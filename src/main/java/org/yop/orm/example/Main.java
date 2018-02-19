@@ -19,9 +19,9 @@ public class Main {
 				Join.to(Pojo::getParent)
 					.where(Where.compare(Pojo::getVersion, Operator.GE, 1))
 					.where(Where.isNotNull(Pojo::getId))
-					.join(JoinSet.to(Pojo::getJopos))
+					.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
 			)
-			.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
+			.join(JoinSet.to(Pojo::getJopos).where(Where.compare(Jopo::getName, Operator.GE, "jopo2")))
 			.where(Where.isNotNull(Pojo::getVersion))
 			.or(Where.isNull(Pojo::getVersion), Where.isNotNull(Pojo::getId))
 			;
