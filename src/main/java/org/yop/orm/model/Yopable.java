@@ -4,15 +4,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
+import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.NaturalId;
-import org.yop.orm.annotations.Parent;
-import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Interface Yop (persistent) objects must implement. <br>
@@ -24,8 +24,6 @@ import java.util.List;
 public interface Yopable {
 
 	Logger logger = LoggerFactory.getLogger(Yopable.class);
-
-	String PARENT_ID = "parentId";
 
 	default Long getId() {
 		Field idField = this.getIdField();
@@ -71,53 +69,15 @@ public interface Yopable {
 	}
 
 	/**
-	 * Check if the current Yopable type has an @Parent field.
-	 * @return true if there is one and only one @Parent field.
+	 * Find all the @JoinTable fields of the current instance that are transient.
+	 * @return the transient @JoinTable fields
 	 */
-	default boolean hasParent() {
-		return Reflection.getFields(this.getClass(), Parent.class, false).size() == 1;
-	}
-
-	/**
-	 * Convenience/convention method for saved objects :
-	 * <ul>
-	 *     <li>no parent → -1</li>
-	 *     <li>parent with ID → parent ID</li>
-	 * </ul>
-	 * @return the parent ID or -1
-	 */
-	default Long getParentId() {
-		Yopable parent = this.getParent();
-		return parent == null ? -1 : parent.getId();
-	}
-
-	/**
-	 * Get the @Parent Yopable of the current instance.
-	 * <br>
-	 * There should be exactly one @Parent field ! Do not use this method else !
-	 * @param <T> the parent type
-	 * @return the value of the @Parent annotated field
-	 */
-	@SuppressWarnings("unchecked")
-	default <T extends Yopable> T getParent() {
-		List<Field> parents = Reflection.getFields(this.getClass(), Parent.class, false);
-		if(parents.size() != 1) {
-			throw new YopMappingException("There should only be one @Parent field !");
-		}
-
-		Field parentField = parents.iterator().next();
-		String parentType = parentField.getType().getName();
-		if(!Yopable.class.isAssignableFrom(parentField.getType())) {
-			throw new YopMappingException(
-				"@Parent field [" + parentType + "#" + parentField.getName() + "] should be a Yopable !"
-			);
-		}
-
-		try {
-			return (T) parentField.get(this);
-		} catch (IllegalAccessException e) {
-			throw new YopMappingException("Error reading @Parent field for [" + this + "]");
-		}
+	default Collection<Field> getTransientRelations() {
+		return  Reflection
+			.getFields(this.getClass(), JoinTable.class, false)
+			.stream()
+			.filter(f -> !Reflection.isNotTransient(f))
+			.collect(Collectors.toList());
 	}
 
 	/**

@@ -2,7 +2,6 @@ package org.yop.orm.example;
 
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
-import org.yop.orm.annotations.Parent;
 import org.yop.orm.model.json.YopableJson;
 
 import java.util.HashSet;
@@ -20,7 +19,6 @@ public class Pojo implements YopableJson {
 	@JoinTable(table = "POJO_JOPO_relation", sourceColumn = "idPOJO", targetColumn = "idJOPO")
 	private Set<Jopo> jopos = new HashSet<>();
 
-	@Parent
 	@JoinTable(table = "POJO_POJO_relation", sourceColumn = "idPOJO_b", targetColumn = "idPOJO_a")
 	private transient Pojo parent;
 
