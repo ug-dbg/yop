@@ -20,7 +20,7 @@ public class Comparaison implements Evaluation {
 	public Comparaison(Function<? extends Yopable, ?> getter, Operator op, Comparable ref) {
 		this.getter = getter;
 		this.op = op;
-		this.ref = ref;
+		this.ref = (ref instanceof String ) ? "'" + ref + "'" : ref;
 	}
 
 	@Override
