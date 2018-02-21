@@ -6,6 +6,7 @@ import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.evaluation.Or;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.Parameters;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,11 +73,15 @@ public class Where<T extends Yopable>  {
 
 	/**
 	 * Create the current WHERE clause SQL.
+	 * @param context    the context from which the query clause must be built
+	 * @param parameters the query parameters that will be updated with this where clause paramters
 	 * @return the SQL WHERE clause
 	 */
-	public String toSQL(Context<T> context) {
+	public String toSQL(Context<T> context, Parameters parameters) {
 		String sql = "";
-		sql += Joiner.on(" AND ").join(evaluations.stream().map(e -> e.toSQL(context)).collect(Collectors.toList()));
+		sql += Joiner.on(" AND ").join(
+			evaluations.stream().map(e -> e.toSQL(context, parameters)).collect(Collectors.toList())
+		);
 		return sql;
 	}
 

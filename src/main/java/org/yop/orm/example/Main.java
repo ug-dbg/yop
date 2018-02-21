@@ -29,8 +29,8 @@ public class Main {
 		Class.forName("com.mysql.jdbc.Driver");
 		String connectionString = "jdbc:mysql://localhost:3306/yop?useUnicode=true&characterEncoding=utf-8";
 		try (Connection connection = DriverManager.getConnection(connectionString, "root", "root")) {
-			Set<Pojo> elementsWithIN     = select.execute(connection, Select.STRATEGY.IN);
 			Set<Pojo> elementsWithExists = select.execute(connection, Select.STRATEGY.EXISTS);
+			Set<Pojo> elementsWithIN     = select.execute(connection, Select.STRATEGY.IN);
 			Set<Pojo> elements2Queries   = select.executeWithTwoQueries(connection);
 			System.out.println(elementsWithIN.equals(elements2Queries));
 			System.out.println(elementsWithIN.equals(elementsWithExists));

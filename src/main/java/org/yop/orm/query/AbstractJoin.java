@@ -5,6 +5,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.evaluation.Comparaison;
 import org.yop.orm.exception.YopMappingException;
+import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
@@ -41,7 +42,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	}
 
 	@Override
-	public String toSQL(Context<From> parent, boolean includeWhereClause) {
+	public String toSQL(Context<From> parent, Parameters parameters, boolean includeWhereClause) {
 		Class<From> from = parent.getTarget();
 		Field field = this.getField(from);
 		JoinTable joinTableAnnotation = field.getAnnotation(JoinTable.class);
@@ -69,12 +70,12 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 			to.getTableName(), targetTableAlias, toIdColumn, relationAlias + Context.DOT + joinTableTargetColumn
 		));
 
-		String whereClause = this.where.toSQL(to);
 		if(includeWhereClause) {
+			String whereClause = this.where.toSQL(to, parameters);
 			out.append(StringUtils.isNotBlank(whereClause) ? " AND " + whereClause : "");
 		}
 
-		this.joins.forEach(join -> out.append(join.toSQL(to, includeWhereClause)));
+		this.joins.forEach(join -> out.append(join.toSQL(to, parameters, includeWhereClause)));
 
 		return out.toString();
 	}

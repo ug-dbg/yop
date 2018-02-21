@@ -4,11 +4,12 @@ package org.yop.orm.evaluation;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
+import org.yop.orm.sql.Parameters;
 
 import java.lang.reflect.Field;
 
 public interface Evaluation {
-	<T extends Yopable> String toSQL(Context<T> context);
+	<T extends Yopable> String toSQL(Context<T> context, Parameters parameters);
 
 	/**
 	 * Read the field @Column annotation

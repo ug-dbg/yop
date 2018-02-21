@@ -6,8 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.evaluation.Comparaison;
 import org.yop.orm.exception.YopSQLException;
-import org.yop.orm.map.Mapper;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.Constants;
+import org.yop.orm.sql.Executor;
+import org.yop.orm.sql.Parameters;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -98,29 +100,18 @@ public class Select<T extends Yopable> {
 	 */
 	public Set<T> executeWithTwoQueries(Connection connection) {
 		Set<Long> ids;
-
-		String request = this.toSQLAnswerRequest();
-		try(Statement statement = connection.createStatement()) {
-			try (ResultSet resultSet = this.executeQuery(statement, request)) {
-				Set<T> elements = Mapper.map(resultSet, this.context.getTarget());
-				ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toSet());
-			}
-		} catch (SQLException e) {
-			throw new YopSQLException("Error executing query [" + request + "]", e);
-		}
+		Parameters parameters = new Parameters();
+		String request = this.toSQLAnswerRequest(parameters);
+		Set<T> elements = Executor.executeQuery(connection, request, parameters, this.context.getTarget());
+		ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toSet());
 
 		if(ids.isEmpty()) {
 			return new HashSet<>();
 		}
 
-		request = this.toSQLDataRequest(ids);
-		try(Statement statement = connection.createStatement()) {
-			try (ResultSet resultSet = this.executeQuery(statement, request)) {
-				return Mapper.map(resultSet, this.context.getTarget());
-			}
-		} catch (SQLException e) {
-			throw new YopSQLException("Error executing query [" + request + "]", e);
-		}
+		parameters = new Parameters();
+		request = this.toSQLDataRequest(ids, parameters);
+		return Executor.executeQuery(connection, request, new Parameters(), this.context.getTarget());
 	}
 
 	/**
@@ -135,14 +126,13 @@ public class Select<T extends Yopable> {
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
 	 */
 	public Set<T> execute(Connection connection, STRATEGY strategy) {
-		String request = strategy == STRATEGY.IN ? this.toSQLDataRequestWithIN() : this.toSQLDataRequest();
-		try(Statement statement = connection.createStatement()) {
-			try (ResultSet resultSet = this.executeQuery(statement, request)) {
-				return Mapper.map(resultSet, this.context.getTarget());
-			}
-		} catch (SQLException e) {
-			throw new YopSQLException("Error executing query [" + request + "]", e);
-		}
+		Parameters parameters = new Parameters();
+		String request =
+			strategy == STRATEGY.IN
+			? this.toSQLDataRequestWithIN(parameters)
+			: this.toSQLDataRequest(parameters);
+
+		return Executor.executeQuery(connection, request, parameters, this.context.getTarget());
 	}
 
 	/**
@@ -158,6 +148,22 @@ public class Select<T extends Yopable> {
 		if(StringUtils.equals("true", System.getProperty("yop.show_sql"))) {
 			logger.info("Executing SELECT SQL query [{}]", sql);
 		}
+
+		// Search table/column aliases that are to long for SQL
+		Set<String> tooLongAliases = new HashSet<>();
+		for (String word : sql.split(" ")) {
+			// if the word is not too long, that's OK
+			// if the word contains a "." this is not an alias
+			if(word.length() <= Constants.SQL_ALIAS_MAX_LENGTH || word.contains(Context.DOT)) {
+				continue;
+			}
+
+
+		}
+
+
+		String safeAliasSQL = sql;
+
 		return statement.executeQuery(sql);
 	}
 
@@ -240,14 +246,14 @@ public class Select<T extends Yopable> {
 	 * @param evaluate true to add the where clauses to the join clauses
 	 * @return the SQL join clause
 	 */
-	private String toSQLJoin(boolean evaluate) {
+	private String toSQLJoin(Parameters parameters, boolean evaluate) {
 		StringBuilder join = new StringBuilder();
-		this.joins.forEach(j -> join.append(j.toSQL(this.context, evaluate)));
+		this.joins.forEach(j -> join.append(j.toSQL(this.context, parameters, evaluate)));
 		return join.toString();
 	}
 
-	private String toSQLWhere() {
-		String whereClause = this.where.toSQL(this.context);
+	private String toSQLWhere(Parameters parameters) {
+		String whereClause = this.where.toSQL(this.context, parameters);
 		return StringUtils.isBlank(whereClause) ? "" : (" WHERE " + whereClause);
 	}
 
@@ -255,24 +261,24 @@ public class Select<T extends Yopable> {
 	 * 2 query strategy : create the SQL 'answer' request : only find the target type that matches. Do not fetch the joins.
 	 * @return the SQL 'answer' request.
 	 */
-	private String toSQLAnswerRequest() {
+	private String toSQLAnswerRequest(Parameters parameters) {
 		String path = this.context.getPath();
 		String sql = "SELECT " + this.toSQLColumnsClause(false) +  " FROM " + this.getTableName() + " as " + path;
-		sql += this.toSQLJoin(true);
-		sql += this.toSQLWhere();
+		sql += this.toSQLJoin(parameters, true);
+		sql += this.toSQLWhere(parameters);
 		return sql;
 	}
 
 	/**
 	 * 2 query strategy : create the SQL 'data' request : fetch all data (including joins) for the given ids.
 	 * <br>
-	 * See {@link #toSQLAnswerRequest()}
+	 * See {@link #toSQLAnswerRequest(Parameters)}
 	 * @return the SQL 'data' request.
 	 */
-	private String toSQLDataRequest(Set<Long> ids) {
+	private String toSQLDataRequest(Set<Long> ids, Parameters parameters) {
 		String path = this.context.getPath();
 		String sql = "SELECT " + this.toSQLColumnsClause(true) +  " FROM " + this.getTableName() + " as " + path;
-		sql += this.toSQLJoin(false);
+		sql += this.toSQLJoin(parameters, false);
 		sql += " WHERE " + this.idAlias() + " IN (" + Joiner.on(",").join(ids) + ") ";
 		return sql;
 	}
@@ -281,11 +287,11 @@ public class Select<T extends Yopable> {
 	 * Single query strategy with EXISTS : create the SQL 'data' request.
 	 * @return the SQL 'data' request.
 	 */
-	private String toSQLDataRequest() {
+	private String toSQLDataRequest(Parameters parameters) {
 		String path = this.context.getPath();
 		String existsSubSelect = "SELECT DISTINCT(" + this.idAlias() +  ") FROM " + this.getTableName() + " as " + path;
-		existsSubSelect += this.toSQLJoin(true);
-		existsSubSelect += this.toSQLWhere();
+		existsSubSelect += this.toSQLJoin(parameters, true);
+		existsSubSelect += this.toSQLWhere(parameters);
 		String andOrWhere = existsSubSelect.isEmpty() ? " WHERE " : " AND ";
 
 		String subQueryDirtyAlias = path + "_0";
@@ -293,7 +299,7 @@ public class Select<T extends Yopable> {
 		existsSubSelect += andOrWhere + this.idAlias() + " = " + idAlias(subQueryDirtyAlias);
 
 		String sql = "SELECT " + this.toSQLColumnsClause(true) +  " FROM " + this.getTableName() + " as " + path;
-		sql += this.toSQLJoin(false);
+		sql += this.toSQLJoin(parameters, false);
 		sql += " WHERE EXISTS (" + existsSubSelect + ")";
 		return sql;
 	}
@@ -302,14 +308,14 @@ public class Select<T extends Yopable> {
 	 * Single query strategy with IN : create the SQL 'data' request.
 	 * @return the SQL 'data' request.
 	 */
-	private String toSQLDataRequestWithIN() {
+	private String toSQLDataRequestWithIN(Parameters parameters) {
 		String path = this.context.getPath();
 		String existsSubSelect = "SELECT " + this.idAlias() +  " FROM " + this.getTableName() + " as " + path;
-		existsSubSelect += this.toSQLJoin(true);
-		existsSubSelect += this.toSQLWhere();
+		existsSubSelect += this.toSQLJoin(parameters, true);
+		existsSubSelect += this.toSQLWhere(parameters);
 
 		String sql = "SELECT " + this.toSQLColumnsClause(true) +  " FROM " + this.getTableName() + " as " + path;
-		sql += this.toSQLJoin(false);
+		sql += this.toSQLJoin(parameters, false);
 		sql += " WHERE " + this.idAlias() + " IN (" + existsSubSelect + ")";
 		return sql;
 	}

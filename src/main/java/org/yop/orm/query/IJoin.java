@@ -2,6 +2,7 @@ package org.yop.orm.query;
 
 import org.yop.orm.model.Yopable;
 import org.yop.orm.evaluation.Comparaison;
+import org.yop.orm.sql.Parameters;
 
 import java.util.Collection;
 import java.util.Set;
@@ -53,10 +54,11 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 	/**
 	 * Create the SQL join clause.
 	 * @param context            the context from which the SQL clause must be built.
+	 * @param parameters         the SQL parameters. Populate me with !
 	 * @param includeWhereClause true to include the where clauses evaluation
 	 * @return the SQL join clause
 	 */
-	String toSQL(Context<From> context, boolean includeWhereClause);
+	String toSQL(Context<From> context, Parameters parameters, boolean includeWhereClause);
 
 	/**
 	 * Find all the columns to select (search in current target type and sub-join clauses if required)

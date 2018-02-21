@@ -132,7 +132,7 @@ public interface Yopable {
 	static <T extends Yopable> Field getIdField(Class<T> clazz) {
 		List<Field> idFields = Reflection.getFields(clazz, Id.class);
 		if(idFields.size() == 0) {
-			logger.debug("No @Id field. Assuming 'id'");
+			logger.debug("No @Id field on [{}]. Assuming 'id'", clazz.getName());
 			Field field = Reflection.get(clazz, "id");
 			if(field != null && Long.class.isAssignableFrom(field.getType())) {
 				return field;
