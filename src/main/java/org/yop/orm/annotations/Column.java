@@ -8,5 +8,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Column {
+    enum LengthStrategy {CUT, EXCEPTION, NONE}
+
     String name();
+    int length() default 50;
+    LengthStrategy length_stratgey() default LengthStrategy.NONE;
 }
