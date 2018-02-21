@@ -1,4 +1,6 @@
-Principles :
+# YOP !
+
+## Principles :
 - 1 object → 1 table
 - 1 relation → 1 join table
 - no foreign key in object table
@@ -13,7 +15,7 @@ Principles :
 - generated queries must be simple and human readable
 - user must keep control over the queries executions order
 
-To do :
+## To do :
 - @Relation annotation (when deleting an object, which relation tables can be cleaned ?)
 - Save
 - Delete
