@@ -3,6 +3,7 @@ package org.yop.orm.query;
 import com.google.common.base.Joiner;
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.evaluation.Comparaison;
+import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Executor;
@@ -128,12 +129,12 @@ public class Select<T extends Yopable> {
 	}
 
 	/**
-	 * Add a comparison to the where clause.
-	 * @param compare the comparison
+	 * Add an evaluation to the where clause.
+	 * @param evaluation the evaluation
 	 * @return the current SELECT request, for chaining purposes
 	 */
-	public Select<T> where(Comparaison compare) {
-		this.where.and(compare);
+	public Select<T> where(Evaluation evaluation) {
+		this.where.and(evaluation);
 		return this;
 	}
 
@@ -249,10 +250,12 @@ public class Select<T extends Yopable> {
 	 */
 	private String toSQLDataRequest(Parameters parameters) {
 		String path = this.context.getPath();
+
+		String whereClause = this.toSQLWhere(parameters);
 		String existsSubSelect = "SELECT DISTINCT(" + this.idAlias() +  ") FROM " + this.getTableName() + " as " + path;
 		existsSubSelect += this.toSQLJoin(parameters, true);
-		existsSubSelect += this.toSQLWhere(parameters);
-		String andOrWhere = existsSubSelect.isEmpty() ? " WHERE " : " AND ";
+		existsSubSelect += whereClause;
+		String andOrWhere = whereClause.isEmpty() ? " WHERE " : " AND ";
 
 		String subQueryDirtyAlias = path + "_0";
 		existsSubSelect = existsSubSelect.replace(path, subQueryDirtyAlias);

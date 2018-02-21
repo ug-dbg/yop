@@ -26,6 +26,15 @@ public class Main {
 			.or(Where.isNull(Pojo::getVersion), Where.isNotNull(Pojo::getId))
 			;
 
+		Pojo reference = new Pojo();
+		reference.setVersion(12);
+		Select<Pojo> selectByNaturalId = Select
+			.from(Pojo.class)
+			.join(Join.to(Pojo::getParent).join(JoinSet.to(Pojo::getJopos)))
+			.join(JoinSet.to(Pojo::getJopos))
+			.where(Where.naturalId(reference))
+			;
+
 		Class.forName("com.mysql.jdbc.Driver");
 		String connectionString = "jdbc:mysql://localhost:3306/yop?useUnicode=true&characterEncoding=utf-8";
 		try (Connection connection = DriverManager.getConnection(connectionString, "root", "root")) {
@@ -38,6 +47,9 @@ public class Main {
 
 			Pojo pojo = elementsWithExists.iterator().next();
 			System.out.println(pojo.toJson());
+
+			Set<Pojo> found = selectByNaturalId.execute(connection, Select.STRATEGY.EXISTS);
+			System.out.println(found);
 		}
 	}
 

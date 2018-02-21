@@ -2,6 +2,7 @@ package org.yop.orm.example;
 
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
+import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.model.json.YopableJson;
 
 import java.util.HashSet;
@@ -13,6 +14,7 @@ public class Pojo implements YopableJson {
 	@Column(name = "ID")
 	private Long id;
 
+	@NaturalId
 	@Column(name = "VERSION")
 	private Integer version;
 

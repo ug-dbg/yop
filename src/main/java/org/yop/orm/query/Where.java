@@ -1,10 +1,7 @@
 package org.yop.orm.query;
 
 import com.google.common.base.Joiner;
-import org.yop.orm.evaluation.Comparaison;
-import org.yop.orm.evaluation.Evaluation;
-import org.yop.orm.evaluation.Operator;
-import org.yop.orm.evaluation.Or;
+import org.yop.orm.evaluation.*;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Parameters;
 
@@ -43,6 +40,16 @@ public class Where<T extends Yopable>  {
 	}
 
 	/**
+	 * Add a natural key evaluation to the where clause, using the AND operator
+	 * @param reference a target class instance, whose natural ID will be used as reference
+	 * @return the current WHERE clause, for chaining purposes
+	 */
+	public Where<T> naturalID(T reference) {
+		this.evaluations.add(new NaturalKey<>(reference));
+		return this;
+	}
+
+	/**
 	 * Add comparisons to the where clause using an AND operator and an OR operator between them.
 	 * @param in the comparisons to add
 	 * @return the current SELECT, for chaining purposes
@@ -57,7 +64,7 @@ public class Where<T extends Yopable>  {
 	 * @param in the comparisons to add
 	 * @return the current SELECT, for chaining purposes
 	 */
-	public final Where<T> and(Comparaison... in) {
+	public final Where<T> and(Evaluation... in) {
 		Arrays.asList(in).forEach(this::matches);
 		return this;
 	}
@@ -115,5 +122,15 @@ public class Where<T extends Yopable>  {
 	 */
 	public static <T extends Yopable> Comparaison isNotNull(Function<T, Comparable<?>> getter) {
 		return new Comparaison(getter, Operator.IS_NOT_NULL, null);
+	}
+
+	/**
+	 * Create a "NaturalId" evaluation, against a target type instance as reference.
+	 * @param reference a target class instance, whose natural ID will be used as reference
+	 * @param <T> the current type
+	 * @return a NaturalId Evaluation object that can be added to the where clause
+	 */
+	public static <T extends Yopable> Evaluation naturalId(T reference) {
+		return new NaturalKey<>(reference);
 	}
 }
