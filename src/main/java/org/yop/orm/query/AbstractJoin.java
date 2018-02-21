@@ -111,7 +111,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	}
 
 	private String toSQLTargetTable(String table, String alias, String column, String referencedJoinColumnAlias) {
-		String sql = " join " + table + " as " + alias;
+		String sql = " left join " + table + " as " + alias;
 		sql += " on " + referencedJoinColumnAlias + " = " + alias + Context.DOT + column;
 		return sql;
 	}
