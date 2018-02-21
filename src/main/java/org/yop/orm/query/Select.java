@@ -2,19 +2,13 @@ package org.yop.orm.query;
 
 import com.google.common.base.Joiner;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.yop.orm.evaluation.Comparaison;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.sql.Constants;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -35,8 +29,6 @@ import java.util.stream.Collectors;
  * @param <T> the type to search for.
  */
 public class Select<T extends Yopable> {
-
-	private static final Logger logger = LoggerFactory.getLogger(Select.class);
 
 	public enum STRATEGY {IN, EXISTS}
 
@@ -133,38 +125,6 @@ public class Select<T extends Yopable> {
 			: this.toSQLDataRequest(parameters);
 
 		return Executor.executeQuery(connection, request, parameters, this.context.getTarget());
-	}
-
-	/**
-	 * Execute the given SQL query.
-	 * <br>
-	 * If the <b>yop.show_sql</b> system property is set, the SQL request is logged.
-	 * @param statement the statement to use to execute
-	 * @param sql the SQL query
-	 * @return the request execution ResultSet
-	 * @throws SQLException an SQL error occured.
-	 */
-	private ResultSet executeQuery(Statement statement, String sql) throws SQLException {
-		if(StringUtils.equals("true", System.getProperty("yop.show_sql"))) {
-			logger.info("Executing SELECT SQL query [{}]", sql);
-		}
-
-		// Search table/column aliases that are to long for SQL
-		Set<String> tooLongAliases = new HashSet<>();
-		for (String word : sql.split(" ")) {
-			// if the word is not too long, that's OK
-			// if the word contains a "." this is not an alias
-			if(word.length() <= Constants.SQL_ALIAS_MAX_LENGTH || word.contains(Context.DOT)) {
-				continue;
-			}
-
-
-		}
-
-
-		String safeAliasSQL = sql;
-
-		return statement.executeQuery(sql);
 	}
 
 	/**
