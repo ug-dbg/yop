@@ -60,6 +60,11 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	}
 
 	@Override
+	public String toSQL(Context<From> parent, Parameters parameters) {
+		return this.toSQL(parent, parameters, true);
+	}
+
+	@Override
 	public <Next extends Yopable> IJoin<From, To> join(IJoin<To, Next> join) {
 		this.joins.add(join);
 		return this;
