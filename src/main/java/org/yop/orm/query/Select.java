@@ -6,7 +6,6 @@ import org.yop.orm.evaluation.Comparaison;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.join.where.IJoin;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 

@@ -24,7 +24,7 @@ public class ToSQL {
 	 * @param <To>   the target type
 	 * @return the SQL join table clauses
 	 */
-	public static <From extends Yopable, To extends Yopable> String toSQL(Context<From> parent, Context<To> to, Field field) {
+	static <From extends Yopable, To extends Yopable> String toSQL(Context<From> parent, Context<To> to, Field field) {
 		Class<From> from = parent.getTarget();
 		JoinTable joinTableAnnotation = field.getAnnotation(JoinTable.class);
 		if(joinTableAnnotation == null) {

@@ -3,7 +3,6 @@ package org.yop.orm.query;
 import com.google.common.base.Joiner;
 import org.yop.orm.evaluation.*;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.join.where.Join;
 import org.yop.orm.sql.Parameters;
 
 import java.util.ArrayList;
@@ -28,7 +27,7 @@ public class Where<T extends Yopable>  {
 	 * <br>
 	 * Use the {@link Select#where()} or {@link Join#where()} to get the {@link Where} instance you need !
 	 */
-	public Where() {}
+	Where() {}
 
 	/**
 	 * Add an evaluation to the where clause, using the AND operator

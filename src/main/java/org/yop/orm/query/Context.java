@@ -162,7 +162,7 @@ public class Context<T extends Yopable> {
 	/**
 	 * Convenience class to store an SQL column (qualified ID and alias)
 	 */
-	public static class SQLColumn {
+	static class SQLColumn {
 		private String qualifiedId;
 		private String alias;
 

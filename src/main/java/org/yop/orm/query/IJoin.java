@@ -1,7 +1,7 @@
-package org.yop.orm.query.join;
+package org.yop.orm.query;
 
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.Context;
+import org.yop.orm.evaluation.Comparaison;
 import org.yop.orm.sql.Parameters;
 
 import java.util.Collection;
@@ -9,7 +9,6 @@ import java.util.Set;
 
 /**
  * A join clause.
- * <br>
  * [From class / From table] → [relation field / relation table] → [Target class / Target table]
  * @param <From> the source type
  * @param <To>   the target type
@@ -29,7 +28,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 	 * Get the sub-join clauses
 	 * @return the sub join clauses (To → relation → Next)
 	 */
-	Collection<org.yop.orm.query.join.where.IJoin<To, ? extends Yopable>> getJoins();
+	Collection<IJoin<To, ? extends Yopable>> getJoins();
 
 	/**
 	 * Add a sub join to the current join clause
@@ -37,15 +36,29 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 	 * @param <Next> the next target type
 	 * @return the current join clause, for chaining purposes
 	 */
-	<Next extends Yopable> org.yop.orm.query.join.where.IJoin<From, To> join(org.yop.orm.query.join.where.IJoin<To, Next> join);
+	<Next extends Yopable> IJoin<From, To> join(IJoin<To, Next> join);
+
+	/**
+	 * Get the join clause where clause
+	 * @return the current join clause where clause
+	 */
+	Where<To> where();
+
+	/**
+	 * Add a where clause to the current join clause.
+	 * @param evaluation the comparison clause
+	 * @return tje current join clause for chaining purposes
+	 */
+	IJoin<From, To> where(Comparaison evaluation);
 
 	/**
 	 * Create the SQL join clause.
-	 * @param context    the context from which the SQL clause must be built.
-	 * @param parameters the SQL parameters. Populate me with !
+	 * @param context            the context from which the SQL clause must be built.
+	 * @param parameters         the SQL parameters. Populate me with !
+	 * @param includeWhereClause true to include the where clauses evaluation
 	 * @return the SQL join clause
 	 */
-	String toSQL(Context<From> context, Parameters parameters);
+	String toSQL(Context<From> context, Parameters parameters, boolean includeWhereClause);
 
 	/**
 	 * Find all the columns to select (search in current target type and sub-join clauses if required)
@@ -57,7 +70,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 		Set<Context.SQLColumn> columns = to.getColumns();
 
 		if (addJoinClauseColumns) {
-			for (org.yop.orm.query.join.where.IJoin<To, ? extends Yopable> join : this.getJoins()) {
+			for (IJoin<To, ? extends Yopable> join : this.getJoins()) {
 				columns.addAll(join.columns(to, true));
 			}
 		}

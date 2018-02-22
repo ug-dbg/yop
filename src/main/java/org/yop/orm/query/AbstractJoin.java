@@ -1,11 +1,8 @@
-package org.yop.orm.query.join.where;
+package org.yop.orm.query;
 
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.evaluation.Comparaison;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.Context;
-import org.yop.orm.query.ToSQL;
-import org.yop.orm.query.Where;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.Reflection;
 
@@ -57,11 +54,6 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 
 		this.joins.forEach(join -> out.append(join.toSQL(to, parameters, includeWhereClause)));
 		return out.toString();
-	}
-
-	@Override
-	public String toSQL(Context<From> parent, Parameters parameters) {
-		return this.toSQL(parent, parameters, true);
 	}
 
 	@Override
