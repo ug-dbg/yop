@@ -26,7 +26,7 @@ public class Executor {
 	private static final Logger logger = LoggerFactory.getLogger(Executor.class);
 
 	/**
-	 * Execute the given SQL query and map results.
+	 * Execute the given SQL SELECT query and map results.
 	 * <br>
 	 * If the <b>yop.show_sql</b> system property is set, the SQL request is logged.
 	 * <br>
@@ -37,11 +37,54 @@ public class Executor {
 	 * @return the request execution ResultSet
 	 * @throws YopSQLException an SQL error occured.
 	 */
-	public static <T extends Yopable> Set<T> executeQuery(
+	@SuppressWarnings("unchecked")
+	public static <T extends Yopable> Set<T> executeSelectQuery(
 		Connection connection,
 		String sql,
 		Parameters parameters,
 		Class<T> target) {
+
+		return (Set<T>) executeQuery(connection, sql, parameters, results -> Mapper.map(results, target));
+	}
+
+	/**
+	 * Execute the given SQL SELECT query and map results.
+	 * <br>
+	 * If the <b>yop.show_sql</b> system property is set, the SQL request is logged.
+	 * <br>
+	 * This method handles the too long aliases that might be present in the SQL query. At least I hope so :)
+	 * @param connection the SQL connection to use
+	 * @param sql        the SQL query
+	 * @param parameters the SQL parameters
+	 * @throws YopSQLException an SQL error occured.
+	 */
+	@SuppressWarnings("unchecked")
+	public static void executeQuery(
+		Connection connection,
+		String sql,
+		Parameters parameters) {
+
+		executeQuery(connection, sql, parameters, null);
+	}
+
+	/**
+	 * Execute the given SQL query.
+	 * <br>
+	 * If the <b>yop.show_sql</b> system property is set, the SQL request is logged.
+	 * <br>
+	 * This method handles the too long aliases that might be present in the SQL query. At least I hope so :)
+	 * @param connection the SQL connection to use
+	 * @param sql        the SQL query
+	 * @param parameters the SQL parameters
+	 * @param action     what to do with results
+	 * @return the return of {@link Action#perform(Results)}
+	 * @throws YopSQLException an SQL error occured.
+	 */
+	private static Object executeQuery(
+		Connection connection,
+		String sql,
+		Parameters parameters,
+		Action action) {
 
 		// Search table/column aliases that are to long for SQL
 		Set<String> tooLongAliases = new HashSet<>();
@@ -63,7 +106,7 @@ public class Executor {
 
 		if(StringUtils.equals("true", System.getProperty("yop.show_sql"))) {
 			logger.info(
-				"Executing SELECT SQL query [{}] with safe aliases [{}] and parameters [{}]",
+				"Executing SQL query [{}] with safe aliases [{}] and parameters [{}]",
 				sql,
 				StringUtils.equals(safeAliasSQL, sql) ? "N/A" : safeAliasSQL,
 				parameters
@@ -75,10 +118,13 @@ public class Executor {
 				Parameters.Parameter parameter = parameters.get(i);
 				statement.setObject(i + 1, parameter.getValue());
 			}
-			return Mapper.map(
-				new Results(statement.executeQuery(), parameters, sql, safeAliasSQL),
-				target
-			);
+
+			if(action == null) {
+				statement.executeUpdate();
+				return null;
+			}
+
+			return action.perform(new Results(statement.executeQuery(), parameters, sql, safeAliasSQL));
 		} catch (SQLException e) {
 			throw new YopSQLException(sql, safeAliasSQL, parameters, e);
 		}
@@ -93,5 +139,9 @@ public class Executor {
 		String shortened = StringUtils.substringAfterLast(alias, Constants.SQL_SEPARATOR);
 		shortened = StringUtils.substring(shortened, 0, Constants.SQL_ALIAS_MAX_LENGTH - 37);
 		return shortened + UUID.randomUUID();
+	}
+
+	private interface Action {
+		Object perform(Results results);
 	}
 }

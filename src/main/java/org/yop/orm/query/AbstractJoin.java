@@ -46,7 +46,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		Context<To> to = this.to(parent, field);
 
 		StringBuilder out = new StringBuilder();
-		out.append(ToSQL.toSQL(parent, to, field));
+		out.append(ToSQL.toSQLJoin(this.joinType(), parent, to, field));
 		if(includeWhereClause) {
 			String whereClause = this.where.toSQL(to, parameters);
 			out.append(StringUtils.isNotBlank(whereClause) ? " AND " + whereClause : "");
@@ -54,6 +54,12 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 
 		this.joins.forEach(join -> out.append(join.toSQL(to, parameters, includeWhereClause)));
 		return out.toString();
+	}
+
+	@Override
+	public String joinTableAlias(Context<From> context) {
+		Field field = this.getField(context.getTarget());
+		return context.getPath() + Context.SQL_SEPARATOR + field.getName();
 	}
 
 	@Override
@@ -78,6 +84,10 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 
 	protected Context<To> to(Context<From> from, Field field) {
 		return from.to(this.getTarget(field), field);
+	}
+
+	protected ToSQL.JoinType joinType() {
+		return ToSQL.JoinType.LEFT_JOIN;
 	}
 
 	abstract Field getField(Class<From> from);

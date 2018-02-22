@@ -95,7 +95,7 @@ public class Select<T extends Yopable> {
 		Set<Long> ids;
 		Parameters parameters = new Parameters();
 		String request = this.toSQLAnswerRequest(parameters);
-		Set<T> elements = Executor.executeQuery(connection, request, parameters, this.context.getTarget());
+		Set<T> elements = Executor.executeSelectQuery(connection, request, parameters, this.context.getTarget());
 		ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toSet());
 
 		if(ids.isEmpty()) {
@@ -104,7 +104,7 @@ public class Select<T extends Yopable> {
 
 		parameters = new Parameters();
 		request = this.toSQLDataRequest(ids, parameters);
-		return Executor.executeQuery(connection, request, new Parameters(), this.context.getTarget());
+		return Executor.executeSelectQuery(connection, request, new Parameters(), this.context.getTarget());
 	}
 
 	/**
@@ -125,7 +125,7 @@ public class Select<T extends Yopable> {
 			? this.toSQLDataRequestWithIN(parameters)
 			: this.toSQLDataRequest(parameters);
 
-		return Executor.executeQuery(connection, request, parameters, this.context.getTarget());
+		return Executor.executeSelectQuery(connection, request, parameters, this.context.getTarget());
 	}
 
 	/**

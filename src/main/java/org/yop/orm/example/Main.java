@@ -46,11 +46,15 @@ public class Main {
 			System.out.println(elementsWithIN.equals(elementsWithExists));
 
 
-			Pojo pojo = elementsWithExists.iterator().next();
-			System.out.println(pojo.toJson());
+			if(elementsWithExists.size() > 0) {
+				Pojo pojo = elementsWithExists.iterator().next();
+				System.out.println(pojo.toJson());
+			}
 
 			Set<Pojo> found = selectByNaturalId.execute(connection, Select.STRATEGY.EXISTS);
 			System.out.println(found);
+
+			delete.executeQuery(connection);
 		}
 	}
 

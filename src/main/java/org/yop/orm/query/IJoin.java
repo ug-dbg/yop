@@ -61,6 +61,13 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 	String toSQL(Context<From> context, Parameters parameters, boolean includeWhereClause);
 
 	/**
+	 * Return the join table alias from the given context
+	 * @param context the context from which the alias is built.
+	 * @return the join table alias for the given context
+	 */
+	String joinTableAlias(Context<From> context);
+
+	/**
 	 * Find all the columns to select (search in current target type and sub-join clauses if required)
 	 * @param addJoinClauseColumns true to add the columns from the sub-join clauses
 	 * @return the columns to select

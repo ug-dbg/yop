@@ -175,6 +175,10 @@ public class Context<T extends Yopable> {
 			return this.qualifiedId + " AS " + this.alias;
 		}
 
+		public String getQualifiedId() {
+			return qualifiedId;
+		}
+
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;

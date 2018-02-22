@@ -6,6 +6,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
+import java.text.MessageFormat;
 
 /**
  * Some common code to generate SQL from objects.
@@ -14,6 +15,18 @@ import java.lang.reflect.Field;
  * this class is for generating SQL from several ones.
  */
 public class ToSQL {
+
+	public enum JoinType {
+		JOIN(" join "), INNER_JOIN(" inner join "), LEFT_JOIN(" left join ");
+
+		JoinType(String sql) {
+			this.sql = sql;
+		}
+
+		private String sql;
+	}
+
+	private static final String JOIN = " {0} as {1} on {2} = {3} ";
 
 	/**
 	 * Generate 'join' clauses from a parent context, a target context and a field linking them.
@@ -24,7 +37,12 @@ public class ToSQL {
 	 * @param <To>   the target type
 	 * @return the SQL join table clauses
 	 */
-	static <From extends Yopable, To extends Yopable> String toSQL(Context<From> parent, Context<To> to, Field field) {
+	static <From extends Yopable, To extends Yopable> String toSQLJoin(
+		JoinType type,
+		Context<From> parent,
+		Context<To> to,
+		Field field) {
+
 		Class<From> from = parent.getTarget();
 		JoinTable joinTableAnnotation = field.getAnnotation(JoinTable.class);
 		if(joinTableAnnotation == null) {
@@ -42,25 +60,13 @@ public class ToSQL {
 		String targetTableAlias = to.getPath();
 		String toIdColumn = Reflection.newInstanceNoArgs(to.getTarget()).getIdColumn();
 
-		return toSQLJoinTable(
-			joinTable, relationAlias, joinTableSourceColumn, parent.getPath() + Context.DOT + fromIdColumn
-		)
-		+
-		toSQLTargetTable(
-			to.getTableName(), targetTableAlias, toIdColumn, relationAlias + Context.DOT + joinTableTargetColumn
-		);
+		return
+			toSQLJoin(type, joinTable, relationAlias, joinTableSourceColumn, parent.getPath() + Context.DOT + fromIdColumn)
+			+
+			toSQLJoin(type, to.getTableName(), targetTableAlias, toIdColumn, relationAlias + Context.DOT + joinTableTargetColumn);
 	}
 
-	private static String toSQLJoinTable(String table, String alias, String column, String referencedIDColumnAlias) {
-		String sql = " left join " + table + " as " + alias;
-		sql += " on " + referencedIDColumnAlias + " = " + alias + Context.DOT + column;
-		return sql;
+	private static String toSQLJoin(JoinType type, String table, String alias, String column, String referencedAlias) {
+		return type.sql + MessageFormat.format(JOIN, table, alias, referencedAlias, alias + Context.DOT + column);
 	}
-
-	private static String toSQLTargetTable(String table, String alias, String column, String referencedJoinColumnAlias) {
-		String sql = " left join " + table + " as " + alias;
-		sql += " on " + referencedJoinColumnAlias + " = " + alias + Context.DOT + column;
-		return sql;
-	}
-
 }
