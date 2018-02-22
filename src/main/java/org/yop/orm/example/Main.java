@@ -1,10 +1,7 @@
 package org.yop.orm.example;
 
 import org.yop.orm.evaluation.Operator;
-import org.yop.orm.query.Join;
-import org.yop.orm.query.JoinSet;
-import org.yop.orm.query.Select;
-import org.yop.orm.query.Where;
+import org.yop.orm.query.*;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -34,6 +31,10 @@ public class Main {
 			.join(JoinSet.to(Pojo::getJopos))
 			.where(Where.naturalId(reference))
 			;
+
+		Delete<Pojo> delete = Delete
+			.from(Pojo.class)
+			.join(Delete.JoinSet.to(Pojo::getJopos).join(Delete.Join.to(Jopo::getPojo)));
 
 		Class.forName("com.mysql.jdbc.Driver");
 		String connectionString = "jdbc:mysql://localhost:3306/yop?useUnicode=true&characterEncoding=utf-8";
