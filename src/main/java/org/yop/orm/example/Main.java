@@ -2,6 +2,8 @@ package org.yop.orm.example;
 
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.query.*;
+import org.yop.orm.query.join.where.Join;
+import org.yop.orm.query.join.where.JoinSet;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

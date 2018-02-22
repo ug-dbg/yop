@@ -1,8 +1,11 @@
-package org.yop.orm.query;
+package org.yop.orm.query.join.where;
 
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.evaluation.Comparaison;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.Context;
+import org.yop.orm.query.ToSQL;
+import org.yop.orm.query.Where;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.Reflection;
 

@@ -1,7 +1,9 @@
-package org.yop.orm.query;
+package org.yop.orm.query.join.where;
 
 import org.yop.orm.model.Yopable;
 import org.yop.orm.evaluation.Comparaison;
+import org.yop.orm.query.Context;
+import org.yop.orm.query.Where;
 import org.yop.orm.sql.Parameters;
 
 import java.util.Collection;

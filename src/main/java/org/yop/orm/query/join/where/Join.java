@@ -1,21 +1,20 @@
-package org.yop.orm.query;
+package org.yop.orm.query.join.where;
 
 import org.yop.orm.model.Yopable;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
-import java.util.Collection;
 import java.util.function.Function;
 
 /**
- * A join clause from a {@link Yopable} to several other ones.
+ * A join clause from a {@link Yopable} to another.
  * @param <From> the source type
  * @param <To>   the target type
  */
-public class JoinSet<From extends Yopable, To extends Yopable> extends AbstractJoin<From, To> {
+public class Join<From extends Yopable, To extends Yopable> extends AbstractJoin<From, To> {
 
 	/** The field getter (From → field & getter → To) */
-	private Function<From, ? extends Collection<To>> getter;
+	private Function<From, To> getter;
 
 	private Field field;
 
@@ -28,21 +27,20 @@ public class JoinSet<From extends Yopable, To extends Yopable> extends AbstractJ
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	Class<To> getTarget(Field field) {
-		return Reflection.getCollectionTarget(field);
+		return (Class<To>) field.getType();
 	}
 
 	/**
-	 * Create a new Join clause
+	 * Create a new Join clause, context-less
 	 * @param getter the getter which holds the relation
 	 * @param <From> the source type
 	 * @param <To>   the target type
 	 * @return a new Join clause, that can be added to a SELECT clause or as a sub-join clause
 	 */
-	public static <From extends Yopable, To extends Yopable> JoinSet<From, To> to(
-		Function<From, ? extends Collection<To>> getter) {
-
-		JoinSet<From, To> to = new JoinSet<>();
+	public static <From extends Yopable, To extends Yopable> IJoin<From, To> to(Function<From, To> getter) {
+		Join<From, To> to = new Join<>();
 		to.getter = getter;
 		return to;
 	}
