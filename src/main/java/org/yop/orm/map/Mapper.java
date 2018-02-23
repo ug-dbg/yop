@@ -12,12 +12,10 @@ import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Maps results of an SQL query to a target class.
@@ -53,6 +51,7 @@ public class Mapper {
 		return out;
 	}
 
+	@SuppressWarnings("unchecked")
 	private static <T> T mapSimpleFields(
 		Results results,
 		T element,
@@ -64,9 +63,60 @@ public class Mapper {
 			String columnName = field.getAnnotation(Column.class).name();
 			columnName = context + SEPARATOR + columnName;
 			columnName = results.getParameters().getAlias(columnName);
-			field.set(element, results.getResultSet().getObject(columnName, field.getType()));
+
+			if(field.getType().isEnum()) {
+				setEnumValue(results.getResultSet(), field, columnName, element);
+			} else {
+				field.set(element, results.getResultSet().getObject(columnName, field.getType()));
+			}
 		}
 		return element;
+	}
+
+	/**
+	 * Map an enum value onto a field of an element
+	 * @param resultSet  the resultset to read
+	 * @param enumField  the enum field. TYPE MUST BE ENUM
+	 * @param columnName the column name to read in the result set
+	 * @param element    the element on which the field must be set
+	 * @throws SQLException           Error reading the result set
+	 * @throws IllegalAccessException Error accessing the enum field on the element
+	 */
+	@SuppressWarnings("unchecked")
+	private static void setEnumValue(
+		ResultSet resultSet,
+		Field enumField,
+		String columnName,
+		Object element)
+		throws SQLException, IllegalAccessException {
+
+		Column.EnumStrategy strategy = enumField.getAnnotation(Column.class).enum_strategy();
+		Class<? extends Enum> enumType = (Class<? extends Enum>) enumField.getType();
+		Object value = resultSet.getObject(columnName);
+
+		if(value == null) {
+			enumField.set(element, null);
+			return;
+		}
+
+		try {
+			switch (strategy) {
+				case NAME:
+					enumField.set(element, Enum.valueOf(enumType, String.valueOf(value))
+					);
+					break;
+				case ORDINAL:
+					// Just in case an ordinal is stored as a string... A bit preposterous !
+					enumField.set(element, enumType.getEnumConstants()[Integer.valueOf(Objects.toString(value))]);
+					break;
+				default:
+					throw new YopMappingException("Unknown enum strategy [" + strategy.name() + "] !");
+			}
+		} catch (RuntimeException e) {
+			throw new YopMapperException(
+				"Could not map enum [" + strategy + ":" + value + "] on [" + enumType.getName() + "]"
+			);
+		}
 	}
 
 	@SuppressWarnings("unchecked")

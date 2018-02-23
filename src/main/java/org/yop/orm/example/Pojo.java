@@ -11,6 +11,8 @@ import java.util.Set;
 
 public class Pojo implements YopableJson {
 
+	private enum Type {FOO, BAR}
+
 	@Column(name = "ID")
 	private Long id;
 
@@ -24,12 +26,23 @@ public class Pojo implements YopableJson {
 	@JoinTable(table = "POJO_POJO_relation", sourceColumn = "idPOJO_b", targetColumn = "idPOJO_a")
 	private transient Pojo parent;
 
+	@Column(name = "TYPE", enum_strategy = Column.EnumStrategy.ORDINAL)
+	private Type type;
+
 	public Integer getVersion() {
 		return version;
 	}
 
 	public void setVersion(Integer version) {
 		this.version = version;
+	}
+
+	public Type getType() {
+		return type;
+	}
+
+	public void setType(Type type) {
+		this.type = type;
 	}
 
 	public Set<Jopo> getJopos() {

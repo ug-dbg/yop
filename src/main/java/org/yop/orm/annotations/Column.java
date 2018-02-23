@@ -9,8 +9,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Column {
     enum LengthStrategy {CUT, EXCEPTION, NONE}
+    enum EnumStrategy {NAME, ORDINAL}
 
     String name();
     int length() default 50;
     LengthStrategy length_stratgey() default LengthStrategy.NONE;
+    EnumStrategy enum_strategy() default EnumStrategy.NAME;
 }
