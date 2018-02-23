@@ -11,7 +11,7 @@ import java.util.Set;
 
 public class Pojo implements YopableJson {
 
-	private enum Type {FOO, BAR}
+	public enum Type {FOO, BAR}
 
 	@Column(name = "ID")
 	private Long id;

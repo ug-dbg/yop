@@ -55,6 +55,12 @@ public class Main {
 			System.out.println(found);
 
 			delete.executeQuery(connection);
+
+			Pojo newPojo = new Pojo();
+			newPojo.setId(3L);
+			newPojo.setVersion(1337);
+			newPojo.setType(Pojo.Type.BAR);
+			Upsert.from(Pojo.class).onto(newPojo).execute(connection);
 		}
 	}
 
