@@ -70,6 +70,16 @@ public class Delete<T extends Yopable> {
 	}
 
 	/**
+	 * Delete the whole data graph. Stop on transient fields.
+	 * <br>
+	 * <b>⚠⚠⚠ There must be no cycle in the data graph model ! ⚠⚠⚠</b>
+	 * @return the current DELETE request, for chaining purpose
+	 */
+	public Delete<T> joinAll() {
+		throw new UnsupportedOperationException("Not implemented yet !");
+	}
+
+	/**
 	 * Execute the DELETE query on the given connection
 	 * @param connection the connection to use
 	 */

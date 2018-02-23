@@ -81,6 +81,16 @@ public class Select<T extends Yopable> {
 	}
 
 	/**
+	 * Fetch the whole data graph. Stop on transient fields.
+	 * <br>
+	 * <b>⚠⚠⚠ There must be no cycle in the data graph model ! ⚠⚠⚠</b>
+	 * @return the current SELECT request, for chaining purpose
+	 */
+	public Select<T> joinAll() {
+		throw new UnsupportedOperationException("Not implemented yet !");
+	}
+
+	/**
 	 * Execute the SELECT request using 2 queries :
 	 * <ul>
 	 *     <li>Find the matching T ids</li>
