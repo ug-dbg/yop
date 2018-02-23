@@ -2,6 +2,7 @@ package org.yop.orm.query;
 
 import com.google.common.base.Joiner;
 import org.yop.orm.annotations.Column;
+import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
@@ -11,7 +12,10 @@ import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
-import java.util.*;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -20,6 +24,8 @@ import java.util.stream.Collectors;
  * @param <T> the type to upsert.
  */
 public class Upsert<T extends Yopable> {
+
+	private static final String INSERT = " INSERT INTO {0} ({1}) VALUES ({2}) ";
 
 	/** Target class */
 	private Class<T> target;
@@ -107,12 +113,16 @@ public class Upsert<T extends Yopable> {
 		List<Query> queries = new ArrayList<>();
 
 		for (T element : this.elements) {
-			String sql = "INSERT INTO " + this.getTableName();
 			Parameters parameters = this.values(element);
 			List<String> columns = parameters.stream().map(Parameters.Parameter::getName).collect(Collectors.toList());
 			List<String> values = parameters.stream().map(p -> "?").collect(Collectors.toList());
 
-			sql += "(" + Joiner.on(", ").join(columns) + ") " + " VALUES " + "(" + Joiner.on(", ").join(values) + ") ";
+			String sql = MessageFormat.format(
+				INSERT,
+				this.getTableName(),
+				Joiner.on(", ").join(columns),
+				Joiner.on(", ").join(values)
+			);
 
 			queries.add(new Query(sql, parameters));
 		}
@@ -137,8 +147,16 @@ public class Upsert<T extends Yopable> {
 	 */
 	private Parameters values(T element) {
 		List<Field> fields = Reflection.getFields(this.target, Column.class);
+		Field idField = Yopable.getIdField(this.target);
 		Parameters parameters = new Parameters();
 		for (Field field : fields) {
+			if(field.equals(idField)) {
+				String value = getInsertIdValue(element);
+				if(value != null) {
+					parameters.addParameter(element.getIdColumn(), value);
+				}
+				continue;
+			}
 			try {
 				parameters.addParameter(field.getAnnotation(Column.class).name(), this.getFieldValue(field, element));
 			} catch (IllegalAccessException e) {
@@ -170,6 +188,33 @@ public class Upsert<T extends Yopable> {
 			}
 		}
 		return field.get(element);
+	}
+
+	/**
+	 * Get the ID that should be in the SQL insert query for the given element.
+	 * <ol>
+	 *     <li>element has an ID field set → return the value of the ID field</li>
+	 *     <li>autoincrement is set to false and id is null → mapping exception</li>
+	 *     <li>sequence name is set → sequence name + .nextval</li>
+	 *     <li>null (→ i.e. do not put me in the insert query)</li>
+	 * </ol>
+	 * @param element the element to check
+	 * @param <T> the element type
+	 * @return the id value to set in the query
+	 * @throws YopMappingException invalid @Id mapping ←→ ID value
+	 */
+	private static <T extends Yopable> String getInsertIdValue(T element) {
+		if(element.getId() != null) {
+			return String.valueOf(element.getId());
+		}
+		Field idField = Yopable.getIdField(element.getClass());
+		if(idField.getAnnotation(Id.class) != null && !idField.getAnnotation(Id.class).autoincrement()) {
+			throw new YopMappingException("Element [" + element + "] has no ID and autoincrement is set to false !");
+		}
+		if(idField.isAnnotationPresent(Id.class) && !idField.getAnnotation(Id.class).sequence().isEmpty()) {
+			return idField.getAnnotation(Id.class).sequence() + ".nextval";
+		}
+		return null;
 	}
 
 	/**
