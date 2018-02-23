@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 public class Upsert<T extends Yopable> {
 
 	private static final String INSERT = " INSERT INTO {0} ({1}) VALUES ({2}) ";
+	private static final String UPDATE = " UPDATE {0} SET {1} WHERE ({2}) ";
 
 	/** Target class */
 	private Class<T> target;
@@ -76,6 +77,15 @@ public class Upsert<T extends Yopable> {
 	}
 
 	/**
+	 * Check for natural ID before insert. Merge and update existing rows.
+	 * <br>
+	 * @return the current SELECT request, for chaining purpose
+	 */
+	public Upsert<T> checkNaturalID() {
+		throw new UnsupportedOperationException("Not implemented yet !");
+	}
+
+	/**
 	 * Add an element to be saved/updated
 	 * @param element the element to be saved/updated
 	 * @return the current UPSERT, for chaining purposes
@@ -114,20 +124,33 @@ public class Upsert<T extends Yopable> {
 
 		for (T element : this.elements) {
 			Parameters parameters = this.values(element);
-			List<String> columns = parameters.stream().map(Parameters.Parameter::getName).collect(Collectors.toList());
-			List<String> values = parameters.stream().map(p -> "?").collect(Collectors.toList());
-
-			String sql = MessageFormat.format(
-				INSERT,
-				this.getTableName(),
-				Joiner.on(", ").join(columns),
-				Joiner.on(", ").join(values)
-			);
-
+			String sql = element.getId() == null ? this.toSQLInsert(element, parameters) : this.toSQLUpdate(element, parameters);
 			queries.add(new Query(sql, parameters));
 		}
 
 		return queries;
+	}
+
+	private String toSQLInsert(T element, Parameters parameters) {
+		List<String> columns = parameters.stream().map(Parameters.Parameter::getName).collect(Collectors.toList());
+		List<String> values = parameters.stream().map(p -> "?").collect(Collectors.toList());
+
+		return MessageFormat.format(
+			INSERT,
+			this.getTableName(),
+			Joiner.on(", ").join(columns),
+			Joiner.on(", ").join(values)
+		);
+	}
+
+	private String toSQLUpdate(T element, Parameters parameters) {
+		String whereClause = element.getIdColumn() + "=" + element.getId();
+		return MessageFormat.format(
+			UPDATE,
+			this.getTableName(),
+			Joiner.on(',').join(parameters.stream().map(p -> p.getName() + "=?").collect(Collectors.toList())),
+			whereClause
+		);
 	}
 
 	/**

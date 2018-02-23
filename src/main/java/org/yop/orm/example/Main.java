@@ -58,8 +58,15 @@ public class Main {
 
 			Pojo newPojo = new Pojo();
 			newPojo.setVersion(1337);
-			newPojo.setType(Pojo.Type.BAR);
+			newPojo.setType(Pojo.Type.FOO);
 			Upsert.from(Pojo.class).onto(newPojo).execute(connection);
+
+			found = Select.from(Pojo.class).where(Where.naturalId(newPojo)).execute(connection, Select.STRATEGY.EXISTS);
+			if(found.size() > 0) {
+				newPojo = found.iterator().next();
+				newPojo.setType(Pojo.Type.BAR);
+				Upsert.from(Pojo.class).onto(newPojo).execute(connection);
+			}
 		}
 	}
 
