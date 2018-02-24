@@ -13,9 +13,7 @@ import org.yop.orm.util.Reflection;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -110,8 +108,11 @@ public class Upsert<T extends Yopable> {
 	 * @param connection the connection to use.
 	 */
 	public void execute(Connection connection) {
-		for (Query query : this.toSQL()) {
+		for (Query<T> query : this.toSQL()) {
 			Executor.executeQuery(connection, query.sql, query.parameters);
+			if(!query.parameters.getGeneratedIds().isEmpty()) {
+				query.element.setId(query.parameters.getGeneratedIds().iterator().next());
+			}
 		}
 	}
 
@@ -119,22 +120,22 @@ public class Upsert<T extends Yopable> {
 	 * Generate a list of SQL Queries that will effectively do the upsert request.
 	 * @return the Upsert queries for the current Upsert
 	 */
-	private List<Query> toSQL() {
-		List<Query> queries = new ArrayList<>();
+	private List<Query<T>> toSQL() {
+		List<Query<T>> queries = new ArrayList<>();
 
 		for (T element : this.elements) {
 			Parameters parameters = this.values(element);
-			String sql = element.getId() == null ? this.toSQLInsert(element, parameters) : this.toSQLUpdate(element, parameters);
-			queries.add(new Query(sql, parameters));
+			String sql = element.getId() == null ? this.toSQLInsert(parameters) : this.toSQLUpdate(element, parameters);
+			queries.add(new Query<>(sql, parameters, element));
 		}
 
 		return queries;
 	}
 
-	private String toSQLInsert(T element, Parameters parameters) {
+	private String toSQLInsert(Parameters parameters) {
 		List<String> columns = parameters.stream().map(Parameters.Parameter::getName).collect(Collectors.toList());
 		List<String> values = parameters.stream().map(p -> "?").collect(Collectors.toList());
-
+		parameters.askGeneratedKeys(true);
 		return MessageFormat.format(
 			INSERT,
 			this.getTableName(),
@@ -243,13 +244,15 @@ public class Upsert<T extends Yopable> {
 	/**
 	 * SQL query + parameters aggregation.
 	 */
-	private static class Query {
+	private static class Query<T> {
 		private String sql;
 		private Parameters parameters;
+		private final T element;
 
-		private Query(String sql, Parameters parameters) {
+		private Query(String sql, Parameters parameters, T element) {
 			this.sql = sql;
 			this.parameters = parameters;
+			this.element = element;
 		}
 	}
 }

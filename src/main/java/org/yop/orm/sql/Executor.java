@@ -7,9 +7,7 @@ import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.Mapper;
 import org.yop.orm.model.Yopable;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -113,7 +111,12 @@ public class Executor {
 			);
 		}
 
-		try (PreparedStatement statement = connection.prepareStatement(safeAliasSQL)) {
+		int generatedKeyCommand =
+			parameters.askGeneratedKeys()
+			? Statement.RETURN_GENERATED_KEYS
+			: Statement.NO_GENERATED_KEYS;
+
+		try (PreparedStatement statement = connection.prepareStatement(safeAliasSQL, generatedKeyCommand)) {
 			for(int i = 0; i < parameters.size(); i++) {
 				Parameters.Parameter parameter = parameters.get(i);
 				statement.setObject(i + 1, parameter.getValue());
@@ -121,6 +124,12 @@ public class Executor {
 
 			if(action == null) {
 				statement.executeUpdate();
+				if(parameters.askGeneratedKeys()) {
+					ResultSet generatedKeys = statement.getGeneratedKeys();
+					while (generatedKeys.next()) {
+						parameters.addGeneratedKey(generatedKeys.getLong(1));
+					}
+				}
 				return null;
 			}
 

@@ -66,6 +66,7 @@ public class Main {
 				newPojo = found.iterator().next();
 				newPojo.setType(Pojo.Type.BAR);
 				Upsert.from(Pojo.class).onto(newPojo).execute(connection);
+				System.out.println(newPojo.getId());
 			}
 		}
 	}

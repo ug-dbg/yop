@@ -1,8 +1,6 @@
 package org.yop.orm.sql;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * SQL query parameters + an other map of too long aliases.
@@ -10,6 +8,10 @@ import java.util.Map;
  * This is an array list, the index of the parameter in the SQL query is the parameter index in the list + 1.
  */
 public class Parameters extends ArrayList<Parameters.Parameter> {
+
+	private boolean askGeneratedKeys = false;
+
+	private Set<Long> generatedIds = new HashSet<>();
 
 	/** Aliases map : short alias → original alias */
 	private Map<String, String> tooLongAliases = new HashMap<>();
@@ -33,12 +35,29 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 		this.add(new Parameter(name, value));
 	}
 
+	public Parameters askGeneratedKeys(boolean value) {
+		this.askGeneratedKeys = value;
+		return this;
+	}
+
+	public boolean askGeneratedKeys() {
+		return this.askGeneratedKeys;
+	}
+
+	public Set<Long> getGeneratedIds() {
+		return this.generatedIds;
+	}
+
 	@Override
 	public String toString() {
 		return "Parameters{" +
 			super.toString() +
 			", tooLongAliases=" + tooLongAliases +
 		'}';
+	}
+
+	public void addGeneratedKey(long id) {
+		this.generatedIds.add(id);
 	}
 
 	/**
