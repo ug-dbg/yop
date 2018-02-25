@@ -1,20 +1,16 @@
 package org.yop.orm.exception;
 
-import org.yop.orm.sql.Parameters;
+import org.yop.orm.sql.Query;
+
+import java.sql.SQLException;
 
 /**
  * A runtime exception to encapsulate the checked {@link java.sql.SQLException}.
  */
 public class YopSQLException extends RuntimeException {
 
-	/** The original query */
-	private String query;
-
-	/** The query with safe aliases replacing too long aliases */
-	private String safeAliasQuery;
-
-	/** The query parameters */
-	private Parameters parameters;
+	/** The query */
+	private Query query;
 
 	public YopSQLException(String message) {
 		super(message);
@@ -24,28 +20,17 @@ public class YopSQLException extends RuntimeException {
 		super(message, cause);
 	}
 
-	public YopSQLException(String query, String safeAliasQuery, Parameters parameters, Throwable cause) {
+	public YopSQLException(Query query, SQLException cause) {
 		super(
-			"Error executing query [" + query
-			+ "] with safe aliasing [" + safeAliasQuery
-			+ "] with parameters [" + parameters + "]",
+			"Error executing query [" + query.getSql()
+			+ "] with safe aliasing [" + query.getSafeSql()
+			+ "] with parameters [" + query.getParameters() + "]",
 			cause
 		);
-
 		this.query = query;
-		this.safeAliasQuery = safeAliasQuery;
-		this.parameters = parameters;
 	}
 
-	public String getQuery() {
+	public Query getQuery() {
 		return query;
-	}
-
-	public String getSafeAliasQuery() {
-		return safeAliasQuery;
-	}
-
-	public Parameters getParameters() {
-		return parameters;
 	}
 }

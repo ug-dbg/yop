@@ -7,10 +7,10 @@ import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.Mapper;
 import org.yop.orm.model.Yopable;
 
-import java.sql.*;
-import java.util.HashSet;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * SQL query executor.
@@ -30,19 +30,14 @@ public class Executor {
 	 * <br>
 	 * This method handles the too long aliases that might be present in the SQL query. At least I hope so :)
 	 * @param connection the SQL connection to use
-	 * @param sql        the SQL query
-	 * @param parameters the SQL parameters
+	 * @param query      the SQL query
+	 * @param target     the target class on which the results of the query will be mapped
 	 * @return the request execution ResultSet
 	 * @throws YopSQLException an SQL error occured.
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T extends Yopable> Set<T> executeSelectQuery(
-		Connection connection,
-		String sql,
-		Parameters parameters,
-		Class<T> target) {
-
-		return (Set<T>) executeQuery(connection, sql, parameters, results -> Mapper.map(results, target));
+	public static <T extends Yopable> Set<T> executeSelectQuery(Connection connection, Query query, Class<T> target) {
+		return (Set<T>) executeQuery(connection, query, results -> Mapper.map(results, target));
 	}
 
 	/**
@@ -52,17 +47,12 @@ public class Executor {
 	 * <br>
 	 * This method handles the too long aliases that might be present in the SQL query. At least I hope so :)
 	 * @param connection the SQL connection to use
-	 * @param sql        the SQL query
-	 * @param parameters the SQL parameters
+	 * @param query      the SQL query
 	 * @throws YopSQLException an SQL error occured.
 	 */
 	@SuppressWarnings("unchecked")
-	public static void executeQuery(
-		Connection connection,
-		String sql,
-		Parameters parameters) {
-
-		executeQuery(connection, sql, parameters, null);
+	public static void executeQuery(Connection connection, Query query) {
+		executeQuery(connection, query, null);
 	}
 
 	/**
@@ -72,51 +62,22 @@ public class Executor {
 	 * <br>
 	 * This method handles the too long aliases that might be present in the SQL query. At least I hope so :)
 	 * @param connection the SQL connection to use
-	 * @param sql        the SQL query
-	 * @param parameters the SQL parameters
+	 * @param query      the SQL query
 	 * @param action     what to do with results
 	 * @return the return of {@link Action#perform(Results)}
 	 * @throws YopSQLException an SQL error occured.
 	 */
 	private static Object executeQuery(
 		Connection connection,
-		String sql,
-		Parameters parameters,
+		Query query,
 		Action action) {
 
-		// Search table/column aliases that are to long for SQL
-		Set<String> tooLongAliases = new HashSet<>();
-		for (String word : sql.split(" ")) {
-			// if the word is not too long, that's OK
-			// if the word contains a "." this is not an alias
-			if(word.length() <= Constants.SQL_ALIAS_MAX_LENGTH || word.contains(Constants.DOT)) {
-				continue;
-			}
-			tooLongAliases.add(word);
-		}
-
-		String safeAliasSQL = sql;
-		for (String tooLongAlias : tooLongAliases) {
-			String shortened = uniqueShortened(tooLongAlias);
-			parameters.addTooLongAlias(tooLongAlias, shortened);
-			safeAliasSQL = safeAliasSQL.replace(tooLongAlias, shortened);
-		}
-
+		Parameters parameters = query.getParameters();
 		if(StringUtils.equals("true", System.getProperty("yop.show_sql"))) {
-			logger.info(
-				"Executing SQL query [{}] with safe aliases [{}] and parameters [{}]",
-				sql,
-				StringUtils.equals(safeAliasSQL, sql) ? "N/A" : safeAliasSQL,
-				parameters
-			);
+			logger.info("Executing SQL query [{}]", query);
 		}
 
-		int generatedKeyCommand =
-			parameters.askGeneratedKeys()
-			? Statement.RETURN_GENERATED_KEYS
-			: Statement.NO_GENERATED_KEYS;
-
-		try (PreparedStatement statement = connection.prepareStatement(safeAliasSQL, generatedKeyCommand)) {
+		try (PreparedStatement statement = connection.prepareStatement(query.getSql(), query.generatedKeyCommand())) {
 			for(int i = 0; i < parameters.size(); i++) {
 				Parameters.Parameter parameter = parameters.get(i);
 				statement.setObject(i + 1, parameter.getValue());
@@ -124,30 +85,14 @@ public class Executor {
 
 			if(action == null) {
 				statement.executeUpdate();
-				if(parameters.askGeneratedKeys()) {
-					ResultSet generatedKeys = statement.getGeneratedKeys();
-					while (generatedKeys.next()) {
-						parameters.addGeneratedKey(generatedKeys.getLong(1));
-					}
-				}
+				query.readGeneratedKey(statement);
 				return null;
 			}
 
-			return action.perform(new Results(statement.executeQuery(), parameters, sql, safeAliasSQL));
+			return action.perform(new Results(statement.executeQuery(), query));
 		} catch (SQLException e) {
-			throw new YopSQLException(sql, safeAliasSQL, parameters, e);
+			throw new YopSQLException(query, e);
 		}
-	}
-
-	/**
-	 * Generate an unique shortened alias for the given one
-	 * @param alias the alias that is too long
-	 * @return a unique alias, generated from the shortened parameter + genererated UUID
-	 */
-	private static String uniqueShortened(String alias) {
-		String shortened = StringUtils.substringAfterLast(alias, Constants.SQL_SEPARATOR);
-		shortened = StringUtils.substring(shortened, 0, Constants.SQL_ALIAS_MAX_LENGTH - 37);
-		return shortened + UUID.randomUUID();
 	}
 
 	private interface Action {

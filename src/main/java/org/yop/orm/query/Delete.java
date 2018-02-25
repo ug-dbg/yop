@@ -6,6 +6,7 @@ import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
+import org.yop.orm.sql.Query;
 
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -85,7 +86,7 @@ public class Delete<T extends Yopable> {
 	 */
 	public void executeQuery(Connection connection) {
 		Parameters parameters = new Parameters();
-		Executor.executeQuery(connection, this.toSQL(parameters), parameters);
+		Executor.executeQuery(connection, new Query(this.toSQL(parameters), parameters));
 	}
 
 	/**

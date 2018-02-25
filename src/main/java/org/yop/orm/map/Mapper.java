@@ -62,7 +62,7 @@ public class Mapper {
 		for (Field field : fields) {
 			String columnName = field.getAnnotation(Column.class).name();
 			columnName = context + SEPARATOR + columnName;
-			columnName = results.getParameters().getAlias(columnName);
+			columnName = results.getQuery().getAlias(columnName);
 
 			if(field.getType().isEnum()) {
 				setEnumValue(results.getResultSet(), field, columnName, element);
@@ -168,7 +168,7 @@ public class Mapper {
 		ResultSetMetaData rsmd = results.getResultSet().getMetaData();
 		int columns = rsmd.getColumnCount();
 		for (int x = 1; x <= columns; x++) {
-			if (results.getParameters().getAlias(rsmd.getColumnLabel(x)).startsWith(context)) {
+			if (results.getQuery().getAlias(rsmd.getColumnLabel(x)).startsWith(context)) {
 				return false;
 			}
 		}

@@ -15,35 +15,51 @@ public class Results {
 	/** The query result set. The result set closing is not handled in this class at all ! */
 	private final ResultSet resultSet;
 
-	/** The query parameters and long aliases replacements */
-	private final Parameters parameters;
+	/** The query that was executed */
+	private Query query;
 
-	/** The SQL query */
-	private final String query;
-
-	/** The SQL query with long aliases replaced */
-	private final String safeAliasQuery;
-
-	public Results(ResultSet resultSet, Parameters parameters, String query, String safeAliasQuery) {
+	/**
+	 * Default constructor : resultset and original query
+	 * @param resultSet the resultset from the query execution
+	 * @param query     the executed query
+	 */
+	Results(ResultSet resultSet, Query query) {
 		this.resultSet = resultSet;
-		this.parameters = parameters;
 		this.query = query;
-		this.safeAliasQuery = safeAliasQuery;
 	}
 
+	/**
+	 * @return the resultset from the query execution
+	 */
 	public ResultSet getResultSet() {
 		return resultSet;
 	}
 
+	/**
+	 * @return the executed query parameters
+	 */
 	public Parameters getParameters() {
-		return parameters;
+		return this.query.getParameters();
 	}
 
-	public String getQuery() {
+	/**
+	 * @return the executed query
+	 */
+	public Query getQuery() {
 		return query;
 	}
 
-	public String getSafeAliasQuery() {
-		return safeAliasQuery;
+	/**
+	 * @return the executed query original SQL
+	 */
+	public String getSQL() {
+		return this.query.getSql();
+	}
+
+	/**
+	 * @return the SQL that cas actually executed (long aliases → safe aliases)
+	 */
+	public String getSafeAliasSQL() {
+		return this.query.getSafeSql();
 	}
 }

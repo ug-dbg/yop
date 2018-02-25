@@ -13,7 +13,9 @@ import org.yop.orm.util.Reflection;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -109,9 +111,9 @@ public class Upsert<T extends Yopable> {
 	 */
 	public void execute(Connection connection) {
 		for (Query<T> query : this.toSQL()) {
-			Executor.executeQuery(connection, query.sql, query.parameters);
-			if(!query.parameters.getGeneratedIds().isEmpty()) {
-				query.element.setId(query.parameters.getGeneratedIds().iterator().next());
+			Executor.executeQuery(connection, query);
+			if(!query.getGeneratedIds().isEmpty()) {
+				query.element.setId(query.getGeneratedIds().iterator().next());
 			}
 		}
 	}
@@ -124,34 +126,48 @@ public class Upsert<T extends Yopable> {
 		List<Query<T>> queries = new ArrayList<>();
 
 		for (T element : this.elements) {
-			Parameters parameters = this.values(element);
-			String sql = element.getId() == null ? this.toSQLInsert(parameters) : this.toSQLUpdate(element, parameters);
-			queries.add(new Query<>(sql, parameters, element));
+			queries.add(
+				element.getId() == null ? this.toSQLInsert(element) : this.toSQLUpdate(element)
+			);
 		}
 
 		return queries;
 	}
 
-	private String toSQLInsert(Parameters parameters) {
+	/**
+	 * Generate a SQL INSERT query for the given element
+	 * @param element the element whose data to use
+	 * @return the generated Query
+	 */
+	private Query toSQLInsert(T element) {
+		Parameters parameters = this.values(element);
 		List<String> columns = parameters.stream().map(Parameters.Parameter::getName).collect(Collectors.toList());
 		List<String> values = parameters.stream().map(p -> "?").collect(Collectors.toList());
-		parameters.askGeneratedKeys(true);
-		return MessageFormat.format(
+
+		String sql = MessageFormat.format(
 			INSERT,
 			this.getTableName(),
 			Joiner.on(", ").join(columns),
 			Joiner.on(", ").join(values)
 		);
+		return (Query) new Query<>(sql, parameters, element).askGeneratedKeys(true);
 	}
 
-	private String toSQLUpdate(T element, Parameters parameters) {
+	/**
+	 * Generate a SQL UPDATE query for the given element
+	 * @param element the element whose data to use
+	 * @return the generated Query
+	 */
+	private Query<T> toSQLUpdate(T element) {
+		Parameters parameters = this.values(element);
 		String whereClause = element.getIdColumn() + "=" + element.getId();
-		return MessageFormat.format(
+		String sql = MessageFormat.format(
 			UPDATE,
 			this.getTableName(),
 			Joiner.on(',').join(parameters.stream().map(p -> p.getName() + "=?").collect(Collectors.toList())),
 			whereClause
 		);
+		return new Query<>(sql, parameters, element);
 	}
 
 	/**
@@ -244,14 +260,11 @@ public class Upsert<T extends Yopable> {
 	/**
 	 * SQL query + parameters aggregation.
 	 */
-	private static class Query<T> {
-		private String sql;
-		private Parameters parameters;
+	private static class Query<T> extends org.yop.orm.sql.Query {
 		private final T element;
 
 		private Query(String sql, Parameters parameters, T element) {
-			this.sql = sql;
-			this.parameters = parameters;
+			super(sql, parameters);
 			this.element = element;
 		}
 	}

@@ -8,6 +8,7 @@ import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
+import org.yop.orm.sql.Query;
 
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -103,9 +104,12 @@ public class Select<T extends Yopable> {
 	 */
 	public Set<T> executeWithTwoQueries(Connection connection) {
 		Set<Long> ids;
+
 		Parameters parameters = new Parameters();
 		String request = this.toSQLAnswerRequest(parameters);
-		Set<T> elements = Executor.executeSelectQuery(connection, request, parameters, this.context.getTarget());
+		Query query = new Query(request, parameters);
+
+		Set<T> elements = Executor.executeSelectQuery(connection, query, this.context.getTarget());
 		ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toSet());
 
 		if(ids.isEmpty()) {
@@ -114,7 +118,8 @@ public class Select<T extends Yopable> {
 
 		parameters = new Parameters();
 		request = this.toSQLDataRequest(ids, parameters);
-		return Executor.executeSelectQuery(connection, request, new Parameters(), this.context.getTarget());
+		query = new Query(request, parameters);
+		return Executor.executeSelectQuery(connection, query, this.context.getTarget());
 	}
 
 	/**
@@ -135,7 +140,7 @@ public class Select<T extends Yopable> {
 			? this.toSQLDataRequestWithIN(parameters)
 			: this.toSQLDataRequest(parameters);
 
-		return Executor.executeSelectQuery(connection, request, parameters, this.context.getTarget());
+		return Executor.executeSelectQuery(connection, new Query(request, parameters), this.context.getTarget());
 	}
 
 	/**
