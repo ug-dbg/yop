@@ -1,5 +1,6 @@
 package org.yop.orm.model;
 
+import com.google.common.primitives.Primitives;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
@@ -134,7 +135,7 @@ public interface Yopable {
 		if(idFields.size() == 0) {
 			logger.trace("No @Id field on [{}]. Assuming 'id'", clazz.getName());
 			Field field = Reflection.get(clazz, "id");
-			if(field != null && Long.class.isAssignableFrom(field.getType())) {
+			if(field != null && Long.class.isAssignableFrom(Primitives.wrap(field.getType()))) {
 				return field;
 			}
 			throw new YopRuntimeException("No Long ID field in [" + clazz.getName() + "] !");
