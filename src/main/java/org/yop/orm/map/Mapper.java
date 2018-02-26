@@ -138,7 +138,7 @@ public class Mapper {
 				if(noContext(results, newContext)) continue;
 
 				mapSimpleFields(results, target, newContext);
-				target = cycleBreaker(target, (Set) field.get(element));
+				target = cycleBreaker(target, (Collection) field.get(element));
 				mapRelationFields(results, target, newContext);
 			} else if (Yopable.class.isAssignableFrom(field.getType())){
 				target = (Yopable) field.get(element);
@@ -175,7 +175,7 @@ public class Mapper {
 		return true;
 	}
 
-	private static <T extends Yopable> T cycleBreaker(T element, Set<T> elements) {
+	private static <T extends Yopable> T cycleBreaker(T element, Collection<T> elements) {
 		T checked = elements.stream().filter(element::equals).findAny().orElse(element);
 		elements.add(checked);
 		return checked;
