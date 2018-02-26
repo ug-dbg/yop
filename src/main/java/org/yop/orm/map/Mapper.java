@@ -64,10 +64,14 @@ public class Mapper {
 			columnName = context + SEPARATOR + columnName;
 			columnName = results.getQuery().getAlias(columnName);
 
-			if(field.getType().isEnum()) {
-				setEnumValue(results.getResultSet(), field, columnName, element);
-			} else {
-				field.set(element, results.getResultSet().getObject(columnName, field.getType()));
+			if (results.getResultSet().getObject(columnName) != null) {
+				if (field.getType().isEnum()) {
+					setEnumValue(results.getResultSet(), field, columnName, element);
+				} else {
+					field.set(element, results.getResultSet().getObject(columnName, field.getType()));
+				}
+			} else if (!field.getType().isPrimitive()){
+				field.set(element, null);
 			}
 		}
 		return element;
@@ -131,13 +135,13 @@ public class Mapper {
 			String newContext = context + SEPARATOR + field.getName() + SEPARATOR;
 			Yopable target;
 			if(Collection.class.isAssignableFrom(field.getType())) {
-				Class<?> targetClass = getRelationFieldType(field);
-				target = (Yopable) targetClass.newInstance();
+				Class<? extends Yopable> targetClass = getRelationFieldType(field);
+				target = targetClass.newInstance();
 				newContext += target.getClass().getSimpleName();
 
-				if(noContext(results, newContext)) continue;
-
+				if(noContext(results, newContext, targetClass)) continue;
 				mapSimpleFields(results, target, newContext);
+
 				target = cycleBreaker(target, (Collection) field.get(element));
 				mapRelationFields(results, target, newContext);
 			} else if (Yopable.class.isAssignableFrom(field.getType())){
@@ -148,7 +152,7 @@ public class Mapper {
 
 				newContext += target.getClass().getSimpleName();
 
-				if(noContext(results, newContext)) continue;
+				if(noContext(results, newContext, target.getClass())) continue;
 				field.set(element, target);
 
 				mapSimpleFields(results, target, newContext);
@@ -164,14 +168,29 @@ public class Mapper {
 		return element;
 	}
 
-	private static boolean noContext(Results results, String context) throws SQLException {
+	private static boolean noContext(
+		Results results,
+		String context,
+		Class<? extends Yopable> targetClass)
+		throws SQLException {
+
+		String idColumn = context + SEPARATOR + Yopable.getIdColumn(targetClass);
 		ResultSetMetaData rsmd = results.getResultSet().getMetaData();
+		if(!hasColumn(rsmd, idColumn)) {
+			return true;
+		}
+
+		if(results.getResultSet().getObject(idColumn) == null) {
+			return true;
+		}
+
 		int columns = rsmd.getColumnCount();
 		for (int x = 1; x <= columns; x++) {
 			if (results.getQuery().getAlias(rsmd.getColumnLabel(x)).startsWith(context)) {
 				return false;
 			}
 		}
+
 		return true;
 	}
 
@@ -184,5 +203,15 @@ public class Mapper {
 	@SuppressWarnings("unchecked")
 	private static <T> Class<T> getRelationFieldType(Field field) {
 		return (Class<T>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+	}
+
+	private static boolean hasColumn(ResultSetMetaData rsmd, String columnName) throws SQLException {
+		int columns = rsmd.getColumnCount();
+		for (int x = 1; x <= columns; x++) {
+			if (columnName.equals(rsmd.getColumnName(x))) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
