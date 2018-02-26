@@ -1,26 +1,36 @@
 # YOP !
 
+## General observations
+- I don't like SQL but it is incredibly efficient.
+- I don't like ORM but I cannot write specific requests. And I still don't like SQL.
+- Problems with ORM mostly come from the unawareness of its mechanisms.
+- One of the greatest difficulty in ORM comes from cycles in the datagraph.
+- One of the greatest difficulty in data representation comes from cycles in the datagraph.
+- One-to-one, One-to-many, Many-to-many relationships are confusing - even though they do make sense.
+- It is very hard to keep control over the fetch strategy at runtime.
+- Hiding complexity is bad design. Helping to cope with complexity is better.
+
 ## Principles :
 - 1 object → 1 table
 - 1 relation → 1 join table
-- no foreign key in object table
-- one unique constraint can be provided for an object → equals/hashcode & natural id
-- no bytecode generation
-- no lazy/eager in mapping : the CRUD API must provide an easy way to deal with fetch strategies
-- the CRUD API should provide an easy way to add/remove relations.
-- the CRUD API should provide an easy way to deal with graphs of objects.
-- The CRUD API should provide an easy way to reference the fields/accessors where constraints are set so the IDE can easy find usages.
-- data can be CRUD using the natural key if the technical ID is unknown
+- No foreign key in object table
+- One unique constraint can be provided for an object → equals/hashcode & natural id
+- 'transient' keyword → cut cycles in the datagraph
+- No bytecode generation
+- No lazy/eager in mapping : the CRUD API must provide an easy way to deal with fetch strategies
+- The CRUD API should provide an easy way to add/remove relations.
+- The CRUD API should provide an easy way to deal with graphs of objects.
+- The CRUD API should provide an easy way to reference the fields/accessors where constraints are set so the IDE can easily find usages.
+- Data can be CRUD using the natural key if the technical ID is unknown
 - Save and Update must be achieved through the same API
-- generated queries must be simple and human readable
-- user must keep control over the queries executions order
+- Generated queries must be simple and human readable
+- User must keep control over the queries executions order
 
 ## To do :
 - @Relation annotation (when deleting an object, which relation tables can be cleaned ?)
-- Save
-- Delete
+- Save related objects
+- 'Join all' clause
 - Robust table aliasing / Context propagation
 - Robust cycle breaker → no cycle mapped ! Use 'transient' ! → easy JSON/XML serialize
 - Schema management
-- SQL query parameters
 - First level cache ?
