@@ -20,7 +20,7 @@ public class JoinSet<From extends Yopable, To extends Yopable> extends AbstractJ
 	private Field field;
 
 	@Override
-	Field getField(Class<From> from) {
+	public Field getField(Class<From> from) {
 		if (this.field == null) {
 			this.field = Reflection.findField(from, this.getter);
 		}
@@ -28,7 +28,7 @@ public class JoinSet<From extends Yopable, To extends Yopable> extends AbstractJ
 	}
 
 	@Override
-	Class<To> getTarget(Field field) {
+	public Class<To> getTarget(Field field) {
 		return Reflection.getCollectionTarget(field);
 	}
 

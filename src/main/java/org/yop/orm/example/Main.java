@@ -25,7 +25,7 @@ public class Main {
 			;
 
 		Pojo reference = new Pojo();
-		reference.setVersion(12);
+		reference.setVersion(2038);
 		Select<Pojo> selectByNaturalId = Select
 			.from(Pojo.class)
 			.join(Join.to(Pojo::getParent).join(JoinSet.to(Pojo::getJopos)))
@@ -60,7 +60,12 @@ public class Main {
 			Pojo newPojo = new Pojo();
 			newPojo.setVersion(1337);
 			newPojo.setType(Pojo.Type.FOO);
-			Upsert.from(Pojo.class).onto(newPojo).execute(connection);
+			Jopo jopo = new Jopo();
+			jopo.setName("jopo From code !");
+			jopo.setPojo(newPojo);
+			newPojo.getJopos().add(jopo);
+
+			Upsert.from(Pojo.class).onto(newPojo).join(JoinSet.to(Pojo::getJopos)).execute(connection);
 
 			found = Select.from(Pojo.class).where(Where.naturalId(newPojo)).execute(connection, Select.STRATEGY.EXISTS);
 			if(found.size() > 0) {

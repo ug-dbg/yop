@@ -19,7 +19,7 @@ public class Join<From extends Yopable, To extends Yopable> extends AbstractJoin
 	private Field field;
 
 	@Override
-	Field getField(Class<From> from) {
+	public Field getField(Class<From> from) {
 		if (this.field == null) {
 			this.field = Reflection.findField(from, this.getter);
 		}
@@ -28,7 +28,7 @@ public class Join<From extends Yopable, To extends Yopable> extends AbstractJoin
 
 	@Override
 	@SuppressWarnings("unchecked")
-	Class<To> getTarget(Field field) {
+	public Class<To> getTarget(Field field) {
 		return (Class<To>) field.getType();
 	}
 

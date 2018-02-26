@@ -89,8 +89,4 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	protected ToSQL.JoinType joinType() {
 		return ToSQL.JoinType.LEFT_JOIN;
 	}
-
-	abstract Field getField(Class<From> from);
-
-	abstract Class<To> getTarget(Field field);
 }

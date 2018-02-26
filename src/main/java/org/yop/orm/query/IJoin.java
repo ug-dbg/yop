@@ -4,6 +4,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.evaluation.Comparaison;
 import org.yop.orm.sql.Parameters;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Set;
 
@@ -66,6 +67,20 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 	 * @return the join table alias for the given context
 	 */
 	String joinTableAlias(Context<From> context);
+
+	/**
+	 * Get the field this join is related to, given the source class.
+	 * @param from the source
+	 * @return the found field
+	 */
+	Field getField(Class<From> from);
+
+	/**
+	 * Return the target type of this join, given the field
+	 * @param field the field of this join
+	 * @return the target class
+	 */
+	Class<To> getTarget(Field field);
 
 	/**
 	 * Find all the columns to select (search in current target type and sub-join clauses if required)

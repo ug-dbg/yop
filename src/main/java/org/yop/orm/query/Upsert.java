@@ -45,6 +45,45 @@ public class Upsert<T extends Yopable> {
 		this.target = target;
 	}
 
+
+	/**
+	 * Create a sub-Upsert request for the given join, on a given source element.
+	 * @param join the join to use for this sub-upsert
+	 * @param on   the source element
+	 * @param <U>  the target type of the sub-upsert
+	 * @return the sub-upsert, or null if the field value is null
+	 * @throws YopMappingException invalid field mapping for the given join
+	 */
+	@SuppressWarnings("unchecked")
+	private <U extends Yopable> Upsert<U> subUpsert(IJoin<T, U> join, T on) {
+		Field field = join.getField(this.target);
+		try {
+			Object children = field.get(on);
+			if(children == null) {
+				return null;
+			}
+
+			if (children instanceof Collection) {
+				if(! ((Collection) children).isEmpty()) {
+					return new Upsert<>(join.getTarget(field)).onto((Collection<U>) children);
+				}
+			} else {
+				return new Upsert<>(join.getTarget(field)).onto((U) children);
+			}
+
+			throw new YopMappingException(
+				"Invalid type [" + children.getClass().getName()
+				+ "] for [" + field.getDeclaringClass().getName() + "#" + field.getName()
+				+ "] on [" + on + "]"
+			);
+
+		} catch (IllegalAccessException e) {
+			throw new YopMappingException(
+				"Could not access [" + field.getDeclaringClass().getName() + "#" + field.getName() + "] on [" + on + "]"
+			);
+		}
+	}
+
 	/**
 	 * Init upsert request.
 	 * @param clazz the target class
@@ -107,9 +146,31 @@ public class Upsert<T extends Yopable> {
 
 	/**
 	 * Execute the upsert request.
+	 * <br>
+	 * <br>
+	 * <b>How is it supposed to work ?</b>
+	 * <br>
+	 * The idea here is to create a sub-upsert request for every join and recurse-execute until the end of the graph.
+	 * <br>
+	 * Every execution should do the insert/update (TODO : delete)
+	 * <br>
+	 * TODO : Then every parent execution should check for the children execution and set data into the relation tables.
 	 * @param connection the connection to use.
 	 */
+	@SuppressWarnings("unchecked")
 	public void execute(Connection connection) {
+		for (T element : this.elements) {
+			for (IJoin<T, ? extends Yopable> join : this.joins) {
+				Upsert sub = this.subUpsert(join, element);
+				if(sub != null) {
+					for (IJoin<? extends Yopable, ? extends Yopable> iJoin : join.getJoins()) {
+						sub.join(iJoin);
+					}
+					sub.execute(connection);
+				}
+			}
+		}
+
 		for (Query<T> query : this.toSQL()) {
 			Executor.executeQuery(connection, query);
 			if(!query.getGeneratedIds().isEmpty()) {
