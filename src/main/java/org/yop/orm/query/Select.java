@@ -9,8 +9,10 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
+import org.yop.orm.util.MessageUtil;
 
 import java.sql.Connection;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -34,6 +36,10 @@ public class Select<T extends Yopable> {
 
 	public enum STRATEGY {IN, EXISTS}
 
+	private static final String SELECT = " SELECT {0} FROM {1} AS {2} {3} WHERE {4} ";
+	private static final String SELECT_DISTINCT = " SELECT DISTINCT({0}) FROM {1} AS {2} {3} WHERE {4} ";
+	private static final String DEFAULT_WHERE = " 1=1 ";
+
 	/** Select root context : target class and SQL path **/
 	private Context<T> context;
 
@@ -50,6 +56,18 @@ public class Select<T extends Yopable> {
 	private Select(Class<T> from) {
 		this.context = Context.root(from);
 		this.where = new Where<>();
+	}
+
+	/**
+	 * Complete constructor.
+	 * @param from  root context
+	 * @param where where clause
+	 * @param joins joins clauses
+	 */
+	private Select(Context<T> from, Where<T> where, Collection<IJoin<T, ? extends Yopable>> joins) {
+		this.context = from;
+		this.where = where;
+		this.joins = joins;
 	}
 
 	/**
@@ -192,7 +210,7 @@ public class Select<T extends Yopable> {
 	 * @return the target type T id alias
 	 */
 	private String idAlias() {
-		return this.idAlias(this.context.getTarget().getSimpleName());
+		return this.idAlias(this.context.tableAlias());
 	}
 
 	/**
@@ -228,21 +246,28 @@ public class Select<T extends Yopable> {
 		return join.toString();
 	}
 
+	/**
+	 * Build the WHERE clause from {@link #where} and for this {@link #context}.
+	 * <b>⚠ Does not prefix with the 'WHERE' keyword ! ⚠</b>
+	 * @param parameters the query parameters that will be populated with the WHERE clause parameters
+	 * @return the Where clause for {@link #where} and {@link #context}
+	 */
 	private String toSQLWhere(Parameters parameters) {
-		String whereClause = this.where.toSQL(this.context, parameters);
-		return StringUtils.isBlank(whereClause) ? "" : (" WHERE " + whereClause);
+		return this.where.toSQL(this.context, parameters);
 	}
 
 	/**
-	 * 2 query strategy : create the SQL 'answer' request : only find the target type that matches. Do not fetch the joins.
+	 * 2 query strategy : create the SQL 'answer' request : only find the target type that matches.
 	 * @return the SQL 'answer' request.
 	 */
 	private String toSQLAnswerRequest(Parameters parameters) {
-		String path = this.context.getPath();
-		String sql = "SELECT " + this.toSQLColumnsClause(false) +  " FROM " + this.getTableName() + " as " + path;
-		sql += this.toSQLJoin(parameters, true);
-		sql += this.toSQLWhere(parameters);
-		return sql;
+		return select(
+			this.toSQLColumnsClause(false),
+			this.getTableName(),
+			this.context.getPath(),
+			this.toSQLJoin(parameters, true),
+			this.toSQLWhere(parameters)
+		);
 	}
 
 	/**
@@ -252,11 +277,13 @@ public class Select<T extends Yopable> {
 	 * @return the SQL 'data' request.
 	 */
 	private String toSQLDataRequest(Set<Long> ids, Parameters parameters) {
-		String path = this.context.getPath();
-		String sql = "SELECT " + this.toSQLColumnsClause(true) +  " FROM " + this.getTableName() + " as " + path;
-		sql += this.toSQLJoin(parameters, false);
-		sql += " WHERE " + this.idAlias() + " IN (" + Joiner.on(",").join(ids) + ") ";
-		return sql;
+		return select(
+			this.toSQLColumnsClause(true),
+			this.getTableName(),
+			this.context.getPath(),
+			this.toSQLJoin(parameters, false),
+			this.idAlias() + " IN (" + Joiner.on(",").join(ids) + ") "
+		);
 	}
 
 	/**
@@ -264,22 +291,34 @@ public class Select<T extends Yopable> {
 	 * @return the SQL 'data' request.
 	 */
 	private String toSQLDataRequest(Parameters parameters) {
-		String path = this.context.getPath();
+		// First we have to build a 'select ids' query for the EXISTS subquery
+		// We copy the current 'Select' object to add a suffix to the context
+		// We link the EXISTS subquery to the global one (id = subquery.id)
+		// This is not very elegant, I must confess
+		Select<T> copyForAlias = new Select<>(this.context.copy("_0"), this.where, this.joins);
 
-		String whereClause = this.toSQLWhere(parameters);
-		String existsSubSelect = "SELECT DISTINCT(" + this.idAlias() +  ") FROM " + this.getTableName() + " as " + path;
-		existsSubSelect += this.toSQLJoin(parameters, true);
-		existsSubSelect += whereClause;
-		String andOrWhere = whereClause.isEmpty() ? " WHERE " : " AND ";
+		String whereClause = MessageUtil.join(
+			" AND ",
+			copyForAlias.toSQLWhere(parameters),
+			this.idAlias() + " = " + copyForAlias.idAlias()
+		);
 
-		String subQueryDirtyAlias = path + "_0";
-		existsSubSelect = existsSubSelect.replace(path, subQueryDirtyAlias);
-		existsSubSelect += andOrWhere + this.idAlias() + " = " + idAlias(subQueryDirtyAlias);
+		String existsSubSelect = selectdistinct(
+			copyForAlias.idAlias(),
+			copyForAlias.getTableName(),
+			copyForAlias.context.getPath(),
+			copyForAlias.toSQLJoin(parameters, true),
+			whereClause
+		);
 
-		String sql = "SELECT " + this.toSQLColumnsClause(true) +  " FROM " + this.getTableName() + " as " + path;
-		sql += this.toSQLJoin(parameters, false);
-		sql += " WHERE EXISTS (" + existsSubSelect + ")";
-		return sql;
+		// Now we can build the global query that fetches the data when the EXISTS clause matches
+		return select(
+			this.toSQLColumnsClause(true),
+			this.getTableName(),
+			this.context.getPath(),
+			this.toSQLJoin(parameters, false),
+			" EXISTS (" + existsSubSelect + ") "
+		);
 	}
 
 	/**
@@ -288,13 +327,60 @@ public class Select<T extends Yopable> {
 	 */
 	private String toSQLDataRequestWithIN(Parameters parameters) {
 		String path = this.context.getPath();
-		String existsSubSelect = "SELECT " + this.idAlias() +  " FROM " + this.getTableName() + " as " + path;
-		existsSubSelect += this.toSQLJoin(parameters, true);
-		existsSubSelect += this.toSQLWhere(parameters);
+		String inSubQuery = select(
+			this.idAlias(),
+			this.getTableName(),
+			path,
+			this.toSQLJoin(parameters, true),
+			this.toSQLWhere(parameters)
+		);
 
-		String sql = "SELECT " + this.toSQLColumnsClause(true) +  " FROM " + this.getTableName() + " as " + path;
-		sql += this.toSQLJoin(parameters, false);
-		sql += " WHERE " + this.idAlias() + " IN (" + existsSubSelect + ")";
-		return sql;
+		return select(
+			this.toSQLColumnsClause(true),
+			this.getTableName(),
+			path,
+			this.toSQLJoin(parameters, false),
+			this.idAlias() + " IN (" + inSubQuery + ")"
+		);
+	}
+
+	/**
+	 * Build the Select query from component clauses
+	 * @param what        Mandatory. Columns clause.
+	 * @param from        Mandatory. Target table.
+	 * @param as          Mandatory. Target table alias.
+	 * @param joinClause  Optional. Join clause.
+	 * @param whereClause Optional. Where clause.
+	 * @return the SQL select query.
+	 */
+	private String select(String what, String from, String as, String joinClause, String whereClause) {
+		return MessageFormat.format(
+			SELECT,
+			what,
+			from,
+			as,
+			joinClause,
+			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause
+		);
+	}
+
+	/**
+	 * Build the 'distinct' Select query from component clauses.
+	 * @param what        Mandatory. Column clause that is to be distinct.
+	 * @param from        Mandatory. Target table.
+	 * @param as          Mandatory. Target table alias.
+	 * @param joinClause  Optional. Join clause.
+	 * @param whereClause Optional. Where clause.
+	 * @return the SQL 'distinct' select query.
+	 */
+	private String selectdistinct(String what, String from, String as, String joinClause, String whereClause) {
+		return MessageFormat.format(
+			SELECT_DISTINCT,
+			what,
+			from,
+			as,
+			joinClause,
+			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause
+		);
 	}
 }

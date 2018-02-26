@@ -5,9 +5,7 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.model.json.YopableJson;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class Pojo implements YopableJson {
 
@@ -22,6 +20,9 @@ public class Pojo implements YopableJson {
 
 	@JoinTable(table = "POJO_JOPO_relation", sourceColumn = "idPOJO", targetColumn = "idJOPO")
 	private Set<Jopo> jopos = new HashSet<>();
+
+	@JoinTable(table = "POJO_OTHER_relation", sourceColumn = "idPojo", targetColumn = "idOther")
+	private List<Other> others = new ArrayList<>();
 
 	@JoinTable(table = "POJO_POJO_relation", sourceColumn = "idPOJO_b", targetColumn = "idPOJO_a")
 	private transient Pojo parent;
@@ -51,6 +52,10 @@ public class Pojo implements YopableJson {
 
 	public void setJopos(Set<Jopo> jopos) {
 		this.jopos = jopos;
+	}
+
+	public List<Other> getOthers() {
+		return others;
 	}
 
 	public Pojo getParent() {

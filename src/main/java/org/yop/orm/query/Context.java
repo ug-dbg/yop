@@ -27,6 +27,8 @@ public class Context<T extends Yopable> {
 	/** The context target class */
 	private Class<T> target;
 
+	private String targetAliasSuffix = "";
+
 	/**
 	 * Private constructor for root context.
 	 * <br>
@@ -54,12 +56,24 @@ public class Context<T extends Yopable> {
 	}
 
 	/**
+	 * Copy the current context.
+	 * <b>⚠ This is a shallow copy : the fields of the returned copy and the current instance are shared ! ⚠</b>
+	 * @param targetAliasSuffix a target alias suffix. Can be null or empty
+	 * @return a shallow copy of the current context, with the given alias suffix
+	 */
+	public Context<T> copy(String targetAliasSuffix) {
+		Context<T> copy = new Context<>(this.parent, this.relationToParent, this.target);
+		copy.targetAliasSuffix = StringUtils.isBlank(targetAliasSuffix) ? "" : targetAliasSuffix;
+		return copy;
+	}
+
+	/**
 	 * Build the context path
 	 * @return the fully qualified context path
 	 */
 	public String getPath() {
 		Context<?> parent = this.parent;
-		StringBuilder path = new StringBuilder(this.target.getSimpleName());
+		StringBuilder path = new StringBuilder(this.target.getSimpleName()).append(this.targetAliasSuffix);
 
 		if(StringUtils.isNotBlank(this.relationToParent) && parent != null) {
 			path.insert(0, this.relationToParent + SQL_SEPARATOR);
@@ -102,6 +116,14 @@ public class Context<T extends Yopable> {
 			));
 		}
 		return columns;
+	}
+
+	/**
+	 * Create the context table alias of the current target
+	 * @return the target table alias
+	 */
+	public String tableAlias() {
+		return this.target.getSimpleName() + this.targetAliasSuffix;
 	}
 
 	/**

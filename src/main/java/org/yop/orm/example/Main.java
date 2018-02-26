@@ -18,6 +18,7 @@ public class Main {
 					.where(Where.isNotNull(Pojo::getId))
 					.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
 			)
+			.join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
 			.join(JoinSet.to(Pojo::getJopos).where(Where.compare(Jopo::getName, Operator.GE, "jopo2")))
 			.where(Where.isNotNull(Pojo::getVersion))
 			.or(Where.isNull(Pojo::getVersion), Where.isNotNull(Pojo::getId))
@@ -54,7 +55,7 @@ public class Main {
 			Set<Pojo> found = selectByNaturalId.execute(connection, Select.STRATEGY.EXISTS);
 			System.out.println(found);
 
-			delete.executeQuery(connection);
+			//delete.executeQuery(connection);
 
 			Pojo newPojo = new Pojo();
 			newPojo.setVersion(1337);
