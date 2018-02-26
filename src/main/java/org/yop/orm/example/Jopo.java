@@ -15,7 +15,7 @@ public class Jopo implements Yopable {
 	private String name;
 
 	@JoinTable(table = "POJO_JOPO_relation", sourceColumn = "idJOPO", targetColumn = "idPOJO")
-	private Pojo pojo;
+	private transient Pojo pojo;
 
 	@Override
 	public Long getId() {
