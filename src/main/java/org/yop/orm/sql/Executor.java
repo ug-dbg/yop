@@ -10,6 +10,7 @@ import org.yop.orm.model.Yopable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Set;
 
 /**
@@ -41,7 +42,10 @@ public class Executor {
 	}
 
 	/**
-	 * Execute the given SQL SELECT query and map results.
+	 * Execute the given SQL query. Whether the query did return something or not,
+	 * nothing is done after the execution.
+	 * <br>
+	 * Any generated ID is however pushed back using {@link Query#readGeneratedKey(Statement)}.
 	 * <br>
 	 * If the <b>yop.show_sql</b> system property is set, the SQL request is logged.
 	 * <br>
