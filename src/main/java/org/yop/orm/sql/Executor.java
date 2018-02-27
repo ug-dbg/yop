@@ -73,7 +73,7 @@ public class Executor {
 		Action action) {
 
 		Parameters parameters = query.getParameters();
-		if(StringUtils.equals("true", System.getProperty("yop.show_sql"))) {
+		if(showSQL()) {
 			logger.info("Executing SQL query [{}]", query);
 		}
 
@@ -86,6 +86,9 @@ public class Executor {
 			if(action == null) {
 				statement.executeUpdate();
 				query.readGeneratedKey(statement);
+				if(showSQL()) {
+					logger.info("Query generated IDs : {}", query.getGeneratedIds());
+				}
 				return null;
 			}
 
@@ -93,6 +96,10 @@ public class Executor {
 		} catch (SQLException e) {
 			throw new YopSQLException(query, e);
 		}
+	}
+
+	private static boolean showSQL() {
+		return StringUtils.equals("true", System.getProperty("yop.show_sql"));
 	}
 
 	private interface Action {
