@@ -23,7 +23,7 @@ public class Other implements YopableJson {
 	private Timestamp timestamp;
 
 	@JoinTable(table = "POJO_OTHER_relation", sourceColumn = "idOther", targetColumn = "idPojo")
-	private Set<Pojo> pojos = new HashSet<>();
+	private transient Set<Pojo> pojos = new HashSet<>();
 
 	public Set<Pojo> getPojos() {
 		return pojos;
