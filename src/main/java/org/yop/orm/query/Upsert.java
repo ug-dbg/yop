@@ -108,13 +108,17 @@ public class Upsert<T extends Yopable> {
 	}
 
 	/**
-	 * Fetch the whole data graph. Stop on transient fields.
+	 * Update the whole data graph. Stop on transient fields.
 	 * <br>
 	 * <b>⚠⚠⚠ There must be no cycle in the data graph model ! ⚠⚠⚠</b>
+	 * <br><br>
+	 * <b>⚠⚠⚠ Any join previously set is cleared ! Please add transient fetch clause after this ! ⚠⚠⚠</b>
 	 * @return the current SELECT request, for chaining purpose
 	 */
 	public Upsert<T> joinAll() {
-		throw new UnsupportedOperationException("Not implemented yet !");
+		this.joins.clear();
+		AbstractJoin.joinAll(this.target, this.joins);
+		return this;
 	}
 
 	/**
@@ -216,7 +220,7 @@ public class Upsert<T extends Yopable> {
 	 * @param join       the join clause (≈ relation table)
 	 * @param <T> the source type
 	 */
-	private static <T extends Yopable> void updateRelation(
+	private static <T extends Yopable> void updateRelation (
 		Connection connection,
 		Collection<T> elements,
 		IJoin<T, ? extends Yopable> join) {

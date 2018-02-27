@@ -103,10 +103,14 @@ public class Select<T extends Yopable> {
 	 * Fetch the whole data graph. Stop on transient fields.
 	 * <br>
 	 * <b>⚠⚠⚠ There must be no cycle in the data graph model ! ⚠⚠⚠</b>
+	 * <br><br>
+	 * <b>⚠⚠⚠ Any join previously set is cleared ! Please add transient fetch clause after this ! ⚠⚠⚠</b>
 	 * @return the current SELECT request, for chaining purpose
 	 */
 	public Select<T> joinAll() {
-		throw new UnsupportedOperationException("Not implemented yet !");
+		this.joins.clear();
+		AbstractJoin.joinAll(this.context.getTarget(), this.joins);
+		return this;
 	}
 
 	/**

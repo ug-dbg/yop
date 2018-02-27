@@ -1,7 +1,9 @@
 package org.yop.orm.query;
 
 import org.apache.commons.lang.StringUtils;
+import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.evaluation.Comparaison;
+import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.Reflection;
@@ -9,6 +11,7 @@ import org.yop.orm.util.Reflection;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Common API between the different IJoin implementations.
@@ -70,11 +73,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 
 	@Override
 	public String toString() {
-		Field where = Reflection.get(this.getClass(), "where");
-		return this.getClass().getSimpleName()
-			+ " { To → " +
-				(where == null ? "N/A" : Reflection.get1ArgParameter(where))
-			+ "}";
+		return this.getClass().getSimpleName() + "{From → To}";
 	}
 
 	@Override
@@ -88,5 +87,90 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 
 	protected ToSQL.JoinType joinType() {
 		return ToSQL.JoinType.LEFT_JOIN;
+	}
+
+	/**
+	 * Create a Join clause when the field is known.
+	 * @param field  the field to use for the join
+	 * @param <From> the source type
+	 * @param <To>   the target type
+	 * @return a new instance of {@link AbstractJoinImpl}
+	 */
+	public static <From extends Yopable, To extends Yopable> IJoin<From, To> create(Field field) {
+		return new AbstractJoinImpl<>(field);
+	}
+
+	/**
+	 * Join all relation fields from the source class.
+	 * @param source the source class, where fields will be searched
+	 * @param joins  the target joins collection
+	 * @param <T> the source type
+	 */
+	@SuppressWarnings("unchecked")
+	static <T extends Yopable> void joinAll(Class<T> source, Collection<IJoin<T, ?  extends Yopable>> joins) {
+		List<Field> fields = Reflection.getFields(source, JoinTable.class);
+		for (Field field : fields) {
+			IJoin<T, Yopable> join = AbstractJoin.create(field);
+			joins.add(join);
+
+			Class<Yopable> newTarget = join.getTarget(field);
+			joinAll(newTarget, join.getJoins());
+		}
+	}
+
+	/**
+	 * IJoin implementation when the Field is known.
+	 * <br>
+	 * This can save some reflection ;-)
+	 * @param <From> the source type
+	 * @param <To>   the target type
+	 */
+	private static class AbstractJoinImpl<From extends Yopable, To extends Yopable> extends AbstractJoin<From, To> {
+		private Field field;
+
+		private AbstractJoinImpl(Field field) {
+			this.field = field;
+		}
+
+		@Override
+		public Field getField(Class<From> from) {
+			return this.field;
+		}
+
+		@Override
+		public String toString() {
+			return this.getClass().getSimpleName() + "{"
+				+ this.field.getDeclaringClass().getName()
+				+ "#"
+				+ this.field.getName()
+				+ " → "
+				+ this.getTarget(field).getName()
+			+ "}";
+		}
+
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public Class<To> getTarget(Field field) {
+			if(Collection.class.isAssignableFrom(field.getType())) {
+				return Reflection.getCollectionTarget(field);
+			}
+			return (Class<To>) field.getType();
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public Collection<To> getTarget(From from) {
+			try {
+				return (Collection<To>) this.field.get(from);
+			} catch (IllegalAccessException e) {
+				throw new YopRuntimeException(
+					"Could not read"
+					+ " field [" + this.field.getDeclaringClass() + "#" + this.field.getName() + "]"
+					+ " of type [" + this.field.getType() + "]"
+					+ " on [" + from + "]"
+				);
+			}
+		}
 	}
 }

@@ -74,10 +74,14 @@ public class Delete<T extends Yopable> {
 	 * Delete the whole data graph. Stop on transient fields.
 	 * <br>
 	 * <b>⚠⚠⚠ There must be no cycle in the data graph model ! ⚠⚠⚠</b>
+	 * <br><br>
+	 * <b>⚠⚠⚠ Any join previously set is cleared ! Please add transient fetch clause after this ! ⚠⚠⚠</b>
 	 * @return the current DELETE request, for chaining purpose
 	 */
 	public Delete<T> joinAll() {
-		throw new UnsupportedOperationException("Not implemented yet !");
+		this.joins.clear();
+		AbstractJoin.joinAll(this.target, this.joins);
+		return this;
 	}
 
 	/**

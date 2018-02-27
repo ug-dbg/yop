@@ -67,7 +67,7 @@ public class Main {
 
 			Upsert.from(Pojo.class).onto(newPojo).join(JoinSet.to(Pojo::getJopos)).checkNaturalID().execute(connection);
 
-			found = Select.from(Pojo.class).where(Where.naturalId(newPojo)).execute(connection, Select.STRATEGY.EXISTS);
+			found = Select.from(Pojo.class).where(Where.naturalId(newPojo)).joinAll().execute(connection, Select.STRATEGY.EXISTS);
 			if(found.size() > 0) {
 				newPojo = found.iterator().next();
 				newPojo.setType(Pojo.Type.BAR);
