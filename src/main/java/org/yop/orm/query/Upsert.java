@@ -1,9 +1,11 @@
 package org.yop.orm.query;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.Maps;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.Table;
+import org.yop.orm.evaluation.NaturalKey;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Executor;
@@ -34,6 +36,9 @@ public class Upsert<T extends Yopable> {
 
 	/** Join clauses */
 	private Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
+
+	/** If set to true, any insert will do a preliminary SELECT query to find any entry whose natural key matches */
+	private boolean checkNaturalID = false;
 
 	/**
 	 * Private constructor, please use {@link #from(Class)}
@@ -118,7 +123,8 @@ public class Upsert<T extends Yopable> {
 	 * @return the current SELECT request, for chaining purpose
 	 */
 	public Upsert<T> checkNaturalID() {
-		throw new UnsupportedOperationException("Not implemented yet !");
+		this.checkNaturalID = true;
+		return this;
 	}
 
 	/**
@@ -168,7 +174,20 @@ public class Upsert<T extends Yopable> {
 			}
 		}
 
-		// Upsert the current data table, when required set the generated ID
+		// If the user asked for natural key checking, do a preliminary SELECT request to find any existing ID
+		if (this.checkNaturalID) {
+			Select<T> naturalIDQuery = Select.from(this.target);
+			for (T element : this.elements.stream().filter(e -> e.getId() == null).collect(Collectors.toList())) {
+				naturalIDQuery.where().or(new NaturalKey<>(element));
+			}
+			Map<T, T> existing = Maps.uniqueIndex(naturalIDQuery.execute(connection, Select.STRATEGY.EXISTS), e -> e);
+
+			// Assign ID on an element if there is a saved element that matched its natural ID
+			// ⚠⚠⚠ The equals and hashcode method are quite important here ! ⚠⚠⚠
+			this.elements.forEach(e -> e.setId(existing.getOrDefault(e, e).getId()));
+		}
+
+		// Upsert the current data table and, when required, set the generated ID
 		Set<T> updated = new HashSet<>();
 		for (Query<T> query : this.toSQL()) {
 			Executor.executeQuery(connection, query);
