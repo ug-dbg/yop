@@ -13,9 +13,7 @@ import org.yop.orm.util.Reflection;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -44,7 +42,6 @@ public class Upsert<T extends Yopable> {
 	private Upsert(Class<T> target) {
 		this.target = target;
 	}
-
 
 	/**
 	 * Create a sub-Upsert request for the given join, on a given source element.
@@ -152,13 +149,13 @@ public class Upsert<T extends Yopable> {
 	 * <br>
 	 * The idea here is to create a sub-upsert request for every join and recurse-execute until the end of the graph.
 	 * <br>
-	 * Every execution should do the insert/update (TODO : delete)
+	 * Every execution should then do the insert/update/delete for the current objects and its joins.
 	 * <br>
-	 * TODO : Then every parent execution should check for the children execution and set data into the relation tables.
 	 * @param connection the connection to use.
 	 */
 	@SuppressWarnings("unchecked")
 	public void execute(Connection connection) {
+		// Recurse through the data graph to upsert data tables, by creating a sub upsert for every join
 		for (T element : this.elements) {
 			for (IJoin<T, ? extends Yopable> join : this.joins) {
 				Upsert sub = this.subUpsert(join, element);
@@ -171,11 +168,46 @@ public class Upsert<T extends Yopable> {
 			}
 		}
 
+		// Upsert the current data table, when required set the generated ID
+		Set<T> updated = new HashSet<>();
 		for (Query<T> query : this.toSQL()) {
 			Executor.executeQuery(connection, query);
 			if(!query.getGeneratedIds().isEmpty()) {
 				query.element.setId(query.getGeneratedIds().iterator().next());
 			}
+			updated.add(query.element);
+		}
+
+		// Upsert the relation tables of the specified joins (DELETE then INSERT, actually)
+		for (IJoin<T, ? extends Yopable> join : this.joins) {
+			updateRelation(connection, updated, join);
+		}
+	}
+
+	/**
+	 * Update a relationship for the given source elements.
+	 * <br><br>
+	 * This method will generate and execute :
+	 * <ol>
+	 *     <li>1 DELETE query to wipe any entry related to the source elements in the relation table</li>
+	 *     <li>INSERT queries to create every From → To entry</li>
+	 * </ol>
+	 * @param connection the connection to use
+	 * @param elements   the source elements
+	 * @param join       the join clause (≈ relation table)
+	 * @param <T> the source type
+	 */
+	private static <T extends Yopable> void updateRelation(
+		Connection connection,
+		Collection<T> elements,
+		IJoin<T, ? extends Yopable> join) {
+
+		Relation<T, ? extends Yopable> relation = new Relation<>(elements, join);
+		Collection<org.yop.orm.sql.Query> relationsQueries = new ArrayList<>();
+		relationsQueries.addAll(relation.toSQLDelete());
+		relationsQueries.addAll(relation.toSQLInsert());
+		for (org.yop.orm.sql.Query query : relationsQueries) {
+			Executor.executeQuery(connection, query);
 		}
 	}
 

@@ -5,6 +5,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -54,12 +55,12 @@ public class MessageUtil {
 	 * Concat objects as Strings using a separator.
 	 * <br>
 	 * Skip null or blanks
-	 * @param strings the strings to concat.
+	 * @param objects the Objects to concat. {@link Objects#toString(Object)} will be used on each non null.
 	 * @return the resulting string.
 	 */
-	public static String join(String separator, Collection<String> strings){
+	public static String join(String separator, Collection<?> objects){
 		return Joiner.on(separator).skipNulls().join(
-			strings.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList()
+			objects.stream().map(Objects::toString).filter(StringUtils::isNotBlank).collect(Collectors.toList()
 		));
 	}
 }

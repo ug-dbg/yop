@@ -83,6 +83,13 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 	Class<To> getTarget(Field field);
 
 	/**
+	 * Get the objects related to the source object, using the current join clause
+	 * @param from the source object
+	 * @return the related targets
+	 */
+	Collection<To> getTarget(From from);
+
+	/**
 	 * Find all the columns to select (search in current target type and sub-join clauses if required)
 	 * @param addJoinClauseColumns true to add the columns from the sub-join clauses
 	 * @return the columns to select

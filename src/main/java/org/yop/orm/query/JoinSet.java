@@ -32,6 +32,11 @@ public class JoinSet<From extends Yopable, To extends Yopable> extends AbstractJ
 		return Reflection.getCollectionTarget(field);
 	}
 
+	@Override
+	public Collection<To> getTarget(From from) {
+		return this.getter.apply(from);
+	}
+
 	/**
 	 * Create a new Join clause
 	 * @param getter the getter which holds the relation

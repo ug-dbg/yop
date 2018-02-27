@@ -28,7 +28,6 @@
 
 ## To do :
 - @Relation annotation (when deleting an object, which relation tables can be cleaned ?)
-- Save related objects
 - 'Join all' clause
 - Robust table aliasing / Context propagation
 - Robust cycle breaker → no cycle mapped ! Use 'transient' ! → easy JSON/XML serialize

@@ -4,6 +4,8 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.function.Function;
 
 /**
@@ -30,6 +32,11 @@ public class Join<From extends Yopable, To extends Yopable> extends AbstractJoin
 	@SuppressWarnings("unchecked")
 	public Class<To> getTarget(Field field) {
 		return (Class<To>) field.getType();
+	}
+
+	@Override
+	public Collection<To> getTarget(From from) {
+		return Collections.singletonList(this.getter.apply(from));
 	}
 
 	/**
