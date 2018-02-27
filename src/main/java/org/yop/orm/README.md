@@ -6,7 +6,7 @@
 - Problems with ORM mostly come from the unawareness of its mechanisms.
 - One of the greatest difficulty in ORM comes from cycles in the datagraph.
 - One of the greatest difficulty in data representation comes from cycles in the datagraph.
-- One-to-one, One-to-many, Many-to-many relationships are confusing - even though they do make sense.
+- One-to-one, One-to-many, Many-to-many relationships are confusing - even though they do make sense in real world.
 - It is very hard to keep control over the fetch strategy at runtime.
 - Hiding complexity is bad design. Helping to cope with complexity is better.
 
