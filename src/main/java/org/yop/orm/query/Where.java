@@ -52,7 +52,7 @@ public class Where<T extends Yopable>  {
 	/**
 	 * Add comparisons to the where clause using an AND operator and an OR operator between them.
 	 * @param in the comparisons to add
-	 * @return the current SELECT, for chaining purposes
+	 * @return the current WHERE clause, for chaining purposes
 	 */
 	public final Where<T> or(Comparaison... in) {
 		List<Evaluation> comparaisons = Arrays.asList(in);
@@ -62,7 +62,7 @@ public class Where<T extends Yopable>  {
 	/**
 	 * Add comparisons to the where clause using an AND operator and an AND operator between them.
 	 * @param in the comparisons to add
-	 * @return the current SELECT, for chaining purposes
+	 * @return the current WHERE, for chaining purposes
 	 */
 	public final Where<T> and(Evaluation... in) {
 		Arrays.asList(in).forEach(this::matches);
@@ -72,7 +72,7 @@ public class Where<T extends Yopable>  {
 	/**
 	 * Add evaluations to the where clause using an AND operator and an OR operator between them.
 	 * @param evaluations the evaluations to add
-	 * @return the current SELECT, for chaining purposes
+	 * @return the current WHERE, for chaining purposes
 	 */
 	public Where<T> or(Evaluation... evaluations) {
 		return this.matches(new Or(evaluations));
