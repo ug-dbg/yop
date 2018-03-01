@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
@@ -96,10 +97,7 @@ public class Context<T extends Yopable> {
 	 * @return the table name for the current context
 	 */
 	public String getTableName() {
-		if(this.target.isAnnotationPresent(Table.class)) {
-			return this.target.getAnnotation(Table.class).name();
-		}
-		return this.target.getSimpleName().toUpperCase();
+		return ORMUtil.getTableName(this.target);
 	}
 
 	/**

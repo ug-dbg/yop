@@ -81,6 +81,12 @@ public class Pojo implements YopableJson {
 
 	@Override
 	public String toString() {
-		return "Pojo{" + "id=" + id + ", version=" + version + ", jopos=" + jopos + ", parent=" + parent + '}';
+		return "Pojo{"
+			+ "id=" + id
+			+ ", version=" + this.version
+			+ ", jopos="   + this.jopos
+			+ ", others="  + this.others
+			+ ", parent="  + this.parent
+		+ '}';
 	}
 }

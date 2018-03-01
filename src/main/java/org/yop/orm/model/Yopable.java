@@ -1,18 +1,14 @@
 package org.yop.orm.model;
 
-import com.google.common.primitives.Primitives;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
-import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.exception.YopRuntimeException;
+import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -23,8 +19,6 @@ import java.util.stream.Collectors;
  * Created by hugues on 23/01/15.
  */
 public interface Yopable {
-
-	Logger logger = LoggerFactory.getLogger(Yopable.class);
 
 	default Long getId() {
 		Field idField = this.getIdField();
@@ -57,7 +51,7 @@ public interface Yopable {
 	}
 
 	default Field getIdField() {
-		return getIdField(this.getClass());
+		return ORMUtil.getIdField(this.getClass());
 	}
 
 	default String getIdColumn() {
@@ -99,6 +93,10 @@ public interface Yopable {
 			return false;
 		}
 
+		if(o == this) {
+			return true;
+		}
+
 		if(! this.getClass().equals(o.getClass())) {
 			return false;
 		}
@@ -128,30 +126,5 @@ public interface Yopable {
 		}
 
 		return this.equals((Object)o);
-	}
-
-	static <T extends Yopable> Field getIdField(Class<T> clazz) {
-		List<Field> idFields = Reflection.getFields(clazz, Id.class);
-		if(idFields.size() == 0) {
-			logger.trace("No @Id field on [{}]. Assuming 'id'", clazz.getName());
-			Field field = Reflection.get(clazz, "id");
-			if(field != null && Long.class.isAssignableFrom(Primitives.wrap(field.getType()))) {
-				return field;
-			}
-			throw new YopRuntimeException("No Long ID field in [" + clazz.getName() + "] !");
-		}
-		if(idFields.size() > 1) {
-			throw new YopRuntimeException("Several @Id fields ! Only one Field of Long type can be @Id !");
-		}
-		Field field = idFields.get(0);
-		if(!Long.class.isAssignableFrom(field.getType())) {
-			throw new YopRuntimeException("@Id field is not Long compatible !");
-		}
-		return field;
-	}
-
-	static <T extends Yopable> String getIdColumn(Class<T> clazz) {
-		Field field = getIdField(clazz);
-		return field.isAnnotationPresent(Column.class) ? field.getAnnotation(Column.class).name() : "ID";
 	}
 }

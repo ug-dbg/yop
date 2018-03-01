@@ -45,10 +45,7 @@ public class Jopo implements Yopable {
 
 	@Override
 	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		Jopo jopo = (Jopo) o;
-		return Objects.equals(name, jopo.name);
+		return o instanceof Yopable && this.equals((Yopable) o);
 	}
 
 	@Override

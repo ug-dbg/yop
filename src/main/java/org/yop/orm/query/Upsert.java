@@ -10,6 +10,7 @@ import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
+import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
@@ -69,7 +70,8 @@ public class Upsert<T extends Yopable> {
 				if(! ((Collection) children).isEmpty()) {
 					return new Upsert<>(join.getTarget(field)).onto((Collection<U>) children);
 				}
-			} else {
+				return null;
+			} else if (children instanceof Yopable) {
 				return new Upsert<>(join.getTarget(field)).onto((U) children);
 			}
 
@@ -291,10 +293,7 @@ public class Upsert<T extends Yopable> {
 	 * @return the table name for the current context
 	 */
 	private String getTableName() {
-		if(this.target.isAnnotationPresent(Table.class)) {
-			return this.target.getAnnotation(Table.class).name();
-		}
-		return this.target.getSimpleName().toUpperCase();
+		return ORMUtil.getTableName(this.target);
 	}
 
 	/**
@@ -303,7 +302,7 @@ public class Upsert<T extends Yopable> {
 	 */
 	private Parameters values(T element) {
 		List<Field> fields = Reflection.getFields(this.target, Column.class);
-		Field idField = Yopable.getIdField(this.target);
+		Field idField = ORMUtil.getIdField(this.target);
 		Parameters parameters = new Parameters();
 		for (Field field : fields) {
 			if(field.equals(idField)) {
@@ -363,7 +362,7 @@ public class Upsert<T extends Yopable> {
 		if(element.getId() != null) {
 			return String.valueOf(element.getId());
 		}
-		Field idField = Yopable.getIdField(element.getClass());
+		Field idField = ORMUtil.getIdField(element.getClass());
 		if(idField.getAnnotation(Id.class) != null && !idField.getAnnotation(Id.class).autoincrement()) {
 			throw new YopMappingException("Element [" + element + "] has no ID and autoincrement is set to false !");
 		}

@@ -8,6 +8,7 @@ import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Results;
+import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
@@ -15,6 +16,7 @@ import java.lang.reflect.ParameterizedType;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.*;
 
 /**
@@ -109,7 +111,12 @@ public class Mapper {
 				if (field.getType().isEnum()) {
 					setEnumValue(results.getResultSet(), field, columnName, element);
 				} else {
-					field.set(element, results.getResultSet().getObject(columnName, field.getType()));
+					try {
+						field.set(element, results.getResultSet().getObject(columnName, field.getType()));
+					} catch (SQLFeatureNotSupportedException e) {
+						Object object = results.getResultSet().getObject(columnName);
+						field.set(element, Reflection.transformInto(object, field.getType()));
+					}
 				}
 			} else if (!field.getType().isPrimitive()){
 				field.set(element, null);
@@ -256,7 +263,7 @@ public class Mapper {
 		Class<? extends Yopable> targetClass)
 		throws SQLException {
 
-		String idColumn = context + SEPARATOR + Yopable.getIdColumn(targetClass);
+		String idColumn = context + SEPARATOR + ORMUtil.getIdColumn(targetClass);
 		ResultSetMetaData rsmd = results.getResultSet().getMetaData();
 		if(!hasColumn(rsmd, idColumn)) {
 			return true;

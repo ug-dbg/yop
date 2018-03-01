@@ -14,6 +14,7 @@ import sun.reflect.ReflectionFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
+import java.time.Instant;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -626,5 +627,54 @@ public class Reflection {
 		Class<? extends T> impl = subTypes.stream().filter(Reflection::isConcrete).findFirst().orElse(null);
 		KNOWN_IMPLEMENTATIONS.put(clazz, impl);
 		return impl;
+	}
+
+	public static Object transformInto(Object what, Class<?> into) {
+		if(what == null || what.getClass().isAssignableFrom(into)) {
+			return what;
+		}
+
+		if(String.class.equals(into)) {
+			return String.valueOf(what);
+		}
+
+		if(what instanceof String) {
+			if (Instant.class.isAssignableFrom(into)) {
+				return Instant.parse((CharSequence) what);
+			}
+			if (Date.class.isAssignableFrom(into)) {
+				return new Date(Instant.parse((CharSequence) what).toEpochMilli());
+			}
+			if (Calendar.class.isAssignableFrom(into)) {
+				Calendar instance = Calendar.getInstance();
+				instance.setTime(new Date(Instant.parse((CharSequence) what).toEpochMilli()));
+			}
+		}
+
+		try {
+			return into.cast(what);
+		} catch (ClassCastException e) {
+			logger.trace("Could not cast[" + what + "] into [" + into.getName() + "]", e);
+		}
+
+		try {
+			Method valueOf = into.getDeclaredMethod("valueOf", String.class);
+			return valueOf.invoke(null, String.valueOf(what));
+		} catch (NoSuchMethodException e) {
+			logger.trace("Could not find valueOf(String) on [" + into.getName() + "]", e);
+		} catch (IllegalAccessException | InvocationTargetException e) {
+			logger.trace("Could not invoke valueOf(String) on [" + into.getName() + "]", e);
+		}
+
+		try {
+			Constructor<?> constructor = into.getDeclaredConstructor(what.getClass());
+			return constructor.newInstance(what);
+		} catch (NoSuchMethodException e) {
+			logger.trace("Could not find valueOf(String) on [" + into.getName() + "]", e);
+		} catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
+			logger.trace("Could not invoke valueOf(String) on [" + into.getName() + "]", e);
+		}
+
+		return what;
 	}
 }

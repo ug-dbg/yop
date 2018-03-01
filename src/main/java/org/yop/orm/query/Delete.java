@@ -29,6 +29,10 @@ import java.util.stream.Collectors;
  * <b>
  *     ⚠⚠⚠ A delete request with join clauses deletes the whole data graph that matches ! ⚠⚠⚠
  * </b>
+ * <br><br>
+ * <b>
+ *     ⚠⚠⚠ Some DB does not support delete with joins ! Please use selects then deletes :-( ⚠⚠⚠
+ * </b>
  *
  * @param <T> the type to delete.
  */
@@ -108,10 +112,18 @@ public class Delete<T extends Yopable> {
 			.collect(Collectors.toSet());
 
 		this.joins.forEach(j -> joinTables(j, root, tables));
-		String columnsClause = Joiner.on(", ").join(tables.stream().map(t -> t + ".*").collect(Collectors.toSet()));
+
+		// 1 single table : omit the 'columns' clause
+		String columnsClause =
+			tables.size() == 1
+			? ""
+			: Joiner.on(", ").join(tables.stream().map(t -> t + ".*").collect(Collectors.toSet()));
+
+		// 1 single table : omit the 'as' clause
+		String asClause = tables.size() == 1 ? "" : " as " + root.getPath();
 
 		return " DELETE " + columnsClause
-			+ " FROM " + root.getTableName() + " as " + root.getPath()
+			+ " FROM " + root.getTableName() + asClause
 			+ this.toSQLJoin(parameters);
 	}
 
