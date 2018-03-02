@@ -152,6 +152,18 @@ public class Context<T extends Yopable> {
 		}
 	}
 
+	/**
+	 * 2 contexts are considered the same if their {@link #getPath()} returns the same value.
+	 * <br><br>
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		return obj != null
+			&& obj instanceof Context
+			&& StringUtils.equals(this.getPath(), ((Context) obj).getPath());
+	}
+
 	@Override
 	public String toString() {
 		return "Context{" + this.getPath() + "}";
