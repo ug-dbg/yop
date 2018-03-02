@@ -15,6 +15,7 @@ import sun.reflect.ReflectionFactory;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -629,6 +630,22 @@ public class Reflection {
 		return impl;
 	}
 
+	/**
+	 * Try to transform a given object into a target class, using some strategies.
+	 * This mostly is to be used if the JDBC driver does not support {@link java.sql.ResultSet#getObject(int, Class)}.
+	 * <ol>
+	 *     <li>what is null or what is already the target type : do nothing</li>
+	 *     <li>target type is String : use {@link String#valueOf(Object)}</li>
+	 *     <li>what is string and target type is some java.time class → parse !</li>
+	 *     <li>try to cast</li>
+	 *     <li>try to use a 'valueOf' method</li>
+	 *     <li>try to use a constructor method</li>
+	 *     <li>return what as is</li>
+	 * </ol>
+	 * @param what incoming object
+	 * @param into expected target type
+	 * @return what transformed into... or not
+	 */
 	public static Object transformInto(Object what, Class<?> into) {
 		if(what == null || what.getClass().isAssignableFrom(into)) {
 			return what;
@@ -641,6 +658,9 @@ public class Reflection {
 		if(what instanceof String) {
 			if (Instant.class.isAssignableFrom(into)) {
 				return Instant.parse((CharSequence) what);
+			}
+			if (LocalDateTime.class.isAssignableFrom(into)) {
+				return LocalDateTime.parse((CharSequence) what);
 			}
 			if (Date.class.isAssignableFrom(into)) {
 				return new Date(Instant.parse((CharSequence) what).toEpochMilli());
