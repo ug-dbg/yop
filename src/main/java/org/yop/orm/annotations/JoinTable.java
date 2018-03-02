@@ -12,4 +12,6 @@ public @interface JoinTable {
     String table();
     String sourceColumn();
     String targetColumn();
+    String sourceForeignKey() default "";
+    String targetForeignKey() default "";
 }
