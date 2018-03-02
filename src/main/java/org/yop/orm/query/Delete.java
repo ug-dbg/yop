@@ -157,9 +157,7 @@ public class Delete<T extends Yopable> {
 	 * @return the SQL join clause
 	 */
 	private String toSQLJoin(Parameters parameters) {
-		StringBuilder join = new StringBuilder();
-		this.joins.forEach(j -> join.append(j.toSQL(Context.root(this.target), parameters, false)));
-		return join.toString();
+		return ToSQL.toSQLJoin(this.joins, Context.root(this.target), parameters, false);
 	}
 
 	/**

@@ -245,9 +245,7 @@ public class Select<T extends Yopable> {
 	 * @return the SQL join clause
 	 */
 	private String toSQLJoin(Parameters parameters, boolean evaluate) {
-		StringBuilder join = new StringBuilder();
-		this.joins.forEach(j -> join.append(j.toSQL(this.context, parameters, evaluate)));
-		return join.toString();
+		return ToSQL.toSQLJoin(this.joins, this.context, parameters, evaluate);
 	}
 
 	/**

@@ -3,10 +3,12 @@ package org.yop.orm.query;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
+import java.util.Collection;
 
 /**
  * Some common code to generate SQL from objects.
@@ -27,6 +29,25 @@ public class ToSQL {
 	}
 
 	private static final String JOIN = " {0} as {1} on {2} = {3} ";
+
+	/**
+	 * Create the SQL join clause (for SELECT or DELETE statement).
+	 * @param joins      the join clauses
+	 * @param context    the current context
+	 * @param parameters the SQL parameters that will be populated
+	 * @param evaluate   true to add {@link IJoin#where()} clauses evaluations
+	 * @return the SQL join clause
+	 */
+	public static <T extends Yopable> String toSQLJoin(
+		Collection<IJoin<T, ? extends Yopable>> joins,
+		Context<T> context,
+		Parameters parameters,
+		boolean evaluate) {
+
+		StringBuilder join = new StringBuilder();
+		joins.forEach(j -> join.append(j.toSQL(context, parameters, evaluate)));
+		return join.toString();
+	}
 
 	/**
 	 * Generate 'join' clauses from a parent context, a target context and a field linking them.
