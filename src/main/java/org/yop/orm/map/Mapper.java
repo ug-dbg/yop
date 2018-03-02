@@ -321,7 +321,7 @@ public class Mapper {
 	private static boolean hasColumn(ResultSetMetaData rsmd, String columnName) throws SQLException {
 		int columns = rsmd.getColumnCount();
 		for (int x = 1; x <= columns; x++) {
-			if (columnName.equals(rsmd.getColumnName(x))) {
+			if (columnName.equals(rsmd.getColumnLabel(x))) {
 				return true;
 			}
 		}
