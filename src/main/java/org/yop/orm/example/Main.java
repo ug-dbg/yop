@@ -5,6 +5,9 @@ import org.yop.orm.query.*;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Set;
 
 public class Main {
@@ -64,8 +67,12 @@ public class Main {
 			jopo.setName("jopo From code !");
 			jopo.setPojo(newPojo);
 			newPojo.getJopos().add(jopo);
+			Other other = new Other();
+			other.setName("otheeer !");
+			other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
+			newPojo.getOthers().add(other);
 
-			Upsert.from(Pojo.class).onto(newPojo).join(JoinSet.to(Pojo::getJopos)).checkNaturalID().execute(connection);
+			Upsert.from(Pojo.class).onto(newPojo).join(JoinSet.to(Pojo::getJopos)).join(JoinSet.to(Pojo::getOthers)).checkNaturalID().execute(connection);
 
 			found = Select.from(Pojo.class).where(Where.naturalId(newPojo)).joinAll().execute(connection, Select.STRATEGY.EXISTS);
 			if(found.size() > 0) {
@@ -73,6 +80,7 @@ public class Main {
 				newPojo.setType(Pojo.Type.BAR);
 				Upsert.from(Pojo.class).onto(newPojo).execute(connection);
 				System.out.println(newPojo.getId());
+				Delete.from(Pojo.class).where(Where.naturalId(newPojo)).executeQuery(connection);
 			}
 		}
 	}

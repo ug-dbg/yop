@@ -6,9 +6,8 @@ import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.model.json.YopableJson;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 public class Other implements YopableJson {
@@ -22,7 +21,7 @@ public class Other implements YopableJson {
 
 	@NaturalId
 	@Column(name = "TIMESTAMP")
-	private Instant timestamp;
+	private LocalDateTime timestamp;
 
 	@JoinTable(table = "POJO_OTHER_relation", sourceColumn = "idOther", targetColumn = "idPojo")
 	private transient Set<Pojo> pojos = new HashSet<>();
@@ -39,11 +38,11 @@ public class Other implements YopableJson {
 		this.name = name;
 	}
 
-	public Instant getTimestamp() {
+	public LocalDateTime getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(Instant timestamp) {
+	public void setTimestamp(LocalDateTime timestamp) {
 		this.timestamp = timestamp;
 	}
 
