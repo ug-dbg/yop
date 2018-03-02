@@ -9,6 +9,7 @@ import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
 
 import java.sql.Connection;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
@@ -37,6 +38,9 @@ import java.util.stream.Collectors;
  * @param <T> the type to delete.
  */
 public class Delete<T extends Yopable> {
+
+	private static final String DELETE = " DELETE {0} FROM {1} {2} WHERE {3} ";
+	private static final String DEFAULT_WHERE = " 1=1 ";
 
 	private Class<T> target;
 	private Where<T> where;
@@ -113,18 +117,25 @@ public class Delete<T extends Yopable> {
 
 		this.joins.forEach(j -> joinTables(j, root, tables));
 
-		// 1 single table : omit the 'columns' clause
-		String columnsClause =
-			tables.size() == 1
-			? ""
-			: Joiner.on(", ").join(tables.stream().map(t -> t + ".*").collect(Collectors.toSet()));
+		// 1 single table : omit the 'columns' clause, the 'as' clause and use a Fake context for the where clause
+		// (This was to deal with SQLite. I am not very proud of this.)
+		String columnsClause = "";
+		String asClause = "";
+		Context<T> context = new Context.FakeContext<>(root, root.getTableName());
+		if (tables.size() > 1) {
+			columnsClause = Joiner.on(", ").join(tables.stream().map(t -> t + ".*").collect(Collectors.toSet()));
+			asClause = " as " + root.getPath();
+			context = root;
+		}
 
-		// 1 single table : omit the 'as' clause
-		String asClause = tables.size() == 1 ? "" : " as " + root.getPath();
-
-		return " DELETE " + columnsClause
-			+ " FROM " + root.getTableName() + asClause
-			+ this.toSQLJoin(parameters);
+		String whereClause = this.where.toSQL(context, parameters);
+		return MessageFormat.format(
+			DELETE,
+			columnsClause,
+			root.getTableName() + asClause,
+			this.toSQLJoin(parameters),
+			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause
+		);
 	}
 
 	/**

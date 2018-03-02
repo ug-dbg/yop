@@ -180,6 +180,26 @@ public class Context<T extends Yopable> {
 	}
 
 	/**
+	 * A Fake context, where you can set a predetermined path.
+	 * <br>
+	 * I am not very proud of this.
+	 * @param <T> the target type
+	 */
+	static class FakeContext<T extends Yopable> extends Context<T> {
+		private String fakePath;
+
+		FakeContext(Context<T> context, String fakePath) {
+			super(context.getTarget());
+			this.fakePath = fakePath;
+		}
+
+		@Override
+		public String getPath() {
+			return this.fakePath;
+		}
+	}
+
+	/**
 	 * Convenience class to store an SQL column (qualified ID and alias)
 	 */
 	static class SQLColumn {
