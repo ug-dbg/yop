@@ -1,8 +1,7 @@
 package org.yop.orm.gen;
 
-import com.google.common.base.Joiner;
+import org.apache.commons.lang.StringUtils;
 import org.reflections.Reflections;
-import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.example.Pojo;
 import org.yop.orm.model.Yopable;
@@ -13,7 +12,6 @@ import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,19 +22,31 @@ import java.util.stream.Collectors;
  */
 public class Table {
 
-	private static final String CREATE = " CREATE TABLE {0} ({1});";
-
 	private String name;
 	private String schema;
+	private ORMTypes types;
+	private boolean relation = false;
 
 	private Collection<Column> columns = new ArrayList<>();
 
-	private String qualifiedName() {
+	private Table(ORMTypes types) {
+		this.types = types;
+	}
+
+	public boolean isRelation() {
+		return relation;
+	}
+
+	public String qualifiedName() {
 		return MessageUtil.join(".", schema, name);
 	}
 
+	public Collection<Column> getColumns() {
+		return this.columns;
+	}
+
 	private String toSQL() {
-		return MessageFormat.format(CREATE, this.qualifiedName(), Joiner.on(", ").join(this.columns));
+		return this.types.toSQL(this);
 	}
 
 	@Override
@@ -62,13 +72,15 @@ public class Table {
 	 * @param packagePrefix the package prefix. Can be fickle.
 	 * @return the table objects that can be used to get INSERT queries
 	 */
-	public static Set<Table> findAllInClassPath(String packagePrefix) {
-		Set<Class<? extends Yopable>> subtypes = new Reflections().getSubTypesOf(Yopable.class);
-		Set<Table> tables = new HashSet<>();
+	public static Set<Table> findAllInClassPath(String packagePrefix, ORMTypes types) {
+		Set<Class<? extends Yopable>> subtypes = new Reflections(packagePrefix).getSubTypesOf(Yopable.class);
+
+		Set<Table> tables = new TreeSet<>(Comparator.comparing(Table::isRelation).thenComparing(Table::qualifiedName));
 		subtypes
 			.stream()
 			.filter(c -> ! c.isInterface() &&  ! Modifier.isAbstract(c.getModifiers() ))
-			.forEach(clazz -> tables.addAll(Table.findTablesFor(clazz, ORMTypes.SQLITE)));
+			.forEach(clazz -> tables.addAll(Table.findTablesFor(clazz, types)));
+
 		return tables;
 	}
 
@@ -78,7 +90,7 @@ public class Table {
 	 * @param types the ORM type, giving DBMS hints
 	 * @return the table objects that can be used to get INSERT queries
 	 */
-	public static Set<Table> findTablesFor(Class<? extends Yopable> clazz, ORMTypes types) {
+	private static Set<Table> findTablesFor(Class<? extends Yopable> clazz, ORMTypes types) {
 		Set<Table> tables = new HashSet<>();
 		tables.add(Table.fromClass(clazz, types));
 		readRelationTables(Pojo.class, types, tables);
@@ -91,8 +103,8 @@ public class Table {
 	 * @param types the ORM type, giving DBMS hints
 	 * @return the table object that can be used to get INSERT query
 	 */
-	public static Table fromClass(Class<? extends Yopable> clazz, ORMTypes types) {
-		Table table = new Table();
+	private static Table fromClass(Class<? extends Yopable> clazz, ORMTypes types) {
+		Table table = new Table(types);
 		table.schema = ORMUtil.getSchemaName(clazz);
 		table.name   = ORMUtil.getTableName(clazz);
 
@@ -106,22 +118,30 @@ public class Table {
 	}
 
 	private static Table fromRelationField(Field relationField, ORMTypes types) {
-			Table table = new Table();
-			table.schema = relationField.getAnnotation(JoinTable.class).schema();
-			table.name   = relationField.getAnnotation(JoinTable.class).table();
+		JoinTable joinTable = relationField.getAnnotation(JoinTable.class);
 
-			Column source = new Column();
-			source.type = types.getForType(Long.class);
-			source.name = relationField.getAnnotation(JoinTable.class).sourceColumn();
-			table.columns.add(source);
+		Table table = new Table(types);
+		table.relation = true;
+		table.schema = joinTable.schema();
+		table.name   = joinTable.table();
 
-			Column target = new Column();
-			target.type = types.getForType(Long.class);
-			target.name = relationField.getAnnotation(JoinTable.class).targetColumn();
-			table.columns.add(target);
+		@SuppressWarnings("unchecked")
+		Class<? extends Yopable> sourceClass = (Class<? extends Yopable>) relationField.getDeclaringClass();
+		Column source = new Column(joinTable.sourceColumn(), joinTable.sourceColumn(), 0, types);
+		createJoinTableColumnAttributes(source, sourceClass, joinTable.sourceForeignKey(), joinTable);
+		table.columns.add(source);
 
-			return table;
+		@SuppressWarnings("unchecked")
+		Class<? extends Yopable> targetClass = (Class<? extends Yopable>)relationField.getType();
+		if(Collection.class.isAssignableFrom(targetClass)) {
+			targetClass = Reflection.getCollectionTarget(relationField);
 		}
+		Column target = new Column(joinTable.targetColumn(), types.getForType(Long.class), 0, types);
+		createJoinTableColumnAttributes(target, targetClass, joinTable.targetForeignKey(), joinTable);
+		table.columns.add(target);
+
+		return table;
+	}
 
 	private static void readRelationTables(Class<? extends Yopable> clazz, ORMTypes types, Set<Table> tables) {
 		tables.addAll(Reflection
@@ -131,41 +151,19 @@ public class Table {
 			.collect(Collectors.toSet()));
 	}
 
-	/**
-	 * A table column that can generate a column clause in an SQL CREATE query.
-	 */
-	private static class Column {
-		private String name;
-		private String type;
-		private String attributes = "";
+	private static void createJoinTableColumnAttributes(
+		Column column,
+		Class<? extends Yopable> reference,
+		String foreignKeyName,
+		JoinTable joinTable) {
 
-		private String toSQL() {
-			return this.name + " "
-				+ this.type
-				+ this.attributes
-				+ " ";
-		}
+		String referencedTable = ORMUtil.getQualifiedTableName(reference);
+		String referencedIdColumn = ORMUtil.getIdColumn(reference);
+		foreignKeyName =
+			StringUtils.isBlank(foreignKeyName)
+			? "FK_" + joinTable.table() + "_" + referencedTable + "_" + referencedIdColumn + "_" + column.getName()
+			: foreignKeyName;
 
-		@Override
-		public String toString() {
-			return this.toSQL();
-		}
-
-		@SuppressWarnings("unchecked")
-		private static Column fromField(Field field, ORMTypes types) {
-			Column column = new Column();
-			column.name = ORMUtil.getColumnName(field);
-			column.type = ORMUtil.getColumnType(field, types);
-
-			boolean primaryKey = false;
-			boolean autoincrement = false;
-			int length = ORMUtil.getColumnLength(field);
-			if(field.equals(ORMUtil.getIdField((Class<? extends Yopable>)field.getDeclaringClass()))) {
-				primaryKey = true;
-				autoincrement = !field.isAnnotationPresent(Id.class) || field.getAnnotation(Id.class).autoincrement();
-			}
-			column.attributes = types.getColumnAttributes(autoincrement, primaryKey, length);
-			return column;
-		}
+		column.setFK(new ForeignKey(foreignKeyName, referencedTable, referencedIdColumn));
 	}
 }
