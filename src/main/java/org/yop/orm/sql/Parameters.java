@@ -13,9 +13,11 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 	 * Add a new SQL parameter
 	 * @param name  the SQL parameter name (will be displayed in the logs if show_sql = true)
 	 * @param value the SQL parameter value
+	 * @return the current Parameters object, for chaining purposes
 	 */
-	public void addParameter(String name, Object value) {
+	public Parameters addParameter(String name, Object value) {
 		this.add(new Parameters.Parameter(name, value));
+		return this;
 	}
 
 	/**
