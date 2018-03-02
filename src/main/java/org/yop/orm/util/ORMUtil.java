@@ -9,6 +9,7 @@ import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.Constants;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -44,6 +45,18 @@ public class ORMUtil {
 			return target.getAnnotation(Table.class).schema();
 		}
 		return "";
+	}
+
+	/**
+	 * Get the schema name for the given yopable target
+	 * (read {@link Table} annotation or return empty string).
+	 * @param target the target Yopable implementation
+	 * @return the table name for the current context
+	 */
+	public static String getQualifiedTableName(Class<? extends Yopable> target) {
+		String schemaName = getSchemaName(target);
+		String tableName = getTableName(target);
+		return StringUtils.isBlank(schemaName) ? tableName : schemaName + Constants.DOT + tableName;
 	}
 
 	/**
