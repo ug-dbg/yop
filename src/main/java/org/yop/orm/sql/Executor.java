@@ -71,7 +71,7 @@ public class Executor {
 	 * @return the return of {@link Action#perform(Results)}
 	 * @throws YopSQLException an SQL error occured.
 	 */
-	private static Object executeQuery(
+	public static Object executeQuery(
 		Connection connection,
 		Query query,
 		Action action) {
@@ -106,7 +106,7 @@ public class Executor {
 		return StringUtils.equals("true", System.getProperty("yop.show_sql"));
 	}
 
-	private interface Action {
-		Object perform(Results results);
+	public interface Action {
+		Object perform(Results results) throws SQLException;
 	}
 }
