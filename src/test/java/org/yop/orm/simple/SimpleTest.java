@@ -83,7 +83,7 @@ public class SimpleTest {
 
 			Delete.from(Pojo.class).executeQuery(connection);
 
-			Set<Pojo> afterDelete = Select.from(Pojo.class).joinAll().execute(connection, Select.Strategy.EXISTS);
+			Set<Pojo> afterDelete = Select.from(Pojo.class).joinAll().execute(connection);
 			Assert.assertEquals(0, afterDelete.size());
 
 			// Assertion that the relation was cleaned in the association table.
@@ -107,7 +107,7 @@ public class SimpleTest {
 			pojo.setVersion(1337);
 			pojo.setType(Pojo.Type.FOO);
 
-			for(int i = 0; i < 150; i++) {
+			for(int i = 0; i < 50; i++) {
 				Jopo jopo = new Jopo();
 				jopo.setName("jopo [" + i + "]");
 				jopo.setPojo(pojo);
@@ -116,12 +116,28 @@ public class SimpleTest {
 
 			Upsert.from(Pojo.class).joinAll().onto(pojo).execute(connection);
 
-			Set<Jopo> jopos = Select.from(Jopo.class).join(Join.to(Jopo::getPojo)).execute(connection, Select.Strategy.EXISTS);
-			Assert.assertEquals(150, jopos.size());
+			Set<Jopo> jopos = Select.from(Jopo.class).join(Join.to(Jopo::getPojo)).execute(connection);
+			Assert.assertEquals(50, jopos.size());
 
 			for (Jopo jopo : jopos) {
 				Assert.assertEquals(pojo, jopo.getPojo());
 			}
+
+			Delete.from(Jopo.class).executeQuery(connection);
+			jopos = Select.from(Jopo.class).join(Join.to(Jopo::getPojo)).execute(connection);
+			Assert.assertEquals(0, jopos.size());
+
+			// Assertion that the relation was cleaned in the association table.
+			Executor.Action action = results -> {
+				results.getResultSet().next();
+				Assert.assertEquals(0, results.getResultSet().getObject(1));
+				return "";
+			};
+
+			Executor.executeQuery(
+				connection,
+				new Query("SELECT COUNT(*) FROM POJO_JOPO_relation", new Parameters()), action
+			);
 		}
 	}
 
