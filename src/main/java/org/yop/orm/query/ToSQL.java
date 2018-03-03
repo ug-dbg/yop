@@ -3,12 +3,15 @@ package org.yop.orm.query;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.JoinClause;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
 import java.util.Collection;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Some common code to generate SQL from objects.
@@ -44,9 +47,19 @@ public class ToSQL {
 		Parameters parameters,
 		boolean evaluate) {
 
-		StringBuilder join = new StringBuilder();
-		joins.forEach(j -> join.append(j.toSQL(context, parameters, evaluate)));
-		return join.toString();
+		JoinClause.JoinClauses joinClauses = new JoinClause.JoinClauses();
+		joins.forEach(j -> j.toSQL(joinClauses, context, evaluate));
+
+		// Join clauses have to be ordered from the closest context to the farthest when building the output !
+		Set<JoinClause> clauses = new TreeSet<>(joinClauses.values());
+
+		StringBuilder sql = new StringBuilder();
+		for (JoinClause joinClause : clauses) {
+			sql.append(joinClause.getJoinClause());
+			parameters.addAll(joinClause.getParameters());
+		}
+
+		return sql.toString();
 	}
 
 	/**

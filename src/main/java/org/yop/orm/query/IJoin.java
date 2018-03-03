@@ -1,8 +1,8 @@
 package org.yop.orm.query;
 
-import org.yop.orm.model.Yopable;
 import org.yop.orm.evaluation.Comparaison;
-import org.yop.orm.sql.Parameters;
+import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.JoinClause;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -54,12 +54,11 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 
 	/**
 	 * Create the SQL join clause.
+	 * @param joinClauses        the join clauses map
 	 * @param context            the context from which the SQL clause must be built.
-	 * @param parameters         the SQL parameters. Populate me with !
 	 * @param includeWhereClause true to include the where clauses evaluation
-	 * @return the SQL join clause
 	 */
-	String toSQL(Context<From> context, Parameters parameters, boolean includeWhereClause);
+	void toSQL(JoinClause.JoinClauses joinClauses, Context<From> context, boolean includeWhereClause);
 
 	/**
 	 * Return the join table alias from the given context

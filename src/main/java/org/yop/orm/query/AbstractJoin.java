@@ -1,10 +1,13 @@
 package org.yop.orm.query;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.evaluation.Comparaison;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.JoinClause;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.Reflection;
 
@@ -19,6 +22,8 @@ import java.util.List;
  * @param <To>   the target type
  */
 abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements IJoin<From, To> {
+
+	private static final Logger logger = LoggerFactory.getLogger(AbstractJoin.class);
 
 	/** The where clause on the target class */
 	protected Where<To> where = new Where<>();
@@ -43,20 +48,28 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	}
 
 	@Override
-	public String toSQL(Context<From> parent, Parameters parameters, boolean includeWhereClause) {
+	public void toSQL(JoinClause.JoinClauses joinClauses, Context<From> parent, boolean includeWhereClause) {
 		Class<From> from = parent.getTarget();
 		Field field = this.getField(from);
 		Context<To> to = this.to(parent, field);
 
-		StringBuilder out = new StringBuilder();
-		out.append(ToSQL.toSQLJoin(this.joinType(), parent, to, field));
+		Parameters parameters = new Parameters();
+		String joinClause = ToSQL.toSQLJoin(this.joinType(), parent, to, field);
 		if(includeWhereClause) {
 			String whereClause = this.where.toSQL(to, parameters);
-			out.append(StringUtils.isNotBlank(whereClause) ? " AND " + whereClause : "");
+			joinClause += StringUtils.isNotBlank(whereClause) ? " AND " + whereClause : "";
 		}
 
-		this.joins.forEach(join -> out.append(join.toSQL(to, parameters, includeWhereClause)));
-		return out.toString();
+		if(joinClauses.containsKey(to)) {
+			logger.debug("Join clause for [{}], already exists ! Trying to choose the most strict.", to);
+			if(joinClauses.get(to).getParameters().size() < parameters.size()) {
+				joinClauses.put(to, new JoinClause(joinClause, to, parameters));
+			}
+		} else {
+			joinClauses.put(to, new JoinClause(joinClause, to, parameters));
+		}
+
+		this.joins.forEach(join -> join.toSQL(joinClauses, to, includeWhereClause));
 	}
 
 	@Override
