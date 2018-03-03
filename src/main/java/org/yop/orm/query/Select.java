@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  */
 public class Select<T extends Yopable> {
 
-	public enum STRATEGY {IN, EXISTS}
+	public enum Strategy {IN, EXISTS}
 
 	private static final String SELECT = " SELECT {0} FROM {1} AS {2} {3} WHERE {4} ";
 	private static final String SELECT_DISTINCT = " SELECT DISTINCT({0}) FROM {1} AS {2} {3} WHERE {4} ";
@@ -147,8 +147,8 @@ public class Select<T extends Yopable> {
 	/**
 	 * Execute the SELECT request using 1 single query and a given strategy :
 	 * <ul>
-	 *     <li>{@link STRATEGY#EXISTS} : use a 'WHERE EXISTS' clause </li>
-	 *     <li>{@link STRATEGY#IN} : use an 'IN' clause </li>
+	 *     <li>{@link Strategy#EXISTS} : use a 'WHERE EXISTS' clause </li>
+	 *     <li>{@link Strategy#IN} : use an 'IN' clause </li>
 	 * </ul>
 	 * @param connection the connection to use for the request
 	 * @param strategy the strategy to use for the select query
@@ -156,10 +156,10 @@ public class Select<T extends Yopable> {
 	 * @throws YopSQLException An SQL error occured
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
 	 */
-	public Set<T> execute(Connection connection, STRATEGY strategy) {
+	public Set<T> execute(Connection connection, Strategy strategy) {
 		Parameters parameters = new Parameters();
 		String request =
-			strategy == STRATEGY.IN
+			strategy == Strategy.IN
 			? this.toSQLDataRequestWithIN(parameters)
 			: this.toSQLDataRequest(parameters);
 
@@ -167,14 +167,14 @@ public class Select<T extends Yopable> {
 	}
 
 	/**
-	 * Execute the SELECT request using the {@link STRATEGY#EXISTS} strategy.
+	 * Execute the SELECT request using the {@link Strategy#EXISTS} strategy.
 	 * @param connection the connection to use for the request
 	 * @return the SELECT result, as a set of T
 	 * @throws YopSQLException An SQL error occured
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
 	 */
 	public Set<T> execute(Connection connection) {
-		return execute(connection, STRATEGY.EXISTS);
+		return execute(connection, Strategy.EXISTS);
 	}
 
 	/**

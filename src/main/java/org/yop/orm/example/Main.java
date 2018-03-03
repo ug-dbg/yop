@@ -43,8 +43,8 @@ public class Main {
 		Class.forName("com.mysql.jdbc.Driver");
 		String connectionString = "jdbc:mysql://localhost:3306/yop?useUnicode=true&characterEncoding=utf-8";
 		try (Connection connection = DriverManager.getConnection(connectionString, "root", "root")) {
-			Set<Pojo> elementsWithExists = select.execute(connection, Select.STRATEGY.EXISTS);
-			Set<Pojo> elementsWithIN     = select.execute(connection, Select.STRATEGY.IN);
+			Set<Pojo> elementsWithExists = select.execute(connection, Select.Strategy.EXISTS);
+			Set<Pojo> elementsWithIN     = select.execute(connection, Select.Strategy.IN);
 			Set<Pojo> elements2Queries   = select.executeWithTwoQueries(connection);
 			System.out.println(elementsWithIN.equals(elements2Queries));
 			System.out.println(elementsWithIN.equals(elementsWithExists));
@@ -55,7 +55,7 @@ public class Main {
 				System.out.println(pojo.toJson());
 			}
 
-			Set<Pojo> found = selectByNaturalId.execute(connection, Select.STRATEGY.EXISTS);
+			Set<Pojo> found = selectByNaturalId.execute(connection, Select.Strategy.EXISTS);
 			System.out.println(found);
 
 			//delete.executeQuery(connection);
@@ -80,7 +80,7 @@ public class Main {
 				.joinAll()
 				.join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
 				.join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
-				.execute(connection, Select.STRATEGY.EXISTS);
+				.execute(connection, Select.Strategy.EXISTS);
 			if(found.size() > 0) {
 				newPojo = found.iterator().next();
 				newPojo.setType(Pojo.Type.BAR);

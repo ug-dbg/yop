@@ -186,7 +186,7 @@ public class Upsert<T extends Yopable> {
 			for (T element : this.elements.stream().filter(e -> e.getId() == null).collect(Collectors.toList())) {
 				naturalIDQuery.where().or(new NaturalKey<>(element));
 			}
-			Map<T, T> existing = Maps.uniqueIndex(naturalIDQuery.execute(connection, Select.STRATEGY.EXISTS), e -> e);
+			Map<T, T> existing = Maps.uniqueIndex(naturalIDQuery.execute(connection, Select.Strategy.EXISTS), e -> e);
 
 			// Assign ID on an element if there is a saved element that matched its natural ID
 			// ⚠⚠⚠ The equals and hashcode method are quite important here ! ⚠⚠⚠
