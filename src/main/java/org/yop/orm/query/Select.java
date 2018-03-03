@@ -151,6 +151,7 @@ public class Select<T extends Yopable> {
 	 *     <li>{@link STRATEGY#IN} : use an 'IN' clause </li>
 	 * </ul>
 	 * @param connection the connection to use for the request
+	 * @param strategy the strategy to use for the select query
 	 * @return the SELECT result, as a set of T
 	 * @throws YopSQLException An SQL error occured
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
@@ -163,6 +164,17 @@ public class Select<T extends Yopable> {
 			: this.toSQLDataRequest(parameters);
 
 		return Executor.executeSelectQuery(connection, new Query(request, parameters), this.context.getTarget());
+	}
+
+	/**
+	 * Execute the SELECT request using the {@link STRATEGY#EXISTS} strategy.
+	 * @param connection the connection to use for the request
+	 * @return the SELECT result, as a set of T
+	 * @throws YopSQLException An SQL error occured
+	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
+	 */
+	public Set<T> execute(Connection connection) {
+		return execute(connection, STRATEGY.EXISTS);
 	}
 
 	/**
