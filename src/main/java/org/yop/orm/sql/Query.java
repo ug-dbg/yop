@@ -41,20 +41,21 @@ public class Query {
 		this.parameters = parameters;
 
 		// Search table/column aliases that are to long for SQL
-		Set<String> tooLongAliases = new HashSet<>();
+		Set<String> tooLongAliases = new TreeSet<>(Comparator.comparing(String::length).reversed());
 		for (String word : sql.split(" ")) {
 			// if the word is not too long, that's OK
 			// if the word contains a "." this is not an alias
 			if(word.length() <= Constants.SQL_ALIAS_MAX_LENGTH || word.contains(Constants.DOT)) {
 				continue;
 			}
-			tooLongAliases.add(word);
+			tooLongAliases.add(word.trim());
 		}
 
 		for (String tooLongAlias : tooLongAliases) {
 			String shortened = uniqueShortened(tooLongAlias);
 			this.tooLongAliases.put(tooLongAlias, shortened);
-			this.safeAliasSQL = safeAliasSQL.replace(tooLongAlias, shortened);
+			this.safeAliasSQL = safeAliasSQL.replace(tooLongAlias + " ", shortened + " ");
+			this.safeAliasSQL = safeAliasSQL.replace(tooLongAlias + ".", shortened + ".");
 		}
 	}
 
@@ -151,6 +152,6 @@ public class Query {
 	private static String uniqueShortened(String alias) {
 		String shortened = StringUtils.substringAfterLast(alias, Constants.SQL_SEPARATOR);
 		shortened = StringUtils.substring(shortened, 0, Constants.SQL_ALIAS_MAX_LENGTH - 37);
-		return shortened + UUID.randomUUID();
+		return shortened + UUID.randomUUID().toString().replace("-", "_");
 	}
 }

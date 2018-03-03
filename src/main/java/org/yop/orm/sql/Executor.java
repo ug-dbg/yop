@@ -81,7 +81,7 @@ public class Executor {
 			logger.info("Executing SQL query [{}]", query);
 		}
 
-		try (PreparedStatement statement = connection.prepareStatement(query.getSql(), query.generatedKeyCommand())) {
+		try (PreparedStatement statement = connection.prepareStatement(query.getSafeSql(), query.generatedKeyCommand())) {
 			for(int i = 0; i < parameters.size(); i++) {
 				Parameters.Parameter parameter = parameters.get(i);
 				statement.setObject(i + 1, parameter.getValue());

@@ -141,4 +141,32 @@ public class SimpleTest {
 		}
 	}
 
+	@Test
+		public void testSafeAlias() throws SQLException, ClassNotFoundException {
+		try (Connection connection = Prepare.getConnection(this.db)) {
+			Pojo pojo = new Pojo();
+			pojo.setVersion(1337);
+			pojo.setType(Pojo.Type.FOO);
+
+			for (int i = 0; i < 3; i++) {
+				Jopo jopo = new Jopo();
+				jopo.setName("jopo [" + i + "]");
+				jopo.setPojo(pojo);
+				pojo.getJopos().add(jopo);
+			}
+
+			Upsert.from(Pojo.class).joinAll().onto(pojo).execute(connection);
+
+			// Stupid joins that should make some column/table aliases length > 64 charcters
+			Set<Pojo> found = Select.from(Pojo.class)
+				.join(
+					JoinSet.to(Pojo::getJopos)
+					.join(Join.to(Jopo::getPojo).join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo).join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo).join(JoinSet.to(Pojo::getJopos)))))))
+				)
+				.execute(connection);
+			Assert.assertEquals(1, found.size());
+			Assert.assertEquals(pojo, found.iterator().next());
+		}
+	}
+
 }
