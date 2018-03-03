@@ -86,7 +86,17 @@ public class SimpleTest {
 			Set<Pojo> afterDelete = Select.from(Pojo.class).joinAll().execute(connection, Select.STRATEGY.EXISTS);
 			Assert.assertEquals(0, afterDelete.size());
 
-			Executor.executeQuery(connection, new Query("SELECT COUNT(*) FROM POJO_JOPO_relation", new Parameters()), results -> {results.getResultSet().next(); System.out.println(results.getResultSet().getObject(1)); return "";});
+			// Assertion that the relation was cleaned in the association table.
+			Executor.Action action = results -> {
+				results.getResultSet().next();
+				Assert.assertEquals(0, results.getResultSet().getObject(1));
+				return "";
+			};
+
+			Executor.executeQuery(
+				connection,
+				new Query("SELECT COUNT(*) FROM POJO_JOPO_relation", new Parameters()), action
+			);
 		}
 	}
 
