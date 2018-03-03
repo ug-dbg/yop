@@ -95,7 +95,8 @@ public class SimpleTest {
 
 			Executor.executeQuery(
 				connection,
-				new Query("SELECT COUNT(*) FROM POJO_JOPO_relation", new Parameters()), action
+				new Query("SELECT COUNT(*) FROM POJO_JOPO_relation", new Parameters()),
+				action
 			);
 		}
 	}
@@ -136,7 +137,8 @@ public class SimpleTest {
 
 			Executor.executeQuery(
 				connection,
-				new Query("SELECT COUNT(*) FROM POJO_JOPO_relation", new Parameters()), action
+				new Query("SELECT COUNT(*) FROM POJO_JOPO_relation", new Parameters()),
+				action
 			);
 		}
 	}
