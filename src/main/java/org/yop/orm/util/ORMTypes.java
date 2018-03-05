@@ -1,6 +1,7 @@
 package org.yop.orm.util;
 
 import com.google.common.primitives.Primitives;
+import org.apache.commons.lang.StringUtils;
 import org.yop.orm.gen.Column;
 import org.yop.orm.gen.ForeignKey;
 import org.yop.orm.gen.Table;
@@ -15,7 +16,7 @@ import java.util.stream.Collectors;
 /**
  * DBMS specificities.
  * <br>
- * This is pretty raw. This was written to prepare unit tests context.
+ * This is pretty raw/patchy. This was written to prepare unit tests context.
  */
 public class ORMTypes extends HashMap<Class<?>, String> {
 
@@ -59,7 +60,7 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 		this.put(Character.class,  "VARCHAR");
 
 		this.put(Integer.class, "INTEGER");
-		this.put(Long.class,    "BIGINT");
+		this.put(Long.class,    "INTEGER");
 		this.put(Short.class,   "INTEGER");
 		this.put(Byte.class,    "INTEGER");
 
@@ -103,9 +104,19 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 		boolean autoincrement = column.getPk() != null && column.getPk().isAutoincrement();
 
 		return column.getName()
-			+ " " + column.getType()
+			+ " " + this.type(column)
 			+ (column.isNotNull() ? " NOT NULL " : "")
 			+ (autoincrement ? " AUTO_INCREMENT " : "");
+	}
+
+	/**
+	 * Get the column SQL type, with length if applicable.
+	 * @param column the input column
+	 * @return the SQL type
+	 */
+	private String type(Column column) {
+		String type = column.getType();
+		return type + (StringUtils.equals("VARCHAR", type) ? "(" + column.getLength() + ")" : "");
 	}
 
 	/**
