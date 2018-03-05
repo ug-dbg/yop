@@ -3,6 +3,7 @@ package org.yop.orm.query;
 import com.google.common.base.Joiner;
 import org.apache.commons.lang3.StringUtils;
 import org.yop.orm.evaluation.Evaluation;
+import org.yop.orm.map.IdMap;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
@@ -10,9 +11,7 @@ import org.yop.orm.sql.Query;
 
 import java.sql.Connection;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -66,6 +65,16 @@ public class Delete<T extends Yopable> {
 
 	public static <T extends Yopable> Delete<T> from(Class<T> target) {
 		return new Delete<>(target);
+	}
+
+	/**
+	 * Turn this DELETE query into a SELECT query, with the same {@link #joins} and {@link #where}.
+	 * <br>
+	 * <b>The where and joins clauses are not duplicated when creating the SELECT query !</b>
+	 * @return a {@link Select} query with this {@link Delete} parameters (context, where and joins)
+	 */
+	public Select<T> toSelect() {
+		return new Select<>(Context.root(this.target), this.where, this.joins);
 	}
 
 	/**
@@ -123,7 +132,19 @@ public class Delete<T extends Yopable> {
 	 * @param connection the connection to use
 	 */
 	public void executeQueries(Connection connection) {
-		throw new UnsupportedOperationException("Not implemented yet !");
+		Select<T> select = this.toSelect();
+		IdMap idMap = select.executeForIds(connection);
+		List<Query> queries = new ArrayList<>();
+
+		for (Map.Entry<Class<? extends Yopable>, Set<Long>> entry : idMap.entries()) {
+			Parameters parameters = new Parameters();
+			String sql = Delete.from(entry.getKey()).where(Where.id(entry.getValue())).toSQL(parameters);
+			queries.add(new Query(sql, parameters));
+		}
+
+		for (Query query : queries) {
+			Executor.executeQuery(connection, query);
+		}
 	}
 
 	/**

@@ -107,10 +107,12 @@ public class Context<T extends Yopable> {
 	public Set<SQLColumn> getColumns() {
 		Set<SQLColumn> columns = new HashSet<>();
 		String path = this.getPath();
+		Field idField = ORMUtil.getIdField(this.target);
 		for (Field field : Reflection.getFields(this.target, Column.class)) {
 			columns.add(new SQLColumn(
 				path + DOT + field.getAnnotation(Column.class).name(),
-				path + Context.SQL_SEPARATOR + field.getAnnotation(Column.class).name()
+				path + Context.SQL_SEPARATOR + field.getAnnotation(Column.class).name(),
+				field.equals(idField)
 			));
 		}
 		return columns;
@@ -229,9 +231,13 @@ public class Context<T extends Yopable> {
 		private String qualifiedId;
 		private String alias;
 
-		SQLColumn(String qualifiedId, String alias) {
+		/** Is this column the ID of a Yopable class ? */
+		private boolean id;
+
+		SQLColumn(String qualifiedId, String alias, boolean id) {
 			this.qualifiedId = qualifiedId;
 			this.alias = alias;
+			this.id = id;
 		}
 
 		public String toSQL() {
@@ -240,6 +246,13 @@ public class Context<T extends Yopable> {
 
 		public String getQualifiedId() {
 			return qualifiedId;
+		}
+
+		/**
+		 * @return {@link #id}
+		 */
+		public boolean isId() {
+			return id;
 		}
 
 		@Override

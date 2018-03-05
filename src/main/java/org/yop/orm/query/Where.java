@@ -1,9 +1,11 @@
 package org.yop.orm.query;
 
 import com.google.common.base.Joiner;
+import org.apache.commons.lang.StringUtils;
 import org.yop.orm.evaluation.*;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Parameters;
+import org.yop.orm.util.ORMUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -132,5 +134,34 @@ public class Where<T extends Yopable>  {
 	 */
 	public static <T extends Yopable> Evaluation naturalId(T reference) {
 		return new NaturalKey<>(reference);
+	}
+
+	/**
+	 * See : {@link #id(Collection)}.
+	 */
+	public static Evaluation id(Long... ids) {
+		return id(Arrays.asList(ids));
+	}
+
+	/**
+	 * Create an "ID" evaluation, against a given ID value.
+	 * @param ids the expected IDs for the target type.
+	 * @return an 'ID IN (?)' Evaluation object that can be added to the where clause
+	 */
+	public static Evaluation id(Collection<Long> ids) {
+		return new Evaluation() {
+			@Override
+			public <Y extends Yopable> String toSQL(Context<Y> context, Parameters parameters) {
+				String idColumn = context.getPath() + "." + ORMUtil.getIdColumn(context.getTarget());
+				String inClause = idColumn + " IN (";
+				for (Long id : ids) {
+					parameters.addParameter(idColumn + "=" + id, id);
+					inClause += "?,";
+				}
+				inClause = StringUtils.removeEnd(inClause, ",");
+				inClause += ")";
+				return inClause;
+			}
+		};
 	}
 }

@@ -257,7 +257,7 @@ public class Mapper {
 	 * @return true if there are no column AND no data for the given context
 	 * @throws SQLException error reading the resultset
 	 */
-	private static boolean noContext(
+	static boolean noContext(
 		Results results,
 		String context,
 		Class<? extends Yopable> targetClass)
@@ -307,7 +307,7 @@ public class Mapper {
 	 * @return the target class
 	 */
 	@SuppressWarnings("unchecked")
-	private static <T> Class<T> getRelationFieldType(Field field) {
+	static <T> Class<T> getRelationFieldType(Field field) {
 		return (Class<T>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
 	}
 

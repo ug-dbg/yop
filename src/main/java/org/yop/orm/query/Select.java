@@ -5,6 +5,7 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.evaluation.Comparaison;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopSQLException;
+import org.yop.orm.map.IdMap;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
@@ -64,7 +65,7 @@ public class Select<T extends Yopable> {
 	 * @param where where clause
 	 * @param joins joins clauses
 	 */
-	private Select(Context<T> from, Where<T> where, Collection<IJoin<T, ? extends Yopable>> joins) {
+	Select(Context<T> from, Where<T> where, Collection<IJoin<T, ? extends Yopable>> joins) {
 		this.context = from;
 		this.where = where;
 		this.joins = joins;
@@ -188,6 +189,21 @@ public class Select<T extends Yopable> {
 	}
 
 	/**
+	 * Execute the SELECT request using the {@link Strategy#EXISTS} strategy to fetch the IDs of every target class.
+	 * @param connection the connection to use for the request
+	 * @return an {@link IdMap} instance, with a set of Ids for every class.
+	 * @throws YopSQLException An SQL error occured
+	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
+	 */
+	public IdMap executeForIds(Connection connection) {
+		Parameters parameters = new Parameters();
+		String request = this.toSQLIDsRequest(parameters);
+		Query query = new Query(request, parameters);
+
+		return (IdMap) Executor.executeQuery(connection, query, IdMap.populateAction(this.context.getTarget()));
+	}
+
+	/**
 	 * Add an evaluation to the where clause.
 	 * @param evaluation the evaluation
 	 * @return the current SELECT request, for chaining purposes
@@ -255,6 +271,23 @@ public class Select<T extends Yopable> {
 	 */
 	private String toSQLColumnsClause(boolean addJoinClauseColumns) {
 		Set<Context.SQLColumn> columns = this.columns(addJoinClauseColumns);
+		return
+			columns.isEmpty()
+			? "*"
+			: Joiner.on(",").join(columns.stream().map(Context.SQLColumn::toSQL).collect(Collectors.toList()));
+	}
+
+	/**
+	 * Create the SQL columns clause <b>only for ID columns </b>!
+	 * @return the SQL columns clause for ID columns
+	 */
+	private String toSQLIdColumnsClause() {
+		Set<Context.SQLColumn> columns = this
+			.columns(true)
+			.stream()
+			.filter(Context.SQLColumn::isId)
+			.collect(Collectors.toSet());
+
 		return
 			columns.isEmpty()
 			? "*"
@@ -338,6 +371,41 @@ public class Select<T extends Yopable> {
 		// Now we can build the global query that fetches the data when the EXISTS clause matches
 		return select(
 			this.toSQLColumnsClause(true),
+			this.getTableName(),
+			this.context.getPath(),
+			this.toSQLJoin(parameters, false),
+			" EXISTS (" + existsSubSelect + ") "
+		);
+	}
+
+	/**
+	 * Single query strategy with EXISTS : create the SQL 'data' request that only returns ID columns.
+	 * @return the SQL 'data' request.
+	 */
+	private String toSQLIDsRequest(Parameters parameters) {
+		// First we have to build a 'select ids' query for the EXISTS subquery
+		// We copy the current 'Select' object to add a suffix to the context
+		// We link the EXISTS subquery to the global one (id = subquery.id)
+		// This is not very elegant, I must confess
+		Select<T> copyForAlias = new Select<>(this.context.copy("_0"), this.where, this.joins);
+
+		String whereClause = MessageUtil.join(
+			" AND ",
+			copyForAlias.toSQLWhere(parameters),
+			this.idAlias() + " = " + copyForAlias.idAlias()
+		);
+
+		String existsSubSelect = selectdistinct(
+			copyForAlias.idAlias(),
+			copyForAlias.getTableName(),
+			copyForAlias.context.getPath(),
+			copyForAlias.toSQLJoin(parameters, true),
+			whereClause
+		);
+
+		// Now we can build the global query that fetches the IDs for every type when the EXISTS clause matches
+		return select(
+			this.toSQLIdColumnsClause(),
 			this.getTableName(),
 			this.context.getPath(),
 			this.toSQLJoin(parameters, false),

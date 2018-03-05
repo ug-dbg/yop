@@ -1,5 +1,6 @@
 package org.yop.orm.simple;
 
+import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -8,6 +9,7 @@ import org.yop.orm.example.Jopo;
 import org.yop.orm.example.Other;
 import org.yop.orm.example.Pojo;
 import org.yop.orm.gen.Prepare;
+import org.yop.orm.map.IdMap;
 import org.yop.orm.query.*;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
@@ -25,10 +27,26 @@ import java.util.Set;
 /**
  * Simple test with simple objects for simple CRUD.
  * I should find a more explicit name. Sorry about that.
+ * <br>
+ * Use the {@link #DBMS_SWITCH} property to switch DBMS for these tests :
+ * <ul>
+ *     <li>mysql : requires a fresh Mysql database instance on port 3306</li>
+ *     <li>sqlite : (default) use a temporary file as DB (deleted on exit)</li>
+ * </ul>
  */
 public class SimpleTest {
 
+	private static final String DBMS_SWITCH = "yop.test.dbms";
 	private File db;
+
+	private Connection getConnection() throws SQLException, ClassNotFoundException {
+		String dbms = System.getProperties().getProperty(DBMS_SWITCH, "sqlite");
+		switch (dbms) {
+			case "mysql" :  return Prepare.getMySQLConnection(true);
+			case "sqlite" :
+			default: return Prepare.getConnection(this.db);
+		}
+	}
 
 	@BeforeClass
 	public static void init() {
@@ -37,12 +55,18 @@ public class SimpleTest {
 
 	@Before
 	public void setUp() throws SQLException, IOException, ClassNotFoundException {
-		this.db = Prepare.createSQLiteDatabase(SimpleTest.class.getName(), "org.yop.orm");
+		String packagePrefix = "org.yop.orm";
+		String dbms = System.getProperties().getProperty("yop.test.dbms", "sqlite");
+		switch (dbms) {
+			case "mysql" :  Prepare.prepareMySQL(packagePrefix);
+			case "sqlite" :
+			default: this.db = Prepare.createSQLiteDatabase(SimpleTest.class.getName(), packagePrefix);
+		}
 	}
 
 	@Test
 	public void testCRUD() throws SQLException, ClassNotFoundException {
-		try (Connection connection = Prepare.getConnection(this.db)) {
+		try (Connection connection = this.getConnection()) {
 			Pojo newPojo = new Pojo();
 			newPojo.setVersion(1337);
 			newPojo.setType(Pojo.Type.FOO);
@@ -89,7 +113,7 @@ public class SimpleTest {
 			// Assertion that the relation was cleaned in the association table.
 			Executor.Action action = results -> {
 				results.getResultSet().next();
-				Assert.assertEquals(0, results.getResultSet().getObject(1));
+				Assert.assertEquals(0, results.getResultSet().getInt(1));
 				return "";
 			};
 
@@ -103,7 +127,7 @@ public class SimpleTest {
 
 	@Test
 	public void testLotOfChildren() throws SQLException, ClassNotFoundException {
-		try (Connection connection = Prepare.getConnection(this.db)) {
+		try (Connection connection = this.getConnection()) {
 			Pojo pojo = new Pojo();
 			pojo.setVersion(1337);
 			pojo.setType(Pojo.Type.FOO);
@@ -131,7 +155,7 @@ public class SimpleTest {
 			// Assertion that the relation was cleaned in the association table.
 			Executor.Action action = results -> {
 				results.getResultSet().next();
-				Assert.assertEquals(0, results.getResultSet().getObject(1));
+				Assert.assertEquals(0, results.getResultSet().getInt(1));
 				return "";
 			};
 
@@ -145,7 +169,7 @@ public class SimpleTest {
 
 	@Test
 		public void testSafeAlias() throws SQLException, ClassNotFoundException {
-		try (Connection connection = Prepare.getConnection(this.db)) {
+		try (Connection connection = this.getConnection()) {
 			Pojo pojo = new Pojo();
 			pojo.setVersion(1337);
 			pojo.setType(Pojo.Type.FOO);
@@ -176,7 +200,7 @@ public class SimpleTest {
 
 	@Test
 	public void testSelectToDelete() throws SQLException, ClassNotFoundException {
-		try (Connection connection = Prepare.getConnection(this.db)) {
+		try (Connection connection = this.getConnection()) {
 			Pojo newPojo = new Pojo();
 			newPojo.setVersion(1337);
 			newPojo.setType(Pojo.Type.FOO);
@@ -199,4 +223,49 @@ public class SimpleTest {
 		}
 	}
 
+	@Test
+	public void testIdMap() throws SQLException, ClassNotFoundException {
+		try (Connection connection = this.getConnection()) {
+				Pojo newPojo = new Pojo();
+				newPojo.setVersion(1337);
+				newPojo.setType(Pojo.Type.FOO);
+				Jopo jopo = new Jopo();
+				jopo.setName("jopo From code !");
+				jopo.setPojo(newPojo);
+				newPojo.getJopos().add(jopo);
+
+				jopo = new Jopo();
+				jopo.setName("jopo From code #2 !");
+				jopo.setPojo(newPojo);
+				newPojo.getJopos().add(jopo);
+
+				Other other = new Other();
+				other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
+				other.setName("other name :)");
+				newPojo.getOthers().add(other);
+
+				Upsert
+					.from(Pojo.class)
+					.onto(newPojo)
+					.join(JoinSet.to(Pojo::getJopos))
+					.join(JoinSet.to(Pojo::getOthers))
+					.checkNaturalID()
+					.execute(connection);
+
+				Select<Pojo> select = Select.from(Pojo.class).where(Where.naturalId(newPojo)).joinAll();
+				Set<Pojo> found = select.execute(connection, Select.Strategy.EXISTS);
+				Assert.assertEquals(1, found.size());
+
+				IdMap idMap = select.executeForIds(connection);
+				System.out.println(idMap);
+				Assert.assertEquals(idMap.getIdsForClass(Pojo.class),  Sets.newHashSet(1L));
+				Assert.assertEquals(idMap.getIdsForClass(Other.class), Sets.newHashSet(1L));
+				Assert.assertEquals(idMap.getIdsForClass(Jopo.class),  Sets.newHashSet(1L, 2L));
+
+				select.toDelete().executeQueries(connection);
+
+				found = select.execute(connection, Select.Strategy.EXISTS);
+				Assert.assertEquals(0, found.size());
+			}
+		}
 }
