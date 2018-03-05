@@ -127,7 +127,7 @@ public class Table {
 
 		@SuppressWarnings("unchecked")
 		Class<? extends Yopable> sourceClass = (Class<? extends Yopable>) relationField.getDeclaringClass();
-		Column source = new Column(joinTable.sourceColumn(), joinTable.sourceColumn(), 0, types);
+		Column source = new Column(joinTable.sourceColumn(), types.getForType(Long.class), 0, types);
 		createJoinTableColumnAttributes(source, sourceClass, joinTable.sourceForeignKey(), joinTable);
 		table.columns.add(source);
 
