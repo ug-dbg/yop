@@ -51,6 +51,19 @@ public class Delete<T extends Yopable> {
 		this.where = new Where<>();
 	}
 
+	/**
+	 * Complete constructor.
+	 * Package protected so a {@link Select} query can be turned into a delete.
+	 * @param target target class
+	 * @param where  where clause
+	 * @param joins  join clauses
+	 */
+	Delete(Class<T> target, Where<T> where, Collection<IJoin<T, ? extends Yopable>> joins) {
+		this(target);
+		this.where = where;
+		this.joins.addAll(joins);
+	}
+
 	public static <T extends Yopable> Delete<T> from(Class<T> target) {
 		return new Delete<>(target);
 	}
@@ -99,6 +112,18 @@ public class Delete<T extends Yopable> {
 	public void executeQuery(Connection connection) {
 		Parameters parameters = new Parameters();
 		Executor.executeQuery(connection, new Query(this.toSQL(parameters), parameters));
+	}
+
+	/**
+	 * Execute the DELETE queries on the given connection, 1 query per table.
+	 * <br>
+	 * This method can be useful if the target DBMS does not support deleting data from multiple tables in 1 query.
+	 * <br>
+	 * yes, SQLite, that's you I'm talking about.
+	 * @param connection the connection to use
+	 */
+	public void executeQueries(Connection connection) {
+		throw new UnsupportedOperationException("Not implemented yet !");
 	}
 
 	/**

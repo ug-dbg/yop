@@ -114,6 +114,16 @@ public class Select<T extends Yopable> {
 	}
 
 	/**
+	 * Turn this SELECT query into a DELETE query, with the same {@link #joins} and {@link #where}.
+	 * <br>
+	 * <b>The where and joins clauses are not duplicated when creating the DELETE query !</b>
+	 * @return a {@link Delete} query with this {@link Select} parameters (context, where and joins)
+	 */
+	public Delete<T> toDelete() {
+		return new Delete<>(this.context.getTarget(), this.where, this.joins);
+	}
+
+	/**
 	 * Execute the SELECT request using 2 queries :
 	 * <ul>
 	 *     <li>Find the matching T ids</li>

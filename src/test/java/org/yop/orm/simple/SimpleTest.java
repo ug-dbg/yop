@@ -163,11 +163,39 @@ public class SimpleTest {
 			Set<Pojo> found = Select.from(Pojo.class)
 				.join(
 					JoinSet.to(Pojo::getJopos)
-					.join(Join.to(Jopo::getPojo).join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo).join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo).join(JoinSet.to(Pojo::getJopos)))))))
+					.join(Join.to(Jopo::getPojo).join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)
+						.join(JoinSet.to(Pojo::getJopos)
+							.join(Join.to(Jopo::getPojo).join(JoinSet.to(Pojo::getJopos))))
+					)))
 				)
 				.execute(connection);
 			Assert.assertEquals(1, found.size());
 			Assert.assertEquals(pojo, found.iterator().next());
+		}
+	}
+
+	@Test
+	public void testSelectToDelete() throws SQLException, ClassNotFoundException {
+		try (Connection connection = Prepare.getConnection(this.db)) {
+			Pojo newPojo = new Pojo();
+			newPojo.setVersion(1337);
+			newPojo.setType(Pojo.Type.FOO);
+
+			Upsert
+				.from(Pojo.class)
+				.onto(newPojo)
+				.checkNaturalID()
+				.execute(connection);
+
+			Select<Pojo> select = Select.from(Pojo.class).where(Where.naturalId(newPojo));
+			Set<Pojo> found = select.execute(connection, Select.Strategy.EXISTS);
+			Assert.assertEquals(1, found.size());
+
+			Delete<Pojo> delete = select.toDelete();
+			delete.executeQuery(connection);
+
+			found = select.execute(connection, Select.Strategy.EXISTS);
+			Assert.assertEquals(0, found.size());
 		}
 	}
 
