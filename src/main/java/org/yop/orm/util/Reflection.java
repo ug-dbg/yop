@@ -432,6 +432,7 @@ public class Reflection {
 	/**
 	 * Returns a test value (see {@link #TEST_LONG} for instance) for the given primitive type.
 	 * @param primitive the primitive type or Wrapper.
+	 * @param salt      the amount to add to the reference test value (e.g. second test)
 	 * @return the test value for the primitive type
 	 */
 	private static Object primitiveTestValue(Class<?> primitive, int salt) {
