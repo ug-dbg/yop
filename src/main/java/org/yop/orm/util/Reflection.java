@@ -6,7 +6,6 @@ import org.apache.commons.lang3.ClassUtils;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.exception.YopRuntimeException;
 import sun.reflect.ReflectionFactory;
 
@@ -59,7 +58,7 @@ public class Reflection {
 	 * @param nonTransient true to exclude transient fields
 	 * @return the field list
 	 */
-	private static List<Field> getFields(Class type, boolean nonTransient) {
+	public static List<Field> getFields(Class type, boolean nonTransient) {
 		List<Field> result = new ArrayList<>();
 
 		Class<?> i = type;
@@ -133,22 +132,6 @@ public class Reflection {
 			i = i.getSuperclass();
 		}
 		return null;
-	}
-
-	/**
-	 * Get all the non transient, non synthetic fields of a class or its superclass that have the @NaturalId annotation.
-	 * @param clazz the class
-	 * @return the natural key fields
-	 */
-	public static List<Field> getNaturalKeyFields(Class clazz){
-		List<Field> fields = new ArrayList<>();
-		for(Field field : getFields(clazz, true)){
-			if(field.isAnnotationPresent(NaturalId.class) && isNotTransient(field)){
-				fields.add(field);
-				field.setAccessible(true);
-			}
-		}
-		return fields;
 	}
 
 	/**

@@ -6,7 +6,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Constants;
 import org.yop.orm.sql.Parameters;
-import org.yop.orm.util.Reflection;
+import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -25,7 +25,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 
 	@Override
 	public <U extends Yopable> String toSQL(Context<U> context, Parameters parameters) {
-		List<Field> naturalKeys = Reflection.getNaturalKeyFields(this.reference.getClass());
+		List<Field> naturalKeys = ORMUtil.getNaturalKeyFields(this.reference.getClass());
 		return Joiner.on(" AND ").join(
 			naturalKeys
 				.stream()

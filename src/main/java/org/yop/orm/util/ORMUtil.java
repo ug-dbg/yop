@@ -6,13 +6,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
+import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Constants;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
+
+import static org.yop.orm.util.Reflection.isNotTransient;
 
 /**
  * Some utility methods to read ORM annotations, find ID field, column type...
@@ -127,5 +131,21 @@ public class ORMUtil {
 	 */
 	public static String getColumnType(Field field, ORMTypes types) {
 		return types.getForType(field.getType());
+	}
+
+	/**
+	 * Get all the non transient, non synthetic fields of a class or its superclass that have the @NaturalId annotation.
+	 * @param clazz the class
+	 * @return the natural key fields
+	 */
+	public static List<Field> getNaturalKeyFields(Class clazz){
+		List<Field> fields = new ArrayList<>();
+		for(Field field : Reflection.getFields(clazz, true)){
+			if(field.isAnnotationPresent(NaturalId.class) && isNotTransient(field)){
+				fields.add(field);
+				field.setAccessible(true);
+			}
+		}
+		return fields;
 	}
 }
