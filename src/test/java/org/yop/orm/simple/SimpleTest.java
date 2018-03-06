@@ -2,21 +2,19 @@ package org.yop.orm.simple;
 
 import com.google.common.collect.Sets;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.yop.orm.DBMSSwitch;
 import org.yop.orm.example.Jopo;
 import org.yop.orm.example.Other;
 import org.yop.orm.example.Pojo;
-import org.yop.orm.gen.Prepare;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.query.*;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
 
-import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -27,45 +25,10 @@ import java.util.Set;
 /**
  * Simple test with simple objects for simple CRUD.
  * I should find a more explicit name. Sorry about that.
- * <br>
- * Use the {@link #DBMS_SWITCH} property to switch DBMS for these tests :
- * <ul>
- *     <li>mysql : requires a fresh Mysql database instance on port 3306</li>
- *     <li>postgres : requires a fresh Postgres database instance on port 5432</li>
- *     <li>sqlite : (default) use a temporary file as DB (deleted on exit)</li>
- * </ul>
  */
-public class SimpleTest {
+public class SimpleTest extends DBMSSwitch {
 
-	private static final String DBMS_SWITCH = "yop.test.dbms";
-	private File db;
-
-	private Connection getConnection() throws SQLException, ClassNotFoundException {
-		String dbms = System.getProperties().getProperty(DBMS_SWITCH, "sqlite");
-		switch (dbms) {
-			case "mysql" :     return Prepare.getMySQLConnection(true);
-			case "postgres" :  return Prepare.getPostgresConnection();
-			case "sqlite" :
-			default: return Prepare.getConnection(this.db);
-		}
-	}
-
-	@BeforeClass
-	public static void init() {
-		System.setProperty("yop.show_sql", "true");
-	}
-
-	@Before
-	public void setUp() throws SQLException, IOException, ClassNotFoundException {
-		String packagePrefix = "org.yop.orm";
-		String dbms = System.getProperties().getProperty("yop.test.dbms", "sqlite");
-		switch (dbms) {
-			case "mysql" :     Prepare.prepareMySQL(packagePrefix);    break;
-			case "postgres" :  Prepare.preparePostgres(packagePrefix); break;
-			case "sqlite" :
-			default: this.db = Prepare.createSQLiteDatabase(SimpleTest.class.getName(), packagePrefix);
-		}
-	}
+	private static final Logger logger = LoggerFactory.getLogger(SimpleTest.class);
 
 	@Test
 	public void testCRUD() throws SQLException, ClassNotFoundException {
@@ -260,7 +223,7 @@ public class SimpleTest {
 				Assert.assertEquals(1, found.size());
 
 				IdMap idMap = select.executeForIds(connection);
-				System.out.println(idMap);
+				logger.debug("IdMap is : \n[{}]", idMap);
 				Assert.assertEquals(idMap.getIdsForClass(Pojo.class),  Sets.newHashSet(1L));
 				Assert.assertEquals(idMap.getIdsForClass(Other.class), Sets.newHashSet(1L));
 				Assert.assertEquals(idMap.getIdsForClass(Jopo.class),  Sets.newHashSet(1L, 2L));
