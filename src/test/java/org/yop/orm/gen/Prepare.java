@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.text.MessageFormat;
 import java.util.Set;
 
 /**
@@ -24,7 +25,8 @@ public class Prepare {
 
 	private static final Logger logger = LoggerFactory.getLogger(Prepare.class);
 
-	private static final String MYSQL_ADDRESS = "localhost:3306/yop?useUnicode=true&characterEncoding=utf-8";
+	private static final String MYSQL_ADDRESS    = "localhost:3306/yop?useUnicode=true&characterEncoding=utf-8";
+	private static final String POSTGRES_ADDRESS = "localhost:5432/yop";
 
 	/**
 	 * Create an SQLite database with the given name and for the given package prefix.
@@ -117,6 +119,50 @@ public class Prepare {
 			}
 			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
 		}
+		connection.commit();
+	}
+
+	/**
+	 * Get a localhost:5432 Postgres connection to 'yop' database.
+	 * <br>
+	 * {@link org.postgresql.Driver} should be in the classpath.
+	 * @return the PostgresSQL connection
+	 * @throws ClassNotFoundException {@link org.postgresql.Driver} not found
+	 * @throws SQLException SQL error opening connection
+	 */
+	public static Connection getPostgresConnection() throws ClassNotFoundException, SQLException {
+		Class.forName("org.postgresql.Driver");
+		String connectionString = "jdbc:postgresql://" + POSTGRES_ADDRESS;
+		return DriverManager.getConnection(connectionString, "yop", "yop");
+	}
+
+	/**
+	 * Prepare the local Postgres database for tests.
+	 * <br><b>⚠⚠⚠  i.e. DROP AND RE-CREATE EVERY TABLE THAT MATCHES THE GIVEN PACKAGE PREFIX! ⚠⚠⚠ </b>
+	 * <br>
+	 * {@link org.postgresql.Driver} should be in the classpath.
+	 * @param packagePrefix the package prefix to scan for Yopable objects
+	 * @throws ClassNotFoundException {@link org.postgresql.Driver} not found
+	 * @throws SQLException SQL error opening connection
+	 */
+	public static void preparePostgres(String packagePrefix) throws SQLException, ClassNotFoundException {
+		Set<Table> tables = Table.findAllInClassPath(packagePrefix, ORMTypes.POSTGRES);
+		Connection connection = getPostgresConnection();
+		connection.setAutoCommit(false);
+		String query = " DROP TABLE IF EXISTS {0} CASCADE; ";
+
+		for (Table table : tables) {
+			try {
+				Executor.executeQuery(
+					connection,
+					new Query(MessageFormat.format(query, table.qualifiedName()), new Parameters())
+				);
+			} catch (RuntimeException e) {
+				logger.trace("Error dropping table [" + table.qualifiedName() + "]");
+			}
+			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
+		}
+
 		connection.commit();
 	}
 }

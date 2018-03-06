@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.Constants;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
@@ -19,7 +20,7 @@ import java.util.Set;
  */
 public class Context<T extends Yopable> {
 
-	public static final String SQL_SEPARATOR = "→";
+	public static final String SQL_SEPARATOR = Constants.SQL_SEPARATOR;
 	static final String DOT = ".";
 
 	private Context<? extends Yopable> parent;
@@ -241,7 +242,7 @@ public class Context<T extends Yopable> {
 		}
 
 		public String toSQL() {
-			return this.qualifiedId + " AS " + this.alias;
+			return this.qualifiedId + " AS \"" + this.alias + "\"";
 		}
 
 		public String getQualifiedId() {

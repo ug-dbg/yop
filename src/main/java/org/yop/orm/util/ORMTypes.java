@@ -106,7 +106,15 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 		return column.getName()
 			+ " " + this.type(column)
 			+ (column.isNotNull() ? " NOT NULL " : "")
-			+ (autoincrement ? " AUTO_INCREMENT " : "");
+			+ (autoincrement ? this.autoIncrementKeyWord() : "");
+	}
+
+	/**
+	 * Changing the {@link #type(Column)} method might be required (hello Postgres!)
+	 * @return the auto increment keyword.
+	 */
+	protected String autoIncrementKeyWord() {
+		return " AUTO_INCREMENT ";
 	}
 
 	/**
@@ -114,7 +122,7 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 	 * @param column the input column
 	 * @return the SQL type
 	 */
-	private String type(Column column) {
+	protected String type(Column column) {
 		String type = column.getType();
 		return type + (StringUtils.equals("VARCHAR", type) ? "(" + column.getLength() + ")" : "");
 	}
@@ -162,6 +170,19 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 
 	/** Default Types. Should work with MySQL. At least I hope. */
 	public static final ORMTypes DEFAULT = new ORMTypes("VARCHAR");
+
+	/** PostGres types */
+	public static final ORMTypes POSTGRES = new ORMTypes("VARCHAR") {
+		@Override
+		protected String autoIncrementKeyWord() {
+			return " SERIAL ";
+		}
+
+		@Override
+		protected String type(Column column) {
+			return column.getPk() == null ? super.type(column) : "";
+		}
+	};
 
 	/** SQLite types */
 	public static final ORMTypes SQLITE = new ORMTypes("TEXT") {

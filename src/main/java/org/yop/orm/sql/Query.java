@@ -40,7 +40,7 @@ public class Query {
 		this.safeAliasSQL = sql;
 		this.parameters = parameters;
 
-		// Search table/column aliases that are to long for SQL
+		// Search table/column aliases that are too long for SQL
 		Set<String> tooLongAliases = new TreeSet<>(Comparator.comparing(String::length).reversed());
 		for (String word : sql.split(" ")) {
 			// if the word is not too long, that's OK
@@ -48,12 +48,15 @@ public class Query {
 			if(word.length() <= Constants.SQL_ALIAS_MAX_LENGTH || word.contains(Constants.DOT)) {
 				continue;
 			}
-			tooLongAliases.add(word.trim());
+			tooLongAliases.add(
+				StringUtils.removeEnd(StringUtils.removeStart(word.trim(), "\""), "\"")
+			);
 		}
 
 		for (String tooLongAlias : tooLongAliases) {
 			String shortened = uniqueShortened(tooLongAlias);
 			this.tooLongAliases.put(tooLongAlias, shortened);
+			this.safeAliasSQL = safeAliasSQL.replace("\"" + tooLongAlias + "\"", "\"" + shortened + "\"");
 			this.safeAliasSQL = safeAliasSQL.replace(tooLongAlias + " ", shortened + " ");
 			this.safeAliasSQL = safeAliasSQL.replace(tooLongAlias + ".", shortened + ".");
 		}

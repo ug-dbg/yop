@@ -42,7 +42,8 @@ public class SimpleTest {
 	private Connection getConnection() throws SQLException, ClassNotFoundException {
 		String dbms = System.getProperties().getProperty(DBMS_SWITCH, "sqlite");
 		switch (dbms) {
-			case "mysql" :  return Prepare.getMySQLConnection(true);
+			case "mysql" :     return Prepare.getMySQLConnection(true);
+			case "postgres" :  return Prepare.getPostgresConnection();
 			case "sqlite" :
 			default: return Prepare.getConnection(this.db);
 		}
@@ -58,7 +59,8 @@ public class SimpleTest {
 		String packagePrefix = "org.yop.orm";
 		String dbms = System.getProperties().getProperty("yop.test.dbms", "sqlite");
 		switch (dbms) {
-			case "mysql" :  Prepare.prepareMySQL(packagePrefix);
+			case "mysql" :     Prepare.prepareMySQL(packagePrefix);    break;
+			case "postgres" :  Prepare.preparePostgres(packagePrefix); break;
 			case "sqlite" :
 			default: this.db = Prepare.createSQLiteDatabase(SimpleTest.class.getName(), packagePrefix);
 		}
