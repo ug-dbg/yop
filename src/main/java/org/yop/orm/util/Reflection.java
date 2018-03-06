@@ -384,7 +384,7 @@ public class Reflection {
 					return field;
 				}
 
-				if(ClassUtils.isPrimitiveOrWrapper(fieldType) && testValue != null && testValue.equals(fieldValue)) {
+				if(primitiveCheck(field, getter, instance, testValue, fieldValue)) {
 					return field;
 				}
 			}
@@ -393,6 +393,35 @@ public class Reflection {
 			throw new YopRuntimeException("Unable to find field from [" + clazz + "] for the given accessors !", e);
 		}
 		throw new YopRuntimeException("Unable to find field from [" + clazz + "] for the given accessors !");
+	}
+
+	/**
+	 * Check a primitive field value against a setter, twice, using {@link #primitiveTestValue(Class, int)}
+	 * with a salt of 1.
+	 * @param field      the field to check
+	 * @param getter     the getter to use
+	 * @param instance   the instance holding the field
+	 * @param testValue  the test value, from the setter
+	 * @param fieldValue the actual field value
+	 * @param <T> the type holding the setter
+	 * @param <R> the target type
+	 * @return true if the getter actually returned the field value, twice
+	 * @throws IllegalAccessException could not read the field
+	 */
+	private static <T, R> boolean primitiveCheck(
+		Field field,
+		Function<T, R> getter,
+		T instance,
+		Object testValue,
+		R fieldValue)
+		throws IllegalAccessException {
+
+		if(ClassUtils.isPrimitiveOrWrapper(field.getType()) && testValue != null && testValue.equals(fieldValue)) {
+			Object confirmValue = primitiveTestValue(field.getType(), 1);
+			field.set(instance, confirmValue);
+			return getter.apply(instance).equals(confirmValue);
+		}
+		return false;
 	}
 
 	/**
@@ -542,7 +571,7 @@ public class Reflection {
 	@SuppressWarnings("unchecked")
 	private static <T> T newInstanceUnsafe(Class<T> clazz) {
 		if (ClassUtils.isPrimitiveOrWrapper(clazz)) {
-			return (T) primitiveTestValue(clazz);
+			return (T) primitiveTestValue(clazz, 0);
 		}
 
 		Class<? extends T> target = implementationOf(clazz);
@@ -570,17 +599,18 @@ public class Reflection {
 	 * @param primitive the primitive type or Wrapper.
 	 * @return the test value for the primitive type
 	 */
-	private static Object primitiveTestValue(Class<?> primitive) {
+	private static Object primitiveTestValue(Class<?> primitive, int salt) {
 		Class<?> unwrapped = primitive.isPrimitive() ? primitive : Primitives.unwrap(primitive);
+		boolean confirm = salt > 0;
 
-		if(boolean.class.equals(unwrapped)) {return TEST_BOOL;}
-		if(byte.class.equals(unwrapped))    {return TEST_BYTE;}
-		if(char.class.equals(unwrapped))    {return TEST_CHAR;}
-		if(short.class.equals(unwrapped))   {return TEST_SHORT;}
-		if(int.class.equals(unwrapped))     {return TEST_INT;}
-		if(long.class.equals(unwrapped))    {return TEST_LONG;}
-		if(float.class.equals(unwrapped))   {return TEST_FLOAT;}
-		if(double.class.equals(unwrapped))  {return TEST_DOUBLE;}
+		if(boolean.class.equals(unwrapped)) {return confirm != TEST_BOOL;}
+		if(byte.class.equals(unwrapped))    {return TEST_BYTE   + salt;}
+		if(char.class.equals(unwrapped))    {return TEST_CHAR   + salt;}
+		if(short.class.equals(unwrapped))   {return TEST_SHORT  + salt;}
+		if(int.class.equals(unwrapped))     {return TEST_INT    + salt;}
+		if(long.class.equals(unwrapped))    {return TEST_LONG   + salt;}
+		if(float.class.equals(unwrapped))   {return TEST_FLOAT  + salt;}
+		if(double.class.equals(unwrapped))  {return TEST_DOUBLE + salt;}
 
 		throw new YopRuntimeException("Primitive class [" + primitive.getName() + "] is not really primitive !");
 	}

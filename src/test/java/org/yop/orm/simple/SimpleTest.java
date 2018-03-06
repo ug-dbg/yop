@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
+import org.yop.orm.evaluation.Operator;
 import org.yop.orm.example.Jopo;
 import org.yop.orm.example.Other;
 import org.yop.orm.example.Pojo;
@@ -34,7 +35,7 @@ public class SimpleTest extends DBMSSwitch {
 	public void testCRUD() throws SQLException, ClassNotFoundException {
 		try (Connection connection = this.getConnection()) {
 			Pojo newPojo = new Pojo();
-			newPojo.setVersion(1337);
+			newPojo.setVersion(10564337);
 			newPojo.setType(Pojo.Type.FOO);
 			Jopo jopo = new Jopo();
 			jopo.setName("jopo From code !");
@@ -55,6 +56,20 @@ public class SimpleTest extends DBMSSwitch {
 				.execute(connection);
 
 			Set<Pojo> found = Select
+				.from(Pojo.class)
+				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
+				.joinAll()
+				.execute(connection, Select.Strategy.EXISTS);
+			Assert.assertEquals(1, found.size());
+
+			found = Select
+				.from(Pojo.class)
+				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion() + 1))
+				.joinAll()
+				.execute(connection, Select.Strategy.EXISTS);
+			Assert.assertEquals(0, found.size());
+
+			found = Select
 				.from(Pojo.class)
 				.where(Where.naturalId(newPojo))
 				.joinAll()
