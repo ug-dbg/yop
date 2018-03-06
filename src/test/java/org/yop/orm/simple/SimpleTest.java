@@ -31,6 +31,7 @@ import java.util.Set;
  * Use the {@link #DBMS_SWITCH} property to switch DBMS for these tests :
  * <ul>
  *     <li>mysql : requires a fresh Mysql database instance on port 3306</li>
+ *     <li>postgres : requires a fresh Postgres database instance on port 5432</li>
  *     <li>sqlite : (default) use a temporary file as DB (deleted on exit)</li>
  * </ul>
  */
