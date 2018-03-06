@@ -522,6 +522,9 @@ public class Reflection {
 		}
 
 		if(what instanceof String) {
+			if(Boolean.class.isAssignableFrom(Primitives.wrap(into))) {
+				return Boolean.valueOf((String) what);
+			}
 			if (Instant.class.isAssignableFrom(into)) {
 				return Instant.parse((CharSequence) what);
 			}

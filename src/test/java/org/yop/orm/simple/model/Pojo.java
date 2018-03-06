@@ -18,6 +18,10 @@ public class Pojo implements YopableJson {
 	@Column(name = "VERSION")
 	private Integer version;
 
+	@NaturalId
+	@Column(name = "ACTIVE")
+	private boolean active;
+
 	@JoinTable(table = "POJO_JOPO_relation", sourceColumn = "idPOJO", targetColumn = "idJOPO")
 	private Set<Jopo> jopos = new HashSet<>();
 
@@ -36,6 +40,14 @@ public class Pojo implements YopableJson {
 
 	public void setVersion(Integer version) {
 		this.version = version;
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
 	}
 
 	public Type getType() {

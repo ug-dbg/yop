@@ -173,6 +173,10 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 
 	/** PostGres types */
 	public static final ORMTypes POSTGRES = new ORMTypes("VARCHAR") {
+		{
+			this.put(Boolean.class, "boolean");
+		}
+
 		@Override
 		protected String autoIncrementKeyWord() {
 			return " SERIAL ";

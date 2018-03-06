@@ -37,6 +37,7 @@ public class SimpleTest extends DBMSSwitch {
 			Pojo newPojo = new Pojo();
 			newPojo.setVersion(10564337);
 			newPojo.setType(Pojo.Type.FOO);
+			newPojo.setActive(true);
 			Jopo jopo = new Jopo();
 			jopo.setName("jopo From code !");
 			jopo.setPojo(newPojo);
@@ -71,10 +72,23 @@ public class SimpleTest extends DBMSSwitch {
 
 			found = Select
 				.from(Pojo.class)
+				.where(Where.compare(Pojo::isActive, Operator.EQ, true))
+				.joinAll()
+				.execute(connection, Select.Strategy.EXISTS);
+			Assert.assertEquals(1, found.size());
+
+			found = Select
+				.from(Pojo.class)
+				.where(Where.compare(Pojo::isActive, Operator.EQ, false))
+				.joinAll()
+				.execute(connection, Select.Strategy.EXISTS);
+			Assert.assertEquals(0, found.size());
+
+			found = Select
+				.from(Pojo.class)
 				.where(Where.naturalId(newPojo))
 				.joinAll()
 				.execute(connection, Select.Strategy.EXISTS);
-
 			Assert.assertEquals(1, found.size());
 
 			Pojo newPojoFromSelect = found.iterator().next();
