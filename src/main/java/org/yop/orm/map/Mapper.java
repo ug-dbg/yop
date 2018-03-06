@@ -1,5 +1,7 @@
 package org.yop.orm.map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.exception.YopMapperException;
@@ -16,7 +18,6 @@ import java.lang.reflect.ParameterizedType;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.util.*;
 
 /**
@@ -28,6 +29,8 @@ import java.util.*;
  * TODO : Robust cycle breaking ?
  */
 public class Mapper {
+
+	private static final Logger logger = LoggerFactory.getLogger(Mapper.class);
 
 	private static final String SEPARATOR = Context.SQL_SEPARATOR;
 
@@ -113,9 +116,11 @@ public class Mapper {
 				} else {
 					try {
 						field.set(element, results.getResultSet().getObject(columnName, field.getType()));
-					} catch (SQLFeatureNotSupportedException e) {
+					} catch (SQLException e) {
+						logger.debug("Error mapping [{}] of type [{}]. Manual fallback.", columnName, field.getType());
 						Object object = results.getResultSet().getObject(columnName);
 						field.set(element, Reflection.transformInto(object, field.getType()));
+						logger.debug("Mapping [{}] of type [{}]. Manual fallback success.", columnName, field.getType());
 					}
 				}
 			} else if (!field.getType().isPrimitive()){
