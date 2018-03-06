@@ -198,7 +198,7 @@ public class Reflection {
 				field.set(instance, testValue);
 				R fieldValue = getter.apply(instance);
 
-				if(testValue == fieldValue) {
+				if(testValue == fieldValue && ! ClassUtils.isPrimitiveOrWrapper(fieldType)) {
 					return field;
 				}
 
