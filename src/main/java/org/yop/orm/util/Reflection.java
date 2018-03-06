@@ -6,10 +6,8 @@ import org.apache.commons.lang3.ClassUtils;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.model.Yopable;
 import sun.reflect.ReflectionFactory;
 
 import java.lang.annotation.Annotation;
@@ -53,16 +51,6 @@ public class Reflection {
 	private static final long    TEST_LONG   = 1337666;
 	private static final float   TEST_FLOAT  = 13.37f;
 	private static final double  TEST_DOUBLE = 1.337;
-
-	/**
-	 * Get all the non transient and non synthetic fields of a class. <br>
-	 * Also retrieve the non transient and non synthetic fields from superclasses.
-	 * @param type the class
-	 * @return the field list
-	 */
-	public static List<Field> getFields(Class type) {
-		return getFields(type, true);
-	}
 
 	/**
 	 * Get all the non synthetic fields of a class. <br>
@@ -148,169 +136,16 @@ public class Reflection {
 	}
 
 	/**
-	 * Get all the non transient, non synthetic fields of a class or its superclass that have the @Column annotation. <br>
-	 * @param clazz the class
-	 * @return the indexed fields
-	 */
-	public static List<Field> getIndexedFields(Class clazz){
-		List<Field> fields = new ArrayList<>();
-		for(Field field : getFields(clazz)){
-			if(field.isAnnotationPresent(Column.class) && isNotTransient(field)){
-				fields.add(field);
-				field.setAccessible(true);
-			}
-		}
-		return fields;
-	}
-
-	/**
-	 * Get all the non transient, non synthetic fields of a class or its superclass that have the @NaturalId annotation. <br>
+	 * Get all the non transient, non synthetic fields of a class or its superclass that have the @NaturalId annotation.
 	 * @param clazz the class
 	 * @return the natural key fields
 	 */
 	public static List<Field> getNaturalKeyFields(Class clazz){
 		List<Field> fields = new ArrayList<>();
-		for(Field field : getFields(clazz)){
+		for(Field field : getFields(clazz, true)){
 			if(field.isAnnotationPresent(NaturalId.class) && isNotTransient(field)){
 				fields.add(field);
 				field.setAccessible(true);
-			}
-		}
-		return fields;
-	}
-
-	/**
-	 * Get all the non transient, non synthetic, non iterable fields of a class or its superclass that have the @Column annotation. <br>
-	 * !! If an exception occurs, this method does not log and returns an empty list !! <br>
-	 * @param clazz the object class
-	 * @return the indexed non null fields
-	 */
-	public static List<Field> getIndexedNonIterableFields(Class clazz){
-		List<Field> fields = new ArrayList<>();
-		try {
-			for (Field field : getFields(clazz)) {
-				if(Iterable.class.isAssignableFrom(field.getType())){
-					continue;
-				}
-				if (field.isAnnotationPresent(Column.class) && isNotTransient(field)) {
-					fields.add(field);
-					field.setAccessible(true);
-				}
-			}
-		}catch (Exception e){
-			return new ArrayList<>();
-		}
-		return fields;
-	}
-
-	/**
-	 * State if a field is non transient, non synthetic, non iterable fields of a class or its superclass and have the @Column annotation. <br>
-	 * @param clazz the class
-	 * @param fieldName the field name
-	 * @return true if the given field exists and is non transient, non synthetic, non iterable fields of a class or its superclass and have the @Column annotation
-	 */
-	public static boolean isIndexedNonIterable(Class clazz, String fieldName){
-		for(Field f : getIndexedNonIterableFields(clazz)){
-			if(StringUtils.equals(fieldName, f.getName())){
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Get all the non transient, non synthetic, non iterable and not null fields of an object or its superclass that have the @Column annotation. <br>
-	 * !! If an exception occurs, this method does not log and returns an empty list !! <br>
-	 * @param o the object
-	 * @return the indexed non null fields
-	 */
-	public static List<Field> getIndexedNonNullNonIterableFields(Object o){
-		List<Field> fields = new ArrayList<>();
-		if(o == null){
-			return fields;
-		}
-		Class clazz = o.getClass();
-		try {
-			for (Field field : getFields(clazz)) {
-				if (field.get(o) == null) {
-					continue;
-				}
-				if(Iterable.class.isAssignableFrom(field.getType())){
-					continue;
-				}
-				if (field.isAnnotationPresent(Column.class) && isNotTransient(field)) {
-					fields.add(field);
-					field.setAccessible(true);
-				}
-			}
-		}catch (Exception e){
-			return new ArrayList<>();
-		}
-		return fields;
-	}
-
-	/**
-	 * Get all the non transient, non synthetic Yopable field of class and its superclass. <br>
-	 * @param clazz the class
-	 * @return the yopable fields
-	 */
-	public static List<Field> getYopableFields(Class clazz){
-		List<Field> fields = new ArrayList<>();
-		for(Field field : getFields(clazz)){
-			if(Yopable.class.isAssignableFrom(field.getType()) && isNotTransient(field)){
-				fields.add(field);
-				field.setAccessible(true);
-			}
-		}
-		return fields;
-	}
-
-	/**
-	 * Get all the non transient, non synthetic and non Yopable field of class and its superclass. <br>
-	 * @param clazz the class
-	 * @return the yopable fields
-	 */
-	public static List<Field> getNonYopableFields(Class clazz){
-		List<Field> fields = new ArrayList<>();
-		for(Field field : getFields(clazz)){
-			if(!Yopable.class.isAssignableFrom(field.getType()) && isNotTransient(field)){
-				fields.add(field);
-				field.setAccessible(true);
-			}
-		}
-		return fields;
-	}
-
-	/**
-	 * Get all the non transient, non synthetic Iterable (with a given type) field of class and its superclass. <br>
-	 * @param clazz the class
-	 * @return the yopable fields
-	 */
-	public static List<Field> getYopableIterableFields(Class clazz){
-		List<Field> fields = new ArrayList<>();
-		for(Field field : getFields(clazz)){
-			if(Iterable.class.isAssignableFrom(field.getType())
-					&& isNotTransient(field)
-					&& Yopable.class.isAssignableFrom((Class<?>) get1ArgParameter(field))
-					){
-				field.setAccessible(true);
-				fields.add(field);
-			}
-		}
-		return fields;
-	}
-
-	/**
-	 * Get all the non transient, non synthetic Iterable field of class and its superclass. <br>
-	 * @param clazz the class
-	 * @return the yopable fields
-	 */
-	public static List<Field> getIterableFields(Class clazz){
-		List<Field> fields = new ArrayList<>();
-		for(Field field : getFields(clazz)){
-			if(Iterable.class.isAssignableFrom(field.getType()) && isNotTransient(field)){
-				field.setAccessible(true);
-				fields.add(field);
 			}
 		}
 		return fields;
