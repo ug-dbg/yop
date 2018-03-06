@@ -3,7 +3,6 @@ package org.yop.orm.gen;
 import org.apache.commons.lang.StringUtils;
 import org.reflections.Reflections;
 import org.yop.orm.annotations.JoinTable;
-import org.yop.orm.example.Pojo;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.ORMTypes;
@@ -93,7 +92,7 @@ public class Table {
 	private static Set<Table> findTablesFor(Class<? extends Yopable> clazz, ORMTypes types) {
 		Set<Table> tables = new HashSet<>();
 		tables.add(Table.fromClass(clazz, types));
-		readRelationTables(Pojo.class, types, tables);
+		readRelationTables(clazz, types, tables);
 		return tables;
 	}
 

@@ -1,4 +1,4 @@
-package org.yop.orm.example;
+package org.yop.orm.simple.model;
 
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
