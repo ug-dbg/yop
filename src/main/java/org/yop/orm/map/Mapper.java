@@ -108,17 +108,17 @@ public class Mapper {
 		for (Field field : fields) {
 			String columnName = field.getAnnotation(Column.class).name();
 			columnName = context + SEPARATOR + columnName;
-			columnName = results.getQuery().getAlias(columnName);
+			String alias = results.getQuery().getAlias(columnName);
 
-			if (results.getResultSet().getObject(columnName) != null) {
+			if (results.getResultSet().getObject(alias) != null) {
 				if (field.getType().isEnum()) {
-					setEnumValue(results.getResultSet(), field, columnName, element);
+					setEnumValue(results.getResultSet(), field, alias, element);
 				} else {
 					try {
-						field.set(element, results.getResultSet().getObject(columnName, field.getType()));
+						field.set(element, results.getResultSet().getObject(alias, field.getType()));
 					} catch (SQLException e) {
 						logger.debug("Error mapping [{}] of type [{}]. Manual fallback.", columnName, field.getType());
-						Object object = results.getResultSet().getObject(columnName);
+						Object object = results.getResultSet().getObject(alias);
 						field.set(element, Reflection.transformInto(object, field.getType()));
 						logger.debug("Mapping [{}] of type [{}]. Manual fallback success.", columnName, field.getType());
 					}
