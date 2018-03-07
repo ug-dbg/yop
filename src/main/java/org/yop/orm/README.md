@@ -32,4 +32,4 @@ The Hit & Run ORM :-)
 - <strike>Robust cycle breaker</strike> → no cycle mapped ! Use 'transient' ! → easy JSON/XML serialize
 - Cycle detector ?
 - Schema management
-- First level cache ?
+- First level cache : Improve !
