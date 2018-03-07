@@ -25,6 +25,8 @@ public abstract class DBMSSwitch {
 	private static final String DBMS_SWITCH = "yop.test.dbms";
 	private File db;
 
+	protected abstract String getPackagePrefix();
+
 	protected Connection getConnection() throws SQLException, ClassNotFoundException {
 		String dbms = System.getProperties().getProperty(DBMS_SWITCH, "sqlite");
 		switch (dbms) {
@@ -42,7 +44,7 @@ public abstract class DBMSSwitch {
 
 	@Before
 	public void setUp() throws SQLException, IOException, ClassNotFoundException {
-		String packagePrefix = "org.yop.orm";
+		String packagePrefix = this.getPackagePrefix();
 		String dbms = System.getProperties().getProperty(DBMS_SWITCH, "sqlite");
 		switch (dbms) {
 			case "mysql" :     Prepare.prepareMySQL(packagePrefix);    break;

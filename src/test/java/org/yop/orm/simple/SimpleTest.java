@@ -31,6 +31,11 @@ public class SimpleTest extends DBMSSwitch {
 
 	private static final Logger logger = LoggerFactory.getLogger(SimpleTest.class);
 
+	@Override
+	protected String getPackagePrefix() {
+		return "org.yop.orm.simple.model";
+	}
+
 	@Test
 	public void testCRUD() throws SQLException, ClassNotFoundException {
 		try (Connection connection = this.getConnection()) {

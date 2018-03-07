@@ -46,7 +46,6 @@ public class Prepare {
 		Path dbPath = Files.createTempFile(name, "_temp.db");
 		dbPath.toFile().deleteOnExit();
 
-
 		Set<Table> tables = Table.findAllInClassPath(packagePrefix, ORMTypes.SQLITE);
 		try (Connection connection = getConnection(dbPath.toFile())) {
 			connection.setAutoCommit(false);
@@ -117,6 +116,8 @@ public class Prepare {
 			} catch (RuntimeException e) {
 				logger.trace("Error dropping table [" + table.qualifiedName() + "]");
 			}
+		}
+		for (Table table : tables) {
 			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
 		}
 		connection.commit();
@@ -160,6 +161,8 @@ public class Prepare {
 			} catch (RuntimeException e) {
 				logger.trace("Error dropping table [" + table.qualifiedName() + "]");
 			}
+		}
+		for (Table table : tables) {
 			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
 		}
 
