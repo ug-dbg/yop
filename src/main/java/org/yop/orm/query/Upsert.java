@@ -268,7 +268,7 @@ public class Upsert<T extends Yopable> {
 			Joiner.on(", ").join(columns),
 			Joiner.on(", ").join(values)
 		);
-		return (Query) new Query<>(sql, parameters, element).askGeneratedKeys(true);
+		return (Query) new Query<>(sql, parameters, element).askGeneratedKeys(true, element.getClass());
 	}
 
 	/**
@@ -306,7 +306,7 @@ public class Upsert<T extends Yopable> {
 		Parameters parameters = new Parameters();
 		for (Field field : fields) {
 			if(field.equals(idField)) {
-				String value = getInsertIdValue(element);
+				Object value = getUpsertIdValue(element);
 				if(value != null) {
 					parameters.addParameter(element.getIdColumn(), value);
 				}
@@ -346,9 +346,9 @@ public class Upsert<T extends Yopable> {
 	}
 
 	/**
-	 * Get the ID that should be in the SQL insert query for the given element.
+	 * Get the ID that should be in the SQL insert/update query for the given element.
 	 * <ol>
-	 *     <li>element has an ID field set → return the value of the ID field</li>
+	 *     <li>element has an ID field set → return the value of the ID field (UPDATE)</li>
 	 *     <li>autoincrement is set to false and id is null → mapping exception</li>
 	 *     <li>sequence name is set → sequence name + .nextval</li>
 	 *     <li>null (→ i.e. do not put me in the insert query)</li>
@@ -358,9 +358,9 @@ public class Upsert<T extends Yopable> {
 	 * @return the id value to set in the query
 	 * @throws YopMappingException invalid @Id mapping ←→ ID value
 	 */
-	private static <T extends Yopable> String getInsertIdValue(T element) {
+	private static <T extends Yopable> Object getUpsertIdValue(T element) {
 		if(element.getId() != null) {
-			return String.valueOf(element.getId());
+			return element.getId();
 		}
 		Field idField = ORMUtil.getIdField(element.getClass());
 		if(idField.getAnnotation(Id.class) != null && !idField.getAnnotation(Id.class).autoincrement()) {
@@ -375,12 +375,13 @@ public class Upsert<T extends Yopable> {
 	/**
 	 * SQL query + parameters aggregation.
 	 */
-	private static class Query<T> extends org.yop.orm.sql.Query {
+	private static class Query<T extends Yopable> extends org.yop.orm.sql.Query {
 		private final T element;
 
 		private Query(String sql, Parameters parameters, T element) {
 			super(sql, parameters);
 			this.element = element;
+			this.target = element == null ? null : element.getClass();
 		}
 	}
 }

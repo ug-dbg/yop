@@ -1,6 +1,8 @@
 package org.yop.orm.sql;
 
 import org.apache.commons.lang.StringUtils;
+import org.yop.orm.model.Yopable;
+import org.yop.orm.util.ORMUtil;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,6 +31,9 @@ public class Query {
 
 	/** Aliases map : short alias → original alias */
 	private Map<String, String> tooLongAliases = new HashMap<>();
+
+	/** A reference to the root target Yopable that this query was generated for. Only required for generated keys. */
+	protected Class<? extends Yopable> target;
 
 	/**
 	 * Default constructor : SQL query and parameters.
@@ -99,11 +104,13 @@ public class Query {
 
 	/**
 	 * Ask for generated IDs or not.
-	 * @param value true to ask the statement to resturn the generated IDs
+	 * @param value  true to ask the statement to resturn the generated IDs
+	 * @param target the target class for which there will be generated keys
 	 * @return the current query, for chaining purposes
 	 */
-	public Query askGeneratedKeys(boolean value) {
+	public Query askGeneratedKeys(boolean value, Class<? extends Yopable> target) {
 		this.askGeneratedKeys = value;
+		this.target = target;
 		return this;
 	}
 
@@ -123,15 +130,44 @@ public class Query {
 	}
 
 	/**
-	 * Read the generated keys from the executed statement
+	 * Read the generated keys from the executed statement.
+	 * <br>
+	 * We rely on {@link Statement#getGeneratedKeys()} and don't specify the generated key column.
+	 * (I surely should check this out first)
+	 * <br>
+	 * <br>
+	 * <b>
+	 *     Generally, the generated key is in the column #1.
+	 *     <br>
+	 *     But, Postgres for instance, put the whole row in the generated key ResultSet.
+	 *     <br>
+	 *     So we need either :
+	 *     <ul>
+	 *         <li>Put the ID column first ALWAYS</li>
+	 *         <li>Keep a reference to the {@link #target} class to read the right column </li>
+	 *     </ul>
+	 *
+	 * </b>
 	 * @param statement the statement that was executed
 	 * @throws SQLException an SQL error occured reading the resultset
 	 */
 	public void readGeneratedKey(Statement statement) throws SQLException {
 		if(this.askGeneratedKeys) {
 			ResultSet generatedKeys = statement.getGeneratedKeys();
+			int idIndex = 1;
+
+			if(this.target != null) {
+				String idColumn = ORMUtil.getIdColumn(this.target);
+				for (int i = 1; i <= generatedKeys.getMetaData().getColumnCount(); i++) {
+					if (StringUtils.equals(idColumn, generatedKeys.getMetaData().getColumnLabel(i))) {
+						idIndex = i;
+						break;
+					}
+				}
+			}
+
 			while (generatedKeys.next()) {
-				this.generatedIds.add(generatedKeys.getLong(1));
+				this.generatedIds.add(generatedKeys.getLong(idIndex));
 			}
 		}
 	}
