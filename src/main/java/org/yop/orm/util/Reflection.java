@@ -530,7 +530,7 @@ public class Reflection {
 		}
 
 		try {
-			Method valueOf = into.getDeclaredMethod("valueOf", String.class);
+			Method valueOf = Primitives.wrap(into).getDeclaredMethod("valueOf", String.class);
 			return valueOf.invoke(null, String.valueOf(what));
 		} catch (NoSuchMethodException e) {
 			logger.trace("Could not find valueOf(String) on [" + into.getName() + "]", e);
