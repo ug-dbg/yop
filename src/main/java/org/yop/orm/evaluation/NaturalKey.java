@@ -1,10 +1,9 @@
 package org.yop.orm.evaluation;
 
-import com.google.common.base.Joiner;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
-import org.yop.orm.sql.Constants;
+import org.yop.orm.query.Where;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.ORMUtil;
 
@@ -26,7 +25,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 	@Override
 	public <U extends Yopable> String toSQL(Context<U> context, Parameters parameters) {
 		List<Field> naturalKeys = ORMUtil.getNaturalKeyFields(this.reference.getClass());
-		return Joiner.on(" AND ").join(
+		return Where.toSQL(
 			naturalKeys
 				.stream()
 				.map(field -> getFieldRestriction(context, field, parameters))

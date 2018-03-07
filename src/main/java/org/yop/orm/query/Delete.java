@@ -6,6 +6,7 @@ import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Executor;
+import org.yop.orm.sql.JoinClause;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
 
@@ -175,12 +176,13 @@ public class Delete<T extends Yopable> {
 		}
 
 		String whereClause = this.where.toSQL(context, parameters);
+		JoinClause.JoinClauses joinClauses = this.toSQLJoin();
 		return MessageFormat.format(
 			DELETE,
 			columnsClause,
 			root.getTableName() + asClause,
-			this.toSQLJoin(parameters),
-			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause
+			joinClauses.toSQL(parameters),
+			Where.toSQL(DEFAULT_WHERE, whereClause, joinClauses.toSQLWhere(parameters))
 		);
 	}
 
@@ -202,8 +204,8 @@ public class Delete<T extends Yopable> {
 	 * Create the SQL join clause for the DELETE statement.
 	 * @return the SQL join clause
 	 */
-	private String toSQLJoin(Parameters parameters) {
-		return ToSQL.toSQLJoin(this.joins, Context.root(this.target), parameters, false);
+	private JoinClause.JoinClauses toSQLJoin() {
+		return ToSQL.toSQLJoin(this.joins, Context.root(this.target), false);
 	}
 
 	/**

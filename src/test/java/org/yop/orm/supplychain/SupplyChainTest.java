@@ -118,12 +118,26 @@ public class SupplyChainTest extends DBMSSwitch {
 				.execute(connection);
 			Assert.assertEquals(1, warehouses.size());
 
-			warehouses = Select
+			Select<Warehouse> select = Select
 				.from(Warehouse.class)
-				.where(Where.compare(Warehouse::getOwner, Operator.EQ, 1337))
-				.join(Join.to(Warehouse::getOwner))
-				.execute(connection);
+				.join(Join.to(Warehouse::getOwner).where(Where.naturalId(organisation)));
+			warehouses = select.execute(connection);
+			Assert.assertEquals(1, warehouses.size());
+
+			organisation.setSomeDummyFloat(1.337F);
+			Upsert.from(Organisation.class).onto(organisation).execute(connection);
+			organisations = Select.from(Organisation.class).where(Where.id(organisation.getId())).execute(connection);
+			Assert.assertEquals(1, organisations.size());
+			Assert.assertEquals(organisation.getSomeDummyFloat(), organisations.iterator().next().getSomeDummyFloat(), 0.01);
+
+			// And delete !
+			Delete<Warehouse> delete = select.toDelete();
+			delete.executeQueries(connection);
+
+			warehouses = select.execute(connection);
 			Assert.assertEquals(0, warehouses.size());
+			organisations = Select.from(Organisation.class).where(Where.naturalId(organisation)).execute(connection);
+			Assert.assertEquals(0, organisations.size());
 		}
 	}
 

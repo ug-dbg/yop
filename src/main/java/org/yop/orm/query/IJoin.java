@@ -1,6 +1,6 @@
 package org.yop.orm.query;
 
-import org.yop.orm.evaluation.Comparison;
+import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.JoinClause;
 
@@ -50,7 +50,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 	 * @param evaluation the comparison clause
 	 * @return tje current join clause for chaining purposes
 	 */
-	IJoin<From, To> where(Comparison evaluation);
+	IJoin<From, To> where(Evaluation evaluation);
 
 	/**
 	 * Create the SQL join clause.

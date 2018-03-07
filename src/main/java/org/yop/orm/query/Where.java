@@ -5,6 +5,7 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.evaluation.*;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Parameters;
+import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.ORMUtil;
 
 import java.util.ArrayList;
@@ -163,5 +164,24 @@ public class Where<T extends Yopable>  {
 				return inClause;
 			}
 		};
+	}
+
+	/**
+	 * Simply join some where clauses using " AND ". Clauses can be null or empty.
+	 * @param whereClauses the where clauses to join
+	 * @return the new where clause
+	 */
+	public static String toSQL(String... whereClauses) {
+		return toSQL(Arrays.asList(whereClauses));
+	}
+
+
+	/**
+	 * Simply join some where clauses using " AND ". Clauses can be null or empty.
+	 * @param whereClauses the where clauses to join
+	 * @return the new where clause
+	 */
+	public static String toSQL(Collection<String> whereClauses) {
+		return MessageUtil.join(" AND ", whereClauses);
 	}
 }

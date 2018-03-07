@@ -1,10 +1,9 @@
 package org.yop.orm.query;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.JoinTable;
-import org.yop.orm.evaluation.Comparison;
+import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.JoinClause;
@@ -42,7 +41,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	}
 
 	@Override
-	public IJoin<From, To> where(Comparison evaluation) {
+	public IJoin<From, To> where(Evaluation evaluation) {
 		this.where.and(evaluation);
 		return this;
 	}
@@ -56,8 +55,9 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		Parameters parameters = new Parameters();
 		String joinClause = ToSQL.toSQLJoin(this.joinType(), parent, to, field);
 		if(includeWhereClause) {
-			String whereClause = this.where.toSQL(to, parameters);
-			joinClause += StringUtils.isNotBlank(whereClause) ? " AND " + whereClause : "";
+			Parameters whereParameters = new Parameters();
+			String whereClause = this.where.toSQL(to, whereParameters);
+			joinClauses.addWhereClause(whereClause, whereParameters);
 		}
 
 		if(joinClauses.containsKey(to)) {

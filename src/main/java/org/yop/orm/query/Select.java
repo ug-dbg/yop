@@ -8,9 +8,9 @@ import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Executor;
+import org.yop.orm.sql.JoinClause;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
-import org.yop.orm.util.MessageUtil;
 
 import java.sql.Connection;
 import java.text.MessageFormat;
@@ -299,8 +299,8 @@ public class Select<T extends Yopable> {
 	 * @param evaluate true to add the where clauses to the join clauses
 	 * @return the SQL join clause
 	 */
-	private String toSQLJoin(Parameters parameters, boolean evaluate) {
-		return ToSQL.toSQLJoin(this.joins, this.context, parameters, evaluate);
+	private JoinClause.JoinClauses toSQLJoin(boolean evaluate) {
+		return ToSQL.toSQLJoin(this.joins, this.context, evaluate);
 	}
 
 	/**
@@ -318,12 +318,13 @@ public class Select<T extends Yopable> {
 	 * @return the SQL 'answer' request.
 	 */
 	private String toSQLAnswerRequest(Parameters parameters) {
+		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true);
 		return select(
 			this.toSQLColumnsClause(false),
 			this.getTableName(),
 			this.context.getPath(),
-			this.toSQLJoin(parameters, true),
-			this.toSQLWhere(parameters)
+			joinClauses.toSQL(parameters),
+			Where.toSQL(this.toSQLWhere(parameters), joinClauses.toSQLWhere(parameters))
 		);
 	}
 
@@ -334,12 +335,13 @@ public class Select<T extends Yopable> {
 	 * @return the SQL 'data' request.
 	 */
 	private String toSQLDataRequest(Set<Long> ids, Parameters parameters) {
+		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false);
 		return select(
 			this.toSQLColumnsClause(true),
 			this.getTableName(),
 			this.context.getPath(),
-			this.toSQLJoin(parameters, false),
-			this.idAlias() + " IN (" + Joiner.on(",").join(ids) + ") "
+			joinClauses.toSQL(parameters),
+			Where.toSQL(this.idAlias() + " IN (" + Joiner.on(",").join(ids) + ") ", joinClauses.toSQLWhere(parameters))
 		);
 	}
 
@@ -354,27 +356,28 @@ public class Select<T extends Yopable> {
 		// This is not very elegant, I must confess
 		Select<T> copyForAlias = new Select<>(this.context.copy("_0"), this.where, this.joins);
 
-		String whereClause = MessageUtil.join(
-			" AND ",
+		String whereClause = Where.toSQL(
 			copyForAlias.toSQLWhere(parameters),
 			this.idAlias() + " = " + copyForAlias.idAlias()
 		);
 
+		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true);
 		String existsSubSelect = selectdistinct(
 			copyForAlias.idAlias(),
 			copyForAlias.getTableName(),
 			copyForAlias.context.getPath(),
-			copyForAlias.toSQLJoin(parameters, true),
-			whereClause
+			joinClauses.toSQL(parameters),
+			Where.toSQL(whereClause, joinClauses.toSQLWhere(parameters))
 		);
 
 		// Now we can build the global query that fetches the data when the EXISTS clause matches
+		joinClauses = this.toSQLJoin(false);
 		return select(
 			this.toSQLColumnsClause(true),
 			this.getTableName(),
 			this.context.getPath(),
-			this.toSQLJoin(parameters, false),
-			" EXISTS (" + existsSubSelect + ") "
+			joinClauses.toSQL(parameters),
+			Where.toSQL(" EXISTS (" + existsSubSelect + ") ", joinClauses.toSQLWhere(parameters))
 		);
 	}
 
@@ -389,27 +392,28 @@ public class Select<T extends Yopable> {
 		// This is not very elegant, I must confess
 		Select<T> copyForAlias = new Select<>(this.context.copy("_0"), this.where, this.joins);
 
-		String whereClause = MessageUtil.join(
-			" AND ",
+		String whereClause = Where.toSQL(
 			copyForAlias.toSQLWhere(parameters),
 			this.idAlias() + " = " + copyForAlias.idAlias()
 		);
 
+		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true);
 		String existsSubSelect = selectdistinct(
 			copyForAlias.idAlias(),
 			copyForAlias.getTableName(),
 			copyForAlias.context.getPath(),
-			copyForAlias.toSQLJoin(parameters, true),
-			whereClause
+			joinClauses.toSQL(parameters),
+			Where.toSQL(whereClause, joinClauses.toSQLWhere(parameters))
 		);
 
 		// Now we can build the global query that fetches the IDs for every type when the EXISTS clause matches
+		joinClauses = this.toSQLJoin(false);
 		return select(
 			this.toSQLIdColumnsClause(),
 			this.getTableName(),
 			this.context.getPath(),
-			this.toSQLJoin(parameters, false),
-			" EXISTS (" + existsSubSelect + ") "
+			joinClauses.toSQL(parameters),
+			Where.toSQL(" EXISTS (" + existsSubSelect + ") ", joinClauses.toSQLWhere(parameters))
 		);
 	}
 
@@ -419,20 +423,22 @@ public class Select<T extends Yopable> {
 	 */
 	private String toSQLDataRequestWithIN(Parameters parameters) {
 		String path = this.context.getPath();
+		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true);
 		String inSubQuery = select(
 			this.idAlias(),
 			this.getTableName(),
 			path,
-			this.toSQLJoin(parameters, true),
-			this.toSQLWhere(parameters)
+			joinClauses.toSQL(parameters),
+			Where.toSQL(this.toSQLWhere(parameters), joinClauses.toSQLWhere(parameters))
 		);
 
+		joinClauses = this.toSQLJoin(false);
 		return select(
 			this.toSQLColumnsClause(true),
 			this.getTableName(),
 			path,
-			this.toSQLJoin(parameters, false),
-			this.idAlias() + " IN (" + inSubQuery + ")"
+			joinClauses.toSQL(parameters),
+			Where.toSQL(this.idAlias() + " IN (" + inSubQuery + ")", joinClauses.toSQLWhere(parameters))
 		);
 	}
 

@@ -4,14 +4,11 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.JoinClause;
-import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * Some common code to generate SQL from objects.
@@ -37,29 +34,17 @@ public class ToSQL {
 	 * Create the SQL join clause (for SELECT or DELETE statement).
 	 * @param joins      the join clauses
 	 * @param context    the current context
-	 * @param parameters the SQL parameters that will be populated
 	 * @param evaluate   true to add {@link IJoin#where()} clauses evaluations
-	 * @return the SQL join clause
+	 * @return the SQL join clauses
 	 */
-	public static <T extends Yopable> String toSQLJoin(
+	public static <T extends Yopable> JoinClause.JoinClauses toSQLJoin(
 		Collection<IJoin<T, ? extends Yopable>> joins,
 		Context<T> context,
-		Parameters parameters,
 		boolean evaluate) {
 
 		JoinClause.JoinClauses joinClauses = new JoinClause.JoinClauses();
 		joins.forEach(j -> j.toSQL(joinClauses, context, evaluate));
-
-		// Join clauses have to be ordered from the closest context to the farthest when building the output !
-		Set<JoinClause> clauses = new TreeSet<>(joinClauses.values());
-
-		StringBuilder sql = new StringBuilder();
-		for (JoinClause joinClause : clauses) {
-			sql.append(joinClause.getJoinClause());
-			parameters.addAll(joinClause.getParameters());
-		}
-
-		return sql.toString();
+		return joinClauses;
 	}
 
 	/**
