@@ -11,6 +11,7 @@ import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.Context;
 import org.yop.orm.sql.Constants;
 
 import java.lang.reflect.Field;
@@ -157,5 +158,14 @@ public class ORMUtil {
 	 */
 	public static String uniqueShortened(String alias) {
 		return RandomStringUtils.randomAlphabetic(Math.min(Constants.SQL_ALIAS_MAX_LENGTH, 10));
+	}
+
+	/**
+	 * Create the fully qualified ID column for a given context.
+	 * @param context the target context
+	 * @return the qualified ID column
+	 */
+	public static String getIdColumn(Context<? extends Yopable> context) {
+		return context.getPath() + Constants.DOT + getIdColumn(context.getTarget());
 	}
 }

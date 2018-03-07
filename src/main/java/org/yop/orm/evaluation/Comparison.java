@@ -36,6 +36,6 @@ public class Comparison implements Evaluation {
 			parameters.addParameter(name, ref);
 		}
 
-		return context.getPath() + DOT + this.columnName(this.field) + op.toSQL() + (ref == null ? "" : "?");
+		return this.columnName(this.field, context) + op.toSQL() + (ref == null ? "" : "?");
 	}
 }

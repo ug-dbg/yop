@@ -109,6 +109,21 @@ public class SupplyChainTest extends DBMSSwitch {
 			Assert.assertEquals(1, warehouses.size());
 			Assert.assertEquals(warehouse, warehouses.iterator().next());
 			Assert.assertEquals(organisation, warehouses.iterator().next().getOwner());
+
+			// Select with where clause on relation
+			warehouses = Select
+				.from(Warehouse.class)
+				.where(Where.compare(Warehouse::getOwner, Operator.EQ, organisation.getId()))
+				.join(Join.to(Warehouse::getOwner))
+				.execute(connection);
+			Assert.assertEquals(1, warehouses.size());
+
+			warehouses = Select
+				.from(Warehouse.class)
+				.where(Where.compare(Warehouse::getOwner, Operator.EQ, 1337))
+				.join(Join.to(Warehouse::getOwner))
+				.execute(connection);
+			Assert.assertEquals(0, warehouses.size());
 		}
 	}
 

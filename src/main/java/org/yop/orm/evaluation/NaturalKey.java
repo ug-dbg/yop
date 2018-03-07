@@ -41,7 +41,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 				String name = context.getPath() + "#" + field.getName() + " = " + "?";
 				parameters.addParameter(name, ref);
 			}
-			return context.getPath() + Constants.DOT + this.columnName(field) + "=" + (ref == null ? "" : "?");
+			return this.columnName(field, context) + "=" + (ref == null ? "" : "?");
 		} catch (IllegalAccessException e) {
 			throw new YopRuntimeException(
 				"Could not read [" + field.getDeclaringClass() + "#" + field.getName()+ "] on [" + this.reference + "] !"
