@@ -1,6 +1,7 @@
 package org.yop.orm.evaluation;
 
 public enum Operator {
+	LIKE(" LIKE "),
 	EQ(" = "),
 	GT(" > "),
 	GE(" >= "),
