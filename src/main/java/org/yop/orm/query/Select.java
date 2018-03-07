@@ -2,7 +2,7 @@ package org.yop.orm.query;
 
 import com.google.common.base.Joiner;
 import org.apache.commons.lang.StringUtils;
-import org.yop.orm.evaluation.Comparaison;
+import org.yop.orm.evaluation.Comparison;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.IdMap;
@@ -218,7 +218,7 @@ public class Select<T extends Yopable> {
 	 * @param compare the comparisons
 	 * @return the current SELECT request, for chaining purposes
 	 */
-	public final Select<T> or(Comparaison... compare) {
+	public final Select<T> or(Comparison... compare) {
 		this.where.or(compare);
 		return this;
 	}

@@ -8,7 +8,7 @@ import org.yop.orm.util.Reflection;
 import java.lang.reflect.Field;
 import java.util.function.Function;
 
-public class Comparaison implements Evaluation {
+public class Comparison implements Evaluation {
 
 	private static final String DOT = ".";
 
@@ -18,7 +18,7 @@ public class Comparaison implements Evaluation {
 
 	private Field field;
 
-	public Comparaison(Function<? extends Yopable, ?> getter, Operator op, Comparable ref) {
+	public Comparison(Function<? extends Yopable, ?> getter, Operator op, Comparable ref) {
 		this.getter = getter;
 		this.op = op;
 		this.ref = ref;

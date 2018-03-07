@@ -4,7 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.JoinTable;
-import org.yop.orm.evaluation.Comparaison;
+import org.yop.orm.evaluation.Comparison;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.JoinClause;
@@ -42,7 +42,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	}
 
 	@Override
-	public IJoin<From, To> where(Comparaison evaluation) {
+	public IJoin<From, To> where(Comparison evaluation) {
 		this.where.and(evaluation);
 		return this;
 	}
