@@ -7,11 +7,17 @@ import org.yop.orm.util.ORMTypes;
 import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
+import java.util.Comparator;
 
 /**
  * A table column that can generate a column clause in an SQL CREATE query.
  */
-public class Column {
+public class Column implements Comparable<Column> {
+	private static Comparator<Column> COMPARATOR =
+		Comparator.nullsLast(
+			Comparator.comparing(Column::isPK).reversed().thenComparing(Column::getName)
+		);
+
 	private String name;
 	private String type;
 	private boolean naturalKey;
@@ -66,9 +72,18 @@ public class Column {
 		return this.types.toSQL(this);
 	}
 
+	public boolean isPK() {
+		return this.pk != null;
+	}
+
 	@Override
 	public String toString() {
 		return this.toSQL();
+	}
+
+	@Override
+	public int compareTo(Column o) {
+		return COMPARATOR.compare(this, o);
 	}
 
 	@SuppressWarnings("unchecked")

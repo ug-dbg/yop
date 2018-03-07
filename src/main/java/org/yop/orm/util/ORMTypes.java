@@ -60,7 +60,7 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 		this.put(Character.class,  "VARCHAR");
 
 		this.put(Integer.class, "INTEGER");
-		this.put(Long.class,    "INTEGER");
+		this.put(Long.class,    "BIGINT");
 		this.put(Short.class,   "INTEGER");
 		this.put(Byte.class,    "INTEGER");
 
@@ -84,7 +84,7 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 	 */
 	public String toSQL(Table table) {
 		Collection<String> elements = new ArrayList<>();
-		elements.addAll(table.getColumns().stream().map(Column::toString).collect(Collectors.toList()));
+		elements.addAll(table.getColumns().stream().sorted().map(Column::toString).collect(Collectors.toList()));
 		elements.addAll(table.getColumns().stream().map(c -> this.toSQLPK(table, c)).collect(Collectors.toList()));
 		elements.addAll(table.getColumns().stream().map(this::toSQLFK).collect(Collectors.toList()));
 
@@ -214,7 +214,7 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 		@Override
 		public String toSQL(Table table) {
 			Collection<String> elements = new ArrayList<>();
-			elements.addAll(table.getColumns().stream().map(Column::toString).collect(Collectors.toList()));
+			elements.addAll(table.getColumns().stream().sorted().map(Column::toString).collect(Collectors.toList()));
 			elements.addAll(table.getColumns().stream().map(this::toSQLFK).collect(Collectors.toList()));
 
 			return MessageFormat.format(
