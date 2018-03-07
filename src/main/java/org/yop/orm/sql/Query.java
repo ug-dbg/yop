@@ -47,7 +47,7 @@ public class Query {
 
 		// Search table/column aliases that are too long for SQL
 		Set<String> tooLongAliases = new TreeSet<>(Comparator.comparing(String::length).reversed());
-		for (String word : sql.split(" ")) {
+		for (String word : StringUtils.split(sql, " ,;\"")) {
 			// if the word is not too long, that's OK
 			// if the word contains a "." this is not an alias
 			if(word.length() <= Constants.SQL_ALIAS_MAX_LENGTH || word.contains(Constants.DOT)) {
@@ -59,11 +59,9 @@ public class Query {
 		}
 
 		for (String tooLongAlias : tooLongAliases) {
-			String shortened = uniqueShortened(tooLongAlias);
+			String shortened = ORMUtil.uniqueShortened(tooLongAlias);
 			this.tooLongAliases.put(tooLongAlias, shortened);
-			this.safeAliasSQL = safeAliasSQL.replace("\"" + tooLongAlias + "\"", "\"" + shortened + "\"");
-			this.safeAliasSQL = safeAliasSQL.replace(tooLongAlias + " ", shortened + " ");
-			this.safeAliasSQL = safeAliasSQL.replace(tooLongAlias + ".", shortened + ".");
+			this.safeAliasSQL = StringUtils.replace(this.safeAliasSQL, tooLongAlias, shortened);
 		}
 	}
 
@@ -81,9 +79,19 @@ public class Query {
 		return this.safeAliasSQL;
 	}
 
-	/** Get the original alias for a shortened one. Return the given parameter if no alias entry */
+	/** Get the original alias for a shortened one. Return the given parameter if no entry */
 	public String getAlias(String shortened) {
-		return this.tooLongAliases.getOrDefault(shortened, shortened);
+		return this.tooLongAliases.entrySet()
+			.stream()
+			.filter(e -> StringUtils.equals(shortened, e.getValue()))
+			.map(Map.Entry::getKey)
+			.findFirst()
+			.orElse(shortened);
+	}
+
+	/** Get the shortened version of an alias. Return the given parameter if no entry */
+	public String getShortened(String alias) {
+		return this.tooLongAliases.getOrDefault(alias, alias);
 	}
 
 	/**
@@ -181,16 +189,5 @@ public class Query {
 			", generatedIds=" + generatedIds +
 			", tooLongAliases=" + tooLongAliases +
 		'}';
-	}
-
-	/**
-	 * Generate an unique shortened alias for the given one
-	 * @param alias the alias that is too long
-	 * @return a unique alias, generated from the shortened parameter + genererated UUID
-	 */
-	private static String uniqueShortened(String alias) {
-		String shortened = StringUtils.substringAfterLast(alias, Constants.SQL_SEPARATOR);
-		shortened = StringUtils.substring(shortened, 0, Constants.SQL_ALIAS_MAX_LENGTH - 37);
-		return shortened + UUID.randomUUID().toString().replace("-", "_");
 	}
 }

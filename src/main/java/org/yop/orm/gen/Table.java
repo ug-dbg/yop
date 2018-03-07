@@ -1,6 +1,5 @@
 package org.yop.orm.gen;
 
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.reflections.Reflections;
 import org.yop.orm.annotations.JoinTable;
@@ -168,7 +167,7 @@ public class Table {
 
 		foreignKeyName =
 			foreignKeyName.length() > Constants.SQL_ALIAS_MAX_LENGTH
-			? RandomStringUtils.randomAlphabetic(Constants.SQL_ALIAS_MAX_LENGTH)
+			? ORMUtil.uniqueShortened(foreignKeyName)
 			: foreignKeyName;
 
 		column.setFK(new ForeignKey(foreignKeyName, referencedTable, referencedIdColumn));

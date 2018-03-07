@@ -108,17 +108,17 @@ public class Mapper {
 		for (Field field : fields) {
 			String columnName = field.getAnnotation(Column.class).name();
 			columnName = context + SEPARATOR + columnName;
-			String alias = results.getQuery().getAlias(columnName);
+			String shortened = results.getQuery().getShortened(columnName);
 
-			if (results.getResultSet().getObject(alias) != null) {
+			if (results.getResultSet().getObject(shortened) != null) {
 				if (field.getType().isEnum()) {
-					setEnumValue(results.getResultSet(), field, alias, element);
+					setEnumValue(results.getResultSet(), field, shortened, element);
 				} else {
 					try {
-						field.set(element, results.getResultSet().getObject(alias, field.getType()));
+						field.set(element, results.getResultSet().getObject(shortened, field.getType()));
 					} catch (SQLException e) {
 						logger.debug("Error mapping [{}] of type [{}]. Manual fallback.", columnName, field.getType());
-						Object object = results.getResultSet().getObject(alias);
+						Object object = results.getResultSet().getObject(shortened);
 						field.set(element, Reflection.transformInto(object, field.getType()));
 						logger.debug("Mapping [{}] of type [{}]. Manual fallback success.", columnName, field.getType());
 					}
@@ -268,7 +268,7 @@ public class Mapper {
 		Class<? extends Yopable> targetClass)
 		throws SQLException {
 
-		String idColumn = context + SEPARATOR + ORMUtil.getIdColumn(targetClass);
+		String idColumn = results.getQuery().getShortened(context + SEPARATOR + ORMUtil.getIdColumn(targetClass));
 		ResultSetMetaData rsmd = results.getResultSet().getMetaData();
 		if(!hasColumn(rsmd, idColumn)) {
 			return true;
@@ -298,9 +298,12 @@ public class Mapper {
 	 * @return the found element or the input element after it is added in the collection
 	 */
 	private static <T extends Yopable> T cycleBreaker(T element, Collection<T> elements) {
-		T checked = elements.stream().filter(element::equals).findAny().orElse(element);
-		elements.add(checked);
-		return checked;
+		Optional<T> any = elements.stream().filter(element::equals).findFirst();
+		if(any.isPresent()) {
+			return any.get();
+		}
+		elements.add(element);
+		return element;
 	}
 
 	/**

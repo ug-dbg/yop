@@ -1,6 +1,7 @@
 package org.yop.orm.util;
 
 import com.google.common.primitives.Primitives;
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,5 +148,14 @@ public class ORMUtil {
 			}
 		}
 		return fields;
+	}
+
+	/**
+	 * Generate an unique shortened alias for the given one
+	 * @param alias the alias that is too long
+	 * @return an unique alphabetic alias
+	 */
+	public static String uniqueShortened(String alias) {
+		return RandomStringUtils.randomAlphabetic(Math.min(Constants.SQL_ALIAS_MAX_LENGTH, 10));
 	}
 }

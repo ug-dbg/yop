@@ -151,6 +151,6 @@ public class IdMap {
 
 		String idColumn = ORMUtil.getIdColumn(target);
 		String idColumnContext = context + SEPARATOR + idColumn;
-		return results.getResultSet().getLong(results.getQuery().getAlias(idColumnContext));
+		return results.getResultSet().getLong(results.getQuery().getShortened(idColumnContext));
 	}
 }
