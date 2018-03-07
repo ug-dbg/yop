@@ -1,9 +1,11 @@
 package org.yop.orm.gen;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.reflections.Reflections;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.Constants;
 import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.ORMTypes;
 import org.yop.orm.util.ORMUtil;
@@ -72,11 +74,12 @@ public class Table {
 	 * @return the table objects that can be used to get INSERT queries
 	 */
 	public static Set<Table> findAllInClassPath(String packagePrefix, ORMTypes types) {
-		Set<Class<? extends Yopable>> subtypes = new Reflections(packagePrefix).getSubTypesOf(Yopable.class);
+		Set<Class<? extends Yopable>> subtypes = new Reflections("").getSubTypesOf(Yopable.class);
 
 		Set<Table> tables = new TreeSet<>(Comparator.comparing(Table::isRelation).thenComparing(Table::qualifiedName));
 		subtypes
 			.stream()
+			.filter(c -> c.getPackage().getName().startsWith(packagePrefix))
 			.filter(c -> ! c.isInterface() &&  ! Modifier.isAbstract(c.getModifiers() ))
 			.forEach(clazz -> tables.addAll(Table.findTablesFor(clazz, types)));
 
@@ -160,7 +163,12 @@ public class Table {
 		String referencedIdColumn = ORMUtil.getIdColumn(reference);
 		foreignKeyName =
 			StringUtils.isBlank(foreignKeyName)
-			? "FK_" + joinTable.table() + "_" + referencedTable + "_" + referencedIdColumn + "_" + column.getName()
+			? "FK_" + joinTable.table() + "_" + column.getName()
+			: foreignKeyName;
+
+		foreignKeyName =
+			foreignKeyName.length() > Constants.SQL_ALIAS_MAX_LENGTH
+			? RandomStringUtils.randomAlphabetic(Constants.SQL_ALIAS_MAX_LENGTH)
 			: foreignKeyName;
 
 		column.setFK(new ForeignKey(foreignKeyName, referencedTable, referencedIdColumn));
