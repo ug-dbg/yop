@@ -278,7 +278,7 @@ public class Upsert<T extends Yopable> {
 	 */
 	private Query<T> toSQLUpdate(T element) {
 		Parameters parameters = this.values(element);
-		String whereClause = element.getIdColumn() + "=" + element.getId();
+		String whereClause = element.getIdColumn() + " = " + element.getId();
 		String sql = MessageFormat.format(
 			UPDATE,
 			this.getTableName(),
