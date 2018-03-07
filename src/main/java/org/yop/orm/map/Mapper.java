@@ -25,8 +25,7 @@ import java.util.*;
  * <br>
  * <b>This mapper is pretty basic for now</b>
  * <br>
- * TODO : First level cache ?
- * TODO : Robust cycle breaking ?
+ * A {@link FirstLevelCache} is used when reading a ResultSet, but it might not be very effective.
  */
 public class Mapper {
 
@@ -73,11 +72,12 @@ public class Mapper {
 		throws IllegalAccessException, InstantiationException, SQLException {
 
 		Set<T> out = new HashSet<>();
+		FirstLevelCache cache = new FirstLevelCache();
 		while (results.getResultSet().next()) {
 			T element = clazz.newInstance();
-			element = mapSimpleFields(results, element, context);
-			element = cycleBreaker(element, out);
-			element = mapRelationFields(results, element, context);
+			element = mapSimpleFields(results, element, context, cache);
+			element = cycleBreaker(element, out, cache);
+			mapRelationFields(results, element, context, cache);
 			out.add(element);
 		}
 		return out;
@@ -86,6 +86,8 @@ public class Mapper {
 	/**
 	 * Map simple fields from a Resultset line for a given context.
 	 * <br>
+	 * This method checks the cache first.
+	 * <br>
 	 * This method iterates over the @Column fields of the target and search for data in the resultset entry.
 	 * <br>
 	 * <b>⚠⚠⚠ This method DOES NOT iterate over the resultset ! ⚠⚠⚠</b>
@@ -93,16 +95,22 @@ public class Mapper {
 	 * @param element the target element
 	 * @param context the target element context
 	 * @param <T> the target type
-	 * @return the input element, for chaining purposes
+	 * @return the input element, or the cached element of it !
 	 * @throws SQLException           an error occured reading the resultset
 	 * @throws IllegalAccessException could not access a field on the target instance
 	 */
 	@SuppressWarnings("unchecked")
-	private static <T> T mapSimpleFields(
+	private static <T extends Yopable> T mapSimpleFields(
 		Results results,
 		T element,
-		String context)
+		String context,
+		FirstLevelCache cache)
 		throws SQLException, IllegalAccessException {
+
+		T fromCache = cache.tryCache(results, (Class<T>) element.getClass(), context);
+		if(fromCache != null) {
+			return fromCache;
+		}
 
 		List<Field> fields = Reflection.getFields(element.getClass(), Column.class);
 		for (Field field : fields) {
@@ -127,7 +135,7 @@ public class Mapper {
 				field.set(element, null);
 			}
 		}
-		return element;
+		return cache.put(element);
 	}
 
 	/**
@@ -202,17 +210,17 @@ public class Mapper {
 	 * @param element the target element
 	 * @param context the target element context
 	 * @param <T> the target type
-	 * @return the target instance, for chaining purposes
 	 * @throws IllegalAccessException could not read a field
 	 * @throws InstantiationException could not instantiate a target element
 	 * @throws SQLException           error reading the resultset
 	 * @throws YopMappingException    Incorrect mapping. Mostly a non Yopable/Collection of Yopable relationship.
 	 */
 	@SuppressWarnings("unchecked")
-	private static <T> T mapRelationFields(
+	private static <T extends Yopable> void mapRelationFields(
 		Results results,
 		T element,
-		String context)
+		String context,
+		FirstLevelCache cache)
 		throws SQLException, IllegalAccessException, InstantiationException {
 
 		List<Field> fields = Reflection.getFields(element.getClass(), JoinTable.class, false);
@@ -222,13 +230,13 @@ public class Mapper {
 			if(Collection.class.isAssignableFrom(field.getType())) {
 				Class<? extends Yopable> targetClass = getRelationFieldType(field);
 				target = targetClass.newInstance();
+
 				newContext += target.getClass().getSimpleName();
-
 				if(noContext(results, newContext, targetClass)) continue;
-				mapSimpleFields(results, target, newContext);
 
-				target = cycleBreaker(target, (Collection) field.get(element));
-				mapRelationFields(results, target, newContext);
+				target = mapSimpleFields(results, target, newContext, cache);
+				target = cycleBreaker(target, (Collection) field.get(element), cache);
+				mapRelationFields(results, target, newContext, cache);
 			} else if (Yopable.class.isAssignableFrom(field.getType())){
 				target = (Yopable) field.get(element);
 				if(target == null) {
@@ -236,12 +244,11 @@ public class Mapper {
 				}
 
 				newContext += target.getClass().getSimpleName();
-
 				if(noContext(results, newContext, target.getClass())) continue;
-				field.set(element, target);
 
-				mapSimpleFields(results, target, newContext);
-				mapRelationFields(results, target, newContext);
+				target = mapSimpleFields(results, target, newContext, cache);
+				field.set(element, target);
+				mapRelationFields(results, target, newContext, cache);
 			} else {
 				throw new YopMappingException(
 					" Field type [" + field.getType().getName()
@@ -250,7 +257,6 @@ public class Mapper {
 				);
 			}
 		}
-		return element;
 	}
 
 	/**
@@ -289,20 +295,18 @@ public class Mapper {
 	}
 
 	/**
-	 * Check for an element in the given collection. Add to the context if does not exist.
-	 * <br>
-	 * TODO : First-level cache ?
+	 * Check for an element in the given collection. Add to the collection if does not exist.
 	 * @param element  the element to find
 	 * @param elements the elements to check into
 	 * @param <T> the target type
 	 * @return the found element or the input element after it is added in the collection
 	 */
-	private static <T extends Yopable> T cycleBreaker(T element, Collection<T> elements) {
+	private static <T extends Yopable> T cycleBreaker(T element, Collection<T> elements, FirstLevelCache cache) {
 		Optional<T> any = elements.stream().filter(element::equals).findFirst();
 		if(any.isPresent()) {
 			return any.get();
 		}
-		elements.add(element);
+		elements.add(cache.put(element));
 		return element;
 	}
 
