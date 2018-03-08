@@ -11,8 +11,21 @@
 	<description>
 		YOP is a lightweight ORM wannabe. No session, no bytecode generation, SQL-like syntax.
 		Strong constraints on the Database schema.
+		Java 8 is required.
 		Ω≡{Ⓐ}
 	</description>
+
+	<licenses>
+		<license>
+			<name>Postcard Public License</name>
+			<url>/dev/null</url>
+			<comments>
+				You are free to do whatever you want with Yop and its source code.
+				If you intend to make money using it, please send me an ugly postcard so I can decorate my fridge.
+			</comments>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
