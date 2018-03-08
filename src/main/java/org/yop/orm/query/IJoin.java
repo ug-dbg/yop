@@ -90,6 +90,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 
 	/**
 	 * Find all the columns to select (search in current target type and sub-join clauses if required)
+	 * @param context              the context (columns are deduced using {@link Context#getColumns()}.
 	 * @param addJoinClauseColumns true to add the columns from the sub-join clauses
 	 * @return the columns to select
 	 */
