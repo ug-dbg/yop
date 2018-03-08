@@ -1,5 +1,11 @@
 package org.yop.orm.gen;
 
+/**
+ * Foreign key model.
+ * A Column can have/be a foreign key.
+ * <br>
+ * A FK constraint will be generated from this object.
+ */
 public class ForeignKey {
 	private String name;
 	private String referencedTable;
