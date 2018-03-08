@@ -12,6 +12,13 @@ import org.yop.orm.util.Reflection;
 import java.lang.reflect.Field;
 import java.util.Collection;
 
+/**
+ * An evaluation is an SQL portion that can be used in a WHERE clause.
+ * <br>
+ * For instance : ExampleEntity→name='foo' OR ExampleEntity='bar'.
+ * <br>
+ * There is only one method to implement {@link #toSQL(Context, Parameters)}.
+ */
 public interface Evaluation {
 
 	/**
