@@ -14,6 +14,14 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 
 public interface Evaluation {
+
+	/**
+	 * Build the SQL portion for the evaluation, fill the given paramaters with the evaluation value(s)
+	 * @param context    the current context for the evaluation
+	 * @param parameters the SQL query paramters
+	 * @param <T> the target evaluation type
+	 * @return the SQL query portion for the evaluation, from the context
+	 */
 	<T extends Yopable> String toSQL(Context<T> context, Parameters parameters);
 
 	/**
