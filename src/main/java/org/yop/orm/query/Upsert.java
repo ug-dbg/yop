@@ -2,6 +2,8 @@ package org.yop.orm.query;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.Table;
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
  * @param <T> the type to upsert.
  */
 public class Upsert<T extends Yopable> {
+
+	private static final Logger logger = LoggerFactory.getLogger(Upsert.class);
 
 	private static final String INSERT = " INSERT INTO {0} ({1}) VALUES ({2}) ";
 	private static final String UPDATE = " UPDATE {0} SET {1} WHERE ({2}) ";
@@ -167,6 +171,11 @@ public class Upsert<T extends Yopable> {
 	 */
 	@SuppressWarnings("unchecked")
 	public void execute(Connection connection) {
+		if(this.elements.isEmpty()) {
+			logger.warn("Upsert on no element. Are you sure you did not forget using #onto() ?");
+			return;
+		}
+
 		// Recurse through the data graph to upsert data tables, by creating a sub upsert for every join
 		for (T element : this.elements) {
 			for (IJoin<T, ? extends Yopable> join : this.joins) {
