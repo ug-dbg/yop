@@ -12,6 +12,7 @@ import sun.reflect.ReflectionFactory;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -510,6 +511,9 @@ public class Reflection {
 			}
 			if (Instant.class.isAssignableFrom(into)) {
 				return Instant.parse((CharSequence) what);
+			}
+			if (LocalDate.class.isAssignableFrom(into)) {
+				return LocalDate.parse((CharSequence) what);
 			}
 			if (LocalDateTime.class.isAssignableFrom(into)) {
 				return LocalDateTime.parse((CharSequence) what);

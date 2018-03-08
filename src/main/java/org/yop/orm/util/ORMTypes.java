@@ -9,6 +9,7 @@ import org.yop.orm.gen.Table;
 import java.sql.Time;
 import java.text.MessageFormat;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -70,6 +71,7 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 		this.put(Date.class,          "DATE");
 		this.put(Calendar.class,      "TIMESTAMP");
 		this.put(Instant.class,       "TIMESTAMP");
+		this.put(LocalDate.class,     "TIMESTAMP");
 		this.put(LocalDateTime.class, "TIMESTAMP");
 
 		this.put(Time.class,               "TIMESTAMP");
