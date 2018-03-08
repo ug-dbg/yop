@@ -5,6 +5,9 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Table(name = "warehouse")
 public class Warehouse extends Persistent {
 
@@ -23,6 +26,20 @@ public class Warehouse extends Persistent {
 		targetColumn = "id_organisation"
 	)
 	private transient Organisation owner;
+
+	@JoinTable(
+		table = "rel_warehouse_product",
+		sourceColumn = "id_organisation",
+		targetColumn = "id_employee"
+	)
+	private List<Product> products = new ArrayList<>();
+
+	@JoinTable(
+		table = "rel_delivery_warehouse",
+		sourceColumn = "id_warehouse",
+		targetColumn = "id_delivery"
+	)
+	private transient List<Delivery> deliveries = new ArrayList<>();
 
 	public String getAddress() {
 		return address;
@@ -54,5 +71,13 @@ public class Warehouse extends Persistent {
 
 	public void setOwner(Organisation owner) {
 		this.owner = owner;
+	}
+
+	public List<Product> getProducts() {
+		return products;
+	}
+
+	public List<Delivery> getDeliveries() {
+		return deliveries;
 	}
 }

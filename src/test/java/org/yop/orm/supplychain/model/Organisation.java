@@ -27,6 +27,13 @@ public class Organisation extends Persistent {
 	)
 	private List<Warehouse> warehouses = new ArrayList<>();
 
+	@JoinTable(
+		table = "rel_employee_organisation",
+		sourceColumn = "id_organisation",
+		targetColumn = "id_employee"
+	)
+	private List<Employee> employees = new ArrayList<>();
+
 	public String getName() {
 		return name;
 	}
@@ -45,5 +52,9 @@ public class Organisation extends Persistent {
 
 	public List<Warehouse> getWarehouses() {
 		return warehouses;
+	}
+
+	public List<Employee> getEmployees() {
+		return employees;
 	}
 }

@@ -24,6 +24,27 @@ public class Order extends Persistent {
 	)
 	private transient Customer customer;
 
+	@JoinTable(
+		table = "rel_order_voucher",
+		sourceColumn = "id_voucher",
+		targetColumn = "id_order"
+	)
+	private List<Voucher> vouchers = new ArrayList<>();
+
+	@JoinTable(
+		table = "rel_order_return",
+		sourceColumn = "id_order",
+		targetColumn = "id_return"
+	)
+	private Return orderReturn;
+
+	@JoinTable(
+		table = "rel_order_payment",
+		sourceColumn = "id_order",
+		targetColumn = "id_payment"
+	)
+	private Payment payment;
+
 	public List<Product> getProducts() {
 		return products;
 	}
@@ -34,5 +55,25 @@ public class Order extends Persistent {
 
 	public void setCustomer(Customer customer) {
 		this.customer = customer;
+	}
+
+	public List<Voucher> getVouchers() {
+		return vouchers;
+	}
+
+	public Return getOrderReturn() {
+		return orderReturn;
+	}
+
+	public void setOrderReturn(Return orderReturn) {
+		this.orderReturn = orderReturn;
+	}
+
+	public Payment getPayment() {
+		return payment;
+	}
+
+	public void setPayment(Payment payment) {
+		this.payment = payment;
 	}
 }

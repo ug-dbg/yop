@@ -23,7 +23,7 @@ public class Category extends Persistent {
 	private String description;
 
 	@JoinTable(
-		table = "category",
+		table = "rel_product_category",
 		sourceColumn = "id_category",
 		targetColumn = "id_product"
 	)

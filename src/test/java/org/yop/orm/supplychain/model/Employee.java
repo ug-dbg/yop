@@ -24,7 +24,7 @@ public class Employee extends Persistent {
 		sourceColumn = "id_employee",
 		targetColumn = "id_organisation"
 	)
-	private Organisation organisation;
+	private transient Organisation organisation;
 
 	public String getName() {
 		return name;
