@@ -1,5 +1,6 @@
 package org.yop.orm.evaluation;
 
+import org.yop.orm.annotations.Column;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Parameters;
@@ -59,8 +60,16 @@ public class Comparison implements Evaluation {
 		}
 
 		if(ref != null) {
+			Object refValue = ref;
+			if(ref.getClass().isEnum()) {
+				switch (field.getAnnotation(Column.class).enum_strategy()) {
+					case NAME:    refValue = ((Enum) ref).name(); break ;
+					case ORDINAL: refValue = ((Enum) ref).ordinal(); break;
+					default: break;
+				}
+			}
 			String name = context.getPath() + "#" + this.field.getName() + " " + op.toSQL() + "?";
-			parameters.addParameter(name, ref);
+			parameters.addParameter(name, refValue);
 		}
 
 		return this.columnName(this.field, context) + op.toSQL() + (ref == null ? "" : "?");
