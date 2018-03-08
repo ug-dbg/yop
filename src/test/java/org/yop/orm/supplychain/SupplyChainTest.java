@@ -3,6 +3,7 @@ package org.yop.orm.supplychain;
 import org.junit.Assert;
 import org.junit.Test;
 import org.yop.orm.DBMSSwitch;
+import org.yop.orm.evaluation.In;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.query.*;
 import org.yop.orm.supplychain.model.Organisation;
@@ -10,7 +11,10 @@ import org.yop.orm.supplychain.model.Warehouse;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Some tests using a rather classic supply chain model.
@@ -59,11 +63,34 @@ public class SupplyChainTest extends DBMSSwitch {
 				warehouse = new Warehouse();
 				warehouse.setActive(i % 2 == 0);
 				warehouse.setAddress(i + " My warehouses avenue");
-				warehouse.setCapacity(i * 100);
+				warehouse.setCapacity(i);
 				organisation.getWarehouses().add(warehouse);
 			}
 			Upsert.from(Organisation.class).checkNaturalID().onto(organisation).joinAll().execute(connection);
 			connection.commit();
+
+			// field IN restriction
+			Set<Long> capacities = new TreeSet<>(Arrays.asList(2L, 4L, 6L));
+			Set<Warehouse> warehouses = Select
+				.from(Warehouse.class)
+				.where(new In(Warehouse::getCapacity, capacities))
+				.execute(connection);
+			Assert.assertEquals(capacities.size(), warehouses.size());
+			Assert.assertEquals(
+				capacities,
+				new TreeSet<>(warehouses.stream().map(Warehouse::getCapacity).collect(Collectors.toList()))
+			);
+
+			Set<String> addresses = new TreeSet<>(Arrays.asList("1 My warehouses avenue", "2 My warehouses avenue"));
+			warehouses = Select
+				.from(Warehouse.class)
+				.where(new In(Warehouse::getAddress, addresses))
+				.execute(connection);
+			Assert.assertEquals(addresses.size(), warehouses.size());
+			Assert.assertEquals(
+				addresses,
+				new TreeSet<>(warehouses.stream().map(Warehouse::getAddress).collect(Collectors.toList()))
+			);
 
 			// Fetch a transient relation ! (Warehouse → Organisation)
 			organisations = Select
@@ -101,7 +128,7 @@ public class SupplyChainTest extends DBMSSwitch {
 
 			Upsert.from(Organisation.class).joinAll().onto(organisation).execute(connection);
 			connection.commit();
-			Set<Warehouse> warehouses = Select
+			warehouses = Select
 				.from(Warehouse.class)
 				.where(Where.compare(Warehouse::getAddress, Operator.LIKE, "%Yolo%"))
 				.join(Join.to(Warehouse::getOwner))
