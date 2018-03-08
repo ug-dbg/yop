@@ -178,7 +178,16 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 			try {
 				// Here we are asked to return a collection of objects, whatever the cardinality.
 				Object target = this.field.get(from);
-				return target instanceof Collection ? (Collection<To>) target : Collections.singletonList((To) target);
+
+				// target is null → empty list
+				// target is collection → target
+				// target is Yopable → target, as a singleton list
+				return
+					target == null ? new ArrayList<>(0)  : (
+						target instanceof Collection
+						? (Collection<To>) target
+						: Collections.singletonList((To) target)
+					);
 			} catch (IllegalAccessException e) {
 				throw new YopRuntimeException(
 					"Could not read"

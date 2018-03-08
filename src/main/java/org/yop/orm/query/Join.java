@@ -4,6 +4,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
@@ -36,7 +37,8 @@ public class Join<From extends Yopable, To extends Yopable> extends AbstractJoin
 
 	@Override
 	public Collection<To> getTarget(From from) {
-		return Collections.singletonList(this.getter.apply(from));
+		To to = this.getter.apply(from);
+		return to == null ? new ArrayList<>(0) : Collections.singletonList(to);
 	}
 
 	/**
