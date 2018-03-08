@@ -1,7 +1,6 @@
 package org.yop.orm.evaluation;
 
 
-import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
@@ -31,9 +30,7 @@ public interface Evaluation {
 	 */
 	@SuppressWarnings("unchecked")
 	default String columnName(Field field, Context<? extends Yopable> context) {
-		if(field.isAnnotationPresent(Column.class)) {
-			return context.getPath() + Constants.DOT + field.getAnnotation(Column.class).name();
-		} else if (field.isAnnotationPresent(JoinTable.class)) {
+		if (field.isAnnotationPresent(JoinTable.class)) {
 			if(Collection.class.isAssignableFrom(field.getType())) {
 				Class<? extends Yopable> target = Reflection.getCollectionTarget(field);
 				Context<? extends Yopable> targetContext = context.to(target, field);
@@ -44,6 +41,6 @@ public interface Evaluation {
 				return ORMUtil.getIdColumn(targetContext);
 			}
 		}
-		return context.getPath() + Constants.DOT + field.getName().toUpperCase();
+		return context.getPath() + Constants.DOT + ORMUtil.getColumnName(field);
 	}
 }
