@@ -8,7 +8,7 @@ import org.yop.orm.model.Persistent;
 @Table(name = "employee")
 public class Employee extends Persistent {
 
-	private enum Role {CEO, CTO, GURU, NO_IDEA}
+	public enum Role {CEO, CTO, GURU, NO_IDEA}
 
 	@Column(name = "name")
 	private String name;
