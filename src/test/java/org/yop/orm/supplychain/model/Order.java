@@ -1,14 +1,19 @@
 package org.yop.orm.supplychain.model;
 
+import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Table(name = "order_table")
 public class Order extends Persistent {
+
+	@Column(name = "timestamp")
+	private LocalDateTime orderTimeStamp;
 
 	@JoinTable(
 		table = "rel_order_products",
@@ -44,6 +49,14 @@ public class Order extends Persistent {
 		targetColumn = "id_payment"
 	)
 	private Payment payment;
+
+	public LocalDateTime getOrderTimeStamp() {
+		return orderTimeStamp;
+	}
+
+	public void setOrderTimeStamp(LocalDateTime orderTimeStamp) {
+		this.orderTimeStamp = orderTimeStamp;
+	}
 
 	public List<Product> getProducts() {
 		return products;

@@ -6,11 +6,12 @@ import org.yop.orm.DBMSSwitch;
 import org.yop.orm.evaluation.In;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.query.*;
-import org.yop.orm.supplychain.model.Organisation;
-import org.yop.orm.supplychain.model.Warehouse;
+import org.yop.orm.supplychain.model.*;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
@@ -165,6 +166,114 @@ public class SupplyChainTest extends DBMSSwitch {
 			Assert.assertEquals(0, warehouses.size());
 			organisations = Select.from(Organisation.class).where(Where.naturalId(organisation)).execute(connection);
 			Assert.assertEquals(0, organisations.size());
+		}
+	}
+
+	@Test
+	public void testBuyingStuff() throws SQLException, ClassNotFoundException {
+		try (Connection connection = this.getConnection()) {
+			Organisation organisation = new Organisation();
+			organisation.setName("world company & Co");
+			organisation.setSomeDummyFloat(3.1415F);
+
+			Warehouse warehouse = new Warehouse();
+			warehouse.setActive(true);
+			warehouse.setAddress("1337 leet Road");
+			warehouse.setCapacity(456724234234L);
+			organisation.getWarehouses().add(warehouse);
+
+			Employee ceo = new Employee();
+			ceo.setActive(true);
+			ceo.setName("Roger");
+			ceo.setRole(Employee.Role.CEO);
+			organisation.getEmployees().add(ceo);
+
+			Employee cto = new Employee();
+			cto.setActive(true);
+			cto.setName("Régis");
+			cto.setRole(Employee.Role.CTO);
+			organisation.getEmployees().add(cto);
+
+			Employee guru = new Employee();
+			guru.setActive(true);
+			guru.setName("Raoul");
+			guru.setRole(Employee.Role.GURU);
+			organisation.getEmployees().add(guru);
+
+			Employee theUnknwonGuy = new Employee();
+			theUnknwonGuy.setActive(true);
+			theUnknwonGuy.setName("?????");
+			theUnknwonGuy.setRole(Employee.Role.NO_IDEA);
+			organisation.getEmployees().add(theUnknwonGuy);
+
+			Manufacturer manufacturer = new Manufacturer();
+			manufacturer.setName("Pickle Corp.");
+			manufacturer.setAddress("42 Pickle Road");
+			Reference pickleReference = new Reference();
+			pickleReference.setManufacturerReference("#pickle");
+			pickleReference.setManufacturer(manufacturer);
+
+			Product pickle = new Product();
+			pickle.setName("I'm a pickle !");
+			pickle.setReference(pickleReference);
+			pickle.setPrice(0.07F);
+			warehouse.getProducts().add(pickle);
+
+			Upsert.from(Organisation.class).onto(organisation).joinAll().execute(connection);
+
+			// Find me a pickle ! But a pickel with some reference !
+			Set<Product> products = Select
+				.from(Product.class)
+				.joinAll()
+				.join(Join.to(Product::getReference).where(Where.naturalId(pickleReference)))
+				.execute(connection);
+			Assert.assertEquals(1, products.size());
+
+			Reference actualReference = products.iterator().next().getReference();
+			Assert.assertEquals(pickleReference, actualReference);
+			Assert.assertEquals(manufacturer.getName(), actualReference.getManufacturer().getName());
+
+			// Call me the guru before I buy my pickle !
+			Set<Employee> guruWannabes = Select
+				.from(Employee.class)
+				.where(Where.compare(Employee::getRole, Operator.EQ, Employee.Role.GURU))
+				.execute(connection);
+			Assert.assertEquals(1 ,guruWannabes.size());
+			Assert.assertEquals(guru.getName(), guruWannabes.iterator().next().getName());
+
+			// All right, I want my pickle !
+			Customer me = new Customer();
+			me.setName("ug_dbg");
+			me.setAbout("It's me !");
+			me.setDateOfBirth(LocalDate.parse("1984-12-08"));
+			me.setNice(false);
+			me.setPhoneNumber(6_66_66_66_66);
+			me.setSockSize((short) 41);
+			Order order = new Order();
+			order.getProducts().add(products.iterator().next());
+			order.setCustomer(me);
+
+			Upsert.from(Order.class).joinAll().join(Join.to(Order::getCustomer)).onto(order).execute(connection);
+			Assert.assertNotNull(order.getId());
+
+			// Oh well, I have to pay, I guess
+			Payment payment = new Payment();
+			payment.setOrder(order);
+			payment.setWhen(LocalDateTime.now());
+			payment.setMethod(Payment.Method.MONOPOLY_MONEY);
+			order.setPayment(payment);
+			Upsert.from(Order.class).join(Join.to(Order::getPayment)).onto(order).execute(connection);
+
+			// How much was it already ?
+			Set<Customer> meIGuess = Select.from(Customer.class).joinAll().where(Where.naturalId(me)).execute(connection);
+			Assert.assertEquals(1, meIGuess.size());
+
+			Order myOrder = meIGuess.iterator().next().getOrders().iterator().next();
+			Assert.assertEquals(
+				pickle.getReference().getManufacturerReference(),
+				myOrder.getProducts().iterator().next().getReference().getManufacturerReference()
+			);
+			Assert.assertEquals(pickle.getPrice(), myOrder.getProducts().iterator().next().getPrice(), 0.01);
 		}
 	}
 

@@ -14,6 +14,9 @@ public class Product  extends Persistent {
 	@Column(name = "name")
 	private String name;
 
+	@Column(name = "price")
+	private float price;
+
 	@JoinTable(
 		table = "rel_product_reference",
 		sourceColumn = "id_product",
@@ -34,6 +37,14 @@ public class Product  extends Persistent {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public float getPrice() {
+		return price;
+	}
+
+	public void setPrice(float price) {
+		this.price = price;
 	}
 
 	public Reference getReference() {
