@@ -13,6 +13,7 @@ import org.yop.orm.util.Reflection;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -175,7 +176,9 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		@SuppressWarnings("unchecked")
 		public Collection<To> getTarget(From from) {
 			try {
-				return (Collection<To>) this.field.get(from);
+				// Here we are asked to return a collection of objects, whatever the cardinality.
+				Object target = this.field.get(from);
+				return target instanceof Collection ? (Collection<To>) target : Collections.singletonList((To) target);
 			} catch (IllegalAccessException e) {
 				throw new YopRuntimeException(
 					"Could not read"
