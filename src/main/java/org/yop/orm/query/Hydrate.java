@@ -12,7 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Hydratation is a simple tool that uses {@link Select} to fetch relations on Yopable objects whose ID is set.
+ * Hydratation is a simple tool that uses {@link Select} to fetch relations on Yopable objects whose IDs are set.
  * @param <T> the target type
  */
 public class Hydrate<T extends Yopable> {
