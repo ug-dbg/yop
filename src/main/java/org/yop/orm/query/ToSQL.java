@@ -16,7 +16,7 @@ import java.util.Collection;
  * Every object SQL can be generated from should have a 'toSQL' method :
  * this class is for generating SQL from several ones.
  */
-public class ToSQL {
+class ToSQL {
 
 	public enum JoinType {
 		JOIN(" join "), INNER_JOIN(" inner join "), LEFT_JOIN(" left join ");
