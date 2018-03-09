@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * @param <From> the source type
  * @param <To>   the target type
  */
-public class Relation<From extends Yopable, To extends Yopable> {
+class Relation<From extends Yopable, To extends Yopable> {
 
 	private static final String DELETE_IN = " DELETE FROM {0} WHERE {1} IN ({2}) ";
 	private static final String INSERT    = " INSERT INTO {0} ({1},{2}) VALUES (?, ?) ";
