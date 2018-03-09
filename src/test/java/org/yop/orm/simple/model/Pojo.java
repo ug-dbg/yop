@@ -28,6 +28,9 @@ public class Pojo implements YopableJson {
 	@JoinTable(table = "POJO_OTHER_relation", sourceColumn = "idPojo", targetColumn = "idOther")
 	private List<Other> others = new ArrayList<>();
 
+	@JoinTable(table = "POJO_POJO_relation", sourceColumn = "idPOJO_a", targetColumn = "idPOJO_b")
+	private transient List<Pojo> children = new ArrayList<>();
+
 	@JoinTable(table = "POJO_POJO_relation", sourceColumn = "idPOJO_b", targetColumn = "idPOJO_a")
 	private transient Pojo parent;
 
@@ -76,6 +79,10 @@ public class Pojo implements YopableJson {
 
 	public void setParent(Pojo parent) {
 		this.parent = parent;
+	}
+
+	public List<Pojo> getChildren() {
+		return children;
 	}
 
 	@Override

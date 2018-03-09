@@ -21,6 +21,8 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -168,7 +170,7 @@ public class SimpleTest extends DBMSSwitch {
 	}
 
 	@Test
-		public void testSafeAlias() throws SQLException, ClassNotFoundException {
+	public void testSafeAlias() throws SQLException, ClassNotFoundException {
 		try (Connection connection = this.getConnection()) {
 			Pojo pojo = new Pojo();
 			pojo.setVersion(1337);
@@ -226,46 +228,133 @@ public class SimpleTest extends DBMSSwitch {
 	@Test
 	public void testIdMap() throws SQLException, ClassNotFoundException {
 		try (Connection connection = this.getConnection()) {
-				Pojo newPojo = new Pojo();
-				newPojo.setVersion(1337);
-				newPojo.setType(Pojo.Type.FOO);
-				Jopo jopo = new Jopo();
-				jopo.setName("jopo From code !");
-				jopo.setPojo(newPojo);
-				newPojo.getJopos().add(jopo);
+			Pojo newPojo = new Pojo();
+			newPojo.setVersion(1337);
+			newPojo.setType(Pojo.Type.FOO);
+			Jopo jopo = new Jopo();
+			jopo.setName("jopo From code !");
+			jopo.setPojo(newPojo);
+			newPojo.getJopos().add(jopo);
 
-				jopo = new Jopo();
-				jopo.setName("jopo From code #2 !");
-				jopo.setPojo(newPojo);
-				newPojo.getJopos().add(jopo);
+			jopo = new Jopo();
+			jopo.setName("jopo From code #2 !");
+			jopo.setPojo(newPojo);
+			newPojo.getJopos().add(jopo);
 
-				Other other = new Other();
-				other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
-				other.setName("other name :)");
-				newPojo.getOthers().add(other);
+			Other other = new Other();
+			other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
+			other.setName("other name :)");
+			newPojo.getOthers().add(other);
 
-				Upsert
-					.from(Pojo.class)
-					.onto(newPojo)
-					.join(JoinSet.to(Pojo::getJopos))
-					.join(JoinSet.to(Pojo::getOthers))
-					.checkNaturalID()
-					.execute(connection);
+			Upsert
+				.from(Pojo.class)
+				.onto(newPojo)
+				.join(JoinSet.to(Pojo::getJopos))
+				.join(JoinSet.to(Pojo::getOthers))
+				.checkNaturalID()
+				.execute(connection);
 
-				Select<Pojo> select = Select.from(Pojo.class).where(Where.naturalId(newPojo)).joinAll();
-				Set<Pojo> found = select.execute(connection, Select.Strategy.EXISTS);
-				Assert.assertEquals(1, found.size());
+			Select<Pojo> select = Select.from(Pojo.class).where(Where.naturalId(newPojo)).joinAll();
+			Set<Pojo> found = select.execute(connection, Select.Strategy.EXISTS);
+			Assert.assertEquals(1, found.size());
 
-				IdMap idMap = select.executeForIds(connection);
-				logger.debug("IdMap is : \n[{}]", idMap);
-				Assert.assertEquals(idMap.getIdsForClass(Pojo.class),  Sets.newHashSet(1L));
-				Assert.assertEquals(idMap.getIdsForClass(Other.class), Sets.newHashSet(1L));
-				Assert.assertEquals(idMap.getIdsForClass(Jopo.class),  Sets.newHashSet(1L, 2L));
+			IdMap idMap = select.executeForIds(connection);
+			logger.debug("IdMap is : \n[{}]", idMap);
+			Assert.assertEquals(idMap.getIdsForClass(Pojo.class),  Sets.newHashSet(1L));
+			Assert.assertEquals(idMap.getIdsForClass(Other.class), Sets.newHashSet(1L));
+			Assert.assertEquals(idMap.getIdsForClass(Jopo.class),  Sets.newHashSet(1L, 2L));
 
-				select.toDelete().executeQueries(connection);
+			select.toDelete().executeQueries(connection);
 
-				found = select.execute(connection, Select.Strategy.EXISTS);
-				Assert.assertEquals(0, found.size());
-			}
+			found = select.execute(connection, Select.Strategy.EXISTS);
+			Assert.assertEquals(0, found.size());
 		}
+	}
+
+	@Test
+	public void testHydrate() throws SQLException, ClassNotFoundException {
+		try (Connection connection = this.getConnection()) {
+			Pojo newPojo = new Pojo();
+			newPojo.setVersion(1337);
+			newPojo.setType(Pojo.Type.FOO);
+			Jopo jopo = new Jopo();
+			jopo.setName("jopo From code !");
+			jopo.setPojo(newPojo);
+			newPojo.getJopos().add(jopo);
+
+			jopo = new Jopo();
+			jopo.setName("jopo From code #2 !");
+			jopo.setPojo(newPojo);
+			newPojo.getJopos().add(jopo);
+
+			Other other = new Other();
+			other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
+			other.setName("other name :)");
+			newPojo.getOthers().add(other);
+
+			Upsert
+				.from(Pojo.class)
+				.onto(newPojo)
+				.join(JoinSet.to(Pojo::getJopos))
+				.join(JoinSet.to(Pojo::getOthers))
+				.checkNaturalID()
+				.execute(connection);
+
+			Select<Pojo> select = Select.from(Pojo.class).where(Where.naturalId(newPojo));
+			Set<Pojo> found = select.execute(connection);
+			Assert.assertEquals(1, found.size());
+			Pojo fromNaturalID = found.iterator().next();
+
+			Hydrate.from(Pojo.class).onto(fromNaturalID).fetchSet(Pojo::getJopos).execute(connection);
+			Assert.assertEquals(newPojo.getJopos(), fromNaturalID.getJopos());
+			Assert.assertEquals(0, fromNaturalID.getOthers().size());
+
+			found = select.execute(connection);
+			Assert.assertEquals(1, found.size());
+			fromNaturalID = found.iterator().next();
+
+			Hydrate.from(Pojo.class).onto(fromNaturalID).fetchAll().execute(connection);
+			Assert.assertEquals(newPojo.getJopos(),  fromNaturalID.getJopos());
+			Assert.assertEquals(newPojo.getOthers(), fromNaturalID.getOthers());
+
+			Pojo parent = new Pojo();
+			parent.setActive(false);
+			parent.setType(Pojo.Type.BAR);
+			parent.setVersion(0);
+			newPojo.setParent(parent);
+
+			Upsert
+				.from(Pojo.class)
+				.onto(newPojo)
+				.join(Join.to(Pojo::getParent))
+				.checkNaturalID()
+				.execute(connection);
+
+			found = select.execute(connection);
+			Assert.assertEquals(1, found.size());
+			fromNaturalID = found.iterator().next();
+			Hydrate.from(Pojo.class).onto(fromNaturalID).fetchAll().fetch(Pojo::getParent).execute(connection);
+			Assert.assertEquals(newPojo.getJopos(),  fromNaturalID.getJopos());
+			Assert.assertEquals(newPojo.getOthers(), fromNaturalID.getOthers());
+			Assert.assertEquals(parent, fromNaturalID.getParent());
+
+			Pojo pojo1 = new Pojo();
+			pojo1.setId(newPojo.getId());
+			pojo1.setVersion(newPojo.getVersion());
+
+			Pojo pojo2 = new Pojo();
+			pojo2.setId(parent.getId());
+
+			Hydrate
+				.from(Pojo.class)
+				.onto(Arrays.asList(pojo1, pojo2))
+				.fetchAll()
+				.fetch(Pojo::getParent)
+				.fetchSet(Pojo::getChildren)
+				.execute(connection);
+
+			Assert.assertEquals(parent, pojo1.getParent());
+			Assert.assertEquals(Collections.singletonList(pojo1), pojo2.getChildren());
+		}
+	}
 }
