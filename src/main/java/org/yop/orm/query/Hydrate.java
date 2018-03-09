@@ -136,7 +136,7 @@ public class Hydrate<T extends Yopable> {
 		for (T elementFromDB : elementsFromDB) {
 			T element = this.elements.get(elementFromDB.getId());
 			for (IJoin<T, ? extends Yopable> join : this.joins) {
-				assign(element, elementFromDB, join);
+				this.assign(element, elementFromDB, join);
 			}
 		}
 	}
