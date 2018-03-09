@@ -136,36 +136,46 @@ public class Hydrate<T extends Yopable> {
 		for (T elementFromDB : elementsFromDB) {
 			T element = this.elements.get(elementFromDB.getId());
 			for (IJoin<T, ? extends Yopable> join : this.joins) {
-				Collection<? extends Yopable> relationValue = join.getTarget(elementFromDB);
-				Field relationField = join.getField(this.target);
+				assign(element, elementFromDB, join);
+			}
+		}
+	}
 
-				try {
-					if (Collection.class.isAssignableFrom(relationField.getType())) {
-						relationField.set(element, relationValue);
-					} else if (Yopable.class.isAssignableFrom(relationField.getType())) {
-						if (relationValue.size() > 1) {
-							throw new YopRuntimeException(
-								"Something very weird happened : "
-								+ "found more than 1 target value for relation ["
-								+ relationField.getDeclaringClass().getName() + "#" + relationField.getName() + "] "
-								+ "for element [" + element + "]"
-							);
-						}
-						if (relationValue.isEmpty()) {
-							relationField.set(element, null);
-						} else {
-							relationField.set(element, relationValue.iterator().next());
-						}
-					}
-				} catch (IllegalAccessException e) {
+	/**
+	 * Assign a relation (join) using an element from DB onto the target element to hydrate.
+	 * @param element the element to hydrate
+	 * @param fromDB  the same element, from DB
+	 * @param join    the relation to hydrate
+	 */
+	private void assign(T element, T fromDB, IJoin<T, ?> join) {
+		Collection<? extends Yopable> relationValue = join.getTarget(fromDB);
+		Field relationField = join.getField(this.target);
+
+		try {
+			if (Collection.class.isAssignableFrom(relationField.getType())) {
+				relationField.set(element, relationValue);
+			} else if (Yopable.class.isAssignableFrom(relationField.getType())) {
+				if (relationValue.size() > 1) {
 					throw new YopRuntimeException(
-						"Could not access ["
+						"Something very weird happened : "
+						+ "found more than 1 target value for relation ["
 						+ relationField.getDeclaringClass().getName() + "#" + relationField.getName() + "] "
-						+ "for element [" + element + "]",
-						e
+						+ " on element [" + element + "]"
 					);
 				}
+				if (relationValue.isEmpty()) {
+					relationField.set(element, null);
+				} else {
+					relationField.set(element, relationValue.iterator().next());
+				}
 			}
+		} catch (IllegalAccessException e) {
+			throw new YopRuntimeException(
+				"Could not access ["
+				+ relationField.getDeclaringClass().getName() + "#" + relationField.getName() + "] "
+				+ "for element [" + element + "]",
+				e
+			);
 		}
 	}
 }
