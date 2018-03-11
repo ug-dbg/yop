@@ -16,7 +16,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.text.MessageFormat;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Prepare some SQLite database with delete on exit.
@@ -27,6 +29,8 @@ public class Prepare {
 
 	private static final String MYSQL_ADDRESS    = "localhost:3306/yop?useUnicode=true&characterEncoding=utf-8";
 	private static final String POSTGRES_ADDRESS = "localhost:5432/yop";
+	private static final String ORACLE_ADDRESS   = "localhost:1521/xe";
+	private static final String MSSQL_ADDRESS    = "localhost\\master:1401";
 
 	/**
 	 * Create an SQLite database with the given name and for the given package prefix.
@@ -124,7 +128,7 @@ public class Prepare {
 	}
 
 	/**
-	 * Get a localhost:5432 Postgres connection to 'yop' database.
+	 * Get a {@link #POSTGRES_ADDRESS} Postgres connection to 'yop' database.
 	 * <br>
 	 * {@link org.postgresql.Driver} should be in the classpath.
 	 * @return the PostgresSQL connection
@@ -153,6 +157,98 @@ public class Prepare {
 		String query = " DROP TABLE IF EXISTS {0} CASCADE; ";
 
 		for (Table table : tables) {
+			try {
+				Executor.executeQuery(
+					connection,
+					new Query(MessageFormat.format(query, table.qualifiedName()), new Parameters())
+				);
+			} catch (RuntimeException e) {
+				logger.trace("Error dropping table [" + table.qualifiedName() + "]");
+			}
+		}
+		for (Table table : tables) {
+			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
+		}
+
+		connection.commit();
+	}
+
+	/**
+	 * Get a {@link #ORACLE_ADDRESS} Oracle connection to 'xe' database.
+	 * <br>
+	 * {@link oracle.jdbc.driver.OracleDriver} should be in the classpath.
+	 * @return the ORacle connection
+	 * @throws ClassNotFoundException {@link oracle.jdbc.driver.OracleDriver} not found
+	 * @throws SQLException SQL error opening connection
+	 */
+	public static Connection getOracleConnection() throws ClassNotFoundException, SQLException {
+		Class.forName("oracle.jdbc.driver.Driver");
+		String connectionString = "jdbc:oracle://" + ORACLE_ADDRESS;
+		return DriverManager.getConnection(connectionString, "yop", "yop");
+	}
+
+	/**
+	 * Prepare the local Oracle database for tests.
+	 * <br><b>⚠⚠⚠  i.e. DROP AND RE-CREATE EVERY TABLE THAT MATCHES THE GIVEN PACKAGE PREFIX! ⚠⚠⚠ </b>
+	 * <br>
+	 * {@link oracle.jdbc.driver.OracleDriver} should be in the classpath.
+	 * @param packagePrefix the package prefix to scan for Yopable objects
+	 * @throws ClassNotFoundException {@link oracle.jdbc.driver.OracleDriver} not found
+	 * @throws SQLException SQL error opening connection
+	 */
+	public static void prepareOracle(String packagePrefix) throws SQLException, ClassNotFoundException {
+		Set<Table> tables = Table.findAllInClassPath(packagePrefix, ORMTypes.ORACLE);
+		Connection connection = getOracleConnection();
+		connection.setAutoCommit(false);
+		String query = " DROP TABLE IF EXISTS {0} CASCADE; ";
+
+		for (Table table : tables) {
+			try {
+				Executor.executeQuery(
+					connection,
+					new Query(MessageFormat.format(query, table.qualifiedName()), new Parameters())
+				);
+			} catch (RuntimeException e) {
+				logger.trace("Error dropping table [" + table.qualifiedName() + "]");
+			}
+		}
+		for (Table table : tables) {
+			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
+		}
+
+		connection.commit();
+	}
+
+	/**
+	 * Get a {@link #MSSQL_ADDRESS} MS-SQL connection to database.
+	 * <br>
+	 * {@link com.microsoft.sqlserver.jdbc.SQLServerDriver} should be in the classpath.
+	 * @return the MSSQL connection
+	 * @throws ClassNotFoundException {@link com.microsoft.sqlserver.jdbc.SQLServerDriver} not found
+	 * @throws SQLException SQL error opening connection
+	 */
+	public static Connection getMSSQLConnection() throws ClassNotFoundException, SQLException {
+		Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+		String connectionString = "jdbc:sqlserver://" + MSSQL_ADDRESS;
+		return DriverManager.getConnection(connectionString, "SA", "<YourStrong!Passw0rd>");
+	}
+
+	/**
+	 * Prepare the local MSSQL database for tests.
+	 * <br><b>⚠⚠⚠  i.e. DROP AND RE-CREATE EVERY TABLE THAT MATCHES THE GIVEN PACKAGE PREFIX! ⚠⚠⚠ </b>
+	 * <br>
+	 * {@link com.microsoft.sqlserver.jdbc.SQLServerDriver} should be in the classpath.
+	 * @param packagePrefix the package prefix to scan for Yopable objects
+	 * @throws ClassNotFoundException {@link com.microsoft.sqlserver.jdbc.SQLServerDriver} not found
+	 * @throws SQLException SQL error opening connection
+	 */
+	public static void prepareMSSQL(String packagePrefix) throws SQLException, ClassNotFoundException {
+		Set<Table> tables = Table.findAllInClassPath(packagePrefix, ORMTypes.MSSQL);
+		Connection connection = getMSSQLConnection();
+		connection.setAutoCommit(false);
+		String query = " DROP TABLE {0} ";
+
+		for (Table table : tables.stream().sorted(Comparator.comparing(Table::isRelation).reversed()).collect(Collectors.toList())) {
 			try {
 				Executor.executeQuery(
 					connection,
