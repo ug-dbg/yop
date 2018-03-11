@@ -1,5 +1,8 @@
 package org.yop.orm.annotations;
 
+import org.yop.orm.transform.ITransformer;
+import org.yop.orm.transform.VoidTransformer;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -15,4 +18,5 @@ public @interface Column {
     int length() default 50;
     LengthStrategy length_stratgey() default LengthStrategy.NONE;
     EnumStrategy enum_strategy() default EnumStrategy.NAME;
+    Class<? extends ITransformer> transformer() default VoidTransformer.class;
 }

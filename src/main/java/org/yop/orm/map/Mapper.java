@@ -10,6 +10,7 @@ import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Results;
+import org.yop.orm.transform.ITransformer;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
@@ -117,21 +118,29 @@ public class Mapper {
 			String columnName = field.getAnnotation(Column.class).name();
 			columnName = context + SEPARATOR + columnName;
 			String shortened = results.getQuery().getShortened(columnName);
+			Class<?> fieldType = field.getType();
 
 			if (results.getResultSet().getObject(shortened) != null) {
-				if (field.getType().isEnum()) {
+				if (fieldType.isEnum()) {
 					setEnumValue(results.getResultSet(), field, shortened, element);
 				} else {
+					ITransformer transformer = ORMUtil.getTransformerFor(field);
 					try {
-						field.set(element, results.getResultSet().getObject(shortened, field.getType()));
+						field.set(element, transformer.fromSQL(
+							results.getResultSet().getObject(shortened, fieldType),
+							fieldType)
+						);
 					} catch (SQLException e) {
-						logger.debug("Error mapping [{}] of type [{}]. Manual fallback.", columnName, field.getType());
+						logger.debug("Error mapping [{}] of type [{}]. Manual fallback.", columnName, fieldType);
 						Object object = results.getResultSet().getObject(shortened);
-						field.set(element, Reflection.transformInto(object, field.getType()));
-						logger.debug("Mapping [{}] of type [{}]. Manual fallback success.", columnName, field.getType());
+						field.set(element, transformer.fromSQL(
+							ITransformer.fallbackTransformer().fromSQL(object, fieldType),
+							fieldType)
+						);
+						logger.debug("Mapping [{}] of type [{}]. Manual fallback success.", columnName, fieldType);
 					}
 				}
-			} else if (!field.getType().isPrimitive()){
+			} else if (!fieldType.isPrimitive()){
 				field.set(element, null);
 			}
 		}
@@ -238,7 +247,7 @@ public class Mapper {
 				target = cycleBreaker(target, (Collection) field.get(element), cache);
 				mapRelationFields(results, target, newContext, cache);
 			} else if (Yopable.class.isAssignableFrom(field.getType())){
-				target = (Yopable) field.get(element);
+				target = (Yopable) ORMUtil.readField(field, element);
 				if(target == null) {
 					target = (Yopable) field.getType().newInstance();
 				}

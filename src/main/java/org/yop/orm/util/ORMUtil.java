@@ -10,9 +10,11 @@ import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.exception.YopMappingException;
+import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Constants;
+import org.yop.orm.transform.ITransformer;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -167,5 +169,37 @@ public class ORMUtil {
 	 */
 	public static String getIdColumn(Context<? extends Yopable> context) {
 		return context.getPath() + Constants.DOT + getIdColumn(context.getTarget());
+	}
+
+	public static ITransformer getTransformerFor(Field field) {
+		if(field.isAnnotationPresent(Column.class)) {
+			Class<? extends ITransformer> transformer = field.getAnnotation(Column.class).transformer();
+			try {
+				return ITransformer.getTransformer(transformer);
+			} catch (RuntimeException e) {
+				logger.warn(
+					"Could not instanciate transformer [{}] for [{}#{}]. Returning VoidTransformer.",
+					transformer.getName(),
+					field.getDeclaringClass(),
+					field.getName()
+				);
+			}
+		}
+		return ITransformer.voidTransformer();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static Object readField(Field field, Yopable element) {
+		try {
+			Object value = field.get(element);
+			if(field.isAnnotationPresent(Column.class)) {
+				return ITransformer.getTransformer(field.getAnnotation(Column.class).transformer()).forSQL(value);
+			}
+			return value;
+		} catch (IllegalAccessException e) {
+			throw new YopRuntimeException(
+				"Could not read [" + field.getDeclaringClass() + "#" + field.getName()+ "] on [" + element + "] !"
+			);
+		}
 	}
 }

@@ -4,10 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.evaluation.Evaluation;
-import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.JoinClause;
 import org.yop.orm.sql.Parameters;
+import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
@@ -175,27 +175,18 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		@Override
 		@SuppressWarnings("unchecked")
 		public Collection<To> getTarget(From from) {
-			try {
-				// Here we are asked to return a collection of objects, whatever the cardinality.
-				Object target = this.field.get(from);
+			// Here we are asked to return a collection of objects, whatever the cardinality.
+			Object target = ORMUtil.readField(this.field, from);
 
-				// target is null → empty list
-				// target is collection → target
-				// target is Yopable → target, as a singleton list
-				return
-					target == null ? new ArrayList<>(0)  : (
-						target instanceof Collection
-						? (Collection<To>) target
-						: Collections.singletonList((To) target)
-					);
-			} catch (IllegalAccessException e) {
-				throw new YopRuntimeException(
-					"Could not read"
-					+ " field [" + this.field.getDeclaringClass() + "#" + this.field.getName() + "]"
-					+ " of type [" + this.field.getType() + "]"
-					+ " on [" + from + "]"
+			// target is null → empty list
+			// target is collection → target
+			// target is Yopable → target, as a singleton list
+			return
+				target == null ? new ArrayList<>(0)  : (
+					target instanceof Collection
+					? (Collection<To>) target
+					: Collections.singletonList((To) target)
 				);
-			}
 		}
 	}
 }

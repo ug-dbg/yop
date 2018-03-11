@@ -50,18 +50,12 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 	 * @return the SQL portion for the given context→field restriction
 	 */
 	private String getFieldRestriction(Context<?> context, Field field, Parameters parameters) {
-		try {
-			Object ref = field.get(this.reference);
-			if(ref != null) {
-				String name = context.getPath() + "#" + field.getName() + " = " + "?";
-				parameters.addParameter(name, ref);
-			}
-			return this.columnName(field, context) + "=" + (ref == null ? "" : "?");
-		} catch (IllegalAccessException e) {
-			throw new YopRuntimeException(
-				"Could not read [" + field.getDeclaringClass() + "#" + field.getName()+ "] on [" + this.reference + "] !"
-			);
+		Object ref = ORMUtil.readField(field, this.reference);
+		if(ref != null) {
+			String name = context.getPath() + "#" + field.getName() + " = " + "?";
+			parameters.addParameter(name, ref);
 		}
+		return this.columnName(field, context) + "=" + (ref == null ? "" : "?");
 	}
 
 }

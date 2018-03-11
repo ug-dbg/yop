@@ -355,7 +355,7 @@ public class Upsert<T extends Yopable> {
 				default: throw new YopMappingException("Unknown enum strategy [" + strategy.name() + "] !");
 			}
 		}
-		return field.get(element);
+		return ORMUtil.readField(field, element);
 	}
 
 	/**
