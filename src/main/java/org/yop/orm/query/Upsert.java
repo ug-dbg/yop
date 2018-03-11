@@ -287,6 +287,10 @@ public class Upsert<T extends Yopable> {
 	 */
 	private Query<T> toSQLUpdate(T element) {
 		Parameters parameters = this.values(element);
+
+		// UPDATE query : exclude ID column.
+		parameters.removeIf(p -> ORMUtil.getIdColumn(element.getClass()).equals(p.getName()));
+
 		String whereClause = element.getIdColumn() + " = " + element.getId();
 		String sql = MessageFormat.format(
 			UPDATE,
