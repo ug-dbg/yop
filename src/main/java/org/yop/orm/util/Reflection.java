@@ -11,9 +11,11 @@ import sun.reflect.ReflectionFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -485,6 +487,7 @@ public class Reflection {
 	 * This mostly is to be used if the JDBC driver does not support {@link java.sql.ResultSet#getObject(int, Class)}.
 	 * <ol>
 	 *     <li>what is null or what is already the target type : do nothing</li>
+	 *     <li>what is java.sql → convert to string</li>
 	 *     <li>target type is String : use {@link String#valueOf(Object)}</li>
 	 *     <li>what is string and target type is some java.time class → parse !</li>
 	 *     <li>try to cast</li>
@@ -503,6 +506,21 @@ public class Reflection {
 
 		if(String.class.equals(into)) {
 			return String.valueOf(what);
+		}
+
+		if(what instanceof java.sql.Timestamp) {
+			LocalDateTime localDateTime = ((Timestamp) what).toLocalDateTime();
+			what = localDateTime.toString();
+		}
+
+		if(what instanceof java.sql.Date) {
+			LocalDate localDate = ((java.sql.Date) what).toLocalDate();
+			what = localDate.toString();
+		}
+
+		if(what instanceof java.sql.Time) {
+			LocalTime localTime = ((java.sql.Time) what).toLocalTime();
+			what = localTime.toString();
 		}
 
 		if(what instanceof String) {
