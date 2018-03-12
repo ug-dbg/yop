@@ -18,10 +18,14 @@ import java.util.stream.Collectors;
  * DBMS specificities.
  * <br>
  * This is pretty raw/patchy. This was written to prepare unit tests context.
+ * <br><br>
+ * This is required for schema generation and should only be used for this purpose only !
+  * <br>
+  * Yop tries to generate some very basic SQL CRUD queries that does not rely on an SQL dialect.
  */
 public class ORMTypes extends HashMap<Class<?>, String> {
 
-	private static final String CREATE = " CREATE TABLE {0} ({1}) ";
+	protected static final String CREATE = " CREATE TABLE {0} ({1}) ";
 	private static final String PK = " CONSTRAINT {0} PRIMARY KEY ({1}) ";
 	private static final String FK = " CONSTRAINT {0} FOREIGN KEY ({1}) REFERENCES {2}({3}) ON DELETE CASCADE ";
 
@@ -55,7 +59,7 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 	 * Add basic types matching.
 	 * @param defaultType the {@link #defaultType} to set.
 	 */
-	private ORMTypes(String defaultType) {
+	protected ORMTypes(String defaultType) {
 		this.defaultType = defaultType;
 		this.put(String.class,     "VARCHAR");
 		this.put(Character.class,  "VARCHAR");
@@ -157,7 +161,7 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 	 * @param column the column model
 	 * @return the FK query portion. Empty if the column is not a FK.
 	 */
-	String toSQLFK(Column column) {
+	protected String toSQLFK(Column column) {
 		ForeignKey fk = column.getFk();
 		if(fk == null) {
 			return "";
@@ -179,161 +183,4 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 	public String toSQLNK(Set<Column> naturalKeys) {
 		return "";
 	}
-
-	/** Default Types. Should work with MySQL. At least I hope. */
-	public static final ORMTypes DEFAULT = new ORMTypes("VARCHAR");
-
-	/** PostGres types */
-	public static final ORMTypes POSTGRES = new ORMTypes("VARCHAR") {
-		{
-			this.put(Boolean.class, "boolean");
-		}
-
-		@Override
-		protected String autoIncrementKeyWord() {
-			return " SERIAL ";
-		}
-
-		@Override
-		protected String type(Column column) {
-			return column.getPk() == null ? super.type(column) : "";
-		}
-	};
-
-	/** Oracle types. */
-	public static final ORMTypes ORACLE = new ORMTypes("VARCHAR") {
-
-		private static final String SEQUENCE_SQL = "CREATE SEQUENCE {0} START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE";
-		private static final String DROP_SEQUENCE_SQL = "DROP SEQUENCE {0}";
-
-		{
-			this.put(String.class,     "VARCHAR");
-			this.put(Character.class,  "VARCHAR");
-
-			this.put(Integer.class, "NUMBER");
-			this.put(Long.class,    "NUMBER");
-			this.put(Short.class,   "NUMBER");
-			this.put(Byte.class,    "NUMBER");
-		}
-
-		@Override
-		protected String autoIncrementKeyWord() {
-			return "";
-		}
-
-		/**
-		 * {@inheritDoc}
-		 * <br><br>
-		 * Implémentation :
-		 * DROP and CREATE the sequences for the given table.
-		 */
-		@Override
-		public List<String> otherSQL(Table table) {
-			List<String> sequencesSQL = new ArrayList<>();
-			for (Column column : table.getColumns()) {
-				for (String sequence : column.getSequences()) {
-					sequencesSQL.add(MessageFormat.format(DROP_SEQUENCE_SQL, sequence));
-					sequencesSQL.add(MessageFormat.format(SEQUENCE_SQL, sequence));
-				}
-			}
-			return sequencesSQL;
-		}
-	};
-
-	/** MS-SQL types. */
-	public static final ORMTypes MSSQL = new ORMTypes("NVARCHAR") {
-		{
-			this.put(String.class,     "NVARCHAR");
-			this.put(Character.class,  "NVARCHAR");
-
-			this.put(Integer.class, "INTEGER");
-			this.put(Long.class,    "BIGINT");
-			this.put(Short.class,   "INTEGER");
-			this.put(Byte.class,    "INTEGER");
-
-			this.put(Float.class,  "REAL");
-			this.put(Double.class, "REAL");
-			this.put(Date.class,          "DATE");
-			this.put(Calendar.class,      "DATETIME");
-			this.put(Instant.class,       "DATETIME");
-			this.put(LocalDate.class,     "DATE");
-			this.put(LocalDateTime.class, "DATETIME");
-
-			this.put(Time.class,               "DATETIME");
-			this.put(java.sql.Date.class,      "DATE");
-			this.put(java.sql.Timestamp.class, "DATETIME");
-		}
-
-		@Override
-		protected String type(Column column) {
-			String type = column.getType();
-			return type + (StringUtils.endsWith(type, "VARCHAR") ? "(" + column.getLength() + ")" : "");
-		}
-
-		@Override
-		protected String autoIncrementKeyWord() {
-			return " IDENTITY (1,1) ";
-		}
-
-		@Override
-		public String toSQL(Table table) {
-			Collection<String> elements = new ArrayList<>();
-			elements.addAll(table.getColumns().stream().sorted().map(Column::toString).collect(Collectors.toList()));
-			elements.addAll(table.getColumns().stream().map(c -> this.toSQLPK(table, c)).collect(Collectors.toList()));
-
-			Set<String> referenced = new HashSet<>();
-			for (Column column : table.getColumns()) {
-				if(column.getFk() != null) {
-					String reference = column.getFk().getReferencedTable() + "." + column.getFk().getReferencedTable();
-					if(referenced.contains(reference)) continue;
-
-					elements.add(this.toSQLFK(column));
-					referenced.add(reference);
-				}
-			}
-
-			return MessageFormat.format(
-				CREATE,
-				table.qualifiedName(),
-				MessageUtil.join(", ", elements)
-			);
-		}
-	};
-
-	/** SQLite types */
-	public static final ORMTypes SQLITE = new ORMTypes("TEXT") {
-		{
-			this.put(String.class,     "TEXT");
-			this.put(Character.class,  "TEXT");
-
-			this.put(Integer.class, "INTEGER");
-			this.put(Long.class,    "INTEGER");
-			this.put(Short.class,   "INTEGER");
-			this.put(Byte.class,    "INTEGER");
-
-			this.put(Float.class,  "REAL");
-			this.put(Double.class, "REAL");
-		}
-
-		@Override
-		public String toSQL(Column column) {
-			return column.getName()
-				+ " " + column.getType()
-				+ (column.isNotNull() ? " NOT NULL " : "")
-				+ (column.getPk() != null ? " PRIMARY KEY " : "");
-		}
-
-		@Override
-		public String toSQL(Table table) {
-			Collection<String> elements = new ArrayList<>();
-			elements.addAll(table.getColumns().stream().sorted().map(Column::toString).collect(Collectors.toList()));
-			elements.addAll(table.getColumns().stream().map(this::toSQLFK).collect(Collectors.toList()));
-
-			return MessageFormat.format(
-				CREATE,
-				table.qualifiedName(),
-				MessageUtil.join(", ", elements)
-			);
-		}
-	};
 }

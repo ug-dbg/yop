@@ -7,7 +7,7 @@ import org.sqlite.SQLiteConfig;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
-import org.yop.orm.util.ORMTypes;
+import org.yop.orm.util.dialect.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +51,7 @@ public class Prepare {
 		dbPath.toFile().deleteOnExit();
 
 		// Relation tables must be created last
-		Set<Table> tables = Table.findAllInClassPath(packagePrefix, ORMTypes.SQLITE);
+		Set<Table> tables = Table.findAllInClassPath(packagePrefix, SQLite.INSTANCE);
 		try (Connection connection = getConnection(dbPath.toFile())) {
 			connection.setAutoCommit(false);
 			for (Table table : tables) {
@@ -112,7 +112,7 @@ public class Prepare {
 	 * @throws SQLException SQL error opening connection
 	 */
 	public static void prepareMySQL(String packagePrefix) throws SQLException, ClassNotFoundException {
-		Set<Table> tables = Table.findAllInClassPath(packagePrefix, ORMTypes.DEFAULT);
+		Set<Table> tables = Table.findAllInClassPath(packagePrefix, MySQL.INSTANCE);
 		Connection connection = getMySQLConnection(false);
 		connection.setAutoCommit(false);
 
@@ -156,7 +156,7 @@ public class Prepare {
 	 * @throws SQLException SQL error opening connection
 	 */
 	public static void preparePostgres(String packagePrefix) throws SQLException, ClassNotFoundException {
-		Set<Table> tables = Table.findAllInClassPath(packagePrefix, ORMTypes.POSTGRES);
+		Set<Table> tables = Table.findAllInClassPath(packagePrefix, Postgres.INSTANCE);
 		Connection connection = getPostgresConnection();
 		connection.setAutoCommit(false);
 		String query = " DROP TABLE IF EXISTS {0} CASCADE; ";
@@ -205,7 +205,7 @@ public class Prepare {
 	 * @throws SQLException SQL error opening connection
 	 */
 	public static void prepareOracle(String packagePrefix) throws SQLException, ClassNotFoundException {
-		Set<Table> tables = Table.findAllInClassPath(packagePrefix, ORMTypes.ORACLE);
+		Set<Table> tables = Table.findAllInClassPath(packagePrefix, Oracle.INSTANCE);
 		Connection connection = getOracleConnection();
 		connection.setAutoCommit(false);
 		String query = " DROP TABLE YOP.{0} ";
@@ -263,7 +263,7 @@ public class Prepare {
 	 * @throws SQLException SQL error opening connection
 	 */
 	public static void prepareMSSQL(String packagePrefix) throws SQLException, ClassNotFoundException {
-		Set<Table> tables = Table.findAllInClassPath(packagePrefix, ORMTypes.MSSQL);
+		Set<Table> tables = Table.findAllInClassPath(packagePrefix, MSSQL.INSTANCE);
 		Connection connection = getMSSQLConnection();
 		connection.setAutoCommit(false);
 		String query = " DROP TABLE {0} ";
