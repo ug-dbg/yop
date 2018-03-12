@@ -221,7 +221,7 @@ public class SupplyChainTest extends DBMSSwitch {
 
 			Upsert.from(Organisation.class).onto(organisation).joinAll().execute(connection);
 
-			// Find me a pickle ! But a pickel with some reference !
+			// Find me a pickle ! But a pickle with some reference !
 			Set<Product> products = Select
 				.from(Product.class)
 				.joinAll()
@@ -267,6 +267,11 @@ public class SupplyChainTest extends DBMSSwitch {
 			// How much was it already ?
 			Set<Customer> meIGuess = Select.from(Customer.class).joinAll().where(Where.naturalId(me)).execute(connection);
 			Assert.assertEquals(1, meIGuess.size());
+			Assert.assertEquals(me, meIGuess.iterator().next());
+			Long myID = me.getId();
+			me.setId(null);
+			Assert.assertEquals(me, meIGuess.iterator().next());
+			me.setId(myID);
 
 			Order myOrder = meIGuess.iterator().next().getOrders().iterator().next();
 			Assert.assertEquals(
