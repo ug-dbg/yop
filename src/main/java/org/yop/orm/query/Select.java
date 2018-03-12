@@ -37,8 +37,13 @@ public class Select<T extends Yopable> {
 
 	public enum Strategy {IN, EXISTS}
 
-	private static final String SELECT = " SELECT {0} FROM {1} AS {2} {3} WHERE {4} ";
-	private static final String SELECT_DISTINCT = " SELECT DISTINCT({0}) FROM {1} AS {2} {3} WHERE {4} ";
+	/** Select [what] FROM [table] [table_alias] [join clause] WHERE [where clause] */
+	private static final String SELECT = " SELECT {0} FROM {1} {2} {3} WHERE {4} ";
+
+	/** Select distinct([what]) FROM [table] [table_alias] [join clause] WHERE [where clause] */
+	private static final String SELECT_DISTINCT = " SELECT DISTINCT({0}) FROM {1} {2} {3} WHERE {4} ";
+
+	/** Default where clause is always added. So I don't have to check if the 'WHERE' keyword is required ;-) */
 	private static final String DEFAULT_WHERE = " 1=1 ";
 
 	/** Select root context : target class and SQL path **/
