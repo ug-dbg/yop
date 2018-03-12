@@ -1,12 +1,12 @@
 package org.yop.orm.gen;
 
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
+import org.yop.orm.util.ORMTypes;
 import org.yop.orm.util.dialect.*;
 
 import java.io.File;
@@ -16,9 +16,6 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Set;
 
 /**
  * Prepare some SQLite database with delete on exit.
@@ -50,14 +47,8 @@ public class Prepare {
 		Path dbPath = Files.createTempFile(name, "_temp.db");
 		dbPath.toFile().deleteOnExit();
 
-		// Relation tables must be created last
-		Set<Table> tables = Table.findAllInClassPath(packagePrefix, SQLite.INSTANCE);
 		try (Connection connection = getConnection(dbPath.toFile())) {
-			connection.setAutoCommit(false);
-			for (Table table : tables) {
-				Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
-			}
-			connection.commit();
+			prepare(packagePrefix, connection, SQLite.INSTANCE);
 		}
 		return dbPath.toFile();
 	}
@@ -112,24 +103,9 @@ public class Prepare {
 	 * @throws SQLException SQL error opening connection
 	 */
 	public static void prepareMySQL(String packagePrefix) throws SQLException, ClassNotFoundException {
-		Set<Table> tables = Table.findAllInClassPath(packagePrefix, MySQL.INSTANCE);
-		Connection connection = getMySQLConnection(false);
-		connection.setAutoCommit(false);
-
-		// Relation tables must be deleted first
-		for (Table table : Lists.reverse(new ArrayList<>(tables))) {
-			try {
-				Executor.executeQuery(connection, new Query("DROP TABLE " + table.qualifiedName(), new Parameters()));
-			} catch (RuntimeException e) {
-				logger.trace("Error dropping table [" + table.qualifiedName() + "]", e);
-			}
+		try (Connection connection = getMySQLConnection(false)) {
+			prepare(packagePrefix, connection, MySQL.INSTANCE);
 		}
-
-		// Relation tables must be created last
-		for (Table table : tables) {
-			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
-		}
-		connection.commit();
 	}
 
 	/**
@@ -156,29 +132,9 @@ public class Prepare {
 	 * @throws SQLException SQL error opening connection
 	 */
 	public static void preparePostgres(String packagePrefix) throws SQLException, ClassNotFoundException {
-		Set<Table> tables = Table.findAllInClassPath(packagePrefix, Postgres.INSTANCE);
-		Connection connection = getPostgresConnection();
-		connection.setAutoCommit(false);
-		String query = " DROP TABLE IF EXISTS {0} CASCADE; ";
-
-		// Relation tables must be deleted first
-		for (Table table : Lists.reverse(new ArrayList<>(tables))) {
-			try {
-				Executor.executeQuery(
-					connection,
-					new Query(MessageFormat.format(query, table.qualifiedName()), new Parameters())
-				);
-			} catch (RuntimeException e) {
-				logger.trace("Error dropping table [" + table.qualifiedName() + "]", e);
-			}
+		try (Connection connection = getPostgresConnection()) {
+			prepare(packagePrefix, connection, Postgres.INSTANCE);
 		}
-
-		// Relation tables must be created last
-		for (Table table : tables) {
-			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
-		}
-
-		connection.commit();
 	}
 
 	/**
@@ -205,38 +161,9 @@ public class Prepare {
 	 * @throws SQLException SQL error opening connection
 	 */
 	public static void prepareOracle(String packagePrefix) throws SQLException, ClassNotFoundException {
-		Set<Table> tables = Table.findAllInClassPath(packagePrefix, Oracle.INSTANCE);
-		Connection connection = getOracleConnection();
-		connection.setAutoCommit(false);
-		String query = " DROP TABLE YOP.{0} ";
-
-		// Relation tables must be deleted first
-		for (Table table : Lists.reverse(new ArrayList<>(tables))) {
-			try {
-				Executor.executeQuery(
-					connection,
-					new Query(MessageFormat.format(query, table.qualifiedName()), new Parameters())
-				);
-			} catch (RuntimeException e) {
-				logger.trace("Error dropping table [" + table.qualifiedName() + "]", e);
-			}
+		try (Connection connection = getOracleConnection()) {
+			prepare(packagePrefix, connection, Oracle.INSTANCE);
 		}
-		connection.commit();
-
-		// Relation tables must be created last
-		for (Table table : tables) {
-			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
-
-			// For Oracle, we also have to create sequences.
-			for (String other : table.otherSQL()) {
-				try {
-					Executor.executeQuery(connection, new Query(other, new Parameters()));
-				} catch (RuntimeException e) {
-					logger.trace("Error executing other SQL init for table [" + table.qualifiedName() + "]", e);
-				}
-			}
-		}
-		connection.commit();
 	}
 
 	/**
@@ -263,28 +190,29 @@ public class Prepare {
 	 * @throws SQLException SQL error opening connection
 	 */
 	public static void prepareMSSQL(String packagePrefix) throws SQLException, ClassNotFoundException {
-		Set<Table> tables = Table.findAllInClassPath(packagePrefix, MSSQL.INSTANCE);
-		Connection connection = getMSSQLConnection();
-		connection.setAutoCommit(false);
-		String query = " DROP TABLE {0} ";
+		try (Connection connection = getMSSQLConnection()) {
+			prepare(packagePrefix, connection, MSSQL.INSTANCE);
+		}
+	}
 
-		// Relation tables must be deleted first
-		for (Table table : Lists.reverse(new ArrayList<>(tables))) {
+	/**
+	 * Prepare the target DB using the script from {@link ORMTypes#generateScript(String)}.
+	 * <br>
+	 * Please use the correct {@link ORMTypes} instance for the given connection ;-)
+	 * @param packagePrefix the package prefix (find all Yopables)
+	 * @param connection    the DB connection to use
+	 * @param dialect       the dialect (one of the singleton from the {@link org.yop.orm.util.dialect} package)
+	 * @throws SQLException an error occured running and committing the generation script
+	 */
+	private static void prepare(String packagePrefix, Connection connection, ORMTypes dialect) throws SQLException {
+		connection.setAutoCommit(false);
+		for (String line : dialect.generateScript(packagePrefix)) {
 			try {
-				Executor.executeQuery(
-					connection,
-					new Query(MessageFormat.format(query, table.qualifiedName()), new Parameters())
-				);
+				Executor.executeQuery(connection, new Query(line, new Parameters()));
 			} catch (RuntimeException e) {
-				logger.trace("Error dropping table [" + table.qualifiedName() + "]", e);
+				logger.warn("Error executing script line [" + line + "]", e);
 			}
 		}
-
-		// Relation tables must be created last
-		for (Table table : tables) {
-			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
-		}
-
 		connection.commit();
 	}
 }

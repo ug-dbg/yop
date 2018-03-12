@@ -1,5 +1,6 @@
 package org.yop.orm.util;
 
+import com.google.common.collect.Lists;
 import com.google.common.primitives.Primitives;
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.gen.Column;
@@ -23,9 +24,10 @@ import java.util.stream.Collectors;
   * <br>
   * Yop tries to generate some very basic SQL CRUD queries that does not rely on an SQL dialect.
  */
-public class ORMTypes extends HashMap<Class<?>, String> {
+public abstract class ORMTypes extends HashMap<Class<?>, String> {
 
 	protected static final String CREATE = " CREATE TABLE {0} ({1}) ";
+	private static final String DROP = "DROP TABLE {0}";
 	private static final String PK = " CONSTRAINT {0} PRIMARY KEY ({1}) ";
 	private static final String FK = " CONSTRAINT {0} FOREIGN KEY ({1}) REFERENCES {2}({3}) ON DELETE CASCADE ";
 
@@ -182,5 +184,30 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 	 */
 	public String toSQLNK(Set<Column> naturalKeys) {
 		return "";
+	}
+
+	/**
+	 * Generate a script (a list of SQL queries)
+	 * that can be used to prepare a DB for the Yopable objects of a given package.
+	 * @param packagePrefix the Yopable package prefix
+	 * @return the SQL script, as an ordered list of SQL queries to run.
+	 */
+	public List<String> generateScript(String packagePrefix) {
+		Set<Table> tables = Table.findAllInClassPath(packagePrefix, this);
+		List<String> script = new ArrayList<>();
+
+		// Relation tables must be deleted first
+		for (Table table : Lists.reverse(new ArrayList<>(tables))) {
+			script.add(MessageFormat.format(DROP, table.qualifiedName()));
+		}
+
+		// Relation tables must be created last
+		// Also add the other SQL queries (e.g. sequences)
+		for (Table table : tables) {
+			script.add(table.toString());
+			script.addAll(table.otherSQL());
+		}
+
+		return script;
 	}
 }

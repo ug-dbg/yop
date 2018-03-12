@@ -22,6 +22,9 @@ public class MSSQL extends ORMTypes {
 
 	public static final ORMTypes INSTANCE = new MSSQL();
 
+	/**
+	 * Default constructor. Please use singleton {@link #INSTANCE}.
+	 */
 	private MSSQL() {
 		super("NVARCHAR");
 		this.put(String.class,     "NVARCHAR");

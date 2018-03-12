@@ -11,6 +11,9 @@ public class Postgres extends ORMTypes {
 
 	public static final ORMTypes INSTANCE = new Postgres();
 
+	/**
+	 * Default constructor. Please use singleton {@link #INSTANCE}.
+	 */
 	private Postgres() {
 		super("varchar");
 		this.put(Boolean.class, "boolean");

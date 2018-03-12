@@ -18,6 +18,9 @@ public class SQLite extends ORMTypes {
 
 	public static final ORMTypes INSTANCE = new SQLite();
 
+	/**
+	 * Default constructor. Please use singleton {@link #INSTANCE}.
+	 */
 	private SQLite() {
 		super("TEXT");
 		this.put(String.class,     "TEXT");

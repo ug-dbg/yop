@@ -21,6 +21,9 @@ public class Oracle extends ORMTypes {
 
 	public static final ORMTypes INSTANCE = new Oracle();
 
+	/**
+	 * Default constructor. Please use singleton {@link #INSTANCE}.
+	 */
 	private Oracle() {
 		super("VARCHAR");
 		this.put(String.class,     "VARCHAR");

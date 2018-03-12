@@ -10,7 +10,10 @@ public class MySQL extends ORMTypes {
 
 	public static final ORMTypes INSTANCE = new MySQL();
 
+	/**
+	 * Default constructor. Please use singleton {@link #INSTANCE}.
+	 */
 	private MySQL() {
-		super("varchar");
+		super("VARCHAR");
 	}
 }
