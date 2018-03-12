@@ -130,7 +130,7 @@ public class Mapper {
 							results.getResultSet().getObject(shortened, fieldType),
 							fieldType)
 						);
-					} catch (SQLException e) {
+					} catch (SQLException | AbstractMethodError e) {
 						logger.debug("Error mapping [{}] of type [{}]. Manual fallback.", columnName, fieldType);
 						Object object = results.getResultSet().getObject(shortened);
 						field.set(element, transformer.fromSQL(
