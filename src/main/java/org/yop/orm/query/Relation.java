@@ -31,7 +31,7 @@ class Relation<From extends Yopable, To extends Yopable> {
 	/**
 	 * The relations to update.
 	 * <br>
-	 * Relations might actually be N ↔ N but Yop API deals with oriented unicyclic graphs.
+	 * Relations might actually be N ↔ N but Yop API deals with oriented acyclic graphs.
 	 * <br><br>
 	 * <b> 1 From → N To, several times</b>
 	 */
