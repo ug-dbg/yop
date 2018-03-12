@@ -269,7 +269,7 @@ public class Upsert<T extends Yopable> {
 	private Query toSQLInsert(T element) {
 		Parameters parameters = this.values(element);
 		List<String> columns = parameters.stream().map(Parameters.Parameter::getName).collect(Collectors.toList());
-		List<String> values = parameters.stream().map(p -> "?").collect(Collectors.toList());
+		List<String> values = parameters.stream().map(Parameters.Parameter::toSQLValue).collect(Collectors.toList());
 
 		String sql = MessageFormat.format(
 			INSERT,
@@ -277,6 +277,8 @@ public class Upsert<T extends Yopable> {
 			Joiner.on(", ").join(columns),
 			Joiner.on(", ").join(values)
 		);
+
+		parameters.removeIf(Parameters.Parameter::isSequence);
 		return (Query) new Query<>(sql, parameters, element).askGeneratedKeys(true, element.getClass());
 	}
 
@@ -310,7 +312,9 @@ public class Upsert<T extends Yopable> {
 	}
 
 	/**
-	 * Find all the columns and values to set
+	 * Find all the columns and values to set.
+	 * <br>
+	 * A sequence parameter might be set if specified !
 	 * @return the columns to select
 	 */
 	private Parameters values(T element) {
@@ -320,8 +324,16 @@ public class Upsert<T extends Yopable> {
 		for (Field field : fields) {
 			if(field.equals(idField)) {
 				Object value = getUpsertIdValue(element);
+
 				if(value != null) {
-					parameters.addParameter(element.getIdColumn(), value);
+					boolean isSequence = ORMUtil.useSequence()
+					&& !ORMUtil.readSequence(idField).isEmpty();
+
+					if (isSequence) {
+						parameters.addSequenceParameter(element.getIdColumn(), value);
+					} else {
+						parameters.addParameter(element.getIdColumn(), value);
+					}
 				}
 				continue;
 			}
@@ -379,8 +391,10 @@ public class Upsert<T extends Yopable> {
 		if(idField.getAnnotation(Id.class) != null && !idField.getAnnotation(Id.class).autoincrement()) {
 			throw new YopMappingException("Element [" + element + "] has no ID and autoincrement is set to false !");
 		}
-		if(idField.isAnnotationPresent(Id.class) && !idField.getAnnotation(Id.class).sequence().isEmpty()) {
-			return idField.getAnnotation(Id.class).sequence() + ".nextval";
+
+		if(ORMUtil.useSequence()
+		&& !ORMUtil.readSequence(idField).isEmpty()) {
+			return ORMUtil.readSequence(idField) + ".nextval";
 		}
 		return null;
 	}

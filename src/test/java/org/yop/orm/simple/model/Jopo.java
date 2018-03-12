@@ -1,5 +1,6 @@
 package org.yop.orm.simple.model;
 
+import org.yop.orm.annotations.Id;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
@@ -8,6 +9,7 @@ import java.util.Objects;
 
 public class Jopo implements Yopable {
 
+	@Id(sequence = "seq_JOPO")
 	@Column(name = "ID")
 	private Long id;
 

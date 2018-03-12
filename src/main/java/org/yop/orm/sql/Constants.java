@@ -1,5 +1,7 @@
 package org.yop.orm.sql;
 
+import java.lang.reflect.Field;
+
 /**
  * SQL constants.
  */
@@ -15,4 +17,20 @@ public class Constants {
 	public static final int SQL_ALIAS_MAX_LENGTH = Integer.valueOf(
 		System.getProperties().getProperty("yop.alias.max.length", "40")
 	);
+
+	/** use sequences (Oracle style) : default to false */
+	public static final boolean USE_SEQUENCES = Boolean.valueOf(
+		System.getProperties().getProperty("yop.sql.sequences", "false")
+	);
+
+	/**
+	 * If you set a sequence to this constant, the sequence name will be calculated :
+	 * <br>
+	 * <b>"seq_" + {current_class#getSimpleName()}</b>
+	 * <br><br>
+	 * see {@link org.yop.orm.util.ORMUtil#readSequence(Field)}
+	 * <br><br>
+	 * The reason for this mechanism is to let you factorize the id field in an abstract class if you need.
+	 */
+	public static final String DEFAULT_SEQ = "→DEFAULT_SEQ←";
 }

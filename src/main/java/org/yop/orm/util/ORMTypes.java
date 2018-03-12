@@ -112,6 +112,16 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 	}
 
 	/**
+	 * An extra list of sql queries to be executed for this table.
+	 * <br>
+	 * Default : do nothing :-)
+	 * @return an ordered list of queries to execute so the table is entirely operationnal.
+	 */
+	public List<String> otherSQL(Table table) {
+		return new ArrayList<>(0);
+	}
+
+	/**
 	 * Changing the {@link #type(Column)} method might be required (hello Postgres!)
 	 * @return the auto increment keyword.
 	 */
@@ -191,7 +201,44 @@ public class ORMTypes extends HashMap<Class<?>, String> {
 	};
 
 	/** Oracle types. */
-	public static final ORMTypes ORACLE = new ORMTypes("VARCHAR");
+	public static final ORMTypes ORACLE = new ORMTypes("VARCHAR") {
+
+		private static final String SEQUENCE_SQL = "CREATE SEQUENCE {0} START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE";
+		private static final String DROP_SEQUENCE_SQL = "DROP SEQUENCE {0}";
+
+		{
+			this.put(String.class,     "VARCHAR");
+			this.put(Character.class,  "VARCHAR");
+
+			this.put(Integer.class, "NUMBER");
+			this.put(Long.class,    "NUMBER");
+			this.put(Short.class,   "NUMBER");
+			this.put(Byte.class,    "NUMBER");
+		}
+
+		@Override
+		protected String autoIncrementKeyWord() {
+			return "";
+		}
+
+		/**
+		 * {@inheritDoc}
+		 * <br><br>
+		 * Implémentation :
+		 * DROP and CREATE the sequences for the given table.
+		 */
+		@Override
+		public List<String> otherSQL(Table table) {
+			List<String> sequencesSQL = new ArrayList<>();
+			for (Column column : table.getColumns()) {
+				for (String sequence : column.getSequences()) {
+					sequencesSQL.add(MessageFormat.format(DROP_SEQUENCE_SQL, sequence));
+					sequencesSQL.add(MessageFormat.format(SEQUENCE_SQL, sequence));
+				}
+			}
+			return sequencesSQL;
+		}
+	};
 
 	/** MS-SQL types. */
 	public static final ORMTypes MSSQL = new ORMTypes("NVARCHAR") {

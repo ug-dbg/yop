@@ -1,18 +1,26 @@
 package org.yop.orm.sql;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.util.ORMUtil;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.*;
 
 /**
  * An SQL query, and everything it needs to be executed on a Connection.
  */
 public class Query {
+
+	private static final Logger logger = LoggerFactory.getLogger(Query.class);
+
+	private static final Comparator<String> ALIAS_COMPARATOR = Comparator
+		.comparing(String::length)
+		.thenComparing(String::compareTo)
+		.reversed();
 
 	/** The SQL to execute */
 	private String sql;
@@ -45,8 +53,8 @@ public class Query {
 		this.safeAliasSQL = sql;
 		this.parameters = parameters;
 
-		// Search table/column aliases that are too long for SQL
-		Set<String> tooLongAliases = new TreeSet<>(Comparator.comparing(String::length).reversed());
+		// Search table/column aliases that are too long for SQL : longest alias first !
+		Set<String> tooLongAliases = new TreeSet<>(ALIAS_COMPARATOR);
 		for (String word : StringUtils.split(sql, " ,;\"")) {
 			// if the word is not too long, that's OK
 			// if the word contains a "." this is not an alias
@@ -95,15 +103,6 @@ public class Query {
 	}
 
 	/**
-	 * Add a new SQL parameter
-	 * @param name  the SQL parameter name (will be displayed in the logs if show_sql = true)
-	 * @param value the SQL parameter value
-	 */
-	public void addParameter(String name, Object value) {
-		this.parameters.add(new Parameters.Parameter(name, value));
-	}
-
-	/**
 	 * @return the query parameters
 	 */
 	public Parameters getParameters() {
@@ -126,8 +125,12 @@ public class Query {
 	 * @return if {@link #askGeneratedKeys} → {@link Statement#RETURN_GENERATED_KEYS}
 	 *         else → {@link Statement#NO_GENERATED_KEYS}
 	 */
-	public int generatedKeyCommand() {
+	private int generatedKeyCommand() {
 		return this.askGeneratedKeys ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS;
+	}
+
+	public String[] getIdColumn() {
+		return this.target == null ? new String[0] : new String[] {ORMUtil.getIdColumn(this.target)};
 	}
 
 	/**
@@ -164,20 +167,55 @@ public class Query {
 			ResultSet generatedKeys = statement.getGeneratedKeys();
 			int idIndex = 1;
 
-			if(this.target != null) {
-				String idColumn = ORMUtil.getIdColumn(this.target);
-				for (int i = 1; i <= generatedKeys.getMetaData().getColumnCount(); i++) {
-					if (StringUtils.equals(idColumn, generatedKeys.getMetaData().getColumnLabel(i))) {
-						idIndex = i;
-						break;
+			try {
+				if (this.target != null) {
+					String idColumn = ORMUtil.getIdColumn(this.target);
+					for (int i = 1; i <= generatedKeys.getMetaData().getColumnCount(); i++) {
+						if (StringUtils.equals(idColumn, generatedKeys.getMetaData().getColumnLabel(i))) {
+							idIndex = i;
+							break;
+						}
 					}
 				}
+			} catch (RuntimeException e) {
+				logger.debug("Error reading metadata for generated indexes. Column #[{}] will be used", idIndex, e);
 			}
 
 			while (generatedKeys.next()) {
 				this.generatedIds.add(generatedKeys.getLong(idIndex));
 			}
 		}
+	}
+
+	/**
+	 * Prepare the statement to be executed using the query.
+	 * <br>
+	 * The safe alias SQL query is used and parameters are set.
+	 * <br>
+	 * You are ready to go :-)
+	 * @param connection the connection to use to prepare the statement
+	 * @return the prepared statement with the parameters set
+	 * @throws SQLException an Error occured preparing the statement with the given connection
+	 */
+	public PreparedStatement prepareStatement(Connection connection) throws SQLException {
+		String[] idColumns = this.getIdColumn();
+		PreparedStatement statement;
+		if (idColumns.length > 0) {
+			statement = connection.prepareStatement(this.getSafeSql(), idColumns);
+		} else {
+			statement = connection.prepareStatement(this.getSafeSql(), this.generatedKeyCommand());
+		}
+		for(int i = 0; i < this.parameters.size(); i++) {
+			Parameters.Parameter parameter = this.parameters.get(i);
+			if (parameter.isSequence()) {
+				throw new YopRuntimeException(
+					"Parameter [" + parameter + "] is a sequence !"
+					+ "It should not be here. This is probably a bug !"
+				);
+			}
+			statement.setObject(i + 1, parameter.getValue());
+		}
+		return statement;
 	}
 
 	@Override

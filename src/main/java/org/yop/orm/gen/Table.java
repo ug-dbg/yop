@@ -20,7 +20,12 @@ import java.util.stream.Collectors;
  * <br>
  * This is pretty raw. This was written to prepare unit tests context.
  */
-public class Table {
+public class Table implements Comparable<Table> {
+
+	/** Relation tables last */
+	private static final Comparator<Table> COMPARATOR = Comparator
+		.comparing(Table::isRelation)
+		.thenComparing(Table::qualifiedName);
 
 	private String name;
 	private String schema;
@@ -49,6 +54,14 @@ public class Table {
 		return this.types.toSQL(this);
 	}
 
+	/**
+	 * An extra list of sql queries to be executed for this table.
+	 * @return an ordered list of queries to execute so the table is entirely operationnal.
+	 */
+	public List<String> otherSQL() {
+		return this.types.otherSQL(this);
+	}
+
 	@Override
 	public String toString() {
 		return this.toSQL();
@@ -67,6 +80,11 @@ public class Table {
 		return Objects.hash(name, schema);
 	}
 
+	@Override
+	public int compareTo(Table o) {
+		return COMPARATOR.compare(this, o);
+	}
+
 	/**
 	 * Find all the tables required to map the Yopable classes with the given package prefix
 	 * @param packagePrefix the package prefix. Can be fickle.
@@ -75,7 +93,7 @@ public class Table {
 	public static Set<Table> findAllInClassPath(String packagePrefix, ORMTypes types) {
 		Set<Class<? extends Yopable>> subtypes = new Reflections("").getSubTypesOf(Yopable.class);
 
-		Set<Table> tables = new TreeSet<>(Comparator.comparing(Table::isRelation).thenComparing(Table::qualifiedName));
+		Set<Table> tables = new TreeSet<>();
 		subtypes
 			.stream()
 			.filter(c -> c.getPackage().getName().startsWith(packagePrefix))

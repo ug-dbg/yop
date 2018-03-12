@@ -171,6 +171,16 @@ public class ORMUtil {
 		return context.getPath() + Constants.DOT + getIdColumn(context.getTarget());
 	}
 
+	/**
+	 * Get the transformer for a given field.
+	 * <ul>
+	 *     <li>No transformer specified → {@link org.yop.orm.transform.VoidTransformer} singleton instance</li>
+	 *     <li>Transformer specified → transformer singleton instance</li>
+	 *     <li>Transformer specified but not instantiable → {@link org.yop.orm.transform.VoidTransformer}</li>
+	 * </ul>
+	 * @param field the field to read
+	 * @return the transformer for the field. Never null.
+	 */
 	public static ITransformer getTransformerFor(Field field) {
 		if(field.isAnnotationPresent(Column.class)) {
 			Class<? extends ITransformer> transformer = field.getAnnotation(Column.class).transformer();
@@ -188,6 +198,15 @@ public class ORMUtil {
 		return ITransformer.voidTransformer();
 	}
 
+	/**
+	 * Read the value of a field.
+	 * <br>
+	 * If the field is a {@link Column} with a specified {@link ITransformer}, the field value is transformed,
+	 * using {@link ITransformer#forSQL(Object)}.
+	 * @param field   the field to read
+	 * @param element the element on which the field is to read
+	 * @return the field value, that might have been transformed using the speficied {@link ITransformer}.
+	 */
 	@SuppressWarnings("unchecked")
 	public static Object readField(Field field, Yopable element) {
 		try {
@@ -201,5 +220,37 @@ public class ORMUtil {
 				"Could not read [" + field.getDeclaringClass() + "#" + field.getName()+ "] on [" + element + "] !"
 			);
 		}
+	}
+
+	/**
+	 * See {@link Constants#USE_SEQUENCES}.
+	 * @return true if the system variable 'yop.sql.sequences' is set.
+	 */
+	public static boolean useSequence() {
+		return Constants.USE_SEQUENCES;
+	}
+
+	/**
+	 * Read the sequence of an {@link Id} field.
+	 * <br>
+	 * What does it do ?
+	 * <ul>
+	 *   <li>not @Id or no sequence set → "" </li>
+	 *   <li>Id field and sequence is not set to {@link Constants#DEFAULT_SEQ} → the sequence set on @Id </li>
+	 *   <li>Id field and sequence is set to {@link Constants#DEFAULT_SEQ} → "seq_" + class simple name </li>
+	 * </ul>
+	 * @param field the field to read
+	 * @return the sequence for this field, or an empty String
+	 *
+	 */
+	public static String readSequence(Field field) {
+		if(field.isAnnotationPresent(Id.class) && !StringUtils.isBlank(field.getAnnotation(Id.class).sequence())) {
+			String seq = field.getAnnotation(Id.class).sequence();
+			if (Constants.DEFAULT_SEQ.equals(seq)) {
+				return "seq_" + field.getDeclaringClass().getSimpleName();
+			}
+			return seq;
+		}
+		return "";
 	}
 }

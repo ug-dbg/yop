@@ -1,6 +1,7 @@
 package org.yop.orm.simple.model;
 
 import org.yop.orm.annotations.Column;
+import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.model.json.YopableJson;
@@ -11,6 +12,7 @@ public class Pojo implements YopableJson {
 
 	public enum Type {FOO, BAR}
 
+	@Id(sequence = "seq_POJO")
 	@Column(name = "ID")
 	private Long id;
 

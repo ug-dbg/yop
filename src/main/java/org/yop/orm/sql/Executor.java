@@ -76,17 +76,11 @@ public class Executor {
 		Query query,
 		Action action) {
 
-		Parameters parameters = query.getParameters();
 		if(showSQL()) {
 			logger.info("Executing SQL query [{}]", query);
 		}
 
-		try (PreparedStatement statement = connection.prepareStatement(query.getSafeSql(), query.generatedKeyCommand())) {
-			for(int i = 0; i < parameters.size(); i++) {
-				Parameters.Parameter parameter = parameters.get(i);
-				statement.setObject(i + 1, parameter.getValue());
-			}
-
+		try (PreparedStatement statement = query.prepareStatement(connection)) {
 			if(action == null) {
 				statement.executeUpdate();
 				query.readGeneratedKey(statement);

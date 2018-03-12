@@ -1,5 +1,6 @@
 package org.yop.orm.gen;
 
+import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.model.Yopable;
@@ -7,7 +8,9 @@ import org.yop.orm.util.ORMTypes;
 import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * A table column that can generate a column clause in an SQL CREATE query.
@@ -23,6 +26,7 @@ public class Column implements Comparable<Column> {
 	private boolean naturalKey;
 	private boolean notNull;
 	private int length;
+	private List<String> sequences = new ArrayList<>();
 
 	private PrimaryKey pk;
 	private ForeignKey fk;
@@ -76,6 +80,10 @@ public class Column implements Comparable<Column> {
 		return this.pk != null;
 	}
 
+	public List<String> getSequences() {
+		return sequences;
+	}
+
 	@Override
 	public String toString() {
 		return this.toSQL();
@@ -99,6 +107,10 @@ public class Column implements Comparable<Column> {
 			column.pk = new PrimaryKey(
 				!field.isAnnotationPresent(Id.class) || field.getAnnotation(Id.class).autoincrement()
 			);
+			String seq = ORMUtil.readSequence(field);
+			if(StringUtils.isNotBlank(seq)) {
+				column.sequences.add(seq);
+			}
 		}
 		column.naturalKey = field.isAnnotationPresent(NaturalId.class);
 		return column;

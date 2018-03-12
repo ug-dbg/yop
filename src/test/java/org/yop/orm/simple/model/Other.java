@@ -1,6 +1,7 @@
 package org.yop.orm.simple.model;
 
 import org.yop.orm.annotations.Column;
+import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.model.Yopable;
@@ -12,6 +13,7 @@ import java.util.Set;
 
 public class Other implements YopableJson {
 
+	@Id(sequence = "seq_OTHER")
 	@Column(name = "ID")
 	private Long id;
 

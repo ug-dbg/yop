@@ -2,13 +2,14 @@ package org.yop.orm.model;
 
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
+import org.yop.orm.sql.Constants;
 
 /**
  * Aggregate some common stuff for the model tests classes.
  */
 public abstract class Persistent implements Yopable {
 
-	@Id
+	@Id(sequence = Constants.DEFAULT_SEQ)
 	@Column(name = "id")
 	private Long id;
 

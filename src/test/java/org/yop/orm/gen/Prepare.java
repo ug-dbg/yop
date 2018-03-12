@@ -1,5 +1,6 @@
 package org.yop.orm.gen;
 
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
@@ -16,9 +17,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.text.MessageFormat;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Prepare some SQLite database with delete on exit.
@@ -50,6 +50,7 @@ public class Prepare {
 		Path dbPath = Files.createTempFile(name, "_temp.db");
 		dbPath.toFile().deleteOnExit();
 
+		// Relation tables must be created last
 		Set<Table> tables = Table.findAllInClassPath(packagePrefix, ORMTypes.SQLITE);
 		try (Connection connection = getConnection(dbPath.toFile())) {
 			connection.setAutoCommit(false);
@@ -114,13 +115,17 @@ public class Prepare {
 		Set<Table> tables = Table.findAllInClassPath(packagePrefix, ORMTypes.DEFAULT);
 		Connection connection = getMySQLConnection(false);
 		connection.setAutoCommit(false);
-		for (Table table : tables) {
+
+		// Relation tables must be deleted first
+		for (Table table : Lists.reverse(new ArrayList<>(tables))) {
 			try {
 				Executor.executeQuery(connection, new Query("DROP TABLE " + table.qualifiedName(), new Parameters()));
 			} catch (RuntimeException e) {
-				logger.trace("Error dropping table [" + table.qualifiedName() + "]");
+				logger.trace("Error dropping table [" + table.qualifiedName() + "]", e);
 			}
 		}
+
+		// Relation tables must be created last
 		for (Table table : tables) {
 			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
 		}
@@ -156,16 +161,19 @@ public class Prepare {
 		connection.setAutoCommit(false);
 		String query = " DROP TABLE IF EXISTS {0} CASCADE; ";
 
-		for (Table table : tables) {
+		// Relation tables must be deleted first
+		for (Table table : Lists.reverse(new ArrayList<>(tables))) {
 			try {
 				Executor.executeQuery(
 					connection,
 					new Query(MessageFormat.format(query, table.qualifiedName()), new Parameters())
 				);
 			} catch (RuntimeException e) {
-				logger.trace("Error dropping table [" + table.qualifiedName() + "]");
+				logger.trace("Error dropping table [" + table.qualifiedName() + "]", e);
 			}
 		}
+
+		// Relation tables must be created last
 		for (Table table : tables) {
 			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
 		}
@@ -182,8 +190,8 @@ public class Prepare {
 	 * @throws SQLException SQL error opening connection
 	 */
 	public static Connection getOracleConnection() throws ClassNotFoundException, SQLException {
-		Class.forName("oracle.jdbc.driver.Driver");
-		String connectionString = "jdbc:oracle://" + ORACLE_ADDRESS;
+		Class.forName("oracle.jdbc.driver.OracleDriver");
+		String connectionString = "jdbc:oracle:thin:@//" + ORACLE_ADDRESS;
 		return DriverManager.getConnection(connectionString, "yop", "yop");
 	}
 
@@ -200,22 +208,34 @@ public class Prepare {
 		Set<Table> tables = Table.findAllInClassPath(packagePrefix, ORMTypes.ORACLE);
 		Connection connection = getOracleConnection();
 		connection.setAutoCommit(false);
-		String query = " DROP TABLE IF EXISTS {0} CASCADE; ";
+		String query = " DROP TABLE YOP.{0} ";
 
-		for (Table table : tables) {
+		// Relation tables must be deleted first
+		for (Table table : Lists.reverse(new ArrayList<>(tables))) {
 			try {
 				Executor.executeQuery(
 					connection,
 					new Query(MessageFormat.format(query, table.qualifiedName()), new Parameters())
 				);
 			} catch (RuntimeException e) {
-				logger.trace("Error dropping table [" + table.qualifiedName() + "]");
+				logger.trace("Error dropping table [" + table.qualifiedName() + "]", e);
 			}
 		}
+		connection.commit();
+
+		// Relation tables must be created last
 		for (Table table : tables) {
 			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
-		}
 
+			// For Oracle, we also have to create sequences.
+			for (String other : table.otherSQL()) {
+				try {
+					Executor.executeQuery(connection, new Query(other, new Parameters()));
+				} catch (RuntimeException e) {
+					logger.trace("Error executing other SQL init for table [" + table.qualifiedName() + "]", e);
+				}
+			}
+		}
 		connection.commit();
 	}
 
@@ -248,16 +268,19 @@ public class Prepare {
 		connection.setAutoCommit(false);
 		String query = " DROP TABLE {0} ";
 
-		for (Table table : tables.stream().sorted(Comparator.comparing(Table::isRelation).reversed()).collect(Collectors.toList())) {
+		// Relation tables must be deleted first
+		for (Table table : Lists.reverse(new ArrayList<>(tables))) {
 			try {
 				Executor.executeQuery(
 					connection,
 					new Query(MessageFormat.format(query, table.qualifiedName()), new Parameters())
 				);
 			} catch (RuntimeException e) {
-				logger.trace("Error dropping table [" + table.qualifiedName() + "]");
+				logger.trace("Error dropping table [" + table.qualifiedName() + "]", e);
 			}
 		}
+
+		// Relation tables must be created last
 		for (Table table : tables) {
 			Executor.executeQuery(connection, new Query(table.toString(), new Parameters()));
 		}
