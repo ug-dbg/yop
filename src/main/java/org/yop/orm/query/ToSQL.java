@@ -28,7 +28,8 @@ class ToSQL {
 		private String sql;
 	}
 
-	private static final String JOIN = " {0} as {1} on {2} = {3} ";
+	/** [table] [table alias] on [column name] = [value] */
+	private static final String JOIN = " {0} {1} on {2} = {3} ";
 
 	/**
 	 * Create the SQL join clause (for SELECT or DELETE statement).
