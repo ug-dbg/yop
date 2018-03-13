@@ -194,6 +194,18 @@ public class Select<T extends Yopable> {
 	}
 
 	/**
+	 * Convenience method that returns the first element of the results or null.
+	 * <br>
+	 * See {@link #execute(Connection)}
+	 * <br>
+	 * TODO : effectively limit the SQL query result
+	 */
+	public T uniqueResult(Connection connection) {
+		Set<T> results = execute(connection, Strategy.EXISTS);
+		return results.isEmpty() ? null : results.iterator().next();
+	}
+
+	/**
 	 * Execute the SELECT request using the {@link Strategy#EXISTS} strategy to fetch the IDs of every target class.
 	 * @param connection the connection to use for the request
 	 * @return an {@link IdMap} instance, with a set of Ids for every class.
