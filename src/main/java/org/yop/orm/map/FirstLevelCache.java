@@ -60,7 +60,8 @@ public class FirstLevelCache {
 	 * @param clazz the target class
 	 * @param id    the object ID
 	 * @param <T> the target type
-	 * @return
+	 * @return the cache entry
+	 * @throws NullPointerException if there is no cache entry for the element class
 	 */
 	@SuppressWarnings("unchecked")
 	public <T extends Yopable> T get(Class<T> clazz, Long id) {

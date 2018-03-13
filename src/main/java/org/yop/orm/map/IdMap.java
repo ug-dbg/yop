@@ -92,7 +92,7 @@ public class IdMap {
 	 * <br>
 	 * It should actually work with any Yop SELECT query.
 	 * <br>
-	 * This method is quite similar to {@link Mapper#mapRelationFields(Results, Object, String)}
+	 * This method is quite similar to {@link Mapper#mapRelationFields(Results, Yopable, String, FirstLevelCache)}
 	 * @param results the SQL query result
 	 * @param yopable the target class
 	 * @param context the current context
