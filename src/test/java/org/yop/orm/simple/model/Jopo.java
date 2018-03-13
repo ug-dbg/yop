@@ -10,7 +10,7 @@ import java.util.Objects;
 public class Jopo implements Yopable {
 
 	@Id(sequence = "seq_JOPO")
-	@Column(name = "ID")
+	@Column(name = "id")
 	private Long id;
 
 	@Column(name = "NAME")

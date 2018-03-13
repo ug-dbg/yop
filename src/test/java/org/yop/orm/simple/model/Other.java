@@ -14,7 +14,7 @@ import java.util.Set;
 public class Other implements YopableJson {
 
 	@Id(sequence = "seq_OTHER")
-	@Column(name = "ID")
+	@Column(name = "id")
 	private Long id;
 
 	@NaturalId

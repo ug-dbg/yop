@@ -13,7 +13,7 @@ public class Pojo implements YopableJson {
 	public enum Type {FOO, BAR}
 
 	@Id(sequence = "seq_POJO")
-	@Column(name = "ID")
+	@Column(name = "id")
 	private Long id;
 
 	@NaturalId
