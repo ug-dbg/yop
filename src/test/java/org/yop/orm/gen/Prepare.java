@@ -29,6 +29,9 @@ public class Prepare {
 	private static final String ORACLE_ADDRESS   = "localhost:1521/xe";
 	private static final String MSSQL_ADDRESS    = "localhost\\master:1401";
 
+	private static final String DBMS_USER = System.getProperty("yop.test.dbms.user", "yop");
+	private static final String DBMS_PWD  = System.getProperty("yop.test.dbms.pwd",  "yop");
+
 	/**
 	 * Create an SQLite database with the given name and for the given package prefix.
 	 * The db will be stored in a temp file with the 'delete on exit' flag.
@@ -88,7 +91,7 @@ public class Prepare {
 	public static Connection getMySQLConnection(boolean foreignKeyChecks) throws ClassNotFoundException, SQLException {
 		Class.forName("com.mysql.jdbc.Driver");
 		String connectionString = "jdbc:mysql://" + MYSQL_ADDRESS;
-		Connection connection = DriverManager.getConnection(connectionString, "root", "root");
+		Connection connection = DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD);
 		connection.prepareStatement("set foreign_key_checks=" + (foreignKeyChecks ? "1" : "0")).executeUpdate();
 		return connection;
 	}
@@ -119,7 +122,7 @@ public class Prepare {
 	public static Connection getPostgresConnection() throws ClassNotFoundException, SQLException {
 		Class.forName("org.postgresql.Driver");
 		String connectionString = "jdbc:postgresql://" + POSTGRES_ADDRESS;
-		return DriverManager.getConnection(connectionString, "yop", "yop");
+		return DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD);
 	}
 
 	/**
@@ -148,7 +151,7 @@ public class Prepare {
 	public static Connection getOracleConnection() throws ClassNotFoundException, SQLException {
 		Class.forName("oracle.jdbc.driver.OracleDriver");
 		String connectionString = "jdbc:oracle:thin:@//" + ORACLE_ADDRESS;
-		return DriverManager.getConnection(connectionString, "yop", "yop");
+		return DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD);
 	}
 
 	/**
@@ -177,7 +180,7 @@ public class Prepare {
 	public static Connection getMSSQLConnection() throws ClassNotFoundException, SQLException {
 		Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 		String connectionString = "jdbc:sqlserver://" + MSSQL_ADDRESS;
-		return DriverManager.getConnection(connectionString, "SA", "<YourStrong!Passw0rd>");
+		return DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD);
 	}
 
 	/**
