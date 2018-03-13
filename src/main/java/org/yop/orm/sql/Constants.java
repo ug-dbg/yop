@@ -23,6 +23,11 @@ public class Constants {
 		System.getProperties().getProperty("yop.sql.sequences", "false")
 	);
 
+	/** Max number of parameters in a query */
+	public static final Integer MAX_PARAMS = Integer.valueOf(
+		System.getProperties().getProperty("yop.sql.max.parameters", "1000")
+	);
+
 	/**
 	 * If you set a sequence to this constant, the sequence name will be calculated :
 	 * <br>
