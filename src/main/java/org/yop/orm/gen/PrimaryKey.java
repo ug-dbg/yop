@@ -15,4 +15,11 @@ public class PrimaryKey {
 	public boolean isAutoincrement() {
 		return autoincrement;
 	}
+
+	@Override
+	public String toString() {
+		return "PrimaryKey{" +
+			"autoincrement=" + autoincrement +
+		'}';
+	}
 }

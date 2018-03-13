@@ -50,7 +50,7 @@ public class Table implements Comparable<Table> {
 		return this.columns;
 	}
 
-	private String toSQL() {
+	public String toSQL() {
 		return this.types.toSQL(this);
 	}
 
@@ -64,7 +64,13 @@ public class Table implements Comparable<Table> {
 
 	@Override
 	public String toString() {
-		return this.toSQL();
+		return "Table{" +
+			"name='" + name + '\'' +
+			", schema='" + schema + '\'' +
+			", types=" + types +
+			", relation=" + relation +
+			", columns=" + columns +
+		'}';
 	}
 
 	@Override

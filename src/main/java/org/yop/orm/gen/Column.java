@@ -72,7 +72,7 @@ public class Column implements Comparable<Column> {
 		return notNull;
 	}
 
-	private String toSQL() {
+	public String toSQL() {
 		return this.types.toSQL(this);
 	}
 
@@ -86,7 +86,17 @@ public class Column implements Comparable<Column> {
 
 	@Override
 	public String toString() {
-		return this.toSQL();
+		return "Column{" +
+			"name='" + name + '\'' +
+			", type='" + type + '\'' +
+			", naturalKey=" + naturalKey +
+			", notNull=" + notNull +
+			", length=" + length +
+			", sequences=" + sequences +
+			", pk=" + pk +
+			", fk=" + fk +
+			", types=" + types +
+		'}';
 	}
 
 	@Override

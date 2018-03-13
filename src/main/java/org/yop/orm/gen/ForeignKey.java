@@ -28,4 +28,13 @@ public class ForeignKey {
 	public String getReferencedColumn() {
 		return referencedColumn;
 	}
+
+	@Override
+	public String toString() {
+		return "ForeignKey{" +
+			"name='" + name + '\'' +
+			", referencedTable='" + referencedTable + '\'' +
+			", referencedColumn='" + referencedColumn + '\'' +
+		'}';
+	}
 }

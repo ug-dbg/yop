@@ -62,7 +62,7 @@ public class MSSQL extends ORMTypes {
 	@Override
 	public String toSQL(Table table) {
 		Collection<String> elements = new ArrayList<>();
-		elements.addAll(table.getColumns().stream().sorted().map(Column::toString).collect(Collectors.toList()));
+		elements.addAll(table.getColumns().stream().sorted().map(Column::toSQL).collect(Collectors.toList()));
 		elements.addAll(table.getColumns().stream().map(c -> this.toSQLPK(table, c)).collect(Collectors.toList()));
 
 		Set<String> referenced = new HashSet<>();
@@ -75,6 +75,7 @@ public class MSSQL extends ORMTypes {
 				referenced.add(reference);
 			}
 		}
+		elements.addAll(this.toSQLNK(table));
 
 		return MessageFormat.format(
 			CREATE,

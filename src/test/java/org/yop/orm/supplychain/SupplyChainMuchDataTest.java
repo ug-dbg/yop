@@ -62,7 +62,7 @@ public class SupplyChainMuchDataTest extends DBMSSwitch {
 			for(int j = 0; j < NB_PRODUCTS; j++) {
 				Product product = new Product();
 				product.setPrice(j);
-				product.setName("Product #" + i + "_" + j);
+				product.setName("Product" + suffix + "#" + i + "_" + j);
 				product.setComment("This is me, adding the product #" + j + " in warehouse #" + i);
 				product.setDescription("product #" + j + " in warehouse #" + i);
 				product.setHeight(150);

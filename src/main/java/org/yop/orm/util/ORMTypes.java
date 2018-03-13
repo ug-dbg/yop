@@ -30,6 +30,7 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 	private static final String DROP = "DROP TABLE {0}";
 	private static final String PK = " CONSTRAINT {0} PRIMARY KEY ({1}) ";
 	private static final String FK = " CONSTRAINT {0} FOREIGN KEY ({1}) REFERENCES {2}({3}) ON DELETE CASCADE ";
+	private static final String NK = " CONSTRAINT {0} UNIQUE ({1}) ";
 
 	/** The default SQL type */
 	private String defaultType;
@@ -92,9 +93,10 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 	 */
 	public String toSQL(Table table) {
 		Collection<String> elements = new ArrayList<>();
-		elements.addAll(table.getColumns().stream().sorted().map(Column::toString).collect(Collectors.toList()));
+		elements.addAll(table.getColumns().stream().sorted().map(Column::toSQL).collect(Collectors.toList()));
 		elements.addAll(table.getColumns().stream().map(c -> this.toSQLPK(table, c)).collect(Collectors.toList()));
 		elements.addAll(table.getColumns().stream().map(this::toSQLFK).collect(Collectors.toList()));
+		elements.addAll(this.toSQLNK(table));
 
 		return MessageFormat.format(
 			CREATE,
@@ -178,12 +180,24 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 	}
 
 	/**
-	 * Generate the SQL CREATE query natural ID portion
-	 * @param naturalKeys the natural key columns
-	 * @return the natural key query portion. Empty string for now.
+	 * Generate the SQL CREATE query natural ID portion.
+	 * @param table the table
+	 * @return the natural key query portions. (There should be 1 or 0)
 	 */
-	public String toSQLNK(Set<Column> naturalKeys) {
-		return "";
+	protected Collection<String> toSQLNK(Table table) {
+		Set<String> nkColumnNames = table.getColumns()
+			.stream()
+			.filter(Column::isNaturalKey)
+			.map(Column::getName)
+			.collect(Collectors.toSet());
+
+		if(nkColumnNames.isEmpty()) {
+			return new ArrayList<>(0);
+		}
+
+		String constaintName = table.qualifiedName() + "_NK";
+		String constraint = MessageFormat.format(NK, constaintName, MessageUtil.join(",", nkColumnNames));
+		return Collections.singletonList(constraint);
 	}
 
 	/**
@@ -204,7 +218,7 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 		// Relation tables must be created last
 		// Also add the other SQL queries (e.g. sequences)
 		for (Table table : tables) {
-			script.add(table.toString());
+			script.add(table.toSQL());
 			script.addAll(table.otherSQL());
 		}
 
