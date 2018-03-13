@@ -13,7 +13,12 @@ Yop is a naughty 'hit and run' tool but it definitely wants to be tested.
 - Declare a package prefix in your tests and DBMSSwitch clears and prepares the database schema for your Yopables. 
 
 # Cheat sheet
-To set the target DBMS custom credentials, use : -Dyop.test.dbms.user="[username]" -Dyop.test.dbms.pwd="[password]".
+To set the target DBMS, use -Dyop.test.dbms.host="[host]" -Dyop.test.dbms.port="[port]" -Dyop.test.dbms.db="[db name]"
+- Default host : localhost
+- Default port : 3306
+- Default name : yop
+
+To set the target DBMS credentials, use : -Dyop.test.dbms.user="[username]" -Dyop.test.dbms.pwd="[password]".
 - Default user name : yop
 - Default password  : yop
 

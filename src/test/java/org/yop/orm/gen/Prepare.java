@@ -24,13 +24,16 @@ public class Prepare {
 
 	private static final Logger logger = LoggerFactory.getLogger(Prepare.class);
 
-	private static final String MYSQL_ADDRESS    = "localhost:3306/yop?useUnicode=true&characterEncoding=utf-8";
-	private static final String POSTGRES_ADDRESS = "localhost:5432/yop";
-	private static final String ORACLE_ADDRESS   = "localhost:1521/xe";
-	private static final String MSSQL_ADDRESS    = "localhost\\master:1401";
-
+	private static final String DBMS_HOST = System.getProperty("yop.test.dbms.host", "localhost");
+	private static final String DBMS_PORT = System.getProperty("yop.test.dbms.port", "3306");
+	private static final String DBMS_DB   = System.getProperty("yop.test.dbms.db",   "yop");
 	private static final String DBMS_USER = System.getProperty("yop.test.dbms.user", "yop");
 	private static final String DBMS_PWD  = System.getProperty("yop.test.dbms.pwd",  "yop");
+
+	private static final String MYSQL_ADDRESS    = DBMS_HOST + ":"  + DBMS_PORT + "/" + DBMS_DB + MySQL.UNICODE_PARAMS;
+	private static final String POSTGRES_ADDRESS = DBMS_HOST + ":"  + DBMS_PORT + "/" + DBMS_DB;
+	private static final String ORACLE_ADDRESS   = DBMS_HOST + ":"  + DBMS_PORT + "/" + DBMS_DB;
+	private static final String MSSQL_ADDRESS    = DBMS_HOST + "\\" + DBMS_DB   + ":" + DBMS_PORT;
 
 	/**
 	 * Create an SQLite database with the given name and for the given package prefix.
