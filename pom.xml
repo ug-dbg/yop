@@ -9,7 +9,7 @@
 	<version>0.2</version>
 	<packaging>jar</packaging>
 	<description>
-		YOP is a lightweight ORM wannabe. No session, no bytecode generation, SQL-like syntax.
+		YOP is a lightweight ORM wannabe. Hit and run, no session, no bytecode generation, SQL-like syntax.
 		Strong constraints on the Database schema.
 		Java 8 is required.
 		Ω≡{Ⓐ}
