@@ -21,7 +21,7 @@ public class AbbreviateTransformer implements ITransformer<String> {
 	@Override
 	public Object forSQL(String s, Column column) {
 		int maxLength = column.length();
-		if(s.length() > maxLength) {
+		if(s != null && s.length() > maxLength) {
 			switch (column.length_strategy()) {
 				case EXCEPTION: this.tooLongException(s, column.name(), column.length());
 				case CUT: return this.cut(s, maxLength, column);
