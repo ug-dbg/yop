@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
  * This is pretty raw/patchy. This was written to prepare unit tests context.
  * <br><br>
  * This is required for schema generation and should only be used for this purpose only !
-  * <br>
-  * Yop tries to generate some very basic SQL CRUD queries that does not rely on an SQL dialect.
+ * <br>
+ * Yop tries to generate some very basic SQL CRUD queries that does not rely on an SQL dialect.
  */
 public abstract class ORMTypes extends HashMap<Class<?>, String> {
 
