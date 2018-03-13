@@ -2,9 +2,12 @@ package org.yop.orm.supplychain;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
 import org.yop.orm.evaluation.In;
 import org.yop.orm.evaluation.Operator;
+import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.query.*;
 import org.yop.orm.supplychain.model.*;
 
@@ -23,6 +26,8 @@ import java.util.stream.Collectors;
  * I must admit I am not very good at designing good test models :-/
  */
 public class SupplyChainTest extends DBMSSwitch {
+
+	private static final Logger logger = LoggerFactory.getLogger(SupplyChainTest.class);
 
 	@Override
 	protected String getPackagePrefix() {
@@ -253,6 +258,14 @@ public class SupplyChainTest extends DBMSSwitch {
 			order.getProducts().add(products.iterator().next());
 			order.setCustomer(me);
 
+			try {
+				Upsert.from(Order.class).joinAll().join(Join.to(Order::getCustomer)).onto(order).execute(connection);
+				logger.warn("Order#orderTimeStamp is marked not null! Is this MySQL with strict mode OFF ?");
+			} catch (YopSQLException e) {
+				logger.trace("Exception on inserting an Order with null orderTimeStamp. That's OK !", e);
+			}
+
+			order.setOrderTimeStamp(LocalDateTime.now());
 			Upsert.from(Order.class).joinAll().join(Join.to(Order::getCustomer)).onto(order).execute(connection);
 			Assert.assertNotNull(order.getId());
 

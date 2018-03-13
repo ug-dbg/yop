@@ -17,7 +17,7 @@ public class Warehouse extends Persistent {
 	@Column(name = "active")
 	private boolean active;
 
-	@Column(name = "capacity")
+	@Column(name = "capacity", not_null = true)
 	private long capacity;
 
 	@JoinTable(

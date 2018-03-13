@@ -13,7 +13,7 @@ public class Jopo implements Yopable {
 	@Column(name = "id")
 	private Long id;
 
-	@Column(name = "NAME")
+	@Column(name = "NAME", not_null = true)
 	private String name;
 
 	@JoinTable(table = "POJO_JOPO_relation", sourceColumn = "idJOPO", targetColumn = "idPOJO")

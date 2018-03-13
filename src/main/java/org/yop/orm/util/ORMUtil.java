@@ -138,6 +138,19 @@ public class ORMUtil {
 	}
 
 	/**
+	 * Check if the given field is a column that must not be null.
+	 * @param field the column field
+	 * @return true if the field has a {@link Column} annotation and {@link Column#not_null()} is true
+	 */
+	public static boolean isColumnNotNullable(Field field) {
+		if(!field.isAnnotationPresent(Column.class)) {
+			return false;
+		}
+		Column annotation = field.getAnnotation(Column.class);
+		return annotation.not_null();
+	}
+
+	/**
 	 * Get all the non transient, non synthetic fields of a class or its superclass that have the @NaturalId annotation.
 	 * @param clazz the class
 	 * @return the natural key fields

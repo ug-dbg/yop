@@ -112,6 +112,7 @@ public class Column implements Comparable<Column> {
 			ORMUtil.getColumnLength(field),
 			types
 		);
+		column.notNull = ORMUtil.isColumnNotNullable(field);
 
 		if(field.equals(ORMUtil.getIdField((Class<? extends Yopable>)field.getDeclaringClass()))) {
 			column.pk = new PrimaryKey(

@@ -12,7 +12,7 @@ import java.util.List;
 @Table(name = "order_table")
 public class Order extends Persistent {
 
-	@Column(name = "timestamp")
+	@Column(name = "timestamp", not_null = true)
 	private LocalDateTime orderTimeStamp;
 
 	@JoinTable(

@@ -18,7 +18,7 @@ public class Product  extends Persistent {
 	@Column(name = "name")
 	private String name;
 
-	@Column(name = "price")
+	@Column(name = "price", not_null = true)
 	private float price;
 
 	@Column(name = "description")
