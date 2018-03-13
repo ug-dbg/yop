@@ -27,9 +27,12 @@ public abstract class DBMSSwitch {
 
 	protected abstract String getPackagePrefix();
 
+	protected static String dbms() {
+		return System.getProperties().getProperty(DBMS_SWITCH, "sqlite");
+	}
+
 	protected Connection getConnection() throws SQLException, ClassNotFoundException {
-		String dbms = System.getProperties().getProperty(DBMS_SWITCH, "sqlite");
-		switch (dbms) {
+		switch (dbms()) {
 			case "mysql" :     return Prepare.getMySQLConnection(true);
 			case "postgres" :  return Prepare.getPostgresConnection();
 			case "oracle" :    return Prepare.getOracleConnection();
@@ -47,8 +50,7 @@ public abstract class DBMSSwitch {
 	@Before
 	public void setUp() throws SQLException, IOException, ClassNotFoundException {
 		String packagePrefix = this.getPackagePrefix();
-		String dbms = System.getProperties().getProperty(DBMS_SWITCH, "sqlite");
-		switch (dbms) {
+		switch (dbms()) {
 			case "mysql" :     Prepare.prepareMySQL(packagePrefix);    break;
 			case "postgres" :  Prepare.preparePostgres(packagePrefix); break;
 			case "oracle" :    Prepare.prepareOracle(packagePrefix);   break;
