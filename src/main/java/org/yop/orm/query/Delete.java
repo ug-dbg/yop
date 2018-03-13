@@ -1,14 +1,12 @@
 package org.yop.orm.query;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.sql.Executor;
-import org.yop.orm.sql.JoinClause;
-import org.yop.orm.sql.Parameters;
-import org.yop.orm.sql.Query;
+import org.yop.orm.sql.*;
 
 import java.sql.Connection;
 import java.text.MessageFormat;
@@ -116,7 +114,11 @@ public class Delete<T extends Yopable> {
 	}
 
 	/**
-	 * Execute the DELETE query on the given connection
+	 * <b>⚠⚠⚠ This method requires the DBMS to support delete from multiple tables ⚠⚠⚠</b>
+	 * <br>
+	 * <b>⚠⚠⚠ This method actually DOES NOT SEEM TO WORK AT ALL ! ⚠⚠⚠</b>
+	 * <br>
+	 * Execute the DELETE query on the given connection.
 	 * @param connection the connection to use
 	 */
 	public void executeQuery(Connection connection) {
@@ -127,9 +129,8 @@ public class Delete<T extends Yopable> {
 	/**
 	 * Execute the DELETE queries on the given connection, 1 query per table.
 	 * <br>
-	 * This method can be useful if the target DBMS does not support deleting data from multiple tables in 1 query.
-	 * <br>
-	 * yes, SQLite, that's you I'm talking about.
+	 * An {@link IdMap} is built using {@link Select#executeForIds(Connection)}
+	 * and then a delete query is applied for every table with IDs to delete.
 	 * @param connection the connection to use
 	 */
 	public void executeQueries(Connection connection) {
@@ -138,9 +139,14 @@ public class Delete<T extends Yopable> {
 		List<Query> queries = new ArrayList<>();
 
 		for (Map.Entry<Class<? extends Yopable>, Set<Long>> entry : idMap.entries()) {
-			Parameters parameters = new Parameters();
-			String sql = Delete.from(entry.getKey()).where(Where.id(entry.getValue())).toSQL(parameters);
-			queries.add(new Query(sql, parameters));
+
+			// Create some 'delete by ID' batches, due to some DBMS limitations.
+			List<List<Long>> batches = Lists.partition(new ArrayList<>(entry.getValue()), Constants.MAX_PARAMS);
+			for (List<Long> batch : batches) {
+				Parameters parameters = new Parameters();
+				String sql = Delete.from(entry.getKey()).where(Where.id(batch)).toSQL(parameters);
+				queries.add(new Query(sql, parameters));
+			}
 		}
 
 		for (Query query : queries) {
