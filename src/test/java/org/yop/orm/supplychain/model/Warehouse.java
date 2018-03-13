@@ -30,7 +30,7 @@ public class Warehouse extends Persistent {
 	@JoinTable(
 		table = "rel_warehouse_product",
 		sourceColumn = "id_organisation",
-		targetColumn = "id_employee"
+		targetColumn = "id_product"
 	)
 	private List<Product> products = new ArrayList<>();
 
