@@ -3,6 +3,7 @@ package org.yop.orm.transform;
 import com.google.common.primitives.Primitives;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yop.orm.annotations.Column;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -126,7 +127,7 @@ public class FallbackTransformer implements ITransformer<Object> {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Object forSQL(Object what) {
+	public Object forSQL(Object what, Column column) {
 		return what;
 	}
 }

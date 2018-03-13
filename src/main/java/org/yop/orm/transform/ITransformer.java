@@ -1,5 +1,6 @@
 package org.yop.orm.transform;
 
+import org.yop.orm.annotations.Column;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.util.Reflection;
 
@@ -11,7 +12,7 @@ import java.util.Map;
  * <br>
  * Then :
  * <ul>
- *     <li>when setting the field value as {@link org.yop.orm.sql.Parameters.Parameter} → {@link #forSQL(Object)}</li>
+ *     <li>when setting the field value as a query parameter → {@link #forSQL(Object, Column)}</li>
  *     <li>when reading a JDBC value for the field → {@link #fromSQL(Object, Class)}</li>
  * </ul>
  * @param <What> the field type
@@ -25,10 +26,11 @@ public interface ITransformer<What> {
 
 	/**
 	 * Transform the field value into anything else for SQL querying
-	 * @param what the field value to transform
+	 * @param what   the field value to transform
+	 * @param column the column annotation, if you need to read some info (e.g. max length)
 	 * @return the transformed value
 	 */
-	Object forSQL(What what);
+	Object forSQL(What what, Column column);
 
 	/**
 	 * Transform a JDBC value for the field to be set

@@ -1,5 +1,7 @@
 package org.yop.orm.transform;
 
+import org.yop.orm.annotations.Column;
+
 /**
  * A void transforer does nothing and returns the parameter object to transform 'as is'.
  */
@@ -17,7 +19,7 @@ public class VoidTransformer implements ITransformer<Object> {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Object forSQL(Object what) {
+	public Object forSQL(Object what, Column column) {
 		return what;
 	}
 

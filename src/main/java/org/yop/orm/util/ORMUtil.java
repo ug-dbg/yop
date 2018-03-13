@@ -202,7 +202,7 @@ public class ORMUtil {
 	 * Read the value of a field.
 	 * <br>
 	 * If the field is a {@link Column} with a specified {@link ITransformer}, the field value is transformed,
-	 * using {@link ITransformer#forSQL(Object)}.
+	 * using {@link ITransformer#forSQL(Object, Column)}.
 	 * @param field   the field to read
 	 * @param element the element on which the field is to read
 	 * @return the field value, that might have been transformed using the speficied {@link ITransformer}.
@@ -212,7 +212,8 @@ public class ORMUtil {
 		try {
 			Object value = field.get(element);
 			if(field.isAnnotationPresent(Column.class)) {
-				return ITransformer.getTransformer(field.getAnnotation(Column.class).transformer()).forSQL(value);
+				Column column = field.getAnnotation(Column.class);
+				return ITransformer.getTransformer(column.transformer()).forSQL(value, column);
 			}
 			return value;
 		} catch (IllegalAccessException e) {

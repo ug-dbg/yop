@@ -16,7 +16,7 @@ public @interface Column {
 
     String name();
     int length() default 50;
-    LengthStrategy length_stratgey() default LengthStrategy.NONE;
+    LengthStrategy length_strategy() default LengthStrategy.NONE;
     EnumStrategy enum_strategy() default EnumStrategy.NAME;
     Class<? extends ITransformer> transformer() default VoidTransformer.class;
 }
