@@ -80,7 +80,7 @@ public class IdMap {
 	public static Executor.Action populateAction(Class<? extends Yopable> target) {
 		return results -> {
 			IdMap map = new IdMap();
-			while (results.getResultSet().next()) {
+			while (results.getCursor().next()) {
 				map(results, target, Context.root(target).getPath(), map);
 			}
 			return map;
@@ -141,16 +141,11 @@ public class IdMap {
 	 * @param context the current context
 	 * @param <T> the target type
 	 * @return the ID on the current row, whose column matches [context→columnIDName]
-	 * @throws SQLException an error occured reading the resultset
+	 * @throws org.yop.orm.exception.YopSQLException an error occured reading the resultset
 	 */
-	private static <T extends Yopable> Long readId(
-		Results results,
-		Class<T> target,
-		String context)
-		throws SQLException {
-
+	private static <T extends Yopable> Long readId(Results results, Class<T> target, String context) {
 		String idColumn = ORMUtil.getIdColumn(target);
 		String idColumnContext = context + SEPARATOR + idColumn;
-		return results.getResultSet().getLong(results.getQuery().getShortened(idColumnContext));
+		return results.getCursor().getLong(results.getQuery().getShortened(idColumnContext));
 	}
 }

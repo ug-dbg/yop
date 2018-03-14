@@ -10,15 +10,13 @@ import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Results;
+import org.yop.orm.sql.adapter.IResultCursor;
 import org.yop.orm.transform.ITransformer;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.util.*;
 
 /**
@@ -48,8 +46,12 @@ public class Mapper {
 			return map(results, clazz, clazz.getSimpleName());
 		} catch (IllegalAccessException | InstantiationException e) {
 			throw new YopMapperException("Error mapping resultset to [" + clazz.getName() + "]", e);
-		} catch (SQLException e) {
-			throw new YopSQLException("An SQL error occured mapping resultset to [" + clazz.getName() + "]", e);
+		} catch (YopSQLException e) {
+			throw new YopSQLException(
+				"An SQL error occured mapping resultset to [" + clazz.getName() + "]",
+				results.getQuery(),
+				e
+			);
 		}
 	}
 
@@ -64,17 +66,17 @@ public class Mapper {
 	 * @return a set of T, read from the result set
 	 * @throws IllegalAccessException could not read a field
 	 * @throws InstantiationException could not instantiate a target element
-	 * @throws SQLException           error reading the resultset
+	 * @throws YopSQLException        error reading the resultset
 	 */
 	private static <T extends Yopable> Set<T> map(
 		Results results,
 		Class<T> clazz,
 		String context)
-		throws IllegalAccessException, InstantiationException, SQLException {
+		throws IllegalAccessException, InstantiationException {
 
 		Set<T> out = new HashSet<>();
 		FirstLevelCache cache = new FirstLevelCache();
-		while (results.getResultSet().next()) {
+		while (results.getCursor().next()) {
 			T element = clazz.newInstance();
 			element = mapSimpleFields(results, element, context, cache);
 			element = cycleBreaker(element, out, cache);
@@ -97,7 +99,7 @@ public class Mapper {
 	 * @param context the target element context
 	 * @param <T> the target type
 	 * @return the input element, or the cached element of it !
-	 * @throws SQLException           an error occured reading the resultset
+	 * @throws YopSQLException        an error occured reading the resultset
 	 * @throws IllegalAccessException could not access a field on the target instance
 	 */
 	@SuppressWarnings("unchecked")
@@ -106,7 +108,7 @@ public class Mapper {
 		T element,
 		String context,
 		FirstLevelCache cache)
-		throws SQLException, IllegalAccessException {
+		throws IllegalAccessException {
 
 		T fromCache = cache.tryCache(results, (Class<T>) element.getClass(), context);
 		if(fromCache != null) {
@@ -120,19 +122,19 @@ public class Mapper {
 			String shortened = results.getQuery().getShortened(columnName);
 			Class<?> fieldType = field.getType();
 
-			if (results.getResultSet().getObject(shortened) != null) {
+			if (results.getCursor().getObject(shortened) != null) {
 				if (fieldType.isEnum()) {
-					setEnumValue(results.getResultSet(), field, shortened, element);
+					setEnumValue(results.getCursor(), field, shortened, element);
 				} else {
 					ITransformer transformer = ORMUtil.getTransformerFor(field);
 					try {
 						field.set(element, transformer.fromSQL(
-							results.getResultSet().getObject(shortened, fieldType),
+							results.getCursor().getObject(shortened, fieldType),
 							fieldType)
 						);
-					} catch (SQLException | AbstractMethodError e) {
+					} catch (YopSQLException | AbstractMethodError e) {
 						logger.debug("Error mapping [{}] of type [{}]. Manual fallback.", columnName, fieldType);
-						Object object = results.getResultSet().getObject(shortened);
+						Object object = results.getCursor().getObject(shortened);
 						field.set(element, transformer.fromSQL(
 							ITransformer.fallbackTransformer().fromSQL(object, fieldType),
 							fieldType)
@@ -158,16 +160,16 @@ public class Mapper {
 	 * @param enumField  the enum field. TYPE MUST BE ENUM
 	 * @param columnName the column name to read in the result set
 	 * @param element    the element on which the field must be set
-	 * @throws SQLException           Error reading the result set
+	 * @throws YopSQLException        Error reading the result set
 	 * @throws IllegalAccessException Error accessing the enum field on the element
 	 */
 	@SuppressWarnings("unchecked")
 	private static void setEnumValue(
-		ResultSet resultSet,
+		IResultCursor resultSet,
 		Field enumField,
 		String columnName,
 		Object element)
-		throws SQLException, IllegalAccessException {
+		throws IllegalAccessException {
 
 		Column.EnumStrategy strategy = enumField.getAnnotation(Column.class).enum_strategy();
 		Class<? extends Enum> enumType = (Class<? extends Enum>) enumField.getType();
@@ -221,7 +223,7 @@ public class Mapper {
 	 * @param <T> the target type
 	 * @throws IllegalAccessException could not read a field
 	 * @throws InstantiationException could not instantiate a target element
-	 * @throws SQLException           error reading the resultset
+	 * @throws YopSQLException        error reading the resultset
 	 * @throws YopMappingException    Incorrect mapping. Mostly a non Yopable/Collection of Yopable relationship.
 	 */
 	@SuppressWarnings("unchecked")
@@ -230,7 +232,7 @@ public class Mapper {
 		T element,
 		String context,
 		FirstLevelCache cache)
-		throws SQLException, IllegalAccessException, InstantiationException {
+		throws IllegalAccessException, InstantiationException {
 
 		List<Field> fields = Reflection.getFields(element.getClass(), JoinTable.class, false);
 		for (Field field : fields) {
@@ -275,27 +277,21 @@ public class Mapper {
 	 * @param context     the context to check
 	 * @param targetClass the target class
 	 * @return true if there are no column AND no data for the given context
-	 * @throws SQLException error reading the resultset
+	 * @throws YopSQLException error reading the resultset
 	 */
-	static boolean noContext(
-		Results results,
-		String context,
-		Class<? extends Yopable> targetClass)
-		throws SQLException {
-
+	static boolean noContext(Results results, String context, Class<? extends Yopable> targetClass) {
 		String idColumn = results.getQuery().getShortened(context + SEPARATOR + ORMUtil.getIdColumn(targetClass));
-		ResultSetMetaData rsmd = results.getResultSet().getMetaData();
-		if(!hasColumn(rsmd, idColumn)) {
+		if(!results.getCursor().hasColumn(idColumn)) {
 			return true;
 		}
 
-		if(results.getResultSet().getObject(idColumn) == null) {
+		if(results.getCursor().getObject(idColumn) == null) {
 			return true;
 		}
 
-		int columns = rsmd.getColumnCount();
+		int columns = results.getCursor().getColumnCount();
 		for (int x = 1; x <= columns; x++) {
-			if (results.getQuery().getAlias(rsmd.getColumnLabel(x)).startsWith(context)) {
+			if (results.getQuery().getAlias(results.getCursor().getColumnName(x)).startsWith(context)) {
 				return false;
 			}
 		}
@@ -330,22 +326,5 @@ public class Mapper {
 	@SuppressWarnings("unchecked")
 	static <T> Class<T> getRelationFieldType(Field field) {
 		return (Class<T>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
-	}
-
-	/**
-	 * Check if a given column is present in the resultset
-	 * @param rsmd       the resultset metadata
-	 * @param columnName the column name
-	 * @return true if the column is present in the resultset
-	 * @throws SQLException error reading the resultset
-	 */
-	private static boolean hasColumn(ResultSetMetaData rsmd, String columnName) throws SQLException {
-		int columns = rsmd.getColumnCount();
-		for (int x = 1; x <= columns; x++) {
-			if (columnName.equals(rsmd.getColumnLabel(x))) {
-				return true;
-			}
-		}
-		return false;
 	}
 }

@@ -7,7 +7,6 @@ import org.yop.orm.sql.Constants;
 import org.yop.orm.sql.Results;
 import org.yop.orm.util.ORMUtil;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,13 +31,13 @@ public class FirstLevelCache {
 	 * @param context the current context
 	 * @param <T> the target type
 	 * @return the value from the cache, or null
-	 * @throws SQLException an error occurred reading the resultset
+	 * @throws org.yop.orm.exception.YopSQLException an error occurred reading the resultset
 	 */
-	public <T extends Yopable> T tryCache(Results results, Class<T> clazz, String context) throws SQLException {
+	public <T extends Yopable> T tryCache(Results results, Class<T> clazz, String context) {
 		String idShortened = results.getQuery().getShortened(
 			context + Constants.SQL_SEPARATOR + ORMUtil.getIdColumn(clazz)
 		);
-		long id = results.getResultSet().getLong(idShortened);
+		long id = results.getCursor().getLong(idShortened);
 		if(this.has(clazz, id)) {
 			return this.get(clazz, id);
 		}

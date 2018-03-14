@@ -1,45 +1,37 @@
 package org.yop.orm.sql;
 
-import java.sql.ResultSet;
+import org.yop.orm.sql.adapter.IResultCursor;
 
 /**
- * An SQL result set with references to :
+ * The query results. Aggregates :
  * <ul>
  *     <li>query</li>
- *     <li>query with safe aliases</li>
- *     <li>query parameters</li>
+ *     <li>result cursor</li>
  * </ul>
  */
 public class Results {
 
-	/** The query result set. The result set closing is not handled in this class at all ! */
-	private final ResultSet resultSet;
+	/** The query cursor (JDBC result set). The result set closing is not handled in this class at all ! */
+	private final IResultCursor cursor;
 
 	/** The query that was executed */
 	private Query query;
 
 	/**
 	 * Default constructor : resultset and original query
-	 * @param resultSet the resultset from the query execution
+	 * @param cursor the resultset from the query execution
 	 * @param query     the executed query
 	 */
-	Results(ResultSet resultSet, Query query) {
-		this.resultSet = resultSet;
+	Results(IResultCursor cursor, Query query) {
+		this.cursor = cursor;
 		this.query = query;
 	}
 
 	/**
 	 * @return the resultset from the query execution
 	 */
-	public ResultSet getResultSet() {
-		return resultSet;
-	}
-
-	/**
-	 * @return the executed query parameters
-	 */
-	public Parameters getParameters() {
-		return this.query.getParameters();
+	public IResultCursor getCursor() {
+		return cursor;
 	}
 
 	/**
@@ -47,19 +39,5 @@ public class Results {
 	 */
 	public Query getQuery() {
 		return query;
-	}
-
-	/**
-	 * @return the executed query original SQL
-	 */
-	public String getSQL() {
-		return this.query.getSql();
-	}
-
-	/**
-	 * @return the SQL that cas actually executed (long aliases → safe aliases)
-	 */
-	public String getSafeAliasSQL() {
-		return this.query.getSafeSql();
 	}
 }

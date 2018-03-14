@@ -7,16 +7,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
 import org.yop.orm.evaluation.Operator;
+import org.yop.orm.map.IdMap;
+import org.yop.orm.query.*;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
 import org.yop.orm.simple.model.Pojo;
-import org.yop.orm.map.IdMap;
-import org.yop.orm.query.*;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
+import org.yop.orm.sql.adapter.IConnection;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -40,7 +40,7 @@ public class SimpleTest extends DBMSSwitch {
 
 	@Test
 	public void testCRUD() throws SQLException, ClassNotFoundException {
-		try (Connection connection = this.getConnection()) {
+		try (IConnection connection = this.getConnection()) {
 			Pojo newPojo = new Pojo();
 			newPojo.setVersion(10564337);
 			newPojo.setType(Pojo.Type.FOO);
@@ -114,8 +114,8 @@ public class SimpleTest extends DBMSSwitch {
 
 			// Assertion that the relation was cleaned in the association table.
 			Executor.Action action = results -> {
-				results.getResultSet().next();
-				Assert.assertEquals(0, results.getResultSet().getInt(1));
+				results.getCursor().next();
+				Assert.assertEquals(0, results.getCursor().getLong(1).longValue());
 				return "";
 			};
 
@@ -129,7 +129,7 @@ public class SimpleTest extends DBMSSwitch {
 
 	@Test
 	public void testLotOfChildren() throws SQLException, ClassNotFoundException {
-		try (Connection connection = this.getConnection()) {
+		try (IConnection connection = this.getConnection()) {
 			Pojo pojo = new Pojo();
 			pojo.setVersion(1337);
 			pojo.setType(Pojo.Type.FOO);
@@ -156,8 +156,8 @@ public class SimpleTest extends DBMSSwitch {
 
 			// Assertion that the relation was cleaned in the association table.
 			Executor.Action action = results -> {
-				results.getResultSet().next();
-				Assert.assertEquals(0, results.getResultSet().getInt(1));
+				results.getCursor().next();
+				Assert.assertEquals(0, results.getCursor().getLong(1).longValue());
 				return "";
 			};
 
@@ -171,7 +171,7 @@ public class SimpleTest extends DBMSSwitch {
 
 	@Test
 	public void testSafeAlias() throws SQLException, ClassNotFoundException {
-		try (Connection connection = this.getConnection()) {
+		try (IConnection connection = this.getConnection()) {
 			Pojo pojo = new Pojo();
 			pojo.setVersion(1337);
 			pojo.setType(Pojo.Type.FOO);
@@ -202,7 +202,7 @@ public class SimpleTest extends DBMSSwitch {
 
 	@Test
 	public void testSelectToDelete() throws SQLException, ClassNotFoundException {
-		try (Connection connection = this.getConnection()) {
+		try (IConnection connection = this.getConnection()) {
 			Pojo newPojo = new Pojo();
 			newPojo.setVersion(1337);
 			newPojo.setType(Pojo.Type.FOO);
@@ -227,7 +227,7 @@ public class SimpleTest extends DBMSSwitch {
 
 	@Test
 	public void testIdMap() throws SQLException, ClassNotFoundException {
-		try (Connection connection = this.getConnection()) {
+		try (IConnection connection = this.getConnection()) {
 			Pojo newPojo = new Pojo();
 			newPojo.setVersion(1337);
 			newPojo.setType(Pojo.Type.FOO);
@@ -273,7 +273,7 @@ public class SimpleTest extends DBMSSwitch {
 
 	@Test
 	public void testHydrate() throws SQLException, ClassNotFoundException {
-		try (Connection connection = this.getConnection()) {
+		try (IConnection connection = this.getConnection()) {
 			Pojo newPojo = new Pojo();
 			newPojo.setVersion(1337);
 			newPojo.setType(Pojo.Type.FOO);

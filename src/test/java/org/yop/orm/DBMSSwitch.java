@@ -4,10 +4,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.yop.orm.gen.Prepare;
 import org.yop.orm.simple.SimpleTest;
+import org.yop.orm.sql.adapter.IConnection;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
@@ -31,7 +31,7 @@ public abstract class DBMSSwitch {
 		return System.getProperties().getProperty(DBMS_SWITCH, "sqlite");
 	}
 
-	protected Connection getConnection() throws SQLException, ClassNotFoundException {
+	protected IConnection getConnection() throws SQLException, ClassNotFoundException {
 		switch (dbms()) {
 			case "mysql" :     return Prepare.getMySQLConnection(true);
 			case "postgres" :  return Prepare.getPostgresConnection();

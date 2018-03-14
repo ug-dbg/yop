@@ -9,9 +9,9 @@ import org.yop.orm.evaluation.In;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.query.*;
+import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.supplychain.model.*;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -36,7 +36,7 @@ public class SupplyChainTest extends DBMSSwitch {
 
 	@Test
 	public void testCreateOrganisation() throws SQLException, ClassNotFoundException {
-		try (Connection connection = this.getConnection()) {
+		try (IConnection connection = this.getConnection()) {
 			connection.setAutoCommit(false);
 
 			Organisation organisation = new Organisation();
@@ -176,7 +176,7 @@ public class SupplyChainTest extends DBMSSwitch {
 
 	@Test
 	public void testBuyingStuff() throws SQLException, ClassNotFoundException {
-		try (Connection connection = this.getConnection()) {
+		try (IConnection connection = this.getConnection()) {
 			Organisation organisation = new Organisation();
 			organisation.setName("world company & Co");
 			organisation.setSomeDummyFloat(3.1415F);

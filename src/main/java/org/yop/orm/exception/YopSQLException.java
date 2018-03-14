@@ -20,6 +20,11 @@ public class YopSQLException extends RuntimeException {
 		super(message, cause);
 	}
 
+	public YopSQLException(String message, Query query, Throwable cause) {
+		super(message, cause);
+		this.query = query;
+	}
+
 	public YopSQLException(Query query, SQLException cause) {
 		super(
 			"Error executing query [" + query.getSql()

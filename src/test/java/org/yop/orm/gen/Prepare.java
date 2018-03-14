@@ -6,6 +6,8 @@ import org.sqlite.SQLiteConfig;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
+import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
 import org.yop.orm.util.ORMTypes;
 import org.yop.orm.util.dialect.*;
 
@@ -53,7 +55,7 @@ public class Prepare {
 		Path dbPath = Files.createTempFile(name, "_temp.db");
 		dbPath.toFile().deleteOnExit();
 
-		try (Connection connection = getConnection(dbPath.toFile())) {
+		try (IConnection connection = getConnection(dbPath.toFile())) {
 			prepare(packagePrefix, connection, SQLite.INSTANCE);
 		}
 		return dbPath.toFile();
@@ -70,14 +72,14 @@ public class Prepare {
 	 * @throws ClassNotFoundException {@link org.sqlite.JDBC} not found
 	 * @throws SQLException SQL error opening connection
 	 */
-	public static Connection getConnection(File db) throws ClassNotFoundException, SQLException {
+	public static IConnection getConnection(File db) throws ClassNotFoundException, SQLException {
 		String url = "jdbc:sqlite:" + db.getAbsolutePath();
 		Class.forName("org.sqlite.JDBC");
 
 		SQLiteConfig config = new SQLiteConfig();
 		config.enforceForeignKeys(true);
 
-		return DriverManager.getConnection(url, config.toProperties());
+		return new JDBCConnection(DriverManager.getConnection(url, config.toProperties()));
 	}
 
 	/**
@@ -91,12 +93,12 @@ public class Prepare {
 	 * @throws ClassNotFoundException {@link com.mysql.jdbc.Driver} not found
 	 * @throws SQLException SQL error opening connection
 	 */
-	public static Connection getMySQLConnection(boolean foreignKeyChecks) throws ClassNotFoundException, SQLException {
+	public static IConnection getMySQLConnection(boolean foreignKeyChecks) throws ClassNotFoundException, SQLException {
 		Class.forName("com.mysql.jdbc.Driver");
 		String connectionString = "jdbc:mysql://" + MYSQL_ADDRESS;
 		Connection connection = DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD);
 		connection.prepareStatement("set foreign_key_checks=" + (foreignKeyChecks ? "1" : "0")).executeUpdate();
-		return connection;
+		return new JDBCConnection(connection);
 	}
 
 	/**
@@ -109,7 +111,7 @@ public class Prepare {
 	 * @throws SQLException SQL error opening connection
 	 */
 	public static void prepareMySQL(String packagePrefix) throws SQLException, ClassNotFoundException {
-		try (Connection connection = getMySQLConnection(false)) {
+		try (IConnection connection = getMySQLConnection(false)) {
 			prepare(packagePrefix, connection, MySQL.INSTANCE);
 		}
 	}
@@ -122,10 +124,10 @@ public class Prepare {
 	 * @throws ClassNotFoundException {@link org.postgresql.Driver} not found
 	 * @throws SQLException SQL error opening connection
 	 */
-	public static Connection getPostgresConnection() throws ClassNotFoundException, SQLException {
+	public static IConnection getPostgresConnection() throws ClassNotFoundException, SQLException {
 		Class.forName("org.postgresql.Driver");
 		String connectionString = "jdbc:postgresql://" + POSTGRES_ADDRESS;
-		return DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD);
+		return new JDBCConnection(DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD));
 	}
 
 	/**
@@ -138,7 +140,7 @@ public class Prepare {
 	 * @throws SQLException SQL error opening connection
 	 */
 	public static void preparePostgres(String packagePrefix) throws SQLException, ClassNotFoundException {
-		try (Connection connection = getPostgresConnection()) {
+		try (IConnection connection = getPostgresConnection()) {
 			prepare(packagePrefix, connection, Postgres.INSTANCE);
 		}
 	}
@@ -151,10 +153,10 @@ public class Prepare {
 	 * @throws ClassNotFoundException {@link oracle.jdbc.driver.OracleDriver} not found
 	 * @throws SQLException SQL error opening connection
 	 */
-	public static Connection getOracleConnection() throws ClassNotFoundException, SQLException {
+	public static IConnection getOracleConnection() throws ClassNotFoundException, SQLException {
 		Class.forName("oracle.jdbc.driver.OracleDriver");
 		String connectionString = "jdbc:oracle:thin:@//" + ORACLE_ADDRESS;
-		return DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD);
+		return new JDBCConnection(DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD));
 	}
 
 	/**
@@ -167,7 +169,7 @@ public class Prepare {
 	 * @throws SQLException SQL error opening connection
 	 */
 	public static void prepareOracle(String packagePrefix) throws SQLException, ClassNotFoundException {
-		try (Connection connection = getOracleConnection()) {
+		try (IConnection connection = getOracleConnection()) {
 			prepare(packagePrefix, connection, Oracle.INSTANCE);
 		}
 	}
@@ -180,10 +182,10 @@ public class Prepare {
 	 * @throws ClassNotFoundException {@link com.microsoft.sqlserver.jdbc.SQLServerDriver} not found
 	 * @throws SQLException SQL error opening connection
 	 */
-	public static Connection getMSSQLConnection() throws ClassNotFoundException, SQLException {
+	public static IConnection getMSSQLConnection() throws ClassNotFoundException, SQLException {
 		Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 		String connectionString = "jdbc:sqlserver://" + MSSQL_ADDRESS;
-		return DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD);
+		return new JDBCConnection(DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD));
 	}
 
 	/**
@@ -196,7 +198,7 @@ public class Prepare {
 	 * @throws SQLException SQL error opening connection
 	 */
 	public static void prepareMSSQL(String packagePrefix) throws SQLException, ClassNotFoundException {
-		try (Connection connection = getMSSQLConnection()) {
+		try (IConnection connection = getMSSQLConnection()) {
 			prepare(packagePrefix, connection, MSSQL.INSTANCE);
 		}
 	}
@@ -210,7 +212,7 @@ public class Prepare {
 	 * @param dialect       the dialect (one of the singleton from the {@link org.yop.orm.util.dialect} package)
 	 * @throws SQLException an error occured running and committing the generation script
 	 */
-	private static void prepare(String packagePrefix, Connection connection, ORMTypes dialect) throws SQLException {
+	private static void prepare(String packagePrefix, IConnection connection, ORMTypes dialect) throws SQLException {
 		connection.setAutoCommit(false);
 		for (String line : dialect.generateScript(packagePrefix)) {
 			try {

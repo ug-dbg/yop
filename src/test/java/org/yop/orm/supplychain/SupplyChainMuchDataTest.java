@@ -10,11 +10,11 @@ import org.yop.orm.query.Delete;
 import org.yop.orm.query.Select;
 import org.yop.orm.query.Upsert;
 import org.yop.orm.query.Where;
+import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.supplychain.model.Organisation;
 import org.yop.orm.supplychain.model.Product;
 import org.yop.orm.supplychain.model.Warehouse;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -42,7 +42,7 @@ public class SupplyChainMuchDataTest extends DBMSSwitch {
 		return "org.yop.orm.supplychain.model";
 	}
 
-	private void createData(Connection connection, String suffix) {
+	private void createData(IConnection connection, String suffix) {
 		Organisation organisation = new Organisation();
 		organisation.setName("Company" + suffix);
 		organisation.setSomeDummyFloat(3.1415F + suffix.length());
@@ -91,7 +91,7 @@ public class SupplyChainMuchDataTest extends DBMSSwitch {
 
 	@Test
 	public void testCRUD() throws SQLException, ClassNotFoundException {
-		try (Connection connection = this.getConnection()) {
+		try (IConnection connection = this.getConnection()) {
 			this.createData(connection, "Foo");
 			this.createData(connection, "Bar");
 

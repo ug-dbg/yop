@@ -11,8 +11,8 @@ import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.JoinClause;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
+import org.yop.orm.sql.adapter.IConnection;
 
-import java.sql.Connection;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -140,7 +140,7 @@ public class Select<T extends Yopable> {
 	 * @throws YopSQLException An SQL error occured
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
 	 */
-	public Set<T> executeWithTwoQueries(Connection connection) {
+	public Set<T> executeWithTwoQueries(IConnection connection) {
 		Set<Long> ids;
 
 		Parameters parameters = new Parameters();
@@ -172,7 +172,7 @@ public class Select<T extends Yopable> {
 	 * @throws YopSQLException An SQL error occured
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
 	 */
-	public Set<T> execute(Connection connection, Strategy strategy) {
+	public Set<T> execute(IConnection connection, Strategy strategy) {
 		Parameters parameters = new Parameters();
 		String request =
 			strategy == Strategy.IN
@@ -189,18 +189,18 @@ public class Select<T extends Yopable> {
 	 * @throws YopSQLException An SQL error occured
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
 	 */
-	public Set<T> execute(Connection connection) {
+	public Set<T> execute(IConnection connection) {
 		return execute(connection, Strategy.EXISTS);
 	}
 
 	/**
 	 * Convenience method that returns the first element of the results or null.
 	 * <br>
-	 * See {@link #execute(Connection)}
+	 * See {@link #execute(IConnection)}
 	 * <br>
 	 * TODO : effectively limit the SQL query result
 	 */
-	public T uniqueResult(Connection connection) {
+	public T uniqueResult(IConnection connection) {
 		Set<T> results = execute(connection, Strategy.EXISTS);
 		return results.isEmpty() ? null : results.iterator().next();
 	}
@@ -212,7 +212,7 @@ public class Select<T extends Yopable> {
 	 * @throws YopSQLException An SQL error occured
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
 	 */
-	public IdMap executeForIds(Connection connection) {
+	public IdMap executeForIds(IConnection connection) {
 		Parameters parameters = new Parameters();
 		String request = this.toSQLIDsRequest(parameters);
 		Query query = new Query(request, parameters);

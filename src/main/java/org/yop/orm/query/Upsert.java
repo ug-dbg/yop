@@ -12,11 +12,11 @@ import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
+import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
-import java.sql.Connection;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -170,7 +170,7 @@ public class Upsert<T extends Yopable> {
 	 * @param connection the connection to use.
 	 */
 	@SuppressWarnings("unchecked")
-	public void execute(Connection connection) {
+	public void execute(IConnection connection) {
 		if(this.elements.isEmpty()) {
 			logger.warn("Upsert on no element. Are you sure you did not forget using #onto() ?");
 			return;
@@ -232,7 +232,7 @@ public class Upsert<T extends Yopable> {
 	 * @param <T> the source type
 	 */
 	private static <T extends Yopable> void updateRelation (
-		Connection connection,
+		IConnection connection,
 		Collection<T> elements,
 		IJoin<T, ? extends Yopable> join) {
 

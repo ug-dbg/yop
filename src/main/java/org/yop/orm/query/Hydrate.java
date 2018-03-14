@@ -4,9 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.adapter.IConnection;
 
 import java.lang.reflect.Field;
-import java.sql.Connection;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -118,7 +118,7 @@ public class Hydrate<T extends Yopable> {
 	 * and every element returned is used to hydrate the {@link #elements}.
 	 * @param connection the connection to use for the hydratation query
 	 */
-	public void execute(Connection connection) {
+	public void execute(IConnection connection) {
 		if(this.elements.isEmpty()) {
 			logger.warn("Hydrate on no element. Are you sure you did not forget using #onto() ?");
 			return;

@@ -7,8 +7,8 @@ import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.*;
+import org.yop.orm.sql.adapter.IConnection;
 
-import java.sql.Connection;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Function;
@@ -121,7 +121,7 @@ public class Delete<T extends Yopable> {
 	 * Execute the DELETE query on the given connection.
 	 * @param connection the connection to use
 	 */
-	public void executeQuery(Connection connection) {
+	public void executeQuery(IConnection connection) {
 		Parameters parameters = new Parameters();
 		Executor.executeQuery(connection, new Query(this.toSQL(parameters), parameters));
 	}
@@ -129,11 +129,11 @@ public class Delete<T extends Yopable> {
 	/**
 	 * Execute the DELETE queries on the given connection, 1 query per table.
 	 * <br>
-	 * An {@link IdMap} is built using {@link Select#executeForIds(Connection)}
+	 * An {@link IdMap} is built using {@link Select#executeForIds(IConnection)}
 	 * and then a delete query is applied for every table with IDs to delete.
 	 * @param connection the connection to use
 	 */
-	public void executeQueries(Connection connection) {
+	public void executeQueries(IConnection connection) {
 		Select<T> select = this.toSelect();
 		IdMap idMap = select.executeForIds(connection);
 		List<Query> queries = new ArrayList<>();

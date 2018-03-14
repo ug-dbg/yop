@@ -1,21 +1,18 @@
 package org.yop.orm.sql;
 
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.adapter.IRequest;
 import org.yop.orm.util.ORMUtil;
 
-import java.sql.*;
 import java.util.*;
 
 /**
  * An SQL query, and everything it needs to be executed on a Connection.
+ * <br>
+ * It also has a generated ID set, that should be filled by {@link IRequest#executeUpdate()}.
  */
 public class Query {
-
-	private static final Logger logger = LoggerFactory.getLogger(Query.class);
 
 	private static final Comparator<String> ALIAS_COMPARATOR = Comparator
 		.comparing(String::length)
@@ -73,6 +70,11 @@ public class Query {
 		}
 	}
 
+
+	public Class<? extends Yopable> getTarget() {
+		return target;
+	}
+
 	/**
 	 * @return the original SQL query
 	 */
@@ -121,14 +123,14 @@ public class Query {
 		return this;
 	}
 
-	/**
-	 * @return if {@link #askGeneratedKeys} → {@link Statement#RETURN_GENERATED_KEYS}
-	 *         else → {@link Statement#NO_GENERATED_KEYS}
-	 */
-	private int generatedKeyCommand() {
-		return this.askGeneratedKeys ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS;
+	public boolean askGeneratedKeys() {
+		return this.askGeneratedKeys;
 	}
 
+	/**
+	 * Get the ID column of this query's {@link #target}.
+	 * @return an array of string that contains the target column ID at index 0, or an empty array if target is null.
+	 */
 	public String[] getIdColumn() {
 		return this.target == null ? new String[0] : new String[] {ORMUtil.getIdColumn(this.target)};
 	}
@@ -138,84 +140,6 @@ public class Query {
 	 */
 	public Set<Long> getGeneratedIds() {
 		return this.generatedIds;
-	}
-
-	/**
-	 * Read the generated keys from the executed statement.
-	 * <br>
-	 * We rely on {@link Statement#getGeneratedKeys()} and don't specify the generated key column.
-	 * (I surely should check this out first)
-	 * <br>
-	 * <br>
-	 * <b>
-	 *     Generally, the generated key is in the column #1.
-	 *     <br>
-	 *     But, Postgres for instance, put the whole row in the generated key ResultSet.
-	 *     <br>
-	 *     So we need either :
-	 *     <ul>
-	 *         <li>Put the ID column first ALWAYS</li>
-	 *         <li>Keep a reference to the {@link #target} class to read the right column </li>
-	 *     </ul>
-	 *
-	 * </b>
-	 * @param statement the statement that was executed
-	 * @throws SQLException an SQL error occured reading the resultset
-	 */
-	public void readGeneratedKey(Statement statement) throws SQLException {
-		if(this.askGeneratedKeys) {
-			ResultSet generatedKeys = statement.getGeneratedKeys();
-			int idIndex = 1;
-
-			try {
-				if (this.target != null) {
-					String idColumn = ORMUtil.getIdColumn(this.target);
-					for (int i = 1; i <= generatedKeys.getMetaData().getColumnCount(); i++) {
-						if (StringUtils.equals(idColumn, generatedKeys.getMetaData().getColumnLabel(i))) {
-							idIndex = i;
-							break;
-						}
-					}
-				}
-			} catch (RuntimeException e) {
-				logger.debug("Error reading metadata for generated indexes. Column #[{}] will be used", idIndex, e);
-			}
-
-			while (generatedKeys.next()) {
-				this.generatedIds.add(generatedKeys.getLong(idIndex));
-			}
-		}
-	}
-
-	/**
-	 * Prepare the statement to be executed using the query.
-	 * <br>
-	 * The safe alias SQL query is used and parameters are set.
-	 * <br>
-	 * You are ready to go :-)
-	 * @param connection the connection to use to prepare the statement
-	 * @return the prepared statement with the parameters set
-	 * @throws SQLException an Error occured preparing the statement with the given connection
-	 */
-	public PreparedStatement prepareStatement(Connection connection) throws SQLException {
-		String[] idColumns = this.getIdColumn();
-		PreparedStatement statement;
-		if (idColumns.length > 0) {
-			statement = connection.prepareStatement(this.getSafeSql(), idColumns);
-		} else {
-			statement = connection.prepareStatement(this.getSafeSql(), this.generatedKeyCommand());
-		}
-		for(int i = 0; i < this.parameters.size(); i++) {
-			Parameters.Parameter parameter = this.parameters.get(i);
-			if (parameter.isSequence()) {
-				throw new YopRuntimeException(
-					"Parameter [" + parameter + "] is a sequence !"
-					+ "It should not be here. This is probably a bug !"
-				);
-			}
-			statement.setObject(i + 1, parameter.getValue());
-		}
-		return statement;
 	}
 
 	@Override

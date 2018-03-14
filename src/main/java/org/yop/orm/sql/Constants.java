@@ -10,6 +10,8 @@ public class Constants {
 	/** Classic SQL dot operator */
 	public static final String DOT = ".";
 
+	public static final String SHOW_SQL_PROPERTY = "yop.show_sql";
+
 	/** alias components separator */
 	public static final String SQL_SEPARATOR = System.getProperties().getProperty("yop.sql.separator", "→");
 
