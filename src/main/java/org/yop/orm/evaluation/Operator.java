@@ -5,8 +5,8 @@ public enum Operator {
 	EQ(" = "),
 	GT(" > "),
 	GE(" >= "),
-	LT(" > "),
-	LE(" > "),
+	LT(" < "),
+	LE(" <= "),
 	IS_NULL(" IS NULL "),
 	IS_NOT_NULL(" IS NOT NULL ");
 
