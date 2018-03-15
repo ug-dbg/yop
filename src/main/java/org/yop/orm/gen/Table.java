@@ -115,7 +115,7 @@ public class Table implements Comparable<Table> {
 	 * @param types the ORM type, giving DBMS hints
 	 * @return the table objects that can be used to get INSERT queries
 	 */
-	private static Set<Table> findTablesFor(Class<? extends Yopable> clazz, ORMTypes types) {
+	public static Set<Table> findTablesFor(Class<? extends Yopable> clazz, ORMTypes types) {
 		Set<Table> tables = new HashSet<>();
 		tables.add(Table.fromClass(clazz, types));
 		readRelationTables(clazz, types, tables);
