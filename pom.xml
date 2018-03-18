@@ -83,6 +83,12 @@
 			<version>23.0</version>
 		</dependency>
 
+		<!--
+			YOP uses the org.reflections library to :
+			- Find all the Yopable objects in a package when you want to generates Tables
+			- Find a relation interface implementation that is not known (i.e. not List, Set, Queue, Collection)
+			If you don't need these, you can safely exclude this dependency.
+		 -->
 		<dependency>
 			<groupId>org.reflections</groupId>
 			<artifactId>reflections</artifactId>
