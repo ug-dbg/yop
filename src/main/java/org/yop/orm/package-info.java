@@ -6,6 +6,7 @@
  * YOP is a dirty DIY Object-Relational Mapping tool
  * whose syntax aims at being SQL-like so you can write inlined requests in Java such as :
  * <br>
+ * <b>
  * {@code
  *  Upsert
  *   .from(Pojo.class)
@@ -15,11 +16,13 @@
  *   .checkNaturalID()
  *   .execute(connection);
  * }
+ * </b>
  * <br>
  * <br>
  * Its core principles are built on 4 constraints :
  * <ul>
  *     <li>[1 data object ↔ 1 table] and [1 relation ↔ 1 table]</li>
+ *     <li>1 technical ID (Long) per Data object</li>
  *     <li>Deal with acyclic graphs of data only</li>
  *     <li>There can be cycles in the Java objects data graph but :
  *          <ul>
