@@ -70,6 +70,13 @@ public class SimpleTest extends DBMSSwitch {
 				.execute(connection, Select.Strategy.EXISTS);
 			Assert.assertEquals(1, found.size());
 
+			Set<Pojo> foundWith2Queries = Select
+				.from(Pojo.class)
+				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
+				.joinAll()
+				.executeWithTwoQueries(connection);
+			Assert.assertEquals(found, foundWith2Queries);
+
 			found = Select
 				.from(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion() + 1))
