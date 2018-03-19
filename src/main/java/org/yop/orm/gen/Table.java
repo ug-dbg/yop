@@ -56,7 +56,7 @@ public class Table implements Comparable<Table> {
 
 	/**
 	 * An extra list of sql queries to be executed for this table.
-	 * @return an ordered list of queries to execute so the table is entirely operationnal.
+	 * @return an ordered list of queries to execute so the table is entirely operational.
 	 */
 	public List<String> otherSQL() {
 		return this.types.otherSQL(this);
