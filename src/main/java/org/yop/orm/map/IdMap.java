@@ -12,7 +12,6 @@ import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -98,14 +97,12 @@ public class IdMap {
 	 * @param context the current context
 	 * @param map the target IdMap that will be populated with IDs
 	 * @param <T> the target type
-	 * @throws SQLException an error occurred reading the resultset
 	 */
 	private static <T extends Yopable> void map(
 		Results results,
 		Class<T> yopable,
 		String context,
-		IdMap map)
-		throws SQLException {
+		IdMap map) {
 
 		map.put(yopable, readId(results, yopable, context));
 		List<Field> fields = Reflection.getFields(yopable, JoinTable.class, false);
