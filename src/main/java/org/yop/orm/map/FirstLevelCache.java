@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * A very basic cache mechanism.
  * <br>
- * It relies on a double map and cache key for an object is (class, id).
+ * It relies on a double map. Cache key for an object is : [class, id].
  */
 public class FirstLevelCache {
 
