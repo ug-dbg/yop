@@ -148,26 +148,12 @@ public class Context<T extends Yopable> {
 	 * @return the target class ID alias
 	 */
 	public String idAlias(String prefix) {
-		Field idField = Reflection.get(this.target, this.newInstance().getIdFieldName());
+		T newInstance = Reflection.newInstanceNoArgs(this.target);
+		Field idField = Reflection.get(this.target, newInstance.getIdFieldName());
 		if(idField != null && idField.isAnnotationPresent(Column.class)) {
 			return prefix + DOT + idField.getAnnotation(Column.class).name();
 		}
-		return prefix + DOT + this.newInstance().getIdFieldName().toUpperCase();
-	}
-
-	/**
-	 * Create a new instance of the target class.
-	 * @return a new instance of T
-	 */
-	private T newInstance() {
-		try {
-			return this.target.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
-			throw new RuntimeException(
-				"Could not instantiate Yopable class [" + this.target.getName() + "]",
-				e
-			);
-		}
+		return prefix + DOT + newInstance.getIdFieldName().toUpperCase();
 	}
 
 	/**
