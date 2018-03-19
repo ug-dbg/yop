@@ -4,6 +4,7 @@ import org.yop.orm.query.Context;
 import org.yop.orm.query.IJoin;
 import org.yop.orm.query.Where;
 
+import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeSet;
@@ -54,7 +55,7 @@ public class JoinClause implements Comparable<JoinClause> {
 	}
 
 	@Override
-	public int compareTo(JoinClause o) {
+	public int compareTo(@Nonnull JoinClause o) {
 		return this.context.getPath().compareTo(o.context.getPath());
 	}
 
