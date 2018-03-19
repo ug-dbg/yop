@@ -170,7 +170,10 @@ public class Reflection {
 			c.setAccessible(true);
 			return c.newInstance();
 		} catch (Exception e) {
-			throw new YopRuntimeException("Unable to create instance of [" + clazz + "]. Does it have a no-arg constructor?", e);
+			throw new YopRuntimeException(
+				"Unable to create instance of [" + clazz + "]. Does it have a no-arg constructor?",
+				e
+			);
 		}
 	}
 
