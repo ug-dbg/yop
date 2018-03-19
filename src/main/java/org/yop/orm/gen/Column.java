@@ -7,6 +7,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.util.ORMTypes;
 import org.yop.orm.util.ORMUtil;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -100,7 +101,7 @@ public class Column implements Comparable<Column> {
 	}
 
 	@Override
-	public int compareTo(Column o) {
+	public int compareTo(@Nonnull Column o) {
 		return COMPARATOR.compare(this, o);
 	}
 
