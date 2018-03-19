@@ -10,6 +10,7 @@ import org.yop.orm.util.ORMTypes;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -87,7 +88,7 @@ public class Table implements Comparable<Table> {
 	}
 
 	@Override
-	public int compareTo(Table o) {
+	public int compareTo(@Nonnull Table o) {
 		return COMPARATOR.compare(this, o);
 	}
 
