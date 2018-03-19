@@ -14,8 +14,14 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * A context on a {@link Where}.
- * Aggregate anything that can be useful to generate SQL portions.
+ * A context is basically a path in an oriented acyclic graph.
+ * <br><br>
+ * It has a target class, a parent context (that can be null) and a relation name to the parent context.
+ * <br>
+ * The path to a current can then be recursively built (see {@link #getPath()}) :
+ * <i>
+ * RootClass→relationA→IntermediaryClass→relationB→currentContextClass
+ * </i>
  * @param <T> the context target class
  */
 public class Context<T extends Yopable> {
@@ -23,7 +29,10 @@ public class Context<T extends Yopable> {
 	public static final String SQL_SEPARATOR = Constants.SQL_SEPARATOR;
 	static final String DOT = ".";
 
+	/** Parent context. If null, this context is the root context. */
 	private Context<? extends Yopable> parent;
+
+	/** Relation (field) name to the parent context. If null, this context is the root context. */
 	private String relationToParent;
 
 	/** The context target class */
@@ -70,7 +79,13 @@ public class Context<T extends Yopable> {
 	}
 
 	/**
-	 * Build the context path
+	 * Build the context path recursively.
+	 * <br>
+	 * The resulting path should look like this :
+	 * <b>RootClass→relationA→IntermediaryClass→relationB→currentContextClass</b>
+	 * <br><br>
+	 * A context that is not root has a reference to the parent context, using a relation name.
+	 * So we can recursively build the path of the given context.
 	 * @return the fully qualified context path
 	 */
 	public String getPath() {
