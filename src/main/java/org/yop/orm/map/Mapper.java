@@ -99,7 +99,7 @@ public class Mapper {
 	 * @param context the target element context
 	 * @param <T> the target type
 	 * @return the input element, or the cached element of it !
-	 * @throws YopSQLException        an error occured reading the resultset
+	 * @throws YopSQLException        an error occurred reading the resultset
 	 * @throws IllegalAccessException could not access a field on the target instance
 	 */
 	@SuppressWarnings("unchecked")
