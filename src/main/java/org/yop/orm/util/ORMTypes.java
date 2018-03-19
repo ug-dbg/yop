@@ -203,6 +203,7 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 	/**
 	 * Generate a script (a list of SQL queries)
 	 * that can be used to prepare a DB for the Yopable objects of a given package.
+	 * <br><b>⚠⚠⚠  i.e. Every table concerned by the package prefix will be dropped in the script ! ⚠⚠⚠ </b>
 	 * @param packagePrefix the Yopable package prefix
 	 * @return the SQL script, as an ordered list of SQL queries to run.
 	 */
