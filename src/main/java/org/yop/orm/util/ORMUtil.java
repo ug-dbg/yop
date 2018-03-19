@@ -201,7 +201,7 @@ public class ORMUtil {
 				return ITransformer.getTransformer(transformer);
 			} catch (RuntimeException e) {
 				logger.warn(
-					"Could not instanciate transformer [{}] for [{}#{}]. Returning VoidTransformer.",
+					"Could not instantiate transformer [{}] for [{}#{}]. Returning VoidTransformer.",
 					transformer.getName(),
 					field.getDeclaringClass(),
 					field.getName()

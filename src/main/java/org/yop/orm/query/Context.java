@@ -164,7 +164,7 @@ public class Context<T extends Yopable> {
 			return this.target.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
 			throw new RuntimeException(
-				"Could not instanciate Yopable class [" + this.target.getName() + "]",
+				"Could not instantiate Yopable class [" + this.target.getName() + "]",
 				e
 			);
 		}
