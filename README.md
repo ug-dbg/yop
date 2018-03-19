@@ -1,12 +1,13 @@
 # YOP !
-The Hit & Run ORM :-) 
+The 'Hit & Run' Object-Relational-Mapping tool :-) 
 
 ## What is YOP ?
 An ORM tool to build/execute/map SQL requests onto java objects.
 
 ## What YOP is not ?
 An ORM framework that manages persistent objects through a session.
-There are some very good frameworks to do this, way better than this rough DIY tool.
+There are some very good frameworks to do this, way better than this rough DIY tool.  
+And using YOP complementary to another ORM does not sound completely absurd.
 
 ## What are the promises ?
 Do some light/easy 'Hit & Run' CRUD in Java, using an SQL-like syntax and method references to manage propagation.  
@@ -28,6 +29,8 @@ Select
 .joinAll()
 .execute(connection
 ```
+YOP *could* be able to run on **Android**.  
+See the "yop-android-poc" for an infamous POC.
 
 ## What are the requirements ?
 * **Java 8** (→ method references are a key requirement of YOP)
@@ -67,8 +70,10 @@ Of course you will still be allowed to have cycles in your java objects data gra
 
 ## Is it reliable ?
 For now, I guess it is not at all :-D  
-You tell me !
+You tell me ! Critics and contributions are welcome.
 
 ## Is it fast ? What is the overhead ?
 I have not written/run any benchmark for now.
-You tell me !
+It has not been specially written to be fast.  
+There is certainly plenty of room for optimization.  
+You tell me ! Critics and contributions are welcome.
