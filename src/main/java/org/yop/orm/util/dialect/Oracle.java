@@ -43,7 +43,7 @@ public class Oracle extends ORMTypes {
 	/**
 	 * {@inheritDoc}
 	 * <br><br>
-	 * Implémentation :
+	 * Implementation :
 	 * DROP and CREATE the sequences for the given table.
 	 */
 	@Override
