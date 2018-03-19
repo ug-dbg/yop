@@ -20,7 +20,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
- * Prepare some SQLite database with delete on exit.
+ * Prepare a target database (DROP and CREATE tables) and get a connection.
+ * <br><br>
+ * This was mostly written to prepare databases for unit tests.
  */
 public class Prepare {
 
