@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.yop.orm.gen.Prepare;
 import org.yop.orm.simple.SimpleTest;
+import org.yop.orm.sql.Constants;
 import org.yop.orm.sql.adapter.IConnection;
 
 import java.io.File;
@@ -15,10 +16,13 @@ import java.sql.SQLException;
  * <br>
  * Use the {@link #DBMS_SWITCH} property to switch DBMS :
  * <ul>
- *     <li>mysql : requires a fresh Mysql database instance on port 3306</li>
- *     <li>postgres : requires a fresh Postgres database instance on port 5432</li>
  *     <li>sqlite : (default) use a temporary file as DB (deleted on exit)</li>
+ *     <li>mysql : MySQL</li>
+ *     <li>postgres : PostgreSQL</li>
+ *     <li>oracle : Oracle</li>
+ *     <li>mssql : Microsoft SQL-Server</li>
  * </ul>
+ * Please supply the connection parameters using system properties. See {@link Prepare}.
  */
 public abstract class DBMSSwitch {
 
@@ -44,7 +48,7 @@ public abstract class DBMSSwitch {
 
 	@BeforeClass
 	public static void init() {
-		System.setProperty("yop.show_sql", "true");
+		System.setProperty(Constants.SHOW_SQL_PROPERTY, "true");
 	}
 
 	@Before
