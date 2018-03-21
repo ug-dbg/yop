@@ -2,6 +2,7 @@ package org.yop.orm.sql.adapter.jdbc;
 
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.exception.YopSQLException;
+import org.yop.orm.sql.BatchQuery;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
 import org.yop.orm.sql.adapter.IConnection;
@@ -79,7 +80,12 @@ public class JDBCConnection implements IConnection {
 					}
 					statement.setObject(i + 1, parameter.getValue());
 				}
-				statement.addBatch();
+
+				// Well, this is embarrassing.
+				// Using addBatch with some drivers does not seem to work well with a single batch entry.
+				if(query instanceof BatchQuery) {
+					statement.addBatch();
+				}
 			}
 		} catch (SQLException e) {
 			throw new YopSQLException("Exception preparing statement for query [" + query + "]", e);
