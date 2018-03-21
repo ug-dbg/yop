@@ -42,7 +42,7 @@ public class BatchQuery extends Query {
 	 */
 	@Override
 	public boolean nextBatch() {
-		if(this.batchCursor >= this.parametersBatches.size()) {
+		if(this.batchCursor >= this.parametersBatches.size() - 1) {
 			return false;
 		}
 		this.batchCursor++;
