@@ -24,7 +24,7 @@ public class AbbreviateTransformer implements ITransformer<String> {
 		if(s != null && s.length() > maxLength) {
 			switch (column.length_strategy()) {
 				case EXCEPTION: this.tooLongException(s, column.name(), column.length());
-				case CUT: return this.cut(s, maxLength, column);
+				case CUT: return this.cut(s, maxLength - 1, column);
 				case NONE:
 				default:  return s;
 			}
