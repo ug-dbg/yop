@@ -30,26 +30,26 @@ public class Upsert<T extends Yopable> {
 
 	private static final Logger logger = LoggerFactory.getLogger(Upsert.class);
 
-	private static final String INSERT = " INSERT INTO {0} ({1}) VALUES ({2}) ";
-	private static final String UPDATE = " UPDATE {0} SET {1} WHERE ({2}) ";
+	protected static final String INSERT = " INSERT INTO {0} ({1}) VALUES ({2}) ";
+	protected static final String UPDATE = " UPDATE {0} SET {1} WHERE ({2}) ";
 
 	/** Target class */
-	private Class<T> target;
+	protected Class<T> target;
 
 	/** Elements to save/update */
-	private Collection<T> elements = new ArrayList<>();
+	protected Collection<T> elements = new ArrayList<>();
 
 	/** Join clauses */
-	private Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
+	protected Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
 
 	/** If set to true, any insert will do a preliminary SELECT query to find any entry whose natural key matches */
-	private boolean checkNaturalID = false;
+	protected boolean checkNaturalID = false;
 
 	/**
-	 * Private constructor, please use {@link #from(Class)}
+	 * Protected constructor, please use {@link #from(Class)}
 	 * @param target the target class
 	 */
-	private Upsert(Class<T> target) {
+	protected Upsert(Class<T> target) {
 		this.target = target;
 	}
 
@@ -62,7 +62,7 @@ public class Upsert<T extends Yopable> {
 	 * @throws YopMappingException invalid field mapping for the given join
 	 */
 	@SuppressWarnings("unchecked")
-	private <U extends Yopable> Upsert<U> subUpsert(IJoin<T, U> join, T on) {
+	protected <U extends Yopable> Upsert<U> subUpsert(IJoin<T, U> join, T on) {
 		Field field = join.getField(this.target);
 		try {
 			Object children = field.get(on);
@@ -231,7 +231,7 @@ public class Upsert<T extends Yopable> {
 	 * @param join       the join clause (≈ relation table)
 	 * @param <T> the source type
 	 */
-	private static <T extends Yopable> void updateRelation (
+	private static <T extends Yopable> void updateRelation(
 		IConnection connection,
 		Collection<T> elements,
 		IJoin<T, ? extends Yopable> join) {
@@ -307,7 +307,7 @@ public class Upsert<T extends Yopable> {
 	 * Get the table name for the current context (read {@link Table} annotation.
 	 * @return the table name for the current context
 	 */
-	private String getTableName() {
+	protected String getTableName() {
 		return ORMUtil.getTableName(this.target);
 	}
 
@@ -317,7 +317,7 @@ public class Upsert<T extends Yopable> {
 	 * A sequence parameter might be set if specified !
 	 * @return the columns to select
 	 */
-	private Parameters values(T element) {
+	protected Parameters values(T element) {
 		List<Field> fields = Reflection.getFields(this.target, Column.class);
 		Field idField = ORMUtil.getIdField(this.target);
 		Parameters parameters = new Parameters();

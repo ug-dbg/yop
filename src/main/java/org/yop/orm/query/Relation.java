@@ -2,6 +2,7 @@ package org.yop.orm.query;
 
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.BatchQuery;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
 import org.yop.orm.sql.SimpleQuery;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
  * @param <From> the source type
  * @param <To>   the target type
  */
-class Relation<From extends Yopable, To extends Yopable> {
+public class Relation<From extends Yopable, To extends Yopable> {
 
 	private static final String DELETE_IN = " DELETE FROM {0} WHERE {1} IN ({2}) ";
 	private static final String INSERT    = " INSERT INTO {0} ({1},{2}) VALUES (?, ?) ";
@@ -97,12 +98,39 @@ class Relation<From extends Yopable, To extends Yopable> {
 		for (Map.Entry<From, Collection<To>> relation : this.relations.entrySet()) {
 			String insert = insert(this.relationTable, this.sourceColumn, this.targetColumn);
 			Long sourceId = relation.getKey().getId();
+
 			for (To to : relation.getValue()) {
 				Parameters parameters = new Parameters();
 				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, sourceId);
 				parameters.addParameter(this.relationTable + "#" + this.targetColumn, to.getId());
 				inserts.add(new SimpleQuery(insert, parameters));
 			}
+		}
+
+		return inserts;
+	}
+
+	/**
+	 * Build the <b>INSERT</b> queries for this relation.
+	 * <br>
+	 * You should have used {@link #toSQLDelete()} before :)
+	 * @return the insert queries
+	 */
+	public Collection<Query> toSQLBatchInsert() {
+		Collection<Query> inserts = new ArrayList<>();
+
+		for (Map.Entry<From, Collection<To>> relation : this.relations.entrySet()) {
+			String insert = insert(this.relationTable, this.sourceColumn, this.targetColumn);
+			BatchQuery batchQuery = new BatchQuery(insert);
+			Long sourceId = relation.getKey().getId();
+
+			for (To to : relation.getValue()) {
+				Parameters parameters = new Parameters();
+				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, sourceId);
+				parameters.addParameter(this.relationTable + "#" + this.targetColumn, to.getId());
+				batchQuery.addParametersBatch(parameters);
+			}
+			inserts.add(batchQuery);
 		}
 
 		return inserts;
