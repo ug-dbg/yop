@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopSQLException;
+import org.yop.orm.sql.BatchQuery;
 import org.yop.orm.sql.Constants;
 import org.yop.orm.sql.Query;
 import org.yop.orm.sql.adapter.IRequest;
@@ -66,7 +67,12 @@ public class JDBCRequest implements IRequest {
 	@Override
 	public void executeUpdate() {
 		try {
-			statement.executeUpdate();
+			if(this.query instanceof BatchQuery) {
+				this.statement.executeBatch();
+			} else {
+				this.statement.executeUpdate();
+			}
+
 			this.readGeneratedKey(this.statement);
 		} catch (SQLException e) {
 			throw new YopSQLException(this.query, e);

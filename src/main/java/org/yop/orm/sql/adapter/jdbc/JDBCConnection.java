@@ -79,6 +79,7 @@ public class JDBCConnection implements IConnection {
 					}
 					statement.setObject(i + 1, parameter.getValue());
 				}
+				statement.addBatch();
 			}
 		} catch (SQLException e) {
 			throw new YopSQLException("Exception preparing statement for query [" + query + "]", e);
