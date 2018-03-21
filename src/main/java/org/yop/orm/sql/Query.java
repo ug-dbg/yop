@@ -11,8 +11,14 @@ import java.util.*;
  * An SQL query, and everything it needs to be executed on a Connection.
  * <br>
  * It also has a generated ID set, that should be filled by {@link IRequest#executeUpdate()}.
+ * <br><br>
+ * A query can either be :
+ * <ul>
+ *     <li>Simple : see {@link SimpleQuery}</li>
+ *     <li>Batch : see {@link BatchQuery}</li>
+ * </ul>
  */
-public class Query {
+public abstract class Query {
 
 	private static final Comparator<String> ALIAS_COMPARATOR = Comparator
 		.comparing(String::length)
@@ -20,35 +26,30 @@ public class Query {
 		.reversed();
 
 	/** The SQL to execute */
-	private String sql;
+	protected String sql;
 
 	/** The SQL with too long aliases replaced with generated UUIDs */
 	private String safeAliasSQL;
 
-	/** The SQL query parameters (i.e. for '?' in the query) */
-	private Parameters parameters;
-
 	/** True to ask the statement to return the generated Ids */
-	private boolean askGeneratedKeys = false;
+	boolean askGeneratedKeys = false;
 
 	/** The generated IDs */
-	private Set<Long> generatedIds = new HashSet<>();
+	Set<Long> generatedIds = new HashSet<>();
 
 	/** Aliases map : short alias → original alias */
-	private Map<String, String> tooLongAliases = new HashMap<>();
+	Map<String, String> tooLongAliases = new HashMap<>();
 
 	/** A reference to the root target Yopable that this query was generated for. Only required for generated keys. */
 	protected Class<? extends Yopable> target;
 
 	/**
-	 * Default constructor : SQL query and parameters.
+	 * Default constructor : SQL query.
 	 * @param sql        the SQL query to execute
-	 * @param parameters the query parameters
 	 */
-	public Query(String sql, Parameters parameters) {
+	public Query(String sql) {
 		this.sql = sql;
 		this.safeAliasSQL = sql;
-		this.parameters = parameters;
 
 		// Search table/column aliases that are too long for SQL : longest alias first !
 		Set<String> tooLongAliases = new TreeSet<>(ALIAS_COMPARATOR);
@@ -105,13 +106,6 @@ public class Query {
 	}
 
 	/**
-	 * @return the query parameters
-	 */
-	public Parameters getParameters() {
-		return parameters;
-	}
-
-	/**
 	 * Ask for generated IDs or not.
 	 * @param value  true to ask the statement to resturn the generated IDs
 	 * @param target the target class for which there will be generated keys
@@ -142,14 +136,16 @@ public class Query {
 		return this.generatedIds;
 	}
 
-	@Override
-	public String toString() {
-		return "Query{" +
-			"sql='" + sql + '\'' +
-			", parameters=" + parameters +
-			", askGeneratedKeys=" + askGeneratedKeys +
-			", generatedIds=" + generatedIds +
-			", tooLongAliases=" + tooLongAliases +
-		'}';
-	}
+	/**
+	 * Move the parameters cursor to the next batch of parameters.
+	 * @return true if there is a next batch available after moving the cursor
+	 */
+	public abstract boolean nextBatch();
+
+	/**
+	 * Get the current batch of parameters
+	 * @return the current batch of parameters.
+	 * @throws ArrayIndexOutOfBoundsException if the batch cursor is not correctly set
+	 */
+	public abstract Parameters getParameters();
 }

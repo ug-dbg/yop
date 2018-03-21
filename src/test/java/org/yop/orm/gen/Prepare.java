@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
-import org.yop.orm.sql.Query;
+import org.yop.orm.sql.SimpleQuery;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
 import org.yop.orm.util.ORMTypes;
@@ -218,7 +218,7 @@ public class Prepare {
 		connection.setAutoCommit(true);
 		for (String line : dialect.generateScript(packagePrefix)) {
 			try {
-				Executor.executeQuery(connection, new Query(line, new Parameters()));
+				Executor.executeQuery(connection, new SimpleQuery(line, new Parameters()));
 			} catch (RuntimeException e) {
 				logger.warn("Error executing script line [" + line + "]", e);
 			}

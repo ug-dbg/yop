@@ -7,10 +7,7 @@ import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.sql.Executor;
-import org.yop.orm.sql.JoinClause;
-import org.yop.orm.sql.Parameters;
-import org.yop.orm.sql.Query;
+import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 
 import java.text.MessageFormat;
@@ -145,7 +142,7 @@ public class Select<T extends Yopable> {
 
 		Parameters parameters = new Parameters();
 		String request = this.toSQLAnswerRequest(parameters);
-		Query query = new Query(request, parameters);
+		Query query = new SimpleQuery(request, parameters);
 
 		Set<T> elements = Executor.executeSelectQuery(connection, query, this.context.getTarget());
 		ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toSet());
@@ -156,7 +153,7 @@ public class Select<T extends Yopable> {
 
 		parameters = new Parameters();
 		request = this.toSQLDataRequest(ids, parameters);
-		query = new Query(request, parameters);
+		query = new SimpleQuery(request, parameters);
 		return Executor.executeSelectQuery(connection, query, this.context.getTarget());
 	}
 
@@ -179,7 +176,7 @@ public class Select<T extends Yopable> {
 			? this.toSQLDataRequestWithIN(parameters)
 			: this.toSQLDataRequest(parameters);
 
-		return Executor.executeSelectQuery(connection, new Query(request, parameters), this.context.getTarget());
+		return Executor.executeSelectQuery(connection, new SimpleQuery(request, parameters), this.context.getTarget());
 	}
 
 	/**
@@ -215,7 +212,7 @@ public class Select<T extends Yopable> {
 	public IdMap executeForIds(IConnection connection) {
 		Parameters parameters = new Parameters();
 		String request = this.toSQLIDsRequest(parameters);
-		Query query = new Query(request, parameters);
+		Query query = new SimpleQuery(request, parameters);
 
 		return (IdMap) Executor.executeQuery(connection, query, IdMap.populateAction(this.context.getTarget()));
 	}

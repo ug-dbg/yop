@@ -402,7 +402,7 @@ public class Upsert<T extends Yopable> {
 	/**
 	 * SQL query + parameters aggregation.
 	 */
-	private static class Query<T extends Yopable> extends org.yop.orm.sql.Query {
+	private static class Query<T extends Yopable> extends org.yop.orm.sql.SimpleQuery {
 		private final T element;
 
 		private Query(String sql, Parameters parameters, T element) {

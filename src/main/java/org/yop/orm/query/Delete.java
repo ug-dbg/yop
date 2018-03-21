@@ -123,7 +123,7 @@ public class Delete<T extends Yopable> {
 	 */
 	public void executeQuery(IConnection connection) {
 		Parameters parameters = new Parameters();
-		Executor.executeQuery(connection, new Query(this.toSQL(parameters), parameters));
+		Executor.executeQuery(connection, new SimpleQuery(this.toSQL(parameters), parameters));
 	}
 
 	/**
@@ -145,7 +145,7 @@ public class Delete<T extends Yopable> {
 			for (List<Long> batch : batches) {
 				Parameters parameters = new Parameters();
 				String sql = Delete.from(entry.getKey()).where(Where.id(batch)).toSQL(parameters);
-				queries.add(new Query(sql, parameters));
+				queries.add(new SimpleQuery(sql, parameters));
 			}
 		}
 

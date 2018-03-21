@@ -4,6 +4,7 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
+import org.yop.orm.sql.SimpleQuery;
 import org.yop.orm.util.MessageUtil;
 
 import java.lang.reflect.Field;
@@ -81,7 +82,7 @@ class Relation<From extends Yopable, To extends Yopable> {
 				return "?";
 			}).collect(Collectors.toList())
 		);
-		return Collections.singletonList(new Query(sql, parameters));
+		return Collections.singletonList(new SimpleQuery(sql, parameters));
 	}
 
 	/**
@@ -100,7 +101,7 @@ class Relation<From extends Yopable, To extends Yopable> {
 				Parameters parameters = new Parameters();
 				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, sourceId);
 				parameters.addParameter(this.relationTable + "#" + this.targetColumn, to.getId());
-				inserts.add(new Query(insert, parameters));
+				inserts.add(new SimpleQuery(insert, parameters));
 			}
 		}
 

@@ -14,7 +14,7 @@ import org.yop.orm.simple.model.Other;
 import org.yop.orm.simple.model.Pojo;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
-import org.yop.orm.sql.Query;
+import org.yop.orm.sql.SimpleQuery;
 import org.yop.orm.sql.adapter.IConnection;
 
 import java.sql.SQLException;
@@ -128,7 +128,7 @@ public class SimpleTest extends DBMSSwitch {
 
 			Executor.executeQuery(
 				connection,
-				new Query("SELECT COUNT(*) FROM POJO_JOPO_relation", new Parameters()),
+				new SimpleQuery("SELECT COUNT(*) FROM POJO_JOPO_relation", new Parameters()),
 				action
 			);
 		}
@@ -170,7 +170,7 @@ public class SimpleTest extends DBMSSwitch {
 
 			Executor.executeQuery(
 				connection,
-				new Query("SELECT COUNT(*) FROM POJO_JOPO_relation", new Parameters()),
+				new SimpleQuery("SELECT COUNT(*) FROM POJO_JOPO_relation", new Parameters()),
 				action
 			);
 		}
