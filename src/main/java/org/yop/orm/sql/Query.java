@@ -143,9 +143,17 @@ public abstract class Query {
 	public abstract boolean nextBatch();
 
 	/**
-	 * Get the current batch of parameters
+	 * Get the current batch of parameters.
 	 * @return the current batch of parameters.
 	 * @throws ArrayIndexOutOfBoundsException if the batch cursor is not correctly set
 	 */
 	public abstract Parameters getParameters();
+
+	/**
+	 * Get a String representation of the parameters.
+	 * <br>
+	 * This method should never throw an {@link ArrayIndexOutOfBoundsException} !
+	 * @return a String representation of the parameters, either batch or simple.
+	 */
+	public abstract String parametersToString();
 }

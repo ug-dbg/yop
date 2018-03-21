@@ -29,7 +29,7 @@ public class YopSQLException extends RuntimeException {
 		super(
 			"Error executing query [" + query.getSql()
 			+ "] with safe aliasing [" + query.getSafeSql()
-			+ "] with parameters [" + query.getParameters() + "]",
+			+ "] with parameters [" + query.parametersToString() + "]",
 			cause
 		);
 		this.query = query;

@@ -29,8 +29,14 @@ public class SimpleQuery extends Query {
 	/**
 	 * @return the query parameters ({@link #parameters} whatever the result of {@link #nextBatch()}.
 	 */
+	@Override
 	public Parameters getParameters() {
-		return parameters;
+		return this.parameters;
+	}
+
+	@Override
+	public String parametersToString() {
+		return String.valueOf(this.parameters);
 	}
 
 	@Override

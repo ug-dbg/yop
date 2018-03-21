@@ -75,6 +75,11 @@ public class BatchQuery extends Query {
 	}
 
 	@Override
+	public String parametersToString() {
+		return String.valueOf(this.parametersBatches);
+	}
+
+	@Override
 	public String toString() {
 		return "BatchQuery{" +
 			"sql='" + this.sql + '\'' +
