@@ -35,7 +35,7 @@ public abstract class Query {
 	boolean askGeneratedKeys = false;
 
 	/** The generated IDs */
-	Set<Long> generatedIds = new HashSet<>();
+	List<Long> generatedIds = new ArrayList<>();
 
 	/** Aliases map : short alias → original alias */
 	Map<String, String> tooLongAliases = new HashMap<>();
@@ -132,7 +132,7 @@ public abstract class Query {
 	/**
 	 * @return the Ids generated when executing this query
 	 */
-	public Set<Long> getGeneratedIds() {
+	public List<Long> getGeneratedIds() {
 		return this.generatedIds;
 	}
 
