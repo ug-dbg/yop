@@ -215,7 +215,7 @@ public class Prepare {
 	 * @throws SQLException an error occured running and committing the generation script
 	 */
 	private static void prepare(String packagePrefix, IConnection connection, ORMTypes dialect) throws SQLException {
-		connection.setAutoCommit(false);
+		connection.setAutoCommit(true);
 		for (String line : dialect.generateScript(packagePrefix)) {
 			try {
 				Executor.executeQuery(connection, new Query(line, new Parameters()));
@@ -223,6 +223,5 @@ public class Prepare {
 				logger.warn("Error executing script line [" + line + "]", e);
 			}
 		}
-		connection.commit();
 	}
 }
