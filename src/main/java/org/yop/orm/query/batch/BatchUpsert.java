@@ -68,15 +68,10 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 * <br>
 	 * @param connection the connection to use.
 	 */
-	@SuppressWarnings("unchecked")
 	public void execute(IConnection connection) {
-		Map<String, List<org.yop.orm.sql.BatchQuery>> delayable = new HashMap<>();
+		DelayedQueries delayable = new DelayedQueries();
 		this.execute(connection, delayable);
-
-		List<org.yop.orm.sql.BatchQuery> merged = new ArrayList<>();
-		delayable.values().forEach(batch -> merged.add(org.yop.orm.sql.BatchQuery.merge(batch)));
-
-		merged.forEach(batch -> Executor.executeQuery(connection, batch));
+		delayable.merge().forEach(batch -> Executor.executeQuery(connection, batch));
 	}
 
 	/**
@@ -93,7 +88,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 * @param delayed    the delayable batch queries, that should be executed after this method ends
 	 */
 	@SuppressWarnings("unchecked")
-	private void execute(IConnection connection, Map<String, List<org.yop.orm.sql.BatchQuery>> delayed) {
+	private void execute(IConnection connection, DelayedQueries delayed) {
 		if(this.elements.isEmpty()) {
 			logger.warn("Upsert on no element. Are you sure you did not forget using #onto() ?");
 			return;
@@ -177,7 +172,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 * Generate a couple of SQL batch Queries that will effectively do the upsert request.
 	 * @return the Upsert queries for the current Upsert : 1 for inserts, one for updates.
 	 */
-	private List<org.yop.orm.sql.Query> toSQL() {
+	private List<Query> toSQL() {
 		List<T> elementsToInsert = new ArrayList<>();
 		List<T> elementsToUpdate = new ArrayList<>();
 
@@ -209,7 +204,6 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 * @param elementsToInsert the elements to insert.
 	 * @return an INSERT batch query for the elements
 	 */
-	@SuppressWarnings("unchecked")
 	private BatchQuery<T> toSQLInserts(List<T> elementsToInsert) {
 		if(elementsToInsert.isEmpty()) {
 			throw new YopRuntimeException("Trying to create batch query on no target element !");
@@ -287,10 +281,9 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 * @param <T> the queries target type
 	 * @return the updated/delayed elements
 	 */
-	@SuppressWarnings("unchecked")
 	private static <T extends Yopable> Collection<T> upsertOrDelay(
 		List<org.yop.orm.sql.Query> queries,
-		Map<String, List<org.yop.orm.sql.BatchQuery>> delayed,
+		DelayedQueries delayed,
 		IConnection connection) {
 
 		Set<T> updated = new HashSet<>();
@@ -343,18 +336,10 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 * Delay the given query, i.e. add the query to the delayed map.
 	 * @param query   the query to delay
 	 * @param delayed the delayed queries map
-	 * @throws YopRuntimeException if the query is not a {@link org.yop.orm.sql.BatchQuery}.
 	 */
-	private static void delay(org.yop.orm.sql.Query query, Map<String, List<org.yop.orm.sql.BatchQuery>> delayed) {
+	private static void delay(org.yop.orm.sql.Query query, DelayedQueries delayed) {
 		delayed.putIfAbsent(query.getSql(), new ArrayList<>());
-		if (query instanceof org.yop.orm.sql.BatchQuery) {
-			delayed.get(query.getSql()).add((org.yop.orm.sql.BatchQuery) query);
-		} else {
-			throw new YopRuntimeException(
-				"Query to delay [" + query + "] is not a batch query ! "
-				+ "This is not expected in a batch upsert !"
-			);
-		}
+		delayed.get(query.getSql()).add(query);
 	}
 
 	/**
@@ -374,7 +359,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 		IConnection connection,
 		Collection<T> elements,
 		IJoin<T, ? extends Yopable> join,
-		Map<String, List<org.yop.orm.sql.BatchQuery>> delayed) {
+		DelayedQueries delayed) {
 
 		Relation<T, ? extends Yopable> relation = new Relation<>(elements, join);
 		for (org.yop.orm.sql.Query query : relation.toSQLDelete()) {
@@ -388,18 +373,18 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	}
 
 	/**
-	 * Get the query elements, whether a {@link BatchQuery} or {@link org.yop.orm.query.Upsert.Query}.
+	 * Get the query elements, whether a {@link BatchQuery} or {@link org.yop.orm.query.Upsert.SimpleQuery}.
 	 * @param query the query
 	 * @param <T> the query target type
 	 * @return the elements concerned by the query
-	 * @throws ClassCastException if query is neither a {@link BatchQuery} nor a {@link org.yop.orm.query.Upsert.Query}.
+	 * @throws ClassCastException query is neither {@link BatchQuery} nor {@link org.yop.orm.query.Upsert.SimpleQuery}.
 	 */
 	@SuppressWarnings("unchecked")
 	private static <T extends Yopable> List<T> getQueryElements(org.yop.orm.sql.Query query) {
 		if (query instanceof BatchQuery) {
 			return ((BatchQuery) query).elements;
 		} else {
-			return Collections.singletonList((T) ((Query) query).getElement());
+			return Collections.singletonList((T) ((SimpleQuery) query).getElement());
 		}
 	}
 

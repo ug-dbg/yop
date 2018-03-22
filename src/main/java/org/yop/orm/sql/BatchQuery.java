@@ -95,22 +95,32 @@ public class BatchQuery extends Query {
 	}
 
 	/**
-	 * Merge a list of Batch queries that have the same SQL.
-	 * @param batches the batches to merge.
+	 * Merge a list of queries that have the same SQL.
+	 * @param queries the queries to merge.
 	 * @return a single BatchQuery
-	 * @throws YopRuntimeException when there are more than 1 SQL query among the batches
+	 * @throws YopRuntimeException when there are more than 1 SQL query among the queries
 	 */
-	public static BatchQuery merge(List<BatchQuery> batches) {
+	public static Query merge(List<Query> queries) {
 		BatchQuery merged = null;
-		for (BatchQuery batchQuery : batches) {
+		for (Query query : queries) {
 			if(merged == null) {
-				merged = new BatchQuery(batchQuery.sql);
+				merged = new BatchQuery(query.sql);
 			}
-			if(!StringUtils.equals(merged.sql, batchQuery.sql)) {
+			if(!StringUtils.equals(merged.sql, query.sql)) {
 				throw new YopRuntimeException("Could not merge batch queries with different SQL !");
 			}
-			merged.parametersBatches.addAll(batchQuery.parametersBatches);
+			if (query instanceof SimpleQuery) {
+				merged.parametersBatches.add(query.getParameters());
+			} else if (query instanceof BatchQuery){
+				merged.parametersBatches.addAll(((BatchQuery) query).parametersBatches);
+			}
 		}
+
+		// Only one batch ? Return a SimpleQuery, for coherence purposes.
+		if (merged != null && merged.parametersBatches.size() == 1) {
+			return new SimpleQuery(merged.sql, merged.parametersBatches.get(0));
+		}
+
 		return merged;
 	}
 }

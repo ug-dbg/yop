@@ -204,7 +204,7 @@ public class Upsert<T extends Yopable> {
 
 		// Upsert the current data table and, when required, set the generated ID
 		Set<T> updated = new HashSet<>();
-		for (Query<T> query : this.toSQL()) {
+		for (SimpleQuery<T> query : this.toSQL()) {
 			Executor.executeQuery(connection, query);
 			if(!query.getGeneratedIds().isEmpty()) {
 				query.element.setId(query.getGeneratedIds().iterator().next());
@@ -249,8 +249,8 @@ public class Upsert<T extends Yopable> {
 	 * Generate a list of SQL Queries that will effectively do the upsert request.
 	 * @return the Upsert queries for the current Upsert
 	 */
-	private List<Query<T>> toSQL() {
-		List<Query<T>> queries = new ArrayList<>();
+	private List<SimpleQuery<T>> toSQL() {
+		List<SimpleQuery<T>> queries = new ArrayList<>();
 
 		for (T element : this.elements) {
 			queries.add(
@@ -266,7 +266,7 @@ public class Upsert<T extends Yopable> {
 	 * @param element the element whose data to use
 	 * @return the generated Query
 	 */
-	protected Query toSQLInsert(T element) {
+	protected SimpleQuery toSQLInsert(T element) {
 		Parameters parameters = this.values(element);
 		List<String> columns = parameters.stream().map(Parameters.Parameter::getName).collect(Collectors.toList());
 		List<String> values = parameters.stream().map(Parameters.Parameter::toSQLValue).collect(Collectors.toList());
@@ -279,7 +279,9 @@ public class Upsert<T extends Yopable> {
 		);
 
 		parameters.removeIf(Parameters.Parameter::isSequence);
-		return (Query) new Query<>(sql, parameters, element).askGeneratedKeys(true, element.getClass());
+		SimpleQuery<T> query = new SimpleQuery<>(sql, parameters, element);
+		query.askGeneratedKeys(true, element.getClass());
+		return query;
 	}
 
 	/**
@@ -287,7 +289,7 @@ public class Upsert<T extends Yopable> {
 	 * @param element the element whose data to use
 	 * @return the generated Query
 	 */
-	private Query<T> toSQLUpdate(T element) {
+	private SimpleQuery<T> toSQLUpdate(T element) {
 		Parameters parameters = this.values(element);
 
 		// UPDATE query : exclude ID column.
@@ -300,7 +302,7 @@ public class Upsert<T extends Yopable> {
 			Joiner.on(',').join(parameters.stream().map(p -> p.getName() + "=?").collect(Collectors.toList())),
 			whereClause
 		);
-		return new Query<>(sql, parameters, element);
+		return new SimpleQuery<>(sql, parameters, element);
 	}
 
 	/**
@@ -402,10 +404,10 @@ public class Upsert<T extends Yopable> {
 	/**
 	 * SQL query + parameters aggregation.
 	 */
-	protected static class Query<T extends Yopable> extends org.yop.orm.sql.SimpleQuery {
+	protected static class SimpleQuery<T extends Yopable> extends org.yop.orm.sql.SimpleQuery {
 		private final T element;
 
-		private Query(String sql, Parameters parameters, T element) {
+		private SimpleQuery(String sql, Parameters parameters, T element) {
 			super(sql, parameters);
 			this.element = element;
 			this.target = element == null ? null : element.getClass();
