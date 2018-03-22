@@ -1,5 +1,8 @@
 package org.yop.orm.sql;
 
+import org.apache.commons.lang3.StringUtils;
+import org.yop.orm.exception.YopRuntimeException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,5 +92,25 @@ public class BatchQuery extends Query {
 			", generatedIds="      + this.generatedIds +
 			", tooLongAliases="    + this.tooLongAliases +
 		'}';
+	}
+
+	/**
+	 * Merge a list of Batch queries that have the same SQL.
+	 * @param batches the batches to merge.
+	 * @return a single BatchQuery
+	 * @throws YopRuntimeException when there are more than 1 SQL query among the batches
+	 */
+	public static BatchQuery merge(List<BatchQuery> batches) {
+		BatchQuery merged = null;
+		for (BatchQuery batchQuery : batches) {
+			if(merged == null) {
+				merged = new BatchQuery(batchQuery.sql);
+			}
+			if(!StringUtils.equals(merged.sql, batchQuery.sql)) {
+				throw new YopRuntimeException("Could not merge batch queries with different SQL !");
+			}
+			merged.parametersBatches.addAll(batchQuery.parametersBatches);
+		}
+		return merged;
 	}
 }

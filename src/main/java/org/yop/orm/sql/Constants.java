@@ -1,6 +1,7 @@
 package org.yop.orm.sql;
 
 import java.lang.reflect.Field;
+import java.sql.Statement;
 
 /**
  * SQL constants.
@@ -28,6 +29,19 @@ public class Constants {
 	/** Max number of parameters in a query */
 	public static final Integer MAX_PARAMS = Integer.valueOf(
 		System.getProperties().getProperty("yop.sql.max.parameters", "1000")
+	);
+
+	/**
+	 * Some SQL drivers does not support {@link Statement#getGeneratedKeys()} with batches.
+	 * <br>
+	 * Namely :
+	 * <ul>
+	 *     <li>SQLite → no support, please set to false</li>
+	 *     <li>MSSQL → no support, please set to false</li>
+	 * </ul>
+	 */
+	public static final boolean USE_BATCH_INSERTS = Boolean.valueOf(
+		System.getProperties().getProperty("yop.sql.batch_inserts", "true")
 	);
 
 	/**

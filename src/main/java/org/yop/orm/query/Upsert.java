@@ -62,7 +62,7 @@ public class Upsert<T extends Yopable> {
 	 * @throws YopMappingException invalid field mapping for the given join
 	 */
 	@SuppressWarnings("unchecked")
-	protected <U extends Yopable> Upsert<U> subUpsert(IJoin<T, U> join, T on) {
+	private <U extends Yopable> Upsert<U> subUpsert(IJoin<T, U> join, T on) {
 		Field field = join.getField(this.target);
 		try {
 			Object children = field.get(on);
@@ -266,7 +266,7 @@ public class Upsert<T extends Yopable> {
 	 * @param element the element whose data to use
 	 * @return the generated Query
 	 */
-	private Query toSQLInsert(T element) {
+	protected Query toSQLInsert(T element) {
 		Parameters parameters = this.values(element);
 		List<String> columns = parameters.stream().map(Parameters.Parameter::getName).collect(Collectors.toList());
 		List<String> values = parameters.stream().map(Parameters.Parameter::toSQLValue).collect(Collectors.toList());
@@ -402,13 +402,17 @@ public class Upsert<T extends Yopable> {
 	/**
 	 * SQL query + parameters aggregation.
 	 */
-	private static class Query<T extends Yopable> extends org.yop.orm.sql.SimpleQuery {
+	protected static class Query<T extends Yopable> extends org.yop.orm.sql.SimpleQuery {
 		private final T element;
 
 		private Query(String sql, Parameters parameters, T element) {
 			super(sql, parameters);
 			this.element = element;
 			this.target = element == null ? null : element.getClass();
+		}
+
+		public T getElement() {
+			return element;
 		}
 	}
 }

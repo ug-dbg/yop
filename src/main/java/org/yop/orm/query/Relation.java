@@ -116,8 +116,8 @@ public class Relation<From extends Yopable, To extends Yopable> {
 	 * You should have used {@link #toSQLDelete()} before :)
 	 * @return the insert queries
 	 */
-	public Collection<Query> toSQLBatchInsert() {
-		Collection<Query> inserts = new ArrayList<>();
+	public Collection<BatchQuery> toSQLBatchInsert() {
+		Collection<BatchQuery> inserts = new ArrayList<>();
 
 		for (Map.Entry<From, Collection<To>> relation : this.relations.entrySet()) {
 			String insert = insert(this.relationTable, this.sourceColumn, this.targetColumn);
