@@ -10,7 +10,7 @@ import org.yop.orm.util.ORMTypes;
 public class MySQL extends ORMTypes {
 
 	public static final ORMTypes INSTANCE = new MySQL();
-	public static final String UNICODE_PARAMS = "?useUnicode=true&characterEncoding=utf-8";
+	public static final String CONNECT_PARAMS = "?useUnicode=true&characterEncoding=utf-8&rewriteBatchedStatements=true";
 
 	/**
 	 * Default constructor. Please use singleton {@link #INSTANCE}.
