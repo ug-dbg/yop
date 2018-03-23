@@ -1,6 +1,7 @@
 package org.yop.orm.sql;
 
 import org.apache.commons.lang.StringUtils;
+import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IRequest;
 import org.yop.orm.util.ORMUtil;
@@ -20,10 +21,16 @@ import java.util.*;
  */
 public abstract class Query {
 
+	/** Query type enum, with an 'unknown' value */
+	public enum Type {CREATE, DROP, SELECT, INSERT, UPDATE, DELETE, UNKNOWN}
+
 	private static final Comparator<String> ALIAS_COMPARATOR = Comparator
 		.comparing(String::length)
 		.thenComparing(String::compareTo)
 		.reversed();
+
+	/** The query type. Needed to know if a query is batchable, for instance. */
+	private Type type;
 
 	/** The SQL to execute */
 	protected String sql;
@@ -43,13 +50,17 @@ public abstract class Query {
 	/** A reference to the root target Yopable that this query was generated for. Only required for generated keys. */
 	protected Class<? extends Yopable> target;
 
+	/** The source elements of the query */
+	protected List<Yopable> elements = new ArrayList<>();
+
 	/**
 	 * Default constructor : SQL query.
 	 * @param sql        the SQL query to execute
 	 */
-	public Query(String sql) {
+	public Query(String sql, Type type) {
 		this.sql = sql;
 		this.safeAliasSQL = sql;
+		this.type = type;
 
 		// Search table/column aliases that are too long for SQL : longest alias first !
 		Set<String> tooLongAliases = new TreeSet<>(ALIAS_COMPARATOR);
@@ -71,7 +82,6 @@ public abstract class Query {
 		}
 	}
 
-
 	public Class<? extends Yopable> getTarget() {
 		return target;
 	}
@@ -88,6 +98,24 @@ public abstract class Query {
 	 */
 	public String getSafeSql() {
 		return this.safeAliasSQL;
+	}
+
+	/**
+	 * Get the elements this query applies to.
+	 * <br>
+	 * This is useful when doing INSERT queries whose generated IDs must be set back to the Java objects.
+	 * @return the {@link #elements} of this query
+	 */
+	public List<Yopable> getElements() {
+		return this.elements;
+	}
+
+	/**
+	 * Get the query type.
+	 * @return {@link #type}
+	 */
+	public Type getType() {
+		return this.type;
 	}
 
 	/** Get the original alias for a shortened one. Return the given parameter if no entry */
@@ -135,6 +163,44 @@ public abstract class Query {
 	public List<Long> getGeneratedIds() {
 		return this.generatedIds;
 	}
+
+	/**
+	 * Read the {@link #generatedIds} and affect them to the {@link #elements}.
+	 * @throws YopRuntimeException if the size of the generated IDs is not the same as the source elements'.
+	 */
+	public void pushGeneratedIds() {
+		if (! this.generatedIds.isEmpty() && !this.elements.isEmpty()) {
+			if(this.generatedIds.size() != this.elements.size()) {
+				throw new YopRuntimeException(
+					"Generated IDs length [" + this.generatedIds.size() + "] "
+					+ "is different from source elements length [" + this.elements.size() + "] ! "
+					+ "Maybe your JDBC driver does not support batch inserts :-( "
+					+ "Query was [" + this + "]"
+				);
+			}
+			for (int i = 0; i < this.generatedIds.size(); i++) {
+				this.elements.get(i).setId(this.generatedIds.get(i));
+			}
+		}
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Query that = (Query) o;
+
+		return Objects.equals(this.elements, that.elements)
+			&& Objects.equals(this.sql, that.sql)
+			&& Objects.equals(this.target, that.target)
+			&& Objects.equals(this.parametersToString(), that.parametersToString());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.elements, this.sql, this.target, this.parametersToString());
+	}
+
 
 	/**
 	 * Move the parameters cursor to the next batch of parameters.

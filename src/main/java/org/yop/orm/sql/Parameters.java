@@ -21,6 +21,17 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 	}
 
 	/**
+	 * Add a new SQL parameter that is a {@link DelayedValue}.
+	 * @param name  the SQL parameter name (will be displayed in the logs if show_sql = true)
+	 * @param value the SQL parameter delayed value
+	 * @return the current Parameters object, for chaining purposes
+	 */
+	public Parameters addParameter(String name, DelayedValue value) {
+		this.add(new Parameters.Parameter(name, value, false));
+		return this;
+	}
+
+	/**
 	 * Add a new SQL sequence parameter.
 	 * A sequence parameter will not be added as a JDBC param but must be explicitely written in the SQL query.
 	 * @param name  the SQL parameter name (will be displayed in the logs if show_sql = true)
@@ -51,7 +62,7 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 		}
 
 		public Object getValue() {
-			return value;
+			return this.value instanceof DelayedValue ? ((DelayedValue) this.value).getDelayedValue() : this.value;
 		}
 
 		public boolean isSequence() {
@@ -74,5 +85,16 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 		public String toString() {
 			return "Parameter{" + "name='" + this.name + '\'' + ", value=" + this.value + '}';
 		}
+	}
+
+	/**
+	 * A delayed value can be set as a {@link Parameter#value}.
+	 * <br>
+	 * When {@link Parameter#getValue()} is called, the delayed value method is used.
+	 * <br>
+	 * This is useful for queries where parameters values are IDs that are not yet generated.
+	 */
+	public interface DelayedValue {
+		Object getDelayedValue();
 	}
 }

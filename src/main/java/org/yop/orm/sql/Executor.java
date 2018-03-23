@@ -44,7 +44,7 @@ public class Executor {
 	 * Execute the given SQL query. Whether the query did return something or not,
 	 * nothing is done after the execution.
 	 * <br>
-	 * Any generated ID should however be pushed back to the query {@link Query#getGeneratedIds()}.
+	 * Any generated ID should however be pushed back to the query {@link Query#pushGeneratedIds()}.
 	 * <br>
 	 * If the <b>yop.show_sql</b> system property is set, the SQL request is logged.
 	 * <br>
@@ -84,6 +84,7 @@ public class Executor {
 		try (IRequest request = connection.prepare(query)) {
 			if(action == null) {
 				request.executeUpdate();
+				request.getQuery().pushGeneratedIds();
 				return null;
 			}
 

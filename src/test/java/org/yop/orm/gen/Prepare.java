@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
+import org.yop.orm.sql.Query;
 import org.yop.orm.sql.SimpleQuery;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
@@ -34,7 +35,7 @@ public class Prepare {
 	private static final String DBMS_USER = System.getProperty("yop.test.dbms.user", "yop");
 	private static final String DBMS_PWD  = System.getProperty("yop.test.dbms.pwd",  "yop");
 
-	private static final String MYSQL_ADDRESS    = DBMS_HOST + ":"  + DBMS_PORT + "/" + DBMS_DB + MySQL.UNICODE_PARAMS;
+	private static final String MYSQL_ADDRESS    = DBMS_HOST + ":"  + DBMS_PORT + "/" + DBMS_DB + MySQL.CONNECT_PARAMS;
 	private static final String POSTGRES_ADDRESS = DBMS_HOST + ":"  + DBMS_PORT + "/" + DBMS_DB;
 	private static final String ORACLE_ADDRESS   = DBMS_HOST + ":"  + DBMS_PORT + "/" + DBMS_DB;
 	private static final String MSSQL_ADDRESS    = DBMS_HOST + "\\" + DBMS_DB   + ":" + DBMS_PORT;
@@ -218,7 +219,7 @@ public class Prepare {
 		connection.setAutoCommit(true);
 		for (String line : dialect.generateScript(packagePrefix)) {
 			try {
-				Executor.executeQuery(connection, new SimpleQuery(line, new Parameters()));
+				Executor.executeQuery(connection, new SimpleQuery(line, Query.Type.UNKNOWN, new Parameters()));
 			} catch (RuntimeException e) {
 				logger.warn("Error executing script line [" + line + "]", e);
 			}

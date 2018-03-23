@@ -142,7 +142,7 @@ public class Select<T extends Yopable> {
 
 		Parameters parameters = new Parameters();
 		String request = this.toSQLAnswerRequest(parameters);
-		Query query = new SimpleQuery(request, parameters);
+		Query query = new SimpleQuery(request, Query.Type.SELECT, parameters);
 
 		Set<T> elements = Executor.executeSelectQuery(connection, query, this.context.getTarget());
 		ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toSet());
@@ -153,7 +153,7 @@ public class Select<T extends Yopable> {
 
 		parameters = new Parameters();
 		request = this.toSQLDataRequest(ids, parameters);
-		query = new SimpleQuery(request, parameters);
+		query = new SimpleQuery(request, Query.Type.SELECT, parameters);
 		return Executor.executeSelectQuery(connection, query, this.context.getTarget());
 	}
 
@@ -176,7 +176,11 @@ public class Select<T extends Yopable> {
 			? this.toSQLDataRequestWithIN(parameters)
 			: this.toSQLDataRequest(parameters);
 
-		return Executor.executeSelectQuery(connection, new SimpleQuery(request, parameters), this.context.getTarget());
+		return Executor.executeSelectQuery(
+			connection,
+			new SimpleQuery(request, Query.Type.SELECT, parameters),
+			this.context.getTarget()
+		);
 	}
 
 	/**
@@ -212,7 +216,7 @@ public class Select<T extends Yopable> {
 	public IdMap executeForIds(IConnection connection) {
 		Parameters parameters = new Parameters();
 		String request = this.toSQLIDsRequest(parameters);
-		Query query = new SimpleQuery(request, parameters);
+		Query query = new SimpleQuery(request, Query.Type.SELECT, parameters);
 
 		return (IdMap) Executor.executeQuery(connection, query, IdMap.populateAction(this.context.getTarget()));
 	}

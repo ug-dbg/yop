@@ -12,11 +12,15 @@ import org.yop.orm.query.IJoin;
 import org.yop.orm.query.Relation;
 import org.yop.orm.query.Select;
 import org.yop.orm.query.Upsert;
-import org.yop.orm.sql.*;
+import org.yop.orm.sql.Constants;
+import org.yop.orm.sql.Executor;
+import org.yop.orm.sql.Parameters;
+import org.yop.orm.sql.Query;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
+import java.sql.Statement;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,6 +34,13 @@ import static org.yop.orm.sql.Parameters.Parameter;
  * <br>
  * Batches are very implementation sensitive. Some drivers does not seem to play well with this.
  * <br>
+ * For instance {@link Statement#getGeneratedKeys()} might not be working. See {@link Constants#USE_BATCH_INSERTS}.
+ * <br><br>
+ * When delaying an insert, the generated ID might be required in further queries.
+ * We use a {@link org.yop.orm.sql.Parameters.DelayedValue} to create a query parameter whose value is not yet known.
+ * <br>
+ * The {@link Yopable#getId()} method is referenced as the parameter's {@link org.yop.orm.sql.Parameters.DelayedValue}.
+ * <br><br>
  * For now, this is not very efficient. There is plenty of room for optimization :-)
  *
  * @param <T> the type to upsert.
@@ -85,7 +96,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 * Every execution should then do the insert/update/delete for the current objects and its joins.
 	 * <br>
 	 * @param connection the connection to use.
-	 * @param delayed    the delayable batch queries, that should be executed after this method ends
+	 * @param delayed    the ordered delayable batch queries, that should be executed after this method ends
 	 */
 	@SuppressWarnings("unchecked")
 	private void execute(IConnection connection, DelayedQueries delayed) {
@@ -121,7 +132,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 		}
 
 		// Upsert the current data table and, when required, set the generated ID
-		Collection<T> updated = upsertOrDelay(this.toSQL(), delayed, connection);
+		Collection<T> updated = delay(this.toSQL(), delayed);
 
 		// Upsert the relation tables of the specified joins (DELETE then INSERT, actually)
 		for (IJoin<T, ? extends Yopable> join : this.joins) {
@@ -225,7 +236,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 					Joiner.on(", ").join(columns),
 					Joiner.on(", ").join(values)
 				);
-				query = new BatchQuery<>(sql, elementsToInsert, this.target);
+				query = new BatchQuery<>(sql, Query.Type.INSERT, elementsToInsert, this.target);
 				query.askGeneratedKeys(true, this.target);
 			}
 
@@ -264,7 +275,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 					whereClause
 				);
 
-				query = new BatchQuery<>(sql, elementsToUpdate, this.target);
+				query = new BatchQuery<>(sql, Query.Type.UPDATE, elementsToUpdate, this.target);
 			}
 
 			parameters.removeIf(Parameter::isSequence);
@@ -274,72 +285,23 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	}
 
 	/**
-	 * Do the upsert queries or delay if possible (i.e. for now, if the query is not an INSERT)
-	 * @param queries    the queries to execute/delay
+	 * Do delay the given queries (add to the delayed query map) enad return all the queries' source elements.
+	 * @param queries    the queries to delay
 	 * @param delayed    the delayed queries where to add the queries that can be delayed
-	 * @param connection the connection to use to execute the queries
 	 * @param <T> the queries target type
 	 * @return the updated/delayed elements
 	 */
-	private static <T extends Yopable> Collection<T> upsertOrDelay(
-		List<org.yop.orm.sql.Query> queries,
-		DelayedQueries delayed,
-		IConnection connection) {
-
+	private static <T extends Yopable> Collection<T> delay(List<Query> queries, DelayedQueries delayed) {
 		Set<T> updated = new HashSet<>();
-		for (org.yop.orm.sql.Query query : queries) {
-			List<T> elements = getQueryElements(query);
-
-			// For now, we have to do inserts immediately because we need the generated keys for further requests.
-			// With a callback like mechanism on query Parameter value, we could maybe delay the inserts !
-			if(query.askGeneratedKeys()) {
-				insert(query, elements, connection);
-			} else {
-				delay(query, delayed);
-			}
+		for (Query query : queries) {
+			@SuppressWarnings("unchecked")
+			List<T> elements = (List<T>) query.getElements();
+			delayed.putIfAbsent(query.getSql(), new ArrayList<>());
+			delayed.get(query.getSql()).add(query);
 			updated.addAll(elements);
 		}
 
 		return updated;
-	}
-
-	/**
-	 * Execute an INSERT query (either batch or not) and set the generated IDs on the source elements.
-	 * @param insert     the INSERT query
-	 * @param elements   the source elements - their respective IDs will be set using the generated IDs.
-	 * @param connection the connection to use for the request(s)
-	 * @param <T> the type of the source elements to upsert.
-	 */
-	private static <T extends Yopable> void insert(
-		org.yop.orm.sql.Query insert,
-		List<T> elements,
-		IConnection connection) {
-
-		Executor.executeQuery(connection, insert);
-		List<Long> generatedIds = insert.getGeneratedIds();
-
-		if (generatedIds.isEmpty() || generatedIds.size() == elements.size()) {
-			for (int i = 0; i < generatedIds.size(); i++) {
-				elements.get(i).setId(generatedIds.get(i));
-			}
-		} else {
-			throw new YopRuntimeException(
-				"Generated IDs length [" + generatedIds.size() + "] "
-				+ "does not match the query inserted elements size [" + elements.size() + "]. "
-				+ "Maybe your JDBC driver does not support batch inserts. Sorry about that. "
-				+ "Query was [" + insert + "]."
-			);
-		}
-	}
-
-	/**
-	 * Delay the given query, i.e. add the query to the delayed map.
-	 * @param query   the query to delay
-	 * @param delayed the delayed queries map
-	 */
-	private static void delay(org.yop.orm.sql.Query query, DelayedQueries delayed) {
-		delayed.putIfAbsent(query.getSql(), new ArrayList<>());
-		delayed.get(query.getSql()).add(query);
 	}
 
 	/**
@@ -353,6 +315,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 * @param connection the connection to use
 	 * @param elements   the source elements
 	 * @param join       the join clause (≈ relation table)
+	 * @param delayed    the delayed query map (any delayable query will be added to this map)
 	 * @param <T> the source type
 	 */
 	private static <T extends Yopable> void updateRelation(
@@ -362,7 +325,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 		DelayedQueries delayed) {
 
 		Relation<T, ? extends Yopable> relation = new Relation<>(elements, join);
-		for (org.yop.orm.sql.Query query : relation.toSQLDelete()) {
+		for (Query query : relation.toSQLDelete()) {
 			Executor.executeQuery(connection, query);
 		}
 
@@ -373,30 +336,12 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	}
 
 	/**
-	 * Get the query elements, whether a {@link BatchQuery} or {@link org.yop.orm.query.Upsert.SimpleQuery}.
-	 * @param query the query
-	 * @param <T> the query target type
-	 * @return the elements concerned by the query
-	 * @throws ClassCastException query is neither {@link BatchQuery} nor {@link org.yop.orm.query.Upsert.SimpleQuery}.
-	 */
-	@SuppressWarnings("unchecked")
-	private static <T extends Yopable> List<T> getQueryElements(org.yop.orm.sql.Query query) {
-		if (query instanceof BatchQuery) {
-			return ((BatchQuery) query).elements;
-		} else {
-			return Collections.singletonList((T) ((SimpleQuery) query).getElement());
-		}
-	}
-
-	/**
-	 * SQL batch query + source elements aggregation.
+	 * SQL batch query with a typed element list constructor.
 	 */
 	private static class BatchQuery<T extends Yopable> extends org.yop.orm.sql.BatchQuery {
-		private final List<T> elements;
-
-		private BatchQuery(String sql, List<T> elements, Class<T> target) {
-			super(sql);
-			this.elements = elements;
+		private BatchQuery(String sql, Type type, List<T> elements, Class<T> target) {
+			super(sql, type);
+			this.elements.addAll(elements);
 			this.target = target;
 		}
 	}

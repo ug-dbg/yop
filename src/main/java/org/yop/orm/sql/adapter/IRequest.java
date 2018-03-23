@@ -34,7 +34,7 @@ public interface IRequest extends AutoCloseable {
 	 * <br><br>
 	 * Typically for 'DELETE', 'UPDATE' or 'INSERT' queries.
 	 * <br><br>
-	 * Any generated ID should be pushed to {@link #getQuery()} using {@link Query#getGeneratedIds()}.
+	 * Any generated ID should be pushed to {@link #getQuery()} using {@link Query#pushGeneratedIds()}.
 	 * <br>
 	 * This mechanism is not very easy to read. I will try to do something better :)
 	 */

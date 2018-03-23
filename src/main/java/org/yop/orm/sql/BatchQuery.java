@@ -4,7 +4,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.yop.orm.exception.YopRuntimeException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A batch query is an SQL query with several batches of parameters.
@@ -22,8 +24,8 @@ public class BatchQuery extends Query {
 	 *
 	 * @param sql the SQL query to execute
 	 */
-	public BatchQuery(String sql) {
-		super(sql);
+	public BatchQuery(String sql, Type type) {
+		super(sql, type);
 	}
 
 	/**
@@ -95,32 +97,48 @@ public class BatchQuery extends Query {
 	}
 
 	/**
-	 * Merge a list of queries that have the same SQL.
+	 * Deduplicate and merge a list of queries that have the same SQL.
 	 * @param queries the queries to merge.
-	 * @return a single BatchQuery
+	 * @return a single deduplicated BatchQuery (as a singleton list)
+	 *         or simply the deduplicated queries if {@link Constants#USE_BATCH_INSERTS} is set to false.
 	 * @throws YopRuntimeException when there are more than 1 SQL query among the queries
 	 */
-	public static Query merge(List<Query> queries) {
+	@SuppressWarnings("unchecked")
+	public static List<Query> merge(List<Query> queries) {
+		List<Query> uniqueQueries = queries.stream().distinct().collect(Collectors.toList());
 		BatchQuery merged = null;
-		for (Query query : queries) {
+
+		for (Query query : uniqueQueries) {
 			if(merged == null) {
-				merged = new BatchQuery(query.sql);
+				if(query.getType() == Type.INSERT && ! Constants.USE_BATCH_INSERTS) {
+					// We are asked not to batch INSERT queries (driver limitation, for instance)
+					return uniqueQueries;
+				}
+
+				merged = new BatchQuery(query.getSql(), query.getType());
+				merged.target = query.target;
+				merged.askGeneratedKeys(query.askGeneratedKeys(), query.getTarget());
 			}
-			if(!StringUtils.equals(merged.sql, query.sql)) {
+			merged.getElements().addAll(query.elements);
+
+			if(!StringUtils.equals(merged.sql, query.getSql())) {
 				throw new YopRuntimeException("Could not merge batch queries with different SQL !");
 			}
+
 			if (query instanceof SimpleQuery) {
 				merged.parametersBatches.add(query.getParameters());
-			} else if (query instanceof BatchQuery){
+			} else if (query instanceof org.yop.orm.sql.BatchQuery){
 				merged.parametersBatches.addAll(((BatchQuery) query).parametersBatches);
 			}
 		}
 
 		// Only one batch ? Return a SimpleQuery, for coherence purposes.
 		if (merged != null && merged.parametersBatches.size() == 1) {
-			return new SimpleQuery(merged.sql, merged.parametersBatches.get(0));
+			return Collections.singletonList(
+				new SimpleQuery(merged.sql, merged.getType(), merged.parametersBatches.get(0))
+			);
 		}
 
-		return merged;
+		return Collections.singletonList(merged);
 	}
 }

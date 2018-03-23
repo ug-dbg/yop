@@ -12,6 +12,7 @@ import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
+import org.yop.orm.sql.Query;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
@@ -206,10 +207,7 @@ public class Upsert<T extends Yopable> {
 		Set<T> updated = new HashSet<>();
 		for (SimpleQuery<T> query : this.toSQL()) {
 			Executor.executeQuery(connection, query);
-			if(!query.getGeneratedIds().isEmpty()) {
-				query.element.setId(query.getGeneratedIds().iterator().next());
-			}
-			updated.add(query.element);
+			updated.add(query.getElement());
 		}
 
 		// Upsert the relation tables of the specified joins (DELETE then INSERT, actually)
@@ -279,7 +277,7 @@ public class Upsert<T extends Yopable> {
 		);
 
 		parameters.removeIf(Parameters.Parameter::isSequence);
-		SimpleQuery<T> query = new SimpleQuery<>(sql, parameters, element);
+		SimpleQuery<T> query = new SimpleQuery<>(sql, Query.Type.INSERT, parameters, element);
 		query.askGeneratedKeys(true, element.getClass());
 		return query;
 	}
@@ -302,7 +300,7 @@ public class Upsert<T extends Yopable> {
 			Joiner.on(',').join(parameters.stream().map(p -> p.getName() + "=?").collect(Collectors.toList())),
 			whereClause
 		);
-		return new SimpleQuery<>(sql, parameters, element);
+		return new SimpleQuery<>(sql, Query.Type.UPDATE, parameters, element);
 	}
 
 	/**
@@ -405,16 +403,15 @@ public class Upsert<T extends Yopable> {
 	 * SQL query + parameters aggregation.
 	 */
 	protected static class SimpleQuery<T extends Yopable> extends org.yop.orm.sql.SimpleQuery {
-		private final T element;
-
-		private SimpleQuery(String sql, Parameters parameters, T element) {
-			super(sql, parameters);
-			this.element = element;
+		private SimpleQuery(String sql, Type type, Parameters parameters, T element) {
+			super(sql, type, parameters);
+			this.elements.add(element);
 			this.target = element == null ? null : element.getClass();
 		}
 
+		@SuppressWarnings("unchecked")
 		public T getElement() {
-			return element;
+			return this.elements.isEmpty() ? null : (T) this.elements.iterator().next();
 		}
 	}
 }

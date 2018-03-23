@@ -79,11 +79,11 @@ public class Relation<From extends Yopable, To extends Yopable> {
 			this.relationTable,
 			this.sourceColumn,
 			this.relations.keySet().stream().map(y -> {
-				parameters.addParameter(this.relationTable + "#" + sourceColumn, y.getId());
+				parameters.addParameter(this.relationTable + "#" + sourceColumn, y::getId);
 				return "?";
 			}).collect(Collectors.toList())
 		);
-		return Collections.singletonList(new SimpleQuery(sql, parameters));
+		return Collections.singletonList(new SimpleQuery(sql, Query.Type.DELETE, parameters));
 	}
 
 	/**
@@ -97,13 +97,13 @@ public class Relation<From extends Yopable, To extends Yopable> {
 
 		for (Map.Entry<From, Collection<To>> relation : this.relations.entrySet()) {
 			String insert = insert(this.relationTable, this.sourceColumn, this.targetColumn);
-			Long sourceId = relation.getKey().getId();
+			From from = relation.getKey();
 
 			for (To to : relation.getValue()) {
 				Parameters parameters = new Parameters();
-				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, sourceId);
-				parameters.addParameter(this.relationTable + "#" + this.targetColumn, to.getId());
-				inserts.add(new SimpleQuery(insert, parameters));
+				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, from::getId);
+				parameters.addParameter(this.relationTable + "#" + this.targetColumn, to::getId);
+				inserts.add(new SimpleQuery(insert, Query.Type.INSERT, parameters));
 			}
 		}
 
@@ -121,13 +121,13 @@ public class Relation<From extends Yopable, To extends Yopable> {
 
 		for (Map.Entry<From, Collection<To>> relation : this.relations.entrySet()) {
 			String insert = insert(this.relationTable, this.sourceColumn, this.targetColumn);
-			BatchQuery batchQuery = new BatchQuery(insert);
-			Long sourceId = relation.getKey().getId();
+			BatchQuery batchQuery = new BatchQuery(insert, Query.Type.INSERT);
+			From from = relation.getKey();
 
 			for (To to : relation.getValue()) {
 				Parameters parameters = new Parameters();
-				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, sourceId);
-				parameters.addParameter(this.relationTable + "#" + this.targetColumn, to.getId());
+				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, from::getId);
+				parameters.addParameter(this.relationTable + "#" + this.targetColumn, to::getId);
 				batchQuery.addParametersBatch(parameters);
 			}
 			inserts.add(batchQuery);

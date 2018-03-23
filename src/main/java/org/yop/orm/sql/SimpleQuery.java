@@ -10,10 +10,11 @@ public class SimpleQuery extends Query {
 	/**
 	 * Default constructor : SQL query and parameters.
 	 * @param sql        the SQL query to execute
+	 * @param type       the query type
 	 * @param parameters the query parameters
 	 */
-	public SimpleQuery(String sql, Parameters parameters) {
-		super(sql);
+	public SimpleQuery(String sql, Type type, Parameters parameters) {
+		super(sql, type);
 		this.parameters = parameters;
 	}
 
