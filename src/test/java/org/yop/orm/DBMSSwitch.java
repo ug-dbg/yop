@@ -2,6 +2,7 @@ package org.yop.orm;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.yop.orm.annotations.LongTest;
 import org.yop.orm.gen.Prepare;
 import org.yop.orm.simple.SimpleTest;
 import org.yop.orm.sql.Constants;
@@ -29,12 +30,35 @@ public abstract class DBMSSwitch {
 	private static final String DBMS_SWITCH = "yop.test.dbms";
 	private File db;
 
+	/**
+	 * Get the package prefix for which Yopable tables should be created
+	 * @return the Yopable data objects package prefix
+	 */
 	protected abstract String getPackagePrefix();
 
+	/**
+	 * Get the current DBMS code.
+	 * @return the value of the {@link #DBMS_SWITCH} property, or 'sqlite'.
+	 */
 	protected static String dbms() {
 		return System.getProperties().getProperty(DBMS_SWITCH, "sqlite");
 	}
 
+	/**
+	 * Check if the current test class should be run.
+	 * @return true if the test is not a {@link LongTest} or {@link LongTest#RUN_LONG_TESTS} is set to true.
+	 */
+	protected boolean check() {
+		return !this.getClass().isAnnotationPresent(LongTest.class)
+			|| "true".equals(System.getProperties().getProperty(LongTest.RUN_LONG_TESTS));
+	}
+
+	/**
+	 * Get the underlying connection
+	 * @return an {@link IConnection} for the current DBMS. See {@link #dbms()}.
+	 * @throws SQLException           could not get a connection to the DB
+	 * @throws ClassNotFoundException could not load the driver class
+	 */
 	protected IConnection getConnection() throws SQLException, ClassNotFoundException {
 		switch (dbms()) {
 			case "mysql" :     return Prepare.getMySQLConnection(true);
