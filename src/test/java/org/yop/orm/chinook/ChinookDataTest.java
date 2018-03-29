@@ -9,10 +9,7 @@ import org.yop.orm.annotations.LongTest;
 import org.yop.orm.chinook.model.*;
 import org.yop.orm.chinook.model.xml.ChinookDataSet;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.Join;
-import org.yop.orm.query.JoinSet;
-import org.yop.orm.query.Select;
-import org.yop.orm.query.Upsert;
+import org.yop.orm.query.*;
 import org.yop.orm.query.batch.BatchUpsert;
 import org.yop.orm.util.Reflection;
 
@@ -52,10 +49,13 @@ public class ChinookDataTest extends DBMSSwitch {
 
 		ChinookData source = this.readData();
 
+		// Batch insert the data !
+		// This can be preeeeetty long with SQLite
 		long start = System.currentTimeMillis();
 		BatchUpsert.from(Artist.class).onto(source.artists.values()).joinAll().execute(this.getConnection());
 		logger.info("Batch upsert in [" + (System.currentTimeMillis() - start + "] ms"));
 
+		// Get all the data from the DB
 		start = System.currentTimeMillis();
 		Set<Artist> artistsFromDB = Select.from(Artist.class).joinAll().execute(this.getConnection());
 		logger.info(
@@ -65,6 +65,9 @@ public class ChinookDataTest extends DBMSSwitch {
 		);
 		Assert.assertEquals(source.artists.size(), artistsFromDB.size());
 
+		// Insert all the employees data in the DB
+		// BatchUpsert does not work because of the Employee→Employee relation with email as natural key
+		// Something should be done
 		start = System.currentTimeMillis();
 		Upsert
 			.from(Employee.class)
@@ -73,6 +76,7 @@ public class ChinookDataTest extends DBMSSwitch {
 			.execute(this.getConnection());
 		logger.info("Upsert in [" + (System.currentTimeMillis() - start + "] ms"));
 
+		// Employee data check : fetch 'reports to'
 		Set<Employee> employeesFromDB = Select
 			.from(Employee.class)
 			.join(Join.to(Employee::getReportsTo))
@@ -88,6 +92,7 @@ public class ChinookDataTest extends DBMSSwitch {
 			employeesByMail.get("nancy@chinookcorp.com").getReportsTo()
 		);
 
+		// Employee data check : fetch 'reporters'
 		employeesFromDB = Select
 			.from(Employee.class)
 			.join(JoinSet.to(Employee::getReporters))
@@ -100,6 +105,50 @@ public class ChinookDataTest extends DBMSSwitch {
 
 		Assert.assertEquals(
 			new HashSet<>(Arrays.asList("margaret@chinookcorp.com", "jane@chinookcorp.com", "steve@chinookcorp.com")),
+			employeesByMail
+				.get("nancy@chinookcorp.com")
+				.getReporters()
+				.stream()
+				.map(Employee::getEmail)
+				.collect(Collectors.toSet())
+		);
+
+		// Employee data check : does not fetch reporters/reports_to, but use Recurse
+		employeesFromDB = Select
+			.from(Employee.class)
+			.execute(this.getConnection());
+		Assert.assertEquals(source.employees.size(), employeesFromDB.size());
+		Recurse.from(Employee.class).onto(employeesFromDB).fetch(Employee::getReportsTo, this.getConnection());
+
+		employeesByMail = employeesFromDB
+			.stream()
+			.collect(Collectors.toMap(Employee::getEmail, Function.identity()));
+
+		Assert.assertEquals(
+			"nancy@chinookcorp.com",
+			employeesByMail.get("margaret@chinookcorp.com").getReportsTo().getEmail()
+		);
+
+		// Jane now reports to herself (what a promotion)
+		// Update, fetch, recurse and check
+		Employee jane = employeesByMail.get("jane@chinookcorp.com");
+		jane.setReportsTo(jane);
+		Upsert.from(Employee.class).onto(jane).join(Join.to(Employee::getReportsTo)).execute(this.getConnection());
+		jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(this.getConnection());
+		Recurse.from(Employee.class).onto(jane).fetch(Employee::getReportsTo, this.getConnection());
+		Recurse.from(Employee.class).onto(employeesFromDB).fetchSet(Employee::getReporters, this.getConnection());
+		employeesByMail = employeesFromDB
+			.stream()
+			.collect(Collectors.toMap(Employee::getEmail, Function.identity()));
+		Assert.assertEquals(
+			"jane@chinookcorp.com",
+			employeesByMail.get("jane@chinookcorp.com").getReportsTo().getEmail()
+		);
+		Assert.assertEquals("jane@chinookcorp.com", jane.getReportsTo().getEmail());
+
+		// Jane should not be in Nancy's reporters list anymore
+		Assert.assertEquals(
+			new HashSet<>(Arrays.asList("margaret@chinookcorp.com", "steve@chinookcorp.com")),
 			employeesByMail
 				.get("nancy@chinookcorp.com")
 				.getReporters()
