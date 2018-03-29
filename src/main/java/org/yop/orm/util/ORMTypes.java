@@ -78,7 +78,7 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 		this.put(Date.class,          "DATE");
 		this.put(Calendar.class,      "TIMESTAMP");
 		this.put(Instant.class,       "TIMESTAMP");
-		this.put(LocalDate.class,     "TIMESTAMP");
+		this.put(LocalDate.class,     "DATE");
 		this.put(LocalDateTime.class, "TIMESTAMP");
 
 		this.put(Time.class,               "TIMESTAMP");
