@@ -1,5 +1,6 @@
 package org.yop.orm.model;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.NaturalId;
@@ -126,5 +127,44 @@ public interface Yopable {
 		}
 
 		return this.equals((Object)o);
+	}
+
+	/**
+	 * Hashcode method for any Yopable object.
+	 * <ul>
+	 *     <li>o is null → NullPointerException</li>
+	 *     <li>the natural ID is implemented → hashcode for all natural fields</li>
+	 *     <li>o's ID not null → ID hashcode</li>
+	 *     <li>{@link System#identityHashCode(Object)}</li>
+	 * </ul>
+	 * @param o the other Yopable object to check
+	 * @return true if this equals o
+	 */
+	static int hashCode(Yopable o) {
+		if(o == null) {
+			throw new NullPointerException();
+		}
+
+		Collection<Field> naturalId = o.getNaturalId();
+		if(! naturalId.isEmpty()) {
+			HashCodeBuilder builder = new HashCodeBuilder();
+			for (Field field : naturalId) {
+				try {
+					builder.append(field.get(o));
+				} catch (IllegalAccessException e) {
+					throw new YopRuntimeException(
+						"Unable to read @NaturalId field [" + field.getName() + "] from [" + o.getClass() + "]",
+						e
+					);
+				}
+			}
+			return builder.toHashCode();
+		}
+
+		if(o.getId() != null) {
+			return o.getId().hashCode();
+		}
+
+		return System.identityHashCode(o);
 	}
 }
