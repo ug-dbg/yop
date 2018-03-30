@@ -156,6 +156,16 @@ public class ChinookDataTest extends DBMSSwitch {
 				.map(Employee::getEmail)
 				.collect(Collectors.toSet())
 		);
+
+		// A nasty cycle !
+		Employee andrew = employeesByMail.get("andrew@chinookcorp.com");
+		andrew.setReportsTo(jane);
+		Upsert.from(Employee.class).onto(andrew).join(Join.to(Employee::getReportsTo)).execute(this.getConnection());
+
+		jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(this.getConnection());
+		Recurse.from(Employee.class).onto(jane).fetch(JoinSet.to(Employee::getReporters), getConnection());
+		Recurse.from(Employee.class).onto(jane).fetch(Join.to(Employee::getReportsTo), getConnection());
+		Assert.assertTrue(jane.getReporters().contains(andrew));
 	}
 
 	/**

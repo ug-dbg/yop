@@ -1,13 +1,16 @@
 package org.yop.orm.query;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
+import java.lang.reflect.Field;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Sometimes there are cycles in the data graph and you want to fetch it all.
@@ -32,6 +35,8 @@ import java.util.function.Function;
  * @param <T> the target type.
  */
 public class Recurse<T extends Yopable> {
+
+	private static final Logger logger = LoggerFactory.getLogger(Recurse.class);
 
 	/** Target class */
 	protected Class<T> target;
@@ -126,5 +131,81 @@ public class Recurse<T extends Yopable> {
 		if (! nexts.isEmpty()) {
 			Recurse.from(this.target).onto(nexts).fetchSet(getter, connection);
 		}
+	}
+
+	/**
+	 * Recursively fetch the given cyclic relation on the target {@link #elements}.
+	 * <br>
+	 * It means whenever new objects are fetched for the relation, try to fetch the relation on these new objects.
+	 * @param join       the relation thread to follow recursively
+	 * @param connection the connection to use
+	 */
+	@SuppressWarnings("unchecked")
+	public <To extends Yopable> void fetch(IJoin<T, To> join, IConnection connection) {
+		if(this.elements.isEmpty()) {
+			logger.warn("Recurse on no element. Are you sure you did not forget using #onto() ?");
+			return;
+		}
+
+		// Get the data using a select on the target elements
+		Map<Long, T> byID = this.elements.stream().collect(Collectors.toMap(Yopable::getId, Function.identity()));
+		Set<T> fetched = Select
+			.from(this.target)
+			.where(Where.id(this.elements.stream().map(Yopable::getId).collect(Collectors.toList())))
+			.join(join)
+			.execute(connection);
+
+		// Assign the data
+		Field field = join.getField(this.target);
+		fetched.forEach(t -> {
+			T onto = byID.get(t.getId());
+			try {
+				field.set(onto, field.get(t));
+			} catch (IllegalAccessException | RuntimeException e) {
+				throw new YopRuntimeException(
+					"Unable to set field [" + field.getDeclaringClass() + "#" + field.getName() + "]"
+					+ " from [" + t + "] onto [" + onto + "]"
+				);
+			}
+		});
+
+		// Walk through the fetched data using the 'join' and grab any target type object
+		Collection<T> next = new ArrayList<>();
+		recurseCandidates(join, this.elements, next, this.target);
+
+		// Recurse !
+		next.removeAll(this.elements);
+		if (! next.isEmpty()) {
+			Recurse.from(this.target).onto(next).fetch(join, connection);
+		}
+	}
+
+	/**
+	 * Walk through the sources, using the join object and find any 'target' typed object.
+	 * @param join       the join path
+	 * @param sources    the source objects
+	 * @param candidates the object of type 'T' found on the path
+	 * @param target     the target class
+	 * @param <T>        the target type
+	 */
+	@SuppressWarnings("unchecked")
+	private static <T extends Yopable> void recurseCandidates(
+		IJoin join,
+		Collection sources,
+		Collection<T> candidates,
+		Class<T> target) {
+
+		Collection elements = new ArrayList();
+		sources.forEach(source -> elements.addAll(join.getTarget((Yopable) source)));
+
+		if (elements.isEmpty() || candidates.containsAll(elements)) {
+			return;
+		}
+
+		if (target.isAssignableFrom(elements.iterator().next().getClass())) {
+			candidates.addAll(elements);
+		}
+
+		join.getJoins().forEach(j -> recurseCandidates((IJoin) j, elements, candidates, target));
 	}
 }
