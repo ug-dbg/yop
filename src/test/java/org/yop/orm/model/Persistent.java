@@ -27,4 +27,9 @@ public abstract class Persistent implements Yopable {
 	public boolean equals(Object o) {
 		return o != null && o instanceof Yopable && this.equals((Yopable) o);
 	}
+
+	@Override
+	public int hashCode() {
+		return Yopable.hashCode(this);
+	}
 }
