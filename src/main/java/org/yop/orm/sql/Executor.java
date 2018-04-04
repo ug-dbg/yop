@@ -127,6 +127,6 @@ public class Executor {
 	 * What to do on query {@link Results} ?
 	 */
 	public interface Action {
-		Object perform(Results results) throws SQLException;
+		Object perform(Results results);
 	}
 }
