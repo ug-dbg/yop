@@ -50,7 +50,10 @@ public abstract class Query {
 	/** A reference to the root target Yopable that this query was generated for. Only required for generated keys. */
 	protected Class<? extends Yopable> target;
 
-	/** The source elements of the query */
+	/**
+	 * The source elements of the query.
+	 * If the query is {@link Type#INSERT}, and {@link #askGeneratedKeys} is set to true, their IDs will be set back.
+	 */
 	protected List<Yopable> elements = new ArrayList<>();
 
 	/**
