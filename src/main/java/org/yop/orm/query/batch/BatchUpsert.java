@@ -285,7 +285,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	}
 
 	/**
-	 * Do delay the given queries (add to the delayed query map) enad return all the queries' source elements.
+	 * Do delay the given queries (add to the delayed query map) and return all the queries' source elements.
 	 * @param queries    the queries to delay
 	 * @param delayed    the delayed queries where to add the queries that can be delayed
 	 * @param <T> the queries target type
