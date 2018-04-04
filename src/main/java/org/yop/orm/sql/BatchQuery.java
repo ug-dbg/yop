@@ -2,14 +2,24 @@ package org.yop.orm.sql;
 
 import org.apache.commons.lang3.StringUtils;
 import org.yop.orm.exception.YopRuntimeException;
+import org.yop.orm.model.Yopable;
+import org.yop.orm.model.YopableEquals;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * A batch query is an SQL query with several batches of parameters.
+ * <br>
+ *     <b>
+ *         If there are some {@link #elements} in this query, it is somehow assumed that :
+ *         <ul>
+ *             <li>There are as many elements as parameter batches</li>
+ *             <li>element[i] ↔ parameter_batch[i]</li>
+ *         </ul>
+ *     </b>
+ *     This is not some very good design. I should do something about it.
+ * <br>
  */
 public class BatchQuery extends Query {
 
@@ -98,15 +108,23 @@ public class BatchQuery extends Query {
 
 	/**
 	 * Deduplicate and merge a list of queries that have the same SQL.
+	 * <br>
+	 * If the query type is {@link Query.Type#INSERT}, query parameters and source elements are deduplicated :
+	 * <ul>
+	 *     <li>if there are {@link Query#elements}, it is assumed that 1 element ↔ 1 parameter batch</li>
+	 *     <li>if there are no {@link Query#elements}, all parameter batches are added</li>
+	 * </ul>
 	 * @param queries the queries to merge.
 	 * @return a single deduplicated BatchQuery (as a singleton list)
 	 *         or simply the deduplicated queries if {@link Constants#USE_BATCH_INSERTS} is set to false.
 	 * @throws YopRuntimeException when there are more than 1 SQL query among the queries
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<Query> merge(List<Query> queries) {
 		List<Query> uniqueQueries = queries.stream().distinct().collect(Collectors.toList());
 		BatchQuery merged = null;
+
+		// For insert queries, we are going to deduplicate, using YopableEquals.equals.
+		Set<YopableEquals> deduplicated = new HashSet<>();
 
 		for (Query query : uniqueQueries) {
 			if(merged == null) {
@@ -114,21 +132,17 @@ public class BatchQuery extends Query {
 					// We are asked not to batch INSERT queries (driver limitation, for instance)
 					return uniqueQueries;
 				}
-
-				merged = new BatchQuery(query.getSql(), query.getType());
-				merged.target = query.target;
-				merged.askGeneratedKeys(query.askGeneratedKeys(), query.getTarget());
+				merged = toBatch(query);
 			}
-			merged.getElements().addAll(query.elements);
 
 			if(!StringUtils.equals(merged.sql, query.getSql())) {
 				throw new YopRuntimeException("Could not merge batch queries with different SQL !");
 			}
 
-			if (query instanceof SimpleQuery) {
-				merged.parametersBatches.add(query.getParameters());
-			} else if (query instanceof org.yop.orm.sql.BatchQuery){
-				merged.parametersBatches.addAll(((BatchQuery) query).parametersBatches);
+			if (query.getType() == Type.INSERT && ! query.getElements().isEmpty()) {
+				mergeInsert(query, merged, deduplicated);
+			} else {
+				merge(query, merged);
 			}
 		}
 
@@ -140,5 +154,69 @@ public class BatchQuery extends Query {
 		}
 
 		return Collections.singletonList(merged);
+	}
+
+	/**
+	 * Create a batch query from a query.
+	 * <br>
+	 * <b>Source elements and query parameters are not added here !</b>
+	 * @param query the source query
+	 * @return a batch query with the same {@link Query#sql}, {@link Query#target} and {@link #askGeneratedKeys}
+	 */
+	private static BatchQuery toBatch(Query query) {
+		BatchQuery batch = new BatchQuery(query.getSql(), query.getType());
+		batch.target = query.target;
+		batch.askGeneratedKeys(query.askGeneratedKeys(), query.getTarget());
+		return batch;
+	}
+
+	/**
+	 * Merge an {@link Query.Type#INSERT} query into a batch query.
+	 * <br>
+	 * This method checks for duplicate (See {@link org.yop.orm.annotations.NaturalId}) in the source elements.
+	 * @param insert       the INSERT query
+	 * @param onto         the target batch query
+	 * @param deduplicated a set of deduplicated source elements. It will be updated with the insert elements.
+	 */
+	private static void mergeInsert(Query insert, BatchQuery onto, Set<YopableEquals> deduplicated) {
+		// Simple query : may have several source elements but no parameter batches
+		if (insert instanceof SimpleQuery) {
+			onto.parametersBatches.add(insert.getParameters());
+		}
+
+		// For each source element, deduplicate. And if batch query, add the parameter batch with same index.
+		// In that latter case, it is assumed that :
+		// element[i] ↔ parameter_batch[i]
+		for (int i = 0; i < insert.getElements().size(); i++) {
+			Yopable element = insert.getElements().get(i);
+
+			if (!deduplicated.contains(new YopableEquals(element))) {
+				onto.getElements().add(element);
+				deduplicated.add(new YopableEquals(element));
+
+				if (insert instanceof org.yop.orm.sql.BatchQuery){
+					onto.parametersBatches.add(((BatchQuery) insert).parametersBatches.get(i));
+				}
+			}
+		}
+	}
+
+	/**
+	 * Merge a query into a target batch query.
+	 * <br>
+	 * <b>
+	 *     This method does not check for duplicates at all ! Source elements and query parameters are added "as is" !
+	 * </b>
+	 * @param query the source query
+	 * @param onto  the target batch query
+	 */
+	private static void merge(Query query, BatchQuery onto) {
+		onto.getElements().addAll(query.elements);
+
+		if (query instanceof SimpleQuery) {
+			onto.parametersBatches.add(query.getParameters());
+		} else if (query instanceof org.yop.orm.sql.BatchQuery){
+			onto.parametersBatches.addAll(((BatchQuery) query).parametersBatches);
+		}
 	}
 }

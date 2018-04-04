@@ -66,10 +66,9 @@ public class ChinookDataTest extends DBMSSwitch {
 		Assert.assertEquals(source.artists.size(), artistsFromDB.size());
 
 		// Insert all the employees data in the DB
-		// BatchUpsert does not work because of the Employee→Employee relation with email as natural key
-		// Something should be done
+		// We use a batch insert : the natural keys will be checked and therefore no exception should occur.
 		start = System.currentTimeMillis();
-		Upsert
+		BatchUpsert
 			.from(Employee.class)
 			.onto(source.employees.values())
 			.join(Join.to(Employee::getReportsTo))
