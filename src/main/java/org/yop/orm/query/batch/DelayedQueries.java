@@ -16,7 +16,7 @@ import java.util.List;
  * <br>
  * This is an {@link LinkedHashMap}, so the query order should be kept!
  */
-public class DelayedQueries extends LinkedHashMap<String, List<Query>> {
+class DelayedQueries extends LinkedHashMap<String, List<Query>> {
 
 	/**
 	 * Merge the queries of this map, when possible.
