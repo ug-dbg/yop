@@ -17,13 +17,13 @@ import java.util.TreeSet;
 public class JoinClause implements Comparable<JoinClause> {
 
 	/** The join clause */
-	private String joinClause;
+	private final String joinClause;
 
 	/** The context of the join clause */
-	private Context<?> context;
+	private final Context<?> context;
 
 	/** The join clause parameters (see : {@link IJoin#where()}) */
-	private Parameters parameters;
+	private final Parameters parameters;
 
 	/**
 	 * JoinClause constructor. Please gimme all I need !

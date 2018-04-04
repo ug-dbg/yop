@@ -18,13 +18,13 @@ import java.util.function.Function;
 public class Comparison implements Evaluation {
 
 	/** The field getter. */
-	private Function<?, ?> getter;
+	private final Function<?, ?> getter;
 
 	/** The comparison operator */
-	private Operator op;
+	private final Operator op;
 
 	/** The comparison value reference */
-	private Comparable ref;
+	private final Comparable ref;
 
 	/** The target field. Deduced from {@link #getter} in {@link #toSQL(Context, Parameters)}*/
 	private Field field;

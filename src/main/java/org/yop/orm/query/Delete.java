@@ -40,9 +40,9 @@ public class Delete<T extends Yopable> {
 	private static final String DELETE = " DELETE {0} FROM {1} {2} WHERE {3} ";
 	private static final String DEFAULT_WHERE = " 1=1 ";
 
-	private Class<T> target;
+	private final Class<T> target;
 	private Where<T> where;
-	private Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
+	private final Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
 
 	private Delete(Class<T> target) {
 		this.target = target;

@@ -6,7 +6,7 @@ package org.yop.orm.gen;
  * Sequences should probably be stored here too.
  */
 public class PrimaryKey {
-	private boolean autoincrement;
+	private final boolean autoincrement;
 
 	public PrimaryKey(boolean autoincrement) {
 		this.autoincrement = autoincrement;

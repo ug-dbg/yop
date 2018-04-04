@@ -18,7 +18,7 @@ public class IdIn  implements Evaluation {
 	private static final String IN = " {0} IN ({1}) ";
 
 	/** ID value restriction */
-	private Collection<Long> values = new HashSet<>();
+	private final Collection<Long> values = new HashSet<>();
 
 	/**
 	 * Default constructor : gimme all the values you have !

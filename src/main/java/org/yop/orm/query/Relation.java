@@ -37,7 +37,7 @@ public class Relation<From extends Yopable, To extends Yopable> {
 	 * <br><br>
 	 * <b> 1 From → N To, several times</b>
 	 */
-	private Map<From, Collection<To>> relations = new HashMap<>();
+	private final Map<From, Collection<To>> relations = new HashMap<>();
 
 	/** The relation table name */
 	private String relationTable;

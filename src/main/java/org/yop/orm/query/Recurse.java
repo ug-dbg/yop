@@ -43,13 +43,13 @@ public class Recurse<T extends Yopable> {
 	private static final Logger logger = LoggerFactory.getLogger(Recurse.class);
 
 	/** Target class */
-	protected Class<T> target;
+	protected final Class<T> target;
 
 	/** Elements on which to recurse */
-	protected Collection<T> elements = new ArrayList<>();
+	protected final Collection<T> elements = new ArrayList<>();
 
 	/** Join clauses */
-	private Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
+	private final Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
 
 	/**
 	 * Protected constructor, please use {@link #from(Class)}

@@ -20,7 +20,7 @@ public class FirstLevelCache {
 	private static final Logger logger = LoggerFactory.getLogger(FirstLevelCache.class);
 
 	/** The cache map */
-	private Map<Class<? extends Yopable>, Map<Long, Yopable>> cache = new HashMap<>();
+	private final Map<Class<? extends Yopable>, Map<Long, Yopable>> cache = new HashMap<>();
 
 	/**
 	 * Try to hit the cache.

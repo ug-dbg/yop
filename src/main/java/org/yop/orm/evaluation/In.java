@@ -25,10 +25,10 @@ public class In implements Evaluation {
 	private static final String IN = " {0} IN ({1}) ";
 
 	/** The field getter on which a restriction is set */
-	private Function<?, ?> getter;
+	private final Function<?, ?> getter;
 
 	/** The restriction values */
-	private Collection<Object> values = new HashSet<>();
+	private final Collection<Object> values = new HashSet<>();
 
 	/**
 	 * Default constructor : I need the field getter and the restriction values.

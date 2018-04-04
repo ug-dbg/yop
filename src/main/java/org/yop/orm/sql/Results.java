@@ -15,7 +15,7 @@ public class Results {
 	private final IResultCursor cursor;
 
 	/** The query that was executed */
-	private Query query;
+	private final Query query;
 
 	/**
 	 * Default constructor : resultset and original query

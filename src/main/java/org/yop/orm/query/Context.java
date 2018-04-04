@@ -30,13 +30,13 @@ public class Context<T extends Yopable> {
 	static final String DOT = ".";
 
 	/** Parent context. If null, this context is the root context. */
-	private Context<? extends Yopable> parent;
+	private final Context<? extends Yopable> parent;
 
 	/** Relation (field) name to the parent context. If null, this context is the root context. */
-	private String relationToParent;
+	private final String relationToParent;
 
 	/** The context target class */
-	private Class<T> target;
+	private final Class<T> target;
 
 	private String targetAliasSuffix = "";
 
@@ -213,7 +213,7 @@ public class Context<T extends Yopable> {
 	 * @param <T> the target type
 	 */
 	static class FakeContext<T extends Yopable> extends Context<T> {
-		private String fakePath;
+		private final String fakePath;
 
 		FakeContext(Context<T> context, String fakePath) {
 			super(context.getTarget());
@@ -230,11 +230,11 @@ public class Context<T extends Yopable> {
 	 * Convenience class to store an SQL column (qualified ID and alias)
 	 */
 	static class SQLColumn {
-		private String qualifiedId;
-		private String alias;
+		private final String qualifiedId;
+		private final String alias;
 
 		/** Is this column the ID of a Yopable class ? */
-		private boolean id;
+		private final boolean id;
 
 		SQLColumn(String qualifiedId, String alias, boolean id) {
 			this.qualifiedId = qualifiedId;

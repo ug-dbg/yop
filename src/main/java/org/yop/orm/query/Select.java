@@ -45,10 +45,10 @@ public class Select<T extends Yopable> {
 	private static final String DEFAULT_WHERE = " 1=1 ";
 
 	/** Select root context : target class and SQL path **/
-	private Context<T> context;
+	private final Context<T> context;
 
 	/** Where clauses */
-	private Where<T> where;
+	private final Where<T> where;
 
 	/** Join clauses */
 	private Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();

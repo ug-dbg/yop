@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  */
 public class Or implements Evaluation {
 	/** The evaluations to join */
-	private List<Evaluation> evaluations = new ArrayList<>();
+	private final List<Evaluation> evaluations = new ArrayList<>();
 
 	/**
 	 * Default constructor with explicit vararg evaluations feeding

@@ -47,9 +47,9 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 	 * An SQL parameter ('?' values in SQL queries)
 	 */
 	public static class Parameter {
-		String name;
-		Object value;
-		boolean sequence;
+		final String name;
+		final Object value;
+		final boolean sequence;
 
 		Parameter(String name, Object value, boolean sequence) {
 			this.name = name;

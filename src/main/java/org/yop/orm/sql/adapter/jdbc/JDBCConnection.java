@@ -21,7 +21,7 @@ import java.sql.Statement;
 public class JDBCConnection implements IConnection {
 
 	/** The underlying JDBC connection */
-	private Connection connection;
+	private final Connection connection;
 
 	/**
 	 * Default constructor : please give me the JDBC connection !
@@ -44,14 +44,14 @@ public class JDBCConnection implements IConnection {
 	/**
 	 * {@inheritDoc}
 	 * <br>
-	 * <u>JDBC Implémentation</u> :
+	 * <u>JDBC Implementation</u> :
 	 * <br>
 	 * Prepare the statement to be executed using the query.
 	 * <br>
 	 * The safe alias SQL query is used and parameters are set.
 	 * <br>
 	 * You are ready to go :-)
-	 * @throws YopSQLException an Error occured preparing the statement with the given connection
+	 * @throws YopSQLException an Error occurred preparing the statement with the given connection
 	 */
 	@Override
 	public IRequest prepare(Query query) {

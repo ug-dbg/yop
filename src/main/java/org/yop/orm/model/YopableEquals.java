@@ -10,7 +10,7 @@ package org.yop.orm.model;
 public class YopableEquals {
 
 	/** the wrapped element */
-	private Yopable yopable;
+	private final Yopable yopable;
 
 	/**
 	 * Default constructor : give me the Yopable object to wrap.

@@ -38,10 +38,10 @@ public class Upsert<T extends Yopable> {
 	protected Class<T> target;
 
 	/** Elements to save/update */
-	protected Collection<T> elements = new ArrayList<>();
+	protected final Collection<T> elements = new ArrayList<>();
 
 	/** Join clauses */
-	protected Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
+	protected final Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
 
 	/** If set to true, any insert will do a preliminary SELECT query to find any entry whose natural key matches */
 	protected boolean checkNaturalID = false;

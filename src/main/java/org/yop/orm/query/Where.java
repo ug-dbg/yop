@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class Where<T extends Yopable>  {
 
 	/** The where clause evaluations. Joined with AND. Use {@link Or} to create an OR evaluation. */
-	private Collection<Evaluation> evaluations = new ArrayList<>();
+	private final Collection<Evaluation> evaluations = new ArrayList<>();
 
 	/**
 	 * Default constructor.

@@ -26,10 +26,10 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	private static final Logger logger = LoggerFactory.getLogger(AbstractJoin.class);
 
 	/** The where clause on the target class */
-	protected Where<To> where = new Where<>();
+	protected final Where<To> where = new Where<>();
 
 	/** Sub-join clauses */
-	private Collection<IJoin<To, ? extends Yopable>> joins = new ArrayList<>();
+	private final Collection<IJoin<To, ? extends Yopable>> joins = new ArrayList<>();
 
 	@Override
 	public Collection<IJoin<To, ? extends Yopable>> getJoins() {
@@ -140,7 +140,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	 * @param <To>   the target type
 	 */
 	private static class AbstractJoinImpl<From extends Yopable, To extends Yopable> extends AbstractJoin<From, To> {
-		private Field field;
+		private final Field field;
 
 		private AbstractJoinImpl(Field field) {
 			this.field = field;

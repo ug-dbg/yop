@@ -17,22 +17,23 @@ import java.util.List;
  * A table column that can generate a column clause in an SQL CREATE query.
  */
 public class Column implements Comparable<Column> {
-	private static Comparator<Column> COMPARATOR =
+	private static final Comparator<Column> COMPARATOR =
 		Comparator.nullsLast(
 			Comparator.comparing(Column::isPK).reversed().thenComparing(Column::getName)
 		);
 
-	private String name;
-	private String type;
-	private boolean naturalKey;
-	private boolean notNull;
-	private int length;
-	private List<String> sequences = new ArrayList<>();
+	private final String name;
+	private final String type;
+	private final int length;
+	private final List<String> sequences = new ArrayList<>();
+
+	private final ORMTypes types;
 
 	private PrimaryKey pk;
 	private ForeignKey fk;
 
-	private ORMTypes types;
+	private boolean naturalKey;
+	private boolean notNull;
 
 	Column(String name, String type, int length, ORMTypes types) {
 		this.name = name;

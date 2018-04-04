@@ -29,7 +29,7 @@ public class IdMap {
 	private static final String SEPARATOR = Context.SQL_SEPARATOR;
 
 	/** The ID map. One class → a collection of IDs */
-	private Map<Class<? extends Yopable>, Set<Long>> ids = new HashMap<>();
+	private final Map<Class<? extends Yopable>, Set<Long>> ids = new HashMap<>();
 
 	/**
 	 * Get the IDs for the given class.

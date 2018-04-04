@@ -13,7 +13,7 @@ public enum Operator {
 	IS_NULL(" IS NULL "),
 	IS_NOT_NULL(" IS NOT NULL ");
 
-	private String sql;
+	private final String sql;
 
 	Operator(String sql) {
 		this.sql = sql;

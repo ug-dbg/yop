@@ -3,7 +3,7 @@ package org.yop.orm.sql;
 public class SimpleQuery extends Query {
 
 	/** The SQL query parameters (i.e. for '?' in the query) */
-	private Parameters parameters;
+	private final Parameters parameters;
 
 	private boolean next = true;
 

@@ -25,7 +25,7 @@ class ToSQL {
 			this.sql = sql;
 		}
 
-		private String sql;
+		private final String sql;
 	}
 
 	/** [table] [table alias] on [column name] = [value] */

@@ -30,10 +30,10 @@ public abstract class Query {
 		.reversed();
 
 	/** The query type. Needed to know if a query is batchable, for instance. */
-	private Type type;
+	private final Type type;
 
 	/** The SQL to execute */
-	protected String sql;
+	protected final String sql;
 
 	/** The SQL with too long aliases replaced with generated UUIDs */
 	private String safeAliasSQL;
@@ -42,10 +42,10 @@ public abstract class Query {
 	boolean askGeneratedKeys = false;
 
 	/** The generated IDs */
-	List<Long> generatedIds = new ArrayList<>();
+	final List<Long> generatedIds = new ArrayList<>();
 
 	/** Aliases map : short alias → original alias */
-	Map<String, String> tooLongAliases = new HashMap<>();
+	final Map<String, String> tooLongAliases = new HashMap<>();
 
 	/** A reference to the root target Yopable that this query was generated for. Only required for generated keys. */
 	protected Class<? extends Yopable> target;
@@ -54,7 +54,7 @@ public abstract class Query {
 	 * The source elements of the query.
 	 * If the query is {@link Type#INSERT}, and {@link #askGeneratedKeys} is set to true, their IDs will be set back.
 	 */
-	protected List<Yopable> elements = new ArrayList<>();
+	protected final List<Yopable> elements = new ArrayList<>();
 
 	/**
 	 * Default constructor : SQL query.

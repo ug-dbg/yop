@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class BatchQuery extends Query {
 
 	/** The query parameters batches */
-	private List<Parameters> parametersBatches = new ArrayList<>();
+	private final List<Parameters> parametersBatches = new ArrayList<>();
 
 	/** The query parameters batches index. Init at -1. Use {@link #nextBatch()} to move the cursor. */
 	private Integer batchCursor = -1;

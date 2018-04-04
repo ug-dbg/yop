@@ -28,10 +28,10 @@ public class JDBCRequest implements IRequest {
 	private static final Logger logger = LoggerFactory.getLogger(JDBCRequest.class);
 
 	/** JDBC prepared statement */
-	private PreparedStatement statement;
+	private final PreparedStatement statement;
 
 	/** The query {@link #statement} comes from */
-	private Query query;
+	private final Query query;
 
 	/**
 	 * Default constructor. Please give me the JDBC statement and the original query.

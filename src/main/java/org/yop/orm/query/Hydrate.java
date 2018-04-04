@@ -20,13 +20,13 @@ public class Hydrate<T extends Yopable> {
 	private static final Logger logger = LoggerFactory.getLogger(Hydrate.class);
 
 	/** The target class */
-	private Class<T> target;
+	private final Class<T> target;
 
 	/** Elements to hydrate */
-	private Map<Long, T> elements = new HashMap<>() ;
+	private final Map<Long, T> elements = new HashMap<>() ;
 
 	/** Relations to hydrate */
-	private Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
+	private final Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
 
 	/**
 	 * Private constructor. Please use {@link #from(Class)} which does the same job.

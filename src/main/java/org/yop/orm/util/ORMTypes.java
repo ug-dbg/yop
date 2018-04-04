@@ -33,7 +33,7 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 	private static final String NK = " CONSTRAINT {0} UNIQUE ({1}) ";
 
 	/** The default SQL type */
-	private String defaultType;
+	private final String defaultType;
 
 	/**
 	 * @return the default SQL type → {@link #defaultType}
