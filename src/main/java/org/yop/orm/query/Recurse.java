@@ -1,9 +1,9 @@
 package org.yop.orm.query;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
+import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 
@@ -18,6 +18,10 @@ import java.util.stream.Collectors;
  * It cannot be done using the standard YOP queries ({@link Select}, {@link Hydrate}).
  * <br>
  * This class intends to enable recursive CRUD. This is just the beginning for now !
+ * <br><br>
+ * The API is very similar to {@link Select}.
+ * <br>
+ * But any fetched element where a join clause is a applicable will trigger a sub-select query.
  * <br><br>
  * <b>
  *  ⚠⚠⚠
@@ -43,6 +47,9 @@ public class Recurse<T extends Yopable> {
 
 	/** Elements on which to recurse */
 	protected Collection<T> elements = new ArrayList<>();
+
+	/** Join clauses */
+	private Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
 
 	/**
 	 * Protected constructor, please use {@link #from(Class)}
@@ -83,108 +90,126 @@ public class Recurse<T extends Yopable> {
 	}
 
 	/**
-	 * Recursively fetch the given cyclic relation on the target {@link #elements}.
-	 * <br>
-	 * It means whenever a new object is fetched for the relation, try to fetch the relation on this new object.
-	 * @param getter     the relation getter
-	 * @param connection the connection to use
+	 * (Left) join to a new type.
+	 * @param join the join clause
+	 * @param <R> the target join type
+	 * @return the current SELECT request, for chaining purpose
 	 */
-	public void fetch(Function<T, T> getter, IConnection connection) {
-		Hydrate.from(this.target).onto(this.elements).fetch(getter).execute(connection);
+	public <R extends Yopable> Recurse<T> join(IJoin<T, R> join) {
+		this.joins.add(join);
+		return this;
+	}
 
-		Collection<T> nexts = new HashSet<>();
-		for (T element : this.elements) {
-			T next = getter.apply(element);
-			if (next != null && getter.apply(next) == null) {
-				nexts.add(next);
-			}
-		}
+	/**
+	 * Fetch the whole data graph. Stop on transient fields.
+	 * <br>
+	 * <b>
+	 *     ⚠⚠⚠
+	 *     <br>
+	 *     There must be no cycle in the data graph model !
+	 *     <br>
+	 *     In a recurse query, any found element where a join clause is a applicable
+	 *     will trigger a sub-select query, using this join clause.
+	 *     <br>
+	 *     ⚠⚠⚠
+	 * </b>
+	 * <br><br>
+	 * <b>⚠⚠⚠ Any join previously set is cleared ! Please add transient fetch clause after this ! ⚠⚠⚠</b>
+	 * @return the current RECURSE request, for chaining purpose
+	 */
+	public Recurse<T> joinAll() {
+		this.joins.clear();
+		AbstractJoin.joinAll(this.target, this.joins);
+		return this;
+	}
 
-		nexts.removeAll(this.elements);
-		if (! nexts.isEmpty()) {
-			Recurse.from(this.target).onto(nexts).fetch(getter, connection);
-		}
+	/**
+	 * Recursively the join relations on the target {@link #elements}.
+	 * <br>
+	 * It means whenever new objects are fetched for the relation,
+	 * try to fetch the relation on these new objects, if applicable.
+	 * <br><br>
+	 * This method will use a shared {@link FirstLevelCache} across all the {@link Select} queries it will execute.
+	 * <br>
+	 * Thus, there <i>should</i> be no duplicates in memory (1 DB object ↔ 1 single object in memory).
+	 * @param connection the connection to use.
+	 */
+	public void execute(IConnection connection) {
+		this.recurse(connection, new FirstLevelCache(), new ArrayList<>());
+	}
+
+	/**
+	 * Add join clauses explicitly. Useful when creating a sub-recurse.
+	 * @param joins the join clause
+	 * @return the current RECURSE request, for chaining purpose
+	 */
+	private Recurse<T> join(Collection<IJoin<T, ?>> joins) {
+		this.joins.addAll(joins);
+		return this;
 	}
 
 	/**
 	 * Recursively fetch the given cyclic relation on the target {@link #elements}.
 	 * <br>
 	 * It means whenever new objects are fetched for the relation, try to fetch the relation on these new objects.
-	 * @param getter     the relation getter
 	 * @param connection the connection to use
-	 */
-	public void fetchSet(Function<T, Collection<T>> getter, IConnection connection) {
-		Hydrate.from(this.target).onto(this.elements).fetchSet(getter).execute(connection);
-
-		Collection<T> nexts = new HashSet<>();
-		for (T element : this.elements) {
-			Collection<T> next = getter.apply(element);
-
-			for (T nextElement : next) {
-				if (nextElement != null && CollectionUtils.isNotEmpty(getter.apply(nextElement))) {
-					nexts.add(nextElement);
-				}
-			}
-		}
-
-		nexts.removeAll(this.elements);
-		if (! nexts.isEmpty()) {
-			Recurse.from(this.target).onto(nexts).fetchSet(getter, connection);
-		}
-	}
-
-	/**
-	 * Recursively fetch the given cyclic relation on the target {@link #elements}.
-	 * <br>
-	 * It means whenever new objects are fetched for the relation, try to fetch the relation on these new objects.
-	 * @param join       the relation thread to follow recursively
-	 * @param connection the connection to use
+	 * @param cache      the 1st level cache to use (will be shared across the different SELECT queries)
+	 * @param done       the elements we have already recursed on (stop condition)
 	 */
 	@SuppressWarnings("unchecked")
-	public <To extends Yopable> void fetch(IJoin<T, To> join, IConnection connection) {
+	private void recurse(IConnection connection, FirstLevelCache cache, Collection<T> done) {
 		if(this.elements.isEmpty()) {
 			logger.warn("Recurse on no element. Are you sure you did not forget using #onto() ?");
 			return;
 		}
+		this.elements.forEach(cache::put);
 
-		// Get the data using a select on the target elements
+		// Get the data using a SELECT query on the target elements and the join clauses.
 		Map<Long, T> byID = this.elements.stream().collect(Collectors.toMap(Yopable::getId, Function.identity()));
-		Set<T> fetched = Select
+		Select<T> select = Select
 			.from(this.target)
-			.where(Where.id(this.elements.stream().map(Yopable::getId).collect(Collectors.toList())))
-			.join(join)
-			.execute(connection);
+			.setCache(cache)
+			.where(Where.id(this.elements.stream().map(Yopable::getId).collect(Collectors.toList())));
+		this.joins.forEach(select::join);
+		Set<T> fetched = select.execute(connection, Select.Strategy.EXISTS);
 
-		// Assign the data
-		Field field = join.getField(this.target);
-		fetched.forEach(t -> {
-			T onto = byID.get(t.getId());
-			try {
-				field.set(onto, field.get(t));
-			} catch (IllegalAccessException | RuntimeException e) {
-				throw new YopRuntimeException(
-					"Unable to set field [" + field.getDeclaringClass() + "#" + field.getName() + "]"
-					+ " from [" + t + "] onto [" + onto + "]"
-				);
-			}
-		});
+		Collection<T> next = new HashSet<>();
+		for (IJoin<T, ?> join : this.joins) {
+			// Assign the data
+			Field field = join.getField(this.target);
+			fetched.forEach(t -> {
+				T onto = byID.get(t.getId());
+				try {
+					field.set(onto, field.get(t));
+				} catch (IllegalAccessException | RuntimeException e) {
+					throw new YopRuntimeException(
+						"Unable to set field [" + field.getDeclaringClass() + "#" + field.getName() + "]"
+						+ " from [" + t + "] onto [" + onto + "]"
+					);
+				}
+			});
+			// Walk through the fetched data using the 'join' and grab any target type object
+			recurseCandidates(join, this.elements, next, this.target);
+		}
 
-		// Walk through the fetched data using the 'join' and grab any target type object
-		Collection<T> next = new ArrayList<>();
-		recurseCandidates(join, this.elements, next, this.target);
+		// Do not recurse on the source elements of this RECURSE query
+		next.removeAll(this.elements);
+
+		// Do not recurse on elements we have already been recursing on (stop condition)
+		next.removeAll(done);
 
 		// Recurse !
-		next.removeAll(this.elements);
 		if (! next.isEmpty()) {
-			Recurse.from(this.target).onto(next).fetch(join, connection);
+			done.addAll(next);
+			Recurse.from(this.target).join(this.joins).onto(next).recurse(connection, cache, done);
 		}
 	}
 
 	/**
 	 * Walk through the sources, using the join object and find any 'target' typed object.
 	 * @param join       the join path
-	 * @param sources    the source objects
-	 * @param candidates the object of type 'T' found on the path
+	 * @param sources    the source objects (will not be updated here at all)
+	 * @param candidates the object of type 'T' found on the path (will be populated here)
 	 * @param target     the target class
 	 * @param <T>        the target type
 	 */

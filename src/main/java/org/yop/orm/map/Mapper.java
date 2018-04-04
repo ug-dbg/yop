@@ -38,12 +38,13 @@ public class Mapper {
 	 * <b>⚠⚠⚠ This method iterates over the resultset ! ⚠⚠⚠</b>
 	 * @param results the SQL query results (resultset + query + parameters...)
 	 * @param clazz   the target class
+	 * @param cache   First level cache to use when mapping objects. The idea is to share it among requests.
 	 * @param <T>     the target type
 	 * @return a set of T, read from the result set
 	 */
-	public static <T extends Yopable> Set<T> map(Results results, Class<T> clazz) {
+	public static <T extends Yopable> Set<T> map(Results results, Class<T> clazz, FirstLevelCache cache) {
 		try {
-			return map(results, clazz, clazz.getSimpleName());
+			return map(results, clazz, clazz.getSimpleName(), cache);
 		} catch (IllegalAccessException | InstantiationException e) {
 			throw new YopMapperException("Error mapping resultset to [" + clazz.getName() + "]", e);
 		} catch (YopSQLException e) {
@@ -62,6 +63,7 @@ public class Mapper {
 	 * @param results the results of the query
 	 * @param clazz   the target class
 	 * @param context the root context (mostly, the simple name of the target class)
+	 * @param cache   First level cache to use
 	 * @param <T>     the target type
 	 * @return a set of T, read from the result set
 	 * @throws IllegalAccessException could not read a field
@@ -71,11 +73,11 @@ public class Mapper {
 	private static <T extends Yopable> Set<T> map(
 		Results results,
 		Class<T> clazz,
-		String context)
+		String context,
+		FirstLevelCache cache)
 		throws IllegalAccessException, InstantiationException {
 
 		Set<T> out = new HashSet<>();
-		FirstLevelCache cache = new FirstLevelCache();
 		while (results.getCursor().next()) {
 			T element = clazz.newInstance();
 			element = mapSimpleFields(results, element, context, cache);

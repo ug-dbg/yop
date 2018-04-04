@@ -5,6 +5,7 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.evaluation.Comparison;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopSQLException;
+import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.*;
@@ -51,6 +52,9 @@ public class Select<T extends Yopable> {
 
 	/** Join clauses */
 	private Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
+
+	/** A custom first level cache that can be specified in some very specific cases */
+	private FirstLevelCache cache;
 
 	/**
 	 * Private constructor. Please use {@link #from(Class)}
@@ -117,6 +121,18 @@ public class Select<T extends Yopable> {
 	}
 
 	/**
+	 * Set a cache to use.
+	 * <br>
+	 * This was created for the {@link Recurse} queries where we would like to keep the same cache when recursing.
+	 * @param cache the cache object to use
+	 * @return the current SELECT request, for chaining purpose
+	 */
+	Select<T> setCache(FirstLevelCache cache) {
+		this.cache = cache;
+		return this;
+	}
+
+	/**
 	 * Turn this SELECT query into a DELETE query, with the same {@link #joins} and {@link #where}.
 	 * <br>
 	 * <b>The where and joins clauses are not duplicated when creating the DELETE query !</b>
@@ -144,7 +160,12 @@ public class Select<T extends Yopable> {
 		String request = this.toSQLAnswerRequest(parameters);
 		Query query = new SimpleQuery(request, Query.Type.SELECT, parameters);
 
-		Set<T> elements = Executor.executeSelectQuery(connection, query, this.context.getTarget());
+		Set<T> elements = Executor.executeSelectQuery(
+			connection,
+			query,
+			this.context.getTarget(),
+			this.cache == null ? new FirstLevelCache() : this.cache
+		);
 		ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toSet());
 
 		if(ids.isEmpty()) {
@@ -154,7 +175,12 @@ public class Select<T extends Yopable> {
 		parameters = new Parameters();
 		request = this.toSQLDataRequest(ids, parameters);
 		query = new SimpleQuery(request, Query.Type.SELECT, parameters);
-		return Executor.executeSelectQuery(connection, query, this.context.getTarget());
+		return Executor.executeSelectQuery(
+			connection,
+			query,
+			this.context.getTarget(),
+			this.cache == null ? new FirstLevelCache() : this.cache
+		);
 	}
 
 	/**
@@ -179,7 +205,8 @@ public class Select<T extends Yopable> {
 		return Executor.executeSelectQuery(
 			connection,
 			new SimpleQuery(request, Query.Type.SELECT, parameters),
-			this.context.getTarget()
+			this.context.getTarget(),
+			this.cache == null ? new FirstLevelCache() : this.cache
 		);
 	}
 

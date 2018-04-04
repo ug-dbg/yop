@@ -118,7 +118,11 @@ public class ChinookDataTest extends DBMSSwitch {
 			.from(Employee.class)
 			.execute(this.getConnection());
 		Assert.assertEquals(source.employees.size(), employeesFromDB.size());
-		Recurse.from(Employee.class).onto(employeesFromDB).fetch(Employee::getReportsTo, this.getConnection());
+		Recurse
+			.from(Employee.class)
+			.onto(employeesFromDB)
+			.join(Join.to(Employee::getReportsTo))
+			.execute(this.getConnection());
 
 		employeesByMail = employeesFromDB
 			.stream()
@@ -135,8 +139,17 @@ public class ChinookDataTest extends DBMSSwitch {
 		jane.setReportsTo(jane);
 		Upsert.from(Employee.class).onto(jane).join(Join.to(Employee::getReportsTo)).execute(this.getConnection());
 		jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(this.getConnection());
-		Recurse.from(Employee.class).onto(jane).fetch(Employee::getReportsTo, this.getConnection());
-		Recurse.from(Employee.class).onto(employeesFromDB).fetchSet(Employee::getReporters, this.getConnection());
+		Recurse
+			.from(Employee.class)
+			.onto(jane)
+			.join(Join.to(Employee::getReportsTo))
+			.execute(this.getConnection());
+		Recurse
+			.from(Employee.class)
+			.onto(employeesFromDB)
+			.join(JoinSet.to(Employee::getReporters))
+			.execute(this.getConnection());
+
 		employeesByMail = employeesFromDB
 			.stream()
 			.collect(Collectors.toMap(Employee::getEmail, Function.identity()));
@@ -163,8 +176,13 @@ public class ChinookDataTest extends DBMSSwitch {
 		Upsert.from(Employee.class).onto(andrew).join(Join.to(Employee::getReportsTo)).execute(this.getConnection());
 
 		jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(this.getConnection());
-		Recurse.from(Employee.class).onto(jane).fetch(JoinSet.to(Employee::getReporters), getConnection());
-		Recurse.from(Employee.class).onto(jane).fetch(Join.to(Employee::getReportsTo), getConnection());
+
+		Recurse
+			.from(Employee.class)
+			.onto(jane)
+			.join(JoinSet.to(Employee::getReporters))
+			.join(Join.to(Employee::getReportsTo))
+			.execute(this.getConnection());
 		Assert.assertTrue(jane.getReporters().contains(andrew));
 	}
 

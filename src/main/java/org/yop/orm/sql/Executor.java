@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopSQLException;
+import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.map.Mapper;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
@@ -35,9 +36,30 @@ public class Executor {
 	 * @return the request execution ResultSet
 	 * @throws YopSQLException an SQL error occured.
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T extends Yopable> Set<T> executeSelectQuery(IConnection connection, Query query, Class<T> target) {
-		return (Set<T>) executeQuery(connection, query, results -> Mapper.map(results, target));
+		return executeSelectQuery(connection, query, target, new FirstLevelCache());
+	}
+
+	/**
+	 * Execute the given SQL SELECT query and map results.
+	 * <br>
+	 * If the <b>yop.show_sql</b> system property is set, the SQL request is logged.
+	 * <br>
+	 * This method handles the too long aliases that might be present in the SQL query. At least I hope so :)
+	 * @param connection the SQL connection to use
+	 * @param query      the SQL query
+	 * @param target     the target class on which the results of the query will be mapped
+	 * @param cache      first level cache to use when mapping objects. The idea is to share it among requests.
+	 * @return the request execution ResultSet
+	 * @throws YopSQLException an SQL error occured.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T extends Yopable> Set<T> executeSelectQuery(
+		IConnection connection,
+		Query query,
+		Class<T> target,
+		FirstLevelCache cache) {
+		return (Set<T>) executeQuery(connection, query, results -> Mapper.map(results, target, cache));
 	}
 
 	/**
@@ -53,7 +75,6 @@ public class Executor {
 	 * @param query      the SQL query
 	 * @throws YopSQLException an SQL error occured.
 	 */
-	@SuppressWarnings("unchecked")
 	public static void executeQuery(IConnection connection, Query query) {
 		executeQuery(connection, query, null);
 	}
