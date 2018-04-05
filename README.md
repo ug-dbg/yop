@@ -65,8 +65,10 @@ I actually feel it is **quite the same problem**.
 We do enjoy data graph cycles in the JVM memory because of a reference mechanism.  
 Since you will mostly want to bring your data out of the Java heap space, why not try to ease it once and for all ?  
 Of course you will still be allowed to have cycles in your java objects data graph, but :
-- you will have to cut them using 'transient' and CRUD them explicitly
-- you will have to think your data as sets of acyclic graphs when you want to CRUD it to SQL/Json
+* you will have to cut them using 'transient' and CRUD them explicitly
+* you will have to think your data as sets of acyclic graphs when you want to CRUD it to SQL/Json  
+  
+And there is a **'Recurse'** API that can recursively fetch cyclic relations using sub-queries. 
 
 ## Is it reliable ?
 For now, I guess it is not at all :-D  
