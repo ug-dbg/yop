@@ -185,7 +185,7 @@
 
 		<!-- Oracle test dependencies. Oracle drivers are not very accessible. -->
 		<!--
-			You need access to the maven repo for ojdbc8.
+			You need access to the Oracle maven repo for ojdbc8.
 			Or download ojdbc8.jar from oracle and install using :
 			mvn install:install-file -Dfile={Path/to/your/ojdbc8.jar} -DgroupId=com.oracle -DartifactId=ojdbc8 -Dversion=12.2.0.1 -Dpackaging=jar
 		-->
