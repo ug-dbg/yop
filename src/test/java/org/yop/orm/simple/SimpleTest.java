@@ -365,4 +365,78 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertEquals(Collections.singletonList(pojo1), pojo2.getChildren());
 		}
 	}
+
+	@Test
+	public void testRecurse() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Pojo newPojo = new Pojo();
+			newPojo.setVersion(1337);
+			newPojo.setType(Pojo.Type.FOO);
+			Jopo jopo = new Jopo();
+			jopo.setName("jopo From code !");
+			jopo.setPojo(newPojo);
+			newPojo.getJopos().add(jopo);
+
+			jopo = new Jopo();
+			jopo.setName("jopo From code #2 !");
+			jopo.setPojo(newPojo);
+			newPojo.getJopos().add(jopo);
+
+			Other other = new Other();
+			other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
+			other.setName("other name :)");
+			newPojo.getOthers().add(other);
+
+			Upsert
+				.from(Pojo.class)
+				.onto(newPojo)
+				.join(JoinSet.to(Pojo::getJopos))
+				.join(JoinSet.to(Pojo::getOthers))
+				.checkNaturalID()
+				.execute(connection);
+
+			Select<Pojo> select = Select.from(Pojo.class).where(Where.naturalId(newPojo));
+			Pojo fromNaturalID = select.uniqueResult(connection);
+
+			Recurse.from(Pojo.class).onto(fromNaturalID).joinAll().execute(connection);
+			Assert.assertEquals(newPojo.getJopos(), fromNaturalID.getJopos());
+			Assert.assertEquals(1, fromNaturalID.getOthers().size());
+
+			Pojo parent = new Pojo();
+			parent.setActive(false);
+			parent.setType(Pojo.Type.BAR);
+			parent.setVersion(0);
+			newPojo.setParent(parent);
+
+			Upsert
+				.from(Pojo.class)
+				.onto(newPojo)
+				.join(Join.to(Pojo::getParent))
+				.checkNaturalID()
+				.execute(connection);
+
+			fromNaturalID = select.uniqueResult(connection);
+			Recurse.from(Pojo.class).onto(fromNaturalID).joinAll().join(Join.to(Pojo::getParent)).execute(connection);
+			Assert.assertEquals(newPojo.getJopos(),  fromNaturalID.getJopos());
+			Assert.assertEquals(newPojo.getOthers(), fromNaturalID.getOthers());
+			Assert.assertEquals(parent, fromNaturalID.getParent());
+
+			Pojo pojo1 = Select.from(Pojo.class).where(Where.id(newPojo.getId())).uniqueResult(this.getConnection());
+			Pojo pojo2 = Select.from(Pojo.class).where(Where.id(parent.getId())).uniqueResult(this.getConnection());
+
+			Recurse
+				.from(Pojo.class)
+				.onto(Arrays.asList(pojo1, pojo2))
+				.joinAll()
+				.join(Join.to(Pojo::getParent))
+				.join(JoinSet.to(Pojo::getChildren))
+				.join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
+				.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
+				.execute(connection);
+
+			Assert.assertEquals(parent, pojo1.getParent());
+			Assert.assertEquals(Collections.singletonList(pojo1), pojo2.getChildren());
+			Assert.assertTrue(pojo1.getParent() == pojo2);
+		}
+	}
 }
