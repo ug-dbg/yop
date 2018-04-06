@@ -59,7 +59,6 @@ public class Other implements YopableJson {
 			"id=" + id
 			+ ", name='" + name + '\''
 			+ ", timestamp=" + timestamp
-			+ ", pojos=" + pojos
 		+'}';
 	}
 }
