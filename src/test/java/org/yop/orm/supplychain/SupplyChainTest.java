@@ -226,6 +226,23 @@ public class SupplyChainTest extends DBMSSwitch {
 
 			Upsert.from(Organisation.class).onto(organisation).joinAll().execute(connection);
 
+			// Fetch the organisation, recurse on employees and warehouses and do some asserts on memory references
+			// (Recurse tries to keep : 1 DB object ↔ 1 single object in memory)
+			organisation = Select
+				.from(Organisation.class)
+				.where(Where.naturalId(organisation))
+				.uniqueResult(this.getConnection());
+
+			Recurse
+				.from(Organisation.class)
+				.onto(organisation)
+				.join(JoinSet.to(Organisation::getEmployees).join(Join.to(Employee::getOrganisation)))
+				.join(JoinSet.to(Organisation::getWarehouses).join(Join.to(Warehouse::getOwner)))
+				.execute(this.getConnection());
+
+			Assert.assertTrue(organisation == organisation.getEmployees().iterator().next().getOrganisation());
+			Assert.assertTrue(organisation == organisation.getWarehouses().iterator().next().getOwner());
+
 			// Find me a pickle ! But a pickle with some reference !
 			Set<Product> products = Select
 				.from(Product.class)
