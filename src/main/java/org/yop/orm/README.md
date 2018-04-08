@@ -22,5 +22,5 @@ Welcome to the sources !
 ## To do :
 - Rationalise : YOP is still very rough. And probably completely dumb.
 - Make CRUD utilities available on the Yopable interface ? e.g. Yopable.save(IConnection connection) ?
-- Batches ? For now DELETE/UPSERT are naive and **not** optimized **at all**. It should not impair the API though.
+- Aggregate functions (ORDER BY, especially)
 - Test (a lot !) : see the README file in the *test* directory.
