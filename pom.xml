@@ -66,6 +66,7 @@
 				<version>3.0.0</version>
 				<configuration>
 					<doclint>none</doclint>
+					<show>private</show>
 				</configuration>
 			</plugin>
 	  </plugins>
