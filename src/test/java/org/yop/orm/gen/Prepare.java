@@ -3,6 +3,7 @@ package org.yop.orm.gen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteException;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
@@ -221,7 +222,12 @@ public class Prepare {
 			try {
 				Executor.executeQuery(connection, new SimpleQuery(line, Query.Type.UNKNOWN, new Parameters()));
 			} catch (RuntimeException e) {
-				logger.warn("Error executing script line [" + line + "]", e);
+				if (e.getCause() instanceof SQLiteException) {
+					// When testing using SQLite, all the 'DROP' requests throws exception. That's quite normal.
+					logger.warn("Error executing script line [{}] : [{}]", line, e.getCause().getMessage());
+				} else {
+					logger.warn("Error executing script line [{}]]", line, e);
+				}
 			}
 		}
 	}
