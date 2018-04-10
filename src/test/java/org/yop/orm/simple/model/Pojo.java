@@ -6,6 +6,8 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.model.json.YopableJson;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 
 public class Pojo implements YopableJson {
@@ -23,6 +25,12 @@ public class Pojo implements YopableJson {
 	@NaturalId
 	@Column(name = "ACTIVE")
 	private boolean active;
+
+	@Column(name = "VERY_LONG_INT")
+	private BigInteger aVeryLongInteger;
+
+	@Column(name = "VERY_LONG_FLOAT")
+	private BigDecimal aVeryLongFloat;
 
 	@JoinTable(table = "POJO_JOPO_relation", sourceColumn = "idPOJO", targetColumn = "idJOPO")
 	private Set<Jopo> jopos = new HashSet<>();
@@ -61,6 +69,22 @@ public class Pojo implements YopableJson {
 
 	public void setType(Type type) {
 		this.type = type;
+	}
+
+	public BigInteger getaVeryLongInteger() {
+		return aVeryLongInteger;
+	}
+
+	public void setaVeryLongInteger(BigInteger aVeryLongInteger) {
+		this.aVeryLongInteger = aVeryLongInteger;
+	}
+
+	public BigDecimal getaVeryLongFloat() {
+		return aVeryLongFloat;
+	}
+
+	public void setaVeryLongFloat(BigDecimal aVeryLongFloat) {
+		this.aVeryLongFloat = aVeryLongFloat;
 	}
 
 	public Set<Jopo> getJopos() {

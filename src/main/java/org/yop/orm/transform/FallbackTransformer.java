@@ -4,10 +4,12 @@ import com.google.common.primitives.Primitives;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
+import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -92,6 +94,10 @@ public class FallbackTransformer implements ITransformer<Object> {
 				Calendar instance = Calendar.getInstance();
 				instance.setTime(new Date(Instant.parse((CharSequence) what).toEpochMilli()));
 			}
+			if (BigDecimal.class.isAssignableFrom(into)) {
+				// Oracle seems to store a BigDecimal (as VARCHAR) with "," instead of "."
+				return new BigDecimal(((String) what).replace(",", "."));
+			}
 		}
 
 		try {
@@ -109,13 +115,21 @@ public class FallbackTransformer implements ITransformer<Object> {
 			logger.trace("Could not invoke valueOf(String) on [" + into.getName() + "]", e);
 		}
 
-		try {
-			Constructor<?> constructor = into.getDeclaredConstructor(what.getClass());
-			return constructor.newInstance(what);
-		} catch (NoSuchMethodException e) {
-			logger.trace("Could not find valueOf(String) on [" + into.getName() + "]", e);
-		} catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
-			logger.trace("Could not invoke valueOf(String) on [" + into.getName() + "]", e);
+		Constructor<?> constructor = Reflection.getConstructor(into, Primitives.wrap(what.getClass()));
+		if(constructor == null) {
+			constructor = Reflection.getConstructor(into, Primitives.unwrap(what.getClass()));
+		}
+		if(constructor != null) {
+			try {
+				return constructor.newInstance(what);
+			} catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
+				logger.trace(
+					"Could not invoke constructor [{}] on param [{}]",
+					String.valueOf(constructor),
+					String.valueOf(what),
+					e
+				);
+			}
 		}
 
 		return what;

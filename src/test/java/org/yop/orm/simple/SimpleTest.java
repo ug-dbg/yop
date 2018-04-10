@@ -18,6 +18,8 @@ import org.yop.orm.sql.Query;
 import org.yop.orm.sql.SimpleQuery;
 import org.yop.orm.sql.adapter.IConnection;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -438,5 +440,24 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertEquals(Collections.singletonList(pojo1), pojo2.getChildren());
 			Assert.assertTrue(pojo1.getParent() == pojo2);
 		}
+	}
+
+	@Test
+	public void testArbitraryPrecisionFields() throws SQLException, ClassNotFoundException {
+		Pojo pojo = new Pojo();
+		pojo.setVersion(1337);
+		pojo.setActive(true);
+		pojo.setType(Pojo.Type.FOO);
+
+		// BigInteger does not work very well with MS-SQL when precision > 20.
+		// I don't really want to know why. Sue me.
+		pojo.setaVeryLongInteger(new BigInteger("1234567890123456780"));
+		pojo.setaVeryLongFloat(new BigDecimal("123.456465665685454949454484964654"));
+
+		Upsert.from(Pojo.class).onto(pojo).execute(this.getConnection());
+
+		Pojo pojoFromDB = Select.from(Pojo.class).where(Where.naturalId(pojo)).uniqueResult(this.getConnection());
+		Assert.assertEquals(pojo.getaVeryLongInteger(), pojoFromDB.getaVeryLongInteger());
+		Assert.assertEquals(pojo.getaVeryLongFloat(),   pojoFromDB.getaVeryLongFloat());
 	}
 }

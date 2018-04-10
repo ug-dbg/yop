@@ -479,4 +479,27 @@ public class Reflection {
 		KNOWN_IMPLEMENTATIONS.put(clazz, impl);
 		return impl;
 	}
+
+	/**
+	 * Get the constructor for the given class with the given other class as single parameter.
+	 * <br>
+	 * This method does not throw {@link NoSuchMethodException}. It returns null if no match.
+	 * <br>
+	 * This method does not wrap/unwrap primitive types : withParameter must be the exact type !
+	 * <br>
+	 * @param on            which class whose constructor we search
+	 * @param withParameter the constructor single parameter class
+	 * @param <T> the constructor target type
+	 * @return the constructor, set accessible, or null if no constructor matches.
+	 */
+	public static <T> Constructor<T> getConstructor(Class<T> on, Class<?> withParameter) {
+		try {
+			Constructor<T> constructor = on.getDeclaredConstructor(withParameter);
+			constructor.setAccessible(true);
+			return constructor;
+		} catch (NoSuchMethodException e) {
+			logger.trace("Could not find constructor [{}]([{}])", on.getName(), withParameter.getName(), e);
+		}
+		return null;
+	}
 }

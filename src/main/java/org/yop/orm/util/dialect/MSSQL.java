@@ -6,6 +6,8 @@ import org.yop.orm.gen.Table;
 import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.ORMTypes;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Time;
 import java.text.MessageFormat;
 import java.time.Instant;
@@ -46,6 +48,9 @@ public class MSSQL extends ORMTypes {
 		this.put(Time.class,               "DATETIME");
 		this.put(java.sql.Date.class,      "DATE");
 		this.put(java.sql.Timestamp.class, "DATETIME");
+
+		this.put(BigInteger.class, "VARCHAR(MAX)");
+		this.put(BigDecimal.class, "VARCHAR(MAX)");
 	}
 
 	@Override
