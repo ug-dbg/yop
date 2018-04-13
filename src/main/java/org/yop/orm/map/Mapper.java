@@ -60,12 +60,14 @@ public class Mapper {
 	 * Map the results of an SQL SELECT request on to a target class, starting from a root context.
 	 * <br>
 	 * <b>⚠⚠⚠ This method iterates over the resultset ! ⚠⚠⚠</b>
+	 * <br><br>
+	 * Query data order is preserved : this method returns a {@link LinkedHashSet}.
 	 * @param results the results of the query
 	 * @param clazz   the target class
 	 * @param context the root context (mostly, the simple name of the target class)
 	 * @param cache   First level cache to use
 	 * @param <T>     the target type
-	 * @return a set of T, read from the result set
+	 * @return a {@link LinkedHashSet} of Ts from the result set. (The order can be quite important with an ORDER BY).
 	 * @throws IllegalAccessException could not read a field
 	 * @throws InstantiationException could not instantiate a target element
 	 * @throws YopSQLException        error reading the resultset
@@ -77,7 +79,7 @@ public class Mapper {
 		FirstLevelCache cache)
 		throws IllegalAccessException, InstantiationException {
 
-		Set<T> out = new HashSet<>();
+		Set<T> out = new LinkedHashSet<>();
 		while (results.getCursor().next()) {
 			T element = clazz.newInstance();
 			element = mapSimpleFields(results, element, context, cache);

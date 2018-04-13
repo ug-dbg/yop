@@ -35,11 +35,11 @@ public class Select<T extends Yopable> {
 
 	public enum Strategy {IN, EXISTS}
 
-	/** Select [what] FROM [table] [table_alias] [join clause] WHERE [where clause] */
-	private static final String SELECT = " SELECT {0} FROM {1} {2} {3} WHERE {4} ";
+	/** Select [what] FROM [table] [table_alias] [join clause] WHERE [where clause] [order by clause]*/
+	private static final String SELECT = " SELECT {0} FROM {1} {2} {3} WHERE {4} {5}";
 
 	/** Select distinct([what]) FROM [table] [table_alias] [join clause] WHERE [where clause] */
-	private static final String SELECT_DISTINCT = " SELECT DISTINCT({0}) FROM {1} {2} {3} WHERE {4} ";
+	private static final String SELECT_DISTINCT = " SELECT DISTINCT({0}) FROM {1} {2} {3} WHERE {4}";
 
 	/** Default where clause is always added. So I don't have to check if the 'WHERE' keyword is required ;-) */
 	private static final String DEFAULT_WHERE = " 1=1 ";
@@ -49,6 +49,9 @@ public class Select<T extends Yopable> {
 
 	/** Where clauses */
 	private final Where<T> where;
+
+	/** Order by clause. Defaults to no order.  */
+	private OrderBy<T> orderBy = new OrderBy<>();
 
 	/** Join clauses */
 	private Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
@@ -117,6 +120,16 @@ public class Select<T extends Yopable> {
 	public Select<T> joinAll() {
 		this.joins.clear();
 		AbstractJoin.joinAll(this.context.getTarget(), this.joins);
+		return this;
+	}
+
+	/**
+	 * Add an {@link OrderBy} clause.
+	 * @param order the order by clause
+	 * @return the current SELECT query, for chaining purposes.
+	 */
+	public Select<T> orderBy(OrderBy<T> order) {
+		this.orderBy = order;
 		return this;
 	}
 
@@ -369,7 +382,8 @@ public class Select<T extends Yopable> {
 			this.getTableName(),
 			this.context.getPath(),
 			joinClauses.toSQL(parameters),
-			Where.toSQL(this.toSQLWhere(parameters), joinClauses.toSQLWhere(parameters))
+			Where.toSQL(this.toSQLWhere(parameters), joinClauses.toSQLWhere(parameters)),
+			this.orderBy.toSQL(this.context.getTarget())
 		);
 	}
 
@@ -386,7 +400,8 @@ public class Select<T extends Yopable> {
 			this.getTableName(),
 			this.context.getPath(),
 			joinClauses.toSQL(parameters),
-			Where.toSQL(this.idAlias() + " IN (" + Joiner.on(",").join(ids) + ") ", joinClauses.toSQLWhere(parameters))
+			Where.toSQL(this.idAlias() + " IN (" + Joiner.on(",").join(ids) + ") ", joinClauses.toSQLWhere(parameters)),
+			this.orderBy.toSQL(this.context.getTarget())
 		);
 	}
 
@@ -407,7 +422,7 @@ public class Select<T extends Yopable> {
 		);
 
 		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true);
-		String existsSubSelect = selectdistinct(
+		String existsSubSelect = selectDistinct(
 			copyForAlias.idAlias(),
 			copyForAlias.getTableName(),
 			copyForAlias.context.getPath(),
@@ -422,7 +437,8 @@ public class Select<T extends Yopable> {
 			this.getTableName(),
 			this.context.getPath(),
 			joinClauses.toSQL(parameters),
-			Where.toSQL(" EXISTS (" + existsSubSelect + ") ", joinClauses.toSQLWhere(parameters))
+			Where.toSQL(" EXISTS (" + existsSubSelect + ") ", joinClauses.toSQLWhere(parameters)),
+			this.orderBy.toSQL(this.context.getTarget())
 		);
 	}
 
@@ -443,7 +459,7 @@ public class Select<T extends Yopable> {
 		);
 
 		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true);
-		String existsSubSelect = selectdistinct(
+		String existsSubSelect = selectDistinct(
 			copyForAlias.idAlias(),
 			copyForAlias.getTableName(),
 			copyForAlias.context.getPath(),
@@ -458,7 +474,8 @@ public class Select<T extends Yopable> {
 			this.getTableName(),
 			this.context.getPath(),
 			joinClauses.toSQL(parameters),
-			Where.toSQL(" EXISTS (" + existsSubSelect + ") ", joinClauses.toSQLWhere(parameters))
+			Where.toSQL(" EXISTS (" + existsSubSelect + ") ", joinClauses.toSQLWhere(parameters)),
+			this.orderBy.toSQL(this.context.getTarget())
 		);
 	}
 
@@ -474,7 +491,8 @@ public class Select<T extends Yopable> {
 			this.getTableName(),
 			path,
 			joinClauses.toSQL(parameters),
-			Where.toSQL(this.toSQLWhere(parameters), joinClauses.toSQLWhere(parameters))
+			Where.toSQL(this.toSQLWhere(parameters), joinClauses.toSQLWhere(parameters)),
+			""
 		);
 
 		joinClauses = this.toSQLJoin(false);
@@ -483,7 +501,8 @@ public class Select<T extends Yopable> {
 			this.getTableName(),
 			path,
 			joinClauses.toSQL(parameters),
-			Where.toSQL(this.idAlias() + " IN (" + inSubQuery + ")", joinClauses.toSQLWhere(parameters))
+			Where.toSQL(this.idAlias() + " IN (" + inSubQuery + ")", joinClauses.toSQLWhere(parameters)),
+			this.orderBy.toSQL(this.context.getTarget())
 		);
 	}
 
@@ -496,14 +515,21 @@ public class Select<T extends Yopable> {
 	 * @param whereClause Optional. Where clause.
 	 * @return the SQL select query.
 	 */
-	private String select(String what, String from, String as, String joinClause, String whereClause) {
+	private String select(
+		String what,
+		String from,
+		String as,
+		String joinClause,
+		String whereClause,
+		String orderClause) {
 		return MessageFormat.format(
 			SELECT,
 			what,
 			from,
 			as,
 			joinClause,
-			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause
+			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause,
+			orderClause
 		);
 	}
 
@@ -516,7 +542,12 @@ public class Select<T extends Yopable> {
 	 * @param whereClause Optional. Where clause.
 	 * @return the SQL 'distinct' select query.
 	 */
-	private String selectdistinct(String what, String from, String as, String joinClause, String whereClause) {
+	private String selectDistinct(
+		String what,
+		String from,
+		String as,
+		String joinClause,
+		String whereClause) {
 		return MessageFormat.format(
 			SELECT_DISTINCT,
 			what,

@@ -1,5 +1,6 @@
 package org.yop.orm.chinook;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -64,6 +65,37 @@ public class ChinookDataTest extends DBMSSwitch {
 			(System.currentTimeMillis() - start)
 		);
 		Assert.assertEquals(source.artists.size(), artistsFromDB.size());
+
+		// Order by test !
+		Set<Track> orderedTracks = Select
+			.from(Track.class)
+			.joinAll()
+			.orderBy(OrderBy.orderBy(Track::getName, true).thenBy(Track::getBytes, false))
+			.execute(this.getConnection());
+
+		// Order checking on strings is quite difficult : special characters, spaces, case, numerics...
+		// A Collator might not exactly match the data order from the DB...
+		// Just check on ascii names with no spaces :-D
+		Track last = null;
+		for (Track next : orderedTracks) {
+			if (last != null
+			&& StringUtils.isAlpha(last.getName())
+			&& StringUtils.isAlpha(next.getName())
+			&& StringUtils.isAsciiPrintable(last.getName())
+			&& StringUtils.isAsciiPrintable(next.getName())) {
+				Assert.assertTrue(
+					"[" + next.getName() + "] is not >= to [" + last.getName() + "]",
+					StringUtils.compareIgnoreCase(next.getName(), last.getName()) >= 0
+				);
+				if (StringUtils.equals(next.getName(), last.getName())) {
+					Assert.assertTrue(
+						"[" + next.getBytes() + "] is not <= to [" + last.getBytes() + "]",
+						next.getBytes() <= last.getBytes()
+					);
+				}
+			}
+			last = next;
+		}
 
 		// Insert all the employees data in the DB
 		// We use a batch insert : the natural keys will be checked and therefore no exception should occur.
@@ -183,6 +215,24 @@ public class ChinookDataTest extends DBMSSwitch {
 			.join(Join.to(Employee::getReportsTo))
 			.execute(this.getConnection());
 		Assert.assertTrue(jane.getReporters().contains(andrew));
+
+		// "Order by" test, on 2 different fields !
+		// I know, this is pretty insane. Don't let all that craziness go to your head.
+		Set<Employee> employees = Select
+			.from(Employee.class)
+			.joinAll()
+			.orderBy(OrderBy.orderBy(Employee::getTitle, true).thenBy(Employee::getBirthDate, true))
+			.execute(this.getConnection());
+		List<Long> orderedIds = employees.stream().map(Employee::getId).collect(Collectors.toList());
+		Assert.assertEquals(Arrays.asList(1L, 3L, 8L, 7L, 2L, 5L, 6L, 4L), orderedIds);
+
+		employees = Select
+			.from(Employee.class)
+			.joinAll()
+			.orderBy(OrderBy.orderBy(Employee::getTitle, true).thenBy(Employee::getBirthDate, false))
+			.execute(this.getConnection());
+		orderedIds = employees.stream().map(Employee::getId).collect(Collectors.toList());
+		Assert.assertEquals(Arrays.asList(1L, 3L, 7L, 8L, 2L, 4L, 6L, 5L), orderedIds);
 	}
 
 	/**
