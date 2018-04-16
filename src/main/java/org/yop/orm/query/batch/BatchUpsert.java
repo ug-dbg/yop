@@ -261,24 +261,33 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 		for (T element : elementsToUpdate) {
 			Parameters parameters = this.values(element);
 
-			// UPDATE query : exclude ID column.
-			parameters.removeIf(p -> ORMUtil.getIdColumn(element.getClass()).equals(p.getName()));
+			// UPDATE query : ID column must be set last (WHERE clause, not VALUES)
+			Parameters.Parameter idParameter = null;
+			for (Parameters.Parameter parameter : parameters) {
+				if (ORMUtil.getIdColumn(element.getClass()).equals(parameter.getName())) {
+					idParameter = parameter;
+					break;
+				}
+			}
+			parameters.remove(idParameter);
+			Collection<String> values = parameters.stream().map(p -> p.getName() + "=?").collect(Collectors.toList());
 
 			if(query == null) {
 				this.target = (Class<T>) element.getClass();
 
-				String whereClause = element.getIdColumn() + " = " + element.getId();
+				String whereClause = element.getIdColumn() + " = ? ";
 				String sql = MessageFormat.format(
 					UPDATE,
 					this.getTableName(),
-					Joiner.on(',').join(parameters.stream().map(p -> p.getName() + "=?").collect(Collectors.toList())),
+					Joiner.on(',').join(values),
 					whereClause
 				);
 
 				query = new BatchQuery<>(sql, Query.Type.UPDATE, elementsToUpdate, this.target);
 			}
 
-			parameters.removeIf(Parameter::isSequence);
+			// Set the ID parameter back, at last position.
+			parameters.add(idParameter);
 			query.addParametersBatch(parameters);
 		}
 		return query;

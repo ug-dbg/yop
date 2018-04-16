@@ -148,9 +148,11 @@ public class BatchQuery extends Query {
 
 		// Only one batch ? Return a SimpleQuery, for coherence purposes.
 		if (merged != null && merged.parametersBatches.size() == 1) {
-			return Collections.singletonList(
-				new SimpleQuery(merged.sql, merged.getType(), merged.parametersBatches.get(0))
-			);
+			Query simpleQuery = new SimpleQuery(
+				merged.sql, merged.getType(), merged.parametersBatches.get(0)
+			).askGeneratedKeys(merged.askGeneratedKeys, merged.target);
+			simpleQuery.elements.addAll(merged.getElements());
+			return Collections.singletonList(simpleQuery);
 		}
 
 		return Collections.singletonList(merged);

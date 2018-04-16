@@ -223,16 +223,42 @@ public class ChinookDataTest extends DBMSSwitch {
 			.joinAll()
 			.orderBy(OrderBy.orderBy(Employee::getTitle, true).thenBy(Employee::getBirthDate, true))
 			.execute(this.getConnection());
-		List<Long> orderedIds = employees.stream().map(Employee::getId).collect(Collectors.toList());
-		Assert.assertEquals(Arrays.asList(1L, 3L, 8L, 7L, 2L, 5L, 6L, 4L), orderedIds);
+		List<String> orderedMails = employees.stream().map(Employee::getEmail).collect(Collectors.toList());
+
+		Assert.assertEquals(
+			Arrays.asList(
+				"andrew@chinookcorp.com",
+				"michael@chinookcorp.com",
+				"laura@chinookcorp.com",
+				"robert@chinookcorp.com",
+				"nancy@chinookcorp.com",
+				"margaret@chinookcorp.com",
+				"steve@chinookcorp.com",
+				"jane@chinookcorp.com"
+			),
+			orderedMails
+		);
 
 		employees = Select
 			.from(Employee.class)
 			.joinAll()
 			.orderBy(OrderBy.orderBy(Employee::getTitle, true).thenBy(Employee::getBirthDate, false))
 			.execute(this.getConnection());
-		orderedIds = employees.stream().map(Employee::getId).collect(Collectors.toList());
-		Assert.assertEquals(Arrays.asList(1L, 3L, 7L, 8L, 2L, 4L, 6L, 5L), orderedIds);
+		orderedMails = employees.stream().map(Employee::getEmail).collect(Collectors.toList());
+
+		Assert.assertEquals(
+			Arrays.asList(
+				"andrew@chinookcorp.com",
+				"michael@chinookcorp.com",
+				"robert@chinookcorp.com",
+				"laura@chinookcorp.com",
+				"nancy@chinookcorp.com",
+				"jane@chinookcorp.com",
+				"steve@chinookcorp.com",
+				"margaret@chinookcorp.com"
+			),
+			orderedMails
+		);
 	}
 
 	/**

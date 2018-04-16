@@ -10,6 +10,7 @@ import org.yop.orm.query.Delete;
 import org.yop.orm.query.Select;
 import org.yop.orm.query.Upsert;
 import org.yop.orm.query.Where;
+import org.yop.orm.query.batch.BatchUpsert;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.supplychain.model.Organisation;
 import org.yop.orm.supplychain.model.Product;
@@ -92,6 +93,7 @@ public class SupplyChainMuchDataTest extends DBMSSwitch {
 	@Test
 	public void testCRUD() throws SQLException, ClassNotFoundException {
 		try (IConnection connection = this.getConnection()) {
+			connection.setAutoCommit(true);
 			this.createData(connection, "Foo");
 			this.createData(connection, "Bar");
 
@@ -117,6 +119,29 @@ public class SupplyChainMuchDataTest extends DBMSSwitch {
 			Upsert.from(Product.class).checkNaturalID().onto(product_1).execute(connection);
 			product_1 = Select.from(Product.class).where(Where.id(product_1.getId())).uniqueResult(connection);
 			Assert.assertEquals(newWeight, product_1.getWeight(), 0.0001);
+
+			// Batch INSERT + UPDATE
+			for (Warehouse warehouse : warehouses) {
+				warehouse.setAddress(String.valueOf(warehouse.getAddress()) + "-updated !");
+			}
+			Warehouse warehouse = new Warehouse();
+			warehouse.setActive(true);
+			warehouse.setAddress("1, Batch Upsert Boulevard");
+			warehouse.setCapacity(2);
+			warehouses.add(warehouse);
+			int nbOfWarehouses = warehouses.size();
+
+			BatchUpsert.from(Warehouse.class).onto(warehouses).checkNaturalID().execute(connection);
+
+			warehouses = Select.from(Warehouse.class).joinAll().execute(connection);
+			Assert.assertEquals(nbOfWarehouses, warehouses.size());
+			for (Warehouse toCheck : warehouses) {
+				Assert.assertTrue(
+					"Warehouse [" + warehouse + "] was not correctly inserted / updated.",
+					toCheck.getAddress().endsWith("-updated !")
+					|| toCheck.getAddress().equals("1, Batch Upsert Boulevard")
+				);
+			}
 
 			Delete.from(Organisation.class).joinAll().executeQueries(connection);
 			Set<Product> left = Select.from(Product.class).execute(connection);

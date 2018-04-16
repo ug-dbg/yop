@@ -2,6 +2,7 @@ package org.yop.orm.supplychain.model;
 
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
+import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
 
@@ -11,9 +12,11 @@ import java.util.List;
 @Table(name = "warehouse")
 public class Warehouse extends Persistent {
 
+	@NaturalId
 	@Column(name = "address")
 	private String address;
 
+	@NaturalId
 	@Column(name = "active")
 	private boolean active;
 
@@ -79,5 +82,15 @@ public class Warehouse extends Persistent {
 
 	public List<Delivery> getDeliveries() {
 		return deliveries;
+	}
+
+	@Override
+	public String toString() {
+		return "Warehouse{" +
+			"id='" + getId() + "\'" +
+			", address='" + address + '\'' +
+			", active=" + active +
+			", capacity=" + capacity +
+		'}';
 	}
 }

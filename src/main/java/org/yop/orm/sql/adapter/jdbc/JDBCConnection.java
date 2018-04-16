@@ -72,7 +72,7 @@ public class JDBCConnection implements IConnection {
 			while (query.nextBatch()) {
 				for (int i = 0; i < query.getParameters().size(); i++) {
 					Parameters.Parameter parameter = query.getParameters().get(i);
-					if (parameter.isSequence()) {
+					if (Query.Type.INSERT == query.getType() && parameter.isSequence()) {
 						throw new YopRuntimeException(
 							"Parameter [" + parameter + "] is a sequence !"
 							+ "It should not be here. This is probably a bug !"

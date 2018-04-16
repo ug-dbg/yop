@@ -290,16 +290,28 @@ public class Upsert<T extends Yopable> {
 	private SimpleQuery<T> toSQLUpdate(T element) {
 		Parameters parameters = this.values(element);
 
-		// UPDATE query : exclude ID column.
-		parameters.removeIf(p -> ORMUtil.getIdColumn(element.getClass()).equals(p.getName()));
+		// UPDATE query : ID column must be set last (WHERE clause, not VALUES)
+		Parameters.Parameter idParameter = null;
+		for (Parameters.Parameter parameter : parameters) {
+			if (ORMUtil.getIdColumn(element.getClass()).equals(parameter.getName())) {
+				idParameter = parameter;
+				break;
+			}
+		}
+		parameters.remove(idParameter);
 
-		String whereClause = element.getIdColumn() + " = " + element.getId();
+		Collection<String> values = parameters.stream().map(p -> p.getName() + "=?").collect(Collectors.toList());
+
+		String whereClause = element.getIdColumn() + " = ? ";
 		String sql = MessageFormat.format(
 			UPDATE,
 			this.getTableName(),
-			Joiner.on(',').join(parameters.stream().map(p -> p.getName() + "=?").collect(Collectors.toList())),
+			Joiner.on(',').join(values),
 			whereClause
 		);
+
+		// Set the ID parameter back, at last position.
+		parameters.add(idParameter);
 		return new SimpleQuery<>(sql, Query.Type.UPDATE, parameters, element);
 	}
 
