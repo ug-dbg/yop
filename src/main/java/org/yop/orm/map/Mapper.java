@@ -44,7 +44,7 @@ public class Mapper {
 	 */
 	public static <T extends Yopable> Set<T> map(Results results, Class<T> clazz, FirstLevelCache cache) {
 		try {
-			return map(results, clazz, clazz.getSimpleName(), cache);
+			return map(results, clazz, ORMUtil.getTargetName(clazz), cache);
 		} catch (IllegalAccessException | InstantiationException e) {
 			throw new YopMapperException("Error mapping resultset to [" + clazz.getName() + "]", e);
 		} catch (YopSQLException e) {
@@ -246,7 +246,7 @@ public class Mapper {
 				Class<? extends Yopable> targetClass = getRelationFieldType(field);
 				target = targetClass.newInstance();
 
-				newContext += target.getClass().getSimpleName();
+				newContext += ORMUtil.getTargetName(target.getClass());
 				if(noContext(results, newContext, targetClass)) continue;
 
 				target = mapSimpleFields(results, target, newContext, cache);
@@ -258,7 +258,7 @@ public class Mapper {
 					target = (Yopable) field.getType().newInstance();
 				}
 
-				newContext += target.getClass().getSimpleName();
+				newContext += ORMUtil.getTargetName(target.getClass());
 				if(noContext(results, newContext, target.getClass())) continue;
 
 				target = mapSimpleFields(results, target, newContext, cache);

@@ -56,6 +56,24 @@ public class ORMUtil {
 	}
 
 	/**
+	 * Return a name for a given target class that will be used in a query to create a context.
+	 * <br>
+	 * This is different from {@link #getTableName(Class)} which determine the Table associated to a class.
+	 * <br><br>
+	 * For now this is simply {@link Class#getSimpleName()}.
+	 * <br>
+	 * Restriction is you cannot use 2 classes with the same name in a request.
+	 * I don't feel it is totally absurd.
+	 * <br>
+	 * @param target the target class
+	 * @param <T> the target class type ({@link Yopable})
+	 * @return the target class context name
+	 */
+	public static <T extends Yopable> String getTargetName(Class<T> target) {
+		return target.getSimpleName();
+	}
+
+	/**
 	 * Get the schema name for the given yopable target
 	 * (read {@link Table} annotation or return empty string).
 	 * @param target the target Yopable implementation

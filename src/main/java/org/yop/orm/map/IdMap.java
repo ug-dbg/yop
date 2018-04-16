@@ -110,14 +110,14 @@ public class IdMap {
 			String newContext = context + SEPARATOR + field.getName() + SEPARATOR;
 			if(Collection.class.isAssignableFrom(field.getType())) {
 				Class<? extends Yopable> targetClass = Mapper.getRelationFieldType(field);
-				newContext += targetClass.getSimpleName();
+				newContext += ORMUtil.getTargetName(targetClass);
 
 				if(Mapper.noContext(results, newContext, targetClass)) continue;
 				map(results, targetClass, newContext, map);
 			} else if (Yopable.class.isAssignableFrom(field.getType())){
 				@SuppressWarnings("unchecked")
 				Class<? extends Yopable> targetClass = (Class<? extends Yopable>) field.getType();
-				newContext += targetClass.getSimpleName();
+				newContext += ORMUtil.getTargetName(targetClass);
 
 				if(Mapper.noContext(results, newContext, targetClass)) continue;
 				map(results, targetClass, newContext, map);

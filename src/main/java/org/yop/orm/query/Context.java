@@ -90,7 +90,7 @@ public class Context<T extends Yopable> {
 	 */
 	public String getPath() {
 		Context<?> parent = this.parent;
-		StringBuilder path = new StringBuilder(this.target.getSimpleName()).append(this.targetAliasSuffix);
+		StringBuilder path = new StringBuilder(ORMUtil.getTargetName(this.target)).append(this.targetAliasSuffix);
 
 		if(StringUtils.isNotBlank(this.relationToParent) && parent != null) {
 			path.insert(0, this.relationToParent + SQL_SEPARATOR);
@@ -139,7 +139,7 @@ public class Context<T extends Yopable> {
 	 * @return the target table alias
 	 */
 	public String tableAlias() {
-		return this.target.getSimpleName() + this.targetAliasSuffix;
+		return ORMUtil.getTargetName(this.target) + this.targetAliasSuffix;
 	}
 
 	/**

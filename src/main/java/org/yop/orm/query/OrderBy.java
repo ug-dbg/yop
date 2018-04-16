@@ -70,7 +70,7 @@ public class OrderBy<T extends Yopable> {
 			Field field = Reflection.findField(target, order.getter);
 
 			String orderColumn =
-				target.getSimpleName()
+				ORMUtil.getTargetName(target)
 				+ Constants.DOT
 				+ ORMUtil.getColumnName(field);
 
