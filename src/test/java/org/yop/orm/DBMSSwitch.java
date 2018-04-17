@@ -1,5 +1,6 @@
 package org.yop.orm;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.yop.orm.annotations.LongTest;
@@ -48,7 +49,7 @@ public abstract class DBMSSwitch {
 	 * Check if the current test class should be run.
 	 * @return true if the test is not a {@link LongTest} or {@link LongTest#RUN_LONG_TESTS} is set to true.
 	 */
-	protected boolean check() {
+	private boolean check() {
 		return !this.getClass().isAnnotationPresent(LongTest.class)
 			|| "true".equals(System.getProperties().getProperty(LongTest.RUN_LONG_TESTS));
 	}
@@ -77,6 +78,11 @@ public abstract class DBMSSwitch {
 
 	@Before
 	public void setUp() throws SQLException, IOException, ClassNotFoundException {
+		Assume.assumeTrue(
+			"DBMSSwitch.check() method returned false. Test class [" + this.getClass().getName() + "] won't be run.",
+			this.check()
+		);
+
 		String packagePrefix = this.getPackagePrefix();
 		switch (dbms()) {
 			case "mysql" :     Prepare.prepareMySQL(packagePrefix);    break;

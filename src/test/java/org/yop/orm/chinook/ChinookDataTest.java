@@ -43,11 +43,6 @@ public class ChinookDataTest extends DBMSSwitch {
 
 	@Test
 	public void test() throws JAXBException, SQLException, ClassNotFoundException {
-		if (!this.check()) {
-			logger.warn("The test class [{}] won't be run.", this.getClass().getName());
-			return;
-		}
-
 		ChinookData source = this.readData();
 
 		// Batch insert the data !
