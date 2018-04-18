@@ -9,6 +9,8 @@ import org.yop.orm.DBMSSwitch;
 import org.yop.orm.annotations.LongTest;
 import org.yop.orm.chinook.model.*;
 import org.yop.orm.chinook.model.xml.ChinookDataSet;
+import org.yop.orm.evaluation.Operator;
+import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.*;
 import org.yop.orm.query.batch.BatchUpsert;
@@ -17,6 +19,7 @@ import org.yop.orm.util.Reflection;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
@@ -36,30 +39,53 @@ public class ChinookDataTest extends DBMSSwitch {
 	private static final Logger logger = LoggerFactory.getLogger(ChinookDataTest.class);
 	private static final String CHINOOK_RESOURCE = "/chinook/data_sample/ChinookData.xml";
 
+	private ChinookData source;
+
 	@Override
 	protected String getPackagePrefix() {
 		return "org.yop.orm.chinook.model";
 	}
 
+	@Override
+	public void setUp() throws SQLException, IOException, ClassNotFoundException {
+		super.setUp();
+
+		try {
+			this.source = this.readData();
+
+			// Batch insert the data !
+			// This can be preeeeetty long with SQLite
+			long start = System.currentTimeMillis();
+			BatchUpsert.from(Artist.class).onto(this.source.artists.values()).joinAll().execute(this.getConnection());
+			logger.info("Batch upsert Music in [" + (System.currentTimeMillis() - start + "] ms"));
+
+			// Insert all the employees data in the DB
+			// We use a batch insert : the natural keys will be checked when merging insert queries into a batch query
+			// and therefore no exception should occur.
+			start = System.currentTimeMillis();
+			BatchUpsert
+				.from(Employee.class)
+				.onto(this.source.employees.values())
+				.join(Join.to(Employee::getReportsTo))
+				.execute(this.getConnection());
+			logger.info("Batch upsert Employees in [" + (System.currentTimeMillis() - start + "] ms"));
+		} catch (JAXBException e) {
+			logger.error("Could not load Chinook Data set !", e);
+			throw new YopRuntimeException("Could not load Chinook Data set !", e);
+		}
+	}
+
 	@Test
-	public void test() throws JAXBException, SQLException, ClassNotFoundException {
-		ChinookData source = this.readData();
-
-		// Batch insert the data !
-		// This can be preeeeetty long with SQLite
-		long start = System.currentTimeMillis();
-		BatchUpsert.from(Artist.class).onto(source.artists.values()).joinAll().execute(this.getConnection());
-		logger.info("Batch upsert in [" + (System.currentTimeMillis() - start + "] ms"));
-
+	public void test_music_ordered_select() throws SQLException, ClassNotFoundException {
 		// Get all the data from the DB
-		start = System.currentTimeMillis();
+		long start = System.currentTimeMillis();
 		Set<Artist> artistsFromDB = Select.from(Artist.class).joinAll().execute(this.getConnection());
 		logger.info(
 			"Recovered [{}] artists and joined data in [{}] ms",
 			artistsFromDB.size(),
 			(System.currentTimeMillis() - start)
 		);
-		Assert.assertEquals(source.artists.size(), artistsFromDB.size());
+		Assert.assertEquals(this.source.artists.size(), artistsFromDB.size());
 
 		// Order by test !
 		Set<Track> orderedTracks = Select
@@ -91,17 +117,65 @@ public class ChinookDataTest extends DBMSSwitch {
 			}
 			last = next;
 		}
+	}
 
-		// Insert all the employees data in the DB
-		// We use a batch insert : the natural keys will be checked and therefore no exception should occur.
-		start = System.currentTimeMillis();
-		BatchUpsert
-			.from(Employee.class)
-			.onto(source.employees.values())
-			.join(Join.to(Employee::getReportsTo))
+	@Test
+	public void test_music_recurse_on_genre() throws SQLException, ClassNotFoundException {
+		// Recurse on genre → tracks → genre ...
+		long start = System.currentTimeMillis();
+		Set<Genre> genres = Select
+			.from(Genre.class)
+			.orderBy(OrderBy.orderBy(Genre::getName, false))
+			.joinAll()
 			.execute(this.getConnection());
-		logger.info("Upsert in [" + (System.currentTimeMillis() - start + "] ms"));
+		logger.info("Select genres in [{}] ms", (System.currentTimeMillis() - start));
 
+		start = System.currentTimeMillis();
+		Recurse
+			.from(Genre.class)
+			.onto(genres)
+			.join(JoinSet.to(Genre::getTracksOfGenre).join(Join.to(Track::getGenre)))
+			.execute(this.getConnection());
+		logger.info("Recurse on genres in [{}] ms", (System.currentTimeMillis() - start));
+
+		for (Genre genre : genres) {
+			Assert.assertTrue(genre.getTracksOfGenre().size() > 0);
+			for (Track track : genre.getTracksOfGenre()) {
+				Assert.assertEquals(genre, track.getGenre());
+			}
+		}
+	}
+
+	@Test
+	public void test_music_delete_genres() throws SQLException, ClassNotFoundException {
+		// Let's delete all these genres with a "/" in their name !
+		long slashed = this.source.tracks
+			.values()
+			.stream()
+			.filter(track -> track.getGenre().getName().contains("/"))
+			.count();
+
+		long start = System.currentTimeMillis();
+		Delete
+			.from(Genre.class)
+			.where(Where.compare(Genre::getName, Operator.LIKE, "%/%"))
+			.join(JoinSet.to(Genre::getTracksOfGenre))
+			.executeQueries(this.getConnection());
+		logger.info("Deleted '/' genres in [{}] ms", (System.currentTimeMillis() - start));
+
+		start = System.currentTimeMillis();
+		Set<Track> tracks = Select.from(Track.class).join(Join.to(Track::getGenre)).execute(this.getConnection());
+		logger.info("Found left tracks for non '/' genres in [{}] ms", (System.currentTimeMillis() - start));
+
+		Assert.assertTrue(tracks.size() == this.source.tracks.size() - slashed);
+		for (Track track : tracks) {
+			Assert.assertTrue(track.getGenre() != null);
+			Assert.assertFalse(track.getGenre().getName().contains("/"));
+		}
+	}
+
+	@Test
+	public void test_employees_fetch() throws SQLException, ClassNotFoundException {
 		// Employee data check : fetch 'reports to'
 		Set<Employee> employeesFromDB = Select
 			.from(Employee.class)
@@ -138,79 +212,10 @@ public class ChinookDataTest extends DBMSSwitch {
 				.map(Employee::getEmail)
 				.collect(Collectors.toSet())
 		);
+	}
 
-		// Employee data check : does not fetch reporters/reports_to, but use Recurse
-		employeesFromDB = Select
-			.from(Employee.class)
-			.execute(this.getConnection());
-		Assert.assertEquals(source.employees.size(), employeesFromDB.size());
-		Recurse
-			.from(Employee.class)
-			.onto(employeesFromDB)
-			.join(Join.to(Employee::getReportsTo))
-			.execute(this.getConnection());
-
-		employeesByMail = employeesFromDB
-			.stream()
-			.collect(Collectors.toMap(Employee::getEmail, Function.identity()));
-
-		Assert.assertEquals(
-			"nancy@chinookcorp.com",
-			employeesByMail.get("margaret@chinookcorp.com").getReportsTo().getEmail()
-		);
-
-		// Jane now reports to herself (what a promotion)
-		// Update, fetch, recurse and check
-		Employee jane = employeesByMail.get("jane@chinookcorp.com");
-		jane.setReportsTo(jane);
-		Upsert.from(Employee.class).onto(jane).join(Join.to(Employee::getReportsTo)).execute(this.getConnection());
-		jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(this.getConnection());
-		Recurse
-			.from(Employee.class)
-			.onto(jane)
-			.join(Join.to(Employee::getReportsTo))
-			.execute(this.getConnection());
-		Recurse
-			.from(Employee.class)
-			.onto(employeesFromDB)
-			.join(JoinSet.to(Employee::getReporters))
-			.execute(this.getConnection());
-
-		employeesByMail = employeesFromDB
-			.stream()
-			.collect(Collectors.toMap(Employee::getEmail, Function.identity()));
-		Assert.assertEquals(
-			"jane@chinookcorp.com",
-			employeesByMail.get("jane@chinookcorp.com").getReportsTo().getEmail()
-		);
-		Assert.assertEquals("jane@chinookcorp.com", jane.getReportsTo().getEmail());
-
-		// Jane should not be in Nancy's reporters list anymore
-		Assert.assertEquals(
-			new HashSet<>(Arrays.asList("margaret@chinookcorp.com", "steve@chinookcorp.com")),
-			employeesByMail
-				.get("nancy@chinookcorp.com")
-				.getReporters()
-				.stream()
-				.map(Employee::getEmail)
-				.collect(Collectors.toSet())
-		);
-
-		// A nasty cycle !
-		Employee andrew = employeesByMail.get("andrew@chinookcorp.com");
-		andrew.setReportsTo(jane);
-		Upsert.from(Employee.class).onto(andrew).join(Join.to(Employee::getReportsTo)).execute(this.getConnection());
-
-		jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(this.getConnection());
-
-		Recurse
-			.from(Employee.class)
-			.onto(jane)
-			.join(JoinSet.to(Employee::getReporters))
-			.join(Join.to(Employee::getReportsTo))
-			.execute(this.getConnection());
-		Assert.assertTrue(jane.getReporters().contains(andrew));
-
+	@Test
+	public void test_employees_fetch_order() throws SQLException, ClassNotFoundException {
 		// "Order by" test, on 2 different fields !
 		// I know, this is pretty insane. Don't let all that craziness go to your head.
 		Set<Employee> employees = Select
@@ -254,6 +259,108 @@ public class ChinookDataTest extends DBMSSwitch {
 			),
 			orderedMails
 		);
+	}
+
+	@Test
+	public void test_employees_recurse() throws SQLException, ClassNotFoundException {
+		// Employee data check : does not fetch reporters/reports_to, but use Recurse
+		Set<Employee> employeesFromDB = Select
+			.from(Employee.class)
+			.execute(this.getConnection());
+		Assert.assertEquals(source.employees.size(), employeesFromDB.size());
+		Recurse
+			.from(Employee.class)
+			.onto(employeesFromDB)
+			.join(Join.to(Employee::getReportsTo))
+			.execute(this.getConnection());
+
+		Map<String, Employee> employeesByMail = employeesFromDB
+			.stream()
+			.collect(Collectors.toMap(Employee::getEmail, Function.identity()));
+
+		Assert.assertEquals(
+			"nancy@chinookcorp.com",
+			employeesByMail.get("margaret@chinookcorp.com").getReportsTo().getEmail()
+		);
+	}
+
+	@Test
+	public void test_employees_recurse_with_self_reference() throws SQLException, ClassNotFoundException {
+		Set<Employee> employeesFromDB = Select
+			.from(Employee.class)
+			.execute(this.getConnection());
+
+		Map<String, Employee> employeesByMail = employeesFromDB
+			.stream()
+			.collect(Collectors.toMap(Employee::getEmail, Function.identity()));
+
+		// Jane now reports to herself (what a promotion)
+		// Update, fetch, recurse and check
+		Employee jane = employeesByMail.get("jane@chinookcorp.com");
+		jane.setReportsTo(jane);
+		Upsert.from(Employee.class).onto(jane).join(Join.to(Employee::getReportsTo)).execute(this.getConnection());
+		jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(this.getConnection());
+		Recurse
+			.from(Employee.class)
+			.onto(jane)
+			.join(Join.to(Employee::getReportsTo))
+			.execute(this.getConnection());
+		Recurse
+			.from(Employee.class)
+			.onto(employeesFromDB)
+			.join(JoinSet.to(Employee::getReporters))
+			.execute(this.getConnection());
+
+		employeesByMail = employeesFromDB
+			.stream()
+			.collect(Collectors.toMap(Employee::getEmail, Function.identity()));
+		Assert.assertEquals(
+			"jane@chinookcorp.com",
+			employeesByMail.get("jane@chinookcorp.com").getReportsTo().getEmail()
+		);
+		Assert.assertEquals("jane@chinookcorp.com", jane.getReportsTo().getEmail());
+
+		// Jane should not be in Nancy's reporters list anymore
+		Assert.assertEquals(
+			new HashSet<>(Arrays.asList("margaret@chinookcorp.com", "steve@chinookcorp.com")),
+			employeesByMail
+				.get("nancy@chinookcorp.com")
+				.getReporters()
+				.stream()
+				.map(Employee::getEmail)
+				.collect(Collectors.toSet())
+		);
+	}
+
+	@Test
+	public void test_employees_recurse_with_weird_cycle() throws SQLException, ClassNotFoundException {
+		Set<Employee> employeesFromDB = Select
+			.from(Employee.class)
+			.execute(this.getConnection());
+
+		Map<String, Employee> employeesByMail = employeesFromDB
+			.stream()
+			.collect(Collectors.toMap(Employee::getEmail, Function.identity()));
+
+		Employee jane = employeesByMail.get("jane@chinookcorp.com");
+		jane.setReportsTo(jane);
+		Upsert.from(Employee.class).onto(jane).join(Join.to(Employee::getReportsTo)).execute(this.getConnection());
+		jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(this.getConnection());
+
+		// A weird cycle : andrew (CEO, top guy) reports to jane
+		Employee andrew = employeesByMail.get("andrew@chinookcorp.com");
+		andrew.setReportsTo(jane);
+		Upsert.from(Employee.class).onto(andrew).join(Join.to(Employee::getReportsTo)).execute(this.getConnection());
+
+		jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(this.getConnection());
+
+		Recurse
+			.from(Employee.class)
+			.onto(jane)
+			.join(JoinSet.to(Employee::getReporters))
+			.join(Join.to(Employee::getReportsTo))
+			.execute(this.getConnection());
+		Assert.assertTrue(jane.getReporters().contains(andrew));
 	}
 
 	/**
