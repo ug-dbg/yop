@@ -126,7 +126,7 @@ public interface Yopable {
 			return true;
 		}
 
-		return this.equals((Object)o);
+		return false;
 	}
 
 	/**
