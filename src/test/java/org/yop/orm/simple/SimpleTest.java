@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
 import org.yop.orm.evaluation.Operator;
+import org.yop.orm.evaluation.Path;
+import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.query.*;
 import org.yop.orm.simple.model.Jopo;
@@ -39,6 +41,60 @@ public class SimpleTest extends DBMSSwitch {
 	@Override
 	protected String getPackagePrefix() {
 		return "org.yop.orm.simple.model";
+	}
+
+	@Test
+	public void testPathRef() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Pojo newPojo = new Pojo();
+			newPojo.setVersion(1);
+			newPojo.setType(Pojo.Type.FOO);
+			newPojo.setActive(true);
+			Jopo jopo = new Jopo();
+			jopo.setName("test path ref");
+			jopo.setPojo(newPojo);
+			newPojo.getJopos().add(jopo);
+
+			Other other = new Other();
+			other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
+			other.setName("test path ref");
+			newPojo.getOthers().add(other);
+
+			Upsert
+				.from(Pojo.class)
+				.onto(newPojo)
+				.join(JoinSet.to(Pojo::getJopos))
+				.join(JoinSet.to(Pojo::getOthers))
+				.checkNaturalID()
+				.execute(connection);
+
+			Path<Pojo, String> jopoName = Path.pathSet(Pojo::getJopos).to(Jopo::getName);
+			Set<Pojo> matches = Select
+				.from(Pojo.class)
+				.join(JoinSet.to(Pojo::getJopos))
+				.join(JoinSet.to(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
+				.execute(connection);
+			Assert.assertEquals(1, matches.size());
+
+			matches = Select
+				.from(Pojo.class)
+				.join(JoinSet.to(Pojo::getJopos))
+				.join(JoinSet.to(Pojo::getOthers).where(Where.compare(Other::getName, Operator.NE, jopoName)))
+				.execute(connection);
+			Assert.assertEquals(0, matches.size());
+		}
+	}
+
+	@Test(expected = YopSQLException.class)
+	public void testPathRef_undeclared_join() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			// Path to Jopo does not match a declared join !
+			Path<Pojo, String> jopoName = Path.pathSet(Pojo::getJopos).to(Jopo::getName);
+			Select
+				.from(Pojo.class)
+				.join(JoinSet.to(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
+				.execute(connection);
+		}
 	}
 
 	@Test

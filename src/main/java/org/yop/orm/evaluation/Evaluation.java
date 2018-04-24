@@ -36,7 +36,7 @@ public interface Evaluation {
 	 * @return the column name. If no @Column/@Jointable annotation, returns the class name in upper case.
 	 */
 	@SuppressWarnings("unchecked")
-	default String columnName(Field field, Context<? extends Yopable> context) {
+	static String columnName(Field field, Context<? extends Yopable> context) {
 		if (field.isAnnotationPresent(JoinTable.class)) {
 			if(Collection.class.isAssignableFrom(field.getType())) {
 				Class<? extends Yopable> target = Reflection.getCollectionTarget(field);

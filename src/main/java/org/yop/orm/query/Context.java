@@ -207,6 +207,18 @@ public class Context<T extends Yopable> {
 	}
 
 	/**
+	 * Give me the root context from my context path !
+	 * @return the root context of the current context, i.e. the first context whose parent is null
+	 */
+	public Context<? extends Yopable> root() {
+		Context<?> context = this;
+		while (context.parent != null) {
+			context = context.parent;
+		}
+		return context;
+	}
+
+	/**
 	 * A Fake context, where you can set a predetermined path.
 	 * <br>
 	 * I am not very proud of this.
