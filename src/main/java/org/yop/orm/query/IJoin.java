@@ -1,11 +1,14 @@
 package org.yop.orm.query;
 
+import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.JoinClause;
+import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -104,5 +107,23 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 			}
 		}
 		return columns;
+	}
+
+	/**
+	 * Join all relation fields from the source class.
+	 * @param source the source class, where fields will be searched
+	 * @param joins  the target joins collection
+	 * @param <T> the source type
+	 */
+	@SuppressWarnings("unchecked")
+	static <T extends Yopable> void joinAll(Class<T> source, Collection<IJoin<T, ?  extends Yopable>> joins) {
+		List<Field> fields = Reflection.getFields(source, JoinTable.class);
+		for (Field field : fields) {
+			IJoin<T, Yopable> join = AbstractJoin.create(field);
+			joins.add(join);
+
+			Class<Yopable> newTarget = join.getTarget(field);
+			joinAll(newTarget, join.getJoins());
+		}
 	}
 }

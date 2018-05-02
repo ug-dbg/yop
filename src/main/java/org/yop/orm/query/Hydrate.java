@@ -56,7 +56,7 @@ public class Hydrate<T extends Yopable> {
 	 */
 	public Hydrate<T> fetchAll() {
 		this.joins.clear();
-		AbstractJoin.joinAll(this.target, this.joins);
+		IJoin.joinAll(this.target, this.joins);
 		return this;
 	}
 

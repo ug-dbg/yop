@@ -119,7 +119,7 @@ public class Select<T extends Yopable> {
 	 */
 	public Select<T> joinAll() {
 		this.joins.clear();
-		AbstractJoin.joinAll(this.context.getTarget(), this.joins);
+		IJoin.joinAll(this.context.getTarget(), this.joins);
 		return this;
 	}
 

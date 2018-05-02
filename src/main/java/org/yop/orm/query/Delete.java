@@ -109,7 +109,7 @@ public class Delete<T extends Yopable> {
 	 */
 	public Delete<T> joinAll() {
 		this.joins.clear();
-		AbstractJoin.joinAll(this.target, this.joins);
+		IJoin.joinAll(this.target, this.joins);
 		return this;
 	}
 

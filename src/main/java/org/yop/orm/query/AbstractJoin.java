@@ -2,7 +2,6 @@ package org.yop.orm.query;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.JoinClause;
@@ -14,7 +13,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Common API between the different IJoin implementations.
@@ -112,24 +110,6 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	 */
 	public static <From extends Yopable, To extends Yopable> IJoin<From, To> create(Field field) {
 		return new AbstractJoinImpl<>(field);
-	}
-
-	/**
-	 * Join all relation fields from the source class.
-	 * @param source the source class, where fields will be searched
-	 * @param joins  the target joins collection
-	 * @param <T> the source type
-	 */
-	@SuppressWarnings("unchecked")
-	static <T extends Yopable> void joinAll(Class<T> source, Collection<IJoin<T, ?  extends Yopable>> joins) {
-		List<Field> fields = Reflection.getFields(source, JoinTable.class);
-		for (Field field : fields) {
-			IJoin<T, Yopable> join = AbstractJoin.create(field);
-			joins.add(join);
-
-			Class<Yopable> newTarget = join.getTarget(field);
-			joinAll(newTarget, join.getJoins());
-		}
 	}
 
 	/**

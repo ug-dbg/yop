@@ -119,7 +119,7 @@ public class Recurse<T extends Yopable> {
 	 */
 	public Recurse<T> joinAll() {
 		this.joins.clear();
-		AbstractJoin.joinAll(this.target, this.joins);
+		IJoin.joinAll(this.target, this.joins);
 		return this;
 	}
 
