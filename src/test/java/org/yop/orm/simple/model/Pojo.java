@@ -4,13 +4,13 @@ import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.NaturalId;
-import org.yop.orm.model.json.YopableJson;
+import org.yop.orm.model.Yopable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 
-public class Pojo implements YopableJson {
+public class Pojo implements Yopable {
 
 	public enum Type {FOO, BAR}
 

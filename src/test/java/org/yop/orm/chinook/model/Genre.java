@@ -5,13 +5,12 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
-import org.yop.orm.model.json.YopableJson;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Table(name = "genre")
-public class Genre extends Persistent implements YopableJson {
+public class Genre extends Persistent {
 
 	@NaturalId
 	@Column(name = "name")

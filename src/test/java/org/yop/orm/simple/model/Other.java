@@ -5,13 +5,12 @@ import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.model.json.YopableJson;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Other implements YopableJson {
+public class Other implements Yopable {
 
 	@Id(sequence = "seq_OTHER")
 	@Column(name = "id")

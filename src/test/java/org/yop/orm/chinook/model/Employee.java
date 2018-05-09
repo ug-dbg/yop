@@ -5,14 +5,13 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
-import org.yop.orm.model.json.YopableJson;
 
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
 @Table(name = "employee_chinook")
-public class Employee extends Persistent implements YopableJson {
+public class Employee extends Persistent {
 
 	@NaturalId
 	@Column(name = "email")

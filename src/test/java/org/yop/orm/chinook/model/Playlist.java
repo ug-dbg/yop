@@ -4,13 +4,12 @@ import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
-import org.yop.orm.model.json.YopableJson;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Table(name = "playlist")
-public class Playlist extends Persistent implements YopableJson {
+public class Playlist extends Persistent {
 
 	@Column(name = "name")
 	private String name;

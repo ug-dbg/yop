@@ -4,14 +4,13 @@ import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
-import org.yop.orm.model.json.YopableJson;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
 @Table(name = "invoice")
-public class Invoice extends Persistent implements YopableJson {
+public class Invoice extends Persistent {
 
 	@Column(name = "invoice_date")
 	private LocalDateTime invoiceDate;

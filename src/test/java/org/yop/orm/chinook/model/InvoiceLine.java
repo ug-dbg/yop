@@ -4,10 +4,9 @@ import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
-import org.yop.orm.model.json.YopableJson;
 
 @Table(name = "invoice_line")
-public class InvoiceLine extends Persistent implements YopableJson {
+public class InvoiceLine extends Persistent {
 
 	@Column(name = "unit_price")
 	private float unitPrice;
