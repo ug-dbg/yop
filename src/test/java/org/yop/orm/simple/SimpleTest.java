@@ -1,12 +1,8 @@
 package org.yop.orm.simple;
 
 import com.google.common.collect.Sets;
-import com.google.gson.*;
-import org.apache.commons.io.IOUtils;
-import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Test;
-import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
@@ -15,7 +11,6 @@ import org.yop.orm.evaluation.Path;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.query.*;
-import org.yop.orm.query.json.JSON;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
 import org.yop.orm.simple.model.Pojo;
@@ -25,8 +20,6 @@ import org.yop.orm.sql.Query;
 import org.yop.orm.sql.SimpleQuery;
 import org.yop.orm.sql.adapter.IConnection;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.SQLException;
