@@ -183,7 +183,7 @@ public class JSON<T extends Yopable> {
 	 * Execute the directive : serialize to JSON, as String.
 	 * <br>
 	 * <b>⚠ {@link #elements} are ignored ! ⚠</b>
-	 * @return a JSON string ({@link #elements}, serialized as JSON)
+	 * @return a JSON string (singleElement, serialized as JSON Object)
 	 */
 	public String toJSON(Yopable singleElement) {
 		return this.gson.instance().toJson(this.toJSONTree(singleElement));
@@ -191,7 +191,7 @@ public class JSON<T extends Yopable> {
 
 	/**
 	 * Execute the directive : serialize {@link #elements} to JSON, as String
-	 * @return a JSON string ({@link #elements}, serialized as JSON)
+	 * @return a JSON string ({@link #elements}, serialized as JSON Array)
 	 */
 	public String toJSON() {
 		return this.gson.instance().toJson(this.toJSONTree());
