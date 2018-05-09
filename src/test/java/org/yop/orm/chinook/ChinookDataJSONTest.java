@@ -1,7 +1,9 @@
 package org.yop.orm.chinook;
 
+import com.google.gson.GsonBuilder;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONException;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -35,6 +37,33 @@ public class ChinookDataJSONTest {
 			logger.error("Could not load Chinook Data set !", e);
 			throw new YopRuntimeException("Could not load Chinook Data set !", e);
 		}
+	}
+
+	@Test
+	public void test_single_artist_to_json() throws IOException, JSONException {
+		String json = JSON
+			.from(Artist.class)
+			.joinAll()
+			.joinIDsAll()
+			.toJSON(source.artists.get(1));
+		String expected = IOUtils.toString(
+			this.getClass().getResourceAsStream("/chinook/json/test_single_artist_to_json_expected.json")
+		);
+		JSONAssert.assertEquals(expected, json, true);
+	}
+
+	@Test
+	public void test_single_artist_to_json_pretty_print() throws IOException {
+		String json = JSON
+			.from(Artist.class)
+			.withBuilder(new GsonBuilder().setPrettyPrinting().disableHtmlEscaping())
+			.joinAll()
+			.joinIDsAll()
+			.toJSON(source.artists.get(1));
+		String expected = IOUtils.toString(
+			this.getClass().getResourceAsStream("/chinook/json/test_single_artist_to_json_expected.json")
+		);
+		Assert.assertEquals(expected, json);
 	}
 
 	@Test
@@ -120,7 +149,7 @@ public class ChinookDataJSONTest {
 	}
 
 	@Test
-	public void test_playlist_to_json() throws IOException, JSONException {
+	public void test_playlists_to_json() throws IOException, JSONException {
 		String json = JSON
 			.from(Playlist.class)
 			.joinAll()

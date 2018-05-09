@@ -41,6 +41,19 @@ public class Join<From extends Yopable, To extends Yopable> extends AbstractJoin
 		return to == null ? new ArrayList<>(0) : Collections.singletonList(to);
 	}
 
+	@Override
+	public String toString() {
+		if (this.field != null) {
+			return super.toString();
+		}
+		return this.getClass().getSimpleName()
+			+ "{"
+			+ this.field.getDeclaringClass().getSimpleName()
+			+ "→" + this.field.getName()
+			+ "→" + this.getTarget(this.field).getSimpleName()
+			+ "}";
+	}
+
 	/**
 	 * Create a new Join clause, context-less
 	 * @param getter the getter which holds the relation

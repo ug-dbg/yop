@@ -47,11 +47,7 @@ public class JSON<T extends Yopable> {
 	/** When adding related object ids ({@link #joinIDs(IJoin)}), the property name is suffixed using this constant */
 	private static final String ID_SUFFIX = "#id";
 
-	/** Join clauses */
-	private Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
-
-	/** Join IDs clauses */
-	private Collection<IJoin<T, ? extends Yopable>> joinIDs = new ArrayList<>();
+	private final GsonInstance gson = new GsonInstance();
 
 	/** The target Yopable class to serialize to JSON */
 	private Class<T> target;
@@ -59,8 +55,13 @@ public class JSON<T extends Yopable> {
 	/** The Yopable elements to serialize */
 	private List<T> elements = new ArrayList<>();
 
-	/** Some custom serializers (e.g. for {@link java.time}) */
-	private final Map<Type, JsonSerializer> serializers = new HashMap<>();
+	/** Join clauses */
+	final Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
+
+	/** Join IDs clauses */
+	final Collection<IJoin<T, ? extends Yopable>> joinIDs = new ArrayList<>();
+
+	final Map<IJoin, Field> fieldCache = new HashMap<>();
 
 	/**
 	 * Private constructor. Set the target and default serializers for {@link java.time} types.
@@ -68,9 +69,10 @@ public class JSON<T extends Yopable> {
 	 */
 	private JSON(Class<T> target) {
 		this.target = target;
-		this.serializers.put(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()));
-		this.serializers.put(LocalDate.class,     (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()));
-		this.serializers.put(LocalTime.class,     (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()));
+		this.gson.register(YopableForJSON.class, new Serializer());
+		this.gson.register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()));
+		this.gson.register(LocalDate.class,     (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()));
+		this.gson.register(LocalTime.class,     (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()));
 	}
 
 	/**
@@ -81,6 +83,18 @@ public class JSON<T extends Yopable> {
 	 */
 	public static <T extends Yopable> JSON<T> from(Class<T> target) {
 		return new JSON<>(target);
+	}
+
+	/**
+	 * Provide the JSON directive with your own GSON builder.
+	 * <br>
+	 * {@link YopableStrategy} and custom serializers will be set on this builder first.
+	 * @param builder the GSON builder you want to use
+	 * @return the current JSON directive, for chaining purposes
+	 */
+	public JSON<T> withBuilder(GsonBuilder builder) {
+		this.gson.customBuilder(builder);
+		return this;
 	}
 
 	/**
@@ -161,35 +175,46 @@ public class JSON<T extends Yopable> {
 	 * @return the current JSON directive, for chaining purpose
 	 */
 	public JSON<T> register(Type type, JsonSerializer serializer) {
-		this.serializers.put(type, serializer);
+		this.gson.register(type, serializer);
 		return this;
 	}
 
 	/**
-	 * Execute the directive : serialize to JSON, as String
+	 * Execute the directive : serialize to JSON, as String.
+	 * <br>
+	 * <b>⚠ {@link #elements} are ignored ! ⚠</b>
+	 * @return a JSON string ({@link #elements}, serialized as JSON)
+	 */
+	public String toJSON(Yopable singleElement) {
+		return this.gson.instance().toJson(this.toJSONTree(singleElement));
+	}
+
+	/**
+	 * Execute the directive : serialize {@link #elements} to JSON, as String
 	 * @return a JSON string ({@link #elements}, serialized as JSON)
 	 */
 	public String toJSON() {
-		return this.toJSONTree().toString();
+		return this.gson.instance().toJson(this.toJSONTree());
 	}
 
 	/**
-	 * Execute the directive : serialize to JSON, as GSON {@link JsonElement}
-	 * @return a GSON JSON element
+	 * Execute the directive : serialize the given to JSON, as GSON {@link JsonElement}.
+	 * <br>
+	 * <b>⚠ {@link #elements} are ignored ! ⚠</b>
+	 * @return a GSON JSON element (JSON object)
+	 */
+	private JsonElement toJSONTree(Yopable singleElement) {
+		return this.gson.instance().toJsonTree(YopableForJSON.create(singleElement, this));
+	}
+
+	/**
+	 * Execute the directive : serialize {@link #elements} to JSON, as GSON {@link JsonElement}
+	 * @return a GSON JSON element (JSON array)
 	 */
 	private JsonElement toJSONTree() {
-		return this.builder().registerTypeAdapter(this.target, new Serializer()).create().toJsonTree(this.elements);
-	}
-
-	/**
-	 * Create a new {@link GsonBuilder} with {@link YopableStrategy} and registered {@link #serializers}.
-	 * @return the GSON builder instance, for serialization.
-	 */
-	private GsonBuilder builder() {
-		GsonBuilder builder = new GsonBuilder();
-		builder.setExclusionStrategies(new YopableStrategy());
-		this.serializers.forEach(builder::registerTypeAdapter);
-		return builder;
+		return this.gson.instance().toJsonTree(
+			this.elements.stream().map(e -> YopableForJSON.create(e, this)).collect(Collectors.toList())
+		);
 	}
 
 	/**
@@ -197,14 +222,14 @@ public class JSON<T extends Yopable> {
 	 * <br>
 	 * Use with {@link YopableStrategy}.
 	 */
-	private class Serializer implements JsonSerializer<Yopable> {
+	private class Serializer implements JsonSerializer<YopableForJSON> {
 
 		/**
 		 * {@inheritDoc}
 		 * <br>
 		 * <b>Implementation details : </b>
 		 * <br>
-		 * Serialize the current object using {@link Gson} and {@link YopableStrategy}.
+		 * Serialize the current object {@link YopableForJSON#subject} using {@link Gson} and {@link YopableStrategy}.
 		 * No {@link JoinTable} field gets serialized.
 		 * <br>
 		 * For each joinID directive in {@link #joinIDs} :
@@ -217,63 +242,35 @@ public class JSON<T extends Yopable> {
 		 * <ul>
 		 *     <li>find the target field, type and values</li>
 		 *     <li>append a new property with the field name</li>
-		 *     <li>create a new {@link JSON} for the target type, onto the values with the sub-joins of the join</li>
-		 *     <li>fill the property with the result of {@link JSON#toJSONTree()}</li>
+		 *     <li>create a new {@link YopableForJSON} for the target elements</li>
+		 *     <li>use the context to serialize the next target elements</li>
 		 * </ul>
 		 */
 		@Override
 		@SuppressWarnings("unchecked")
-		public JsonElement serialize(Yopable src, Type typeOfSrc, JsonSerializationContext context) {
+		public JsonElement serialize(YopableForJSON src, Type typeOfSrc, JsonSerializationContext context) {
 			// Serialize the given element to JSON. The YopableStrategy excludes @JoinTable properties
-			Gson gson = JSON.this.builder().create();
-			JsonElement element = gson.toJsonTree(src, typeOfSrc);
+			JsonElement element = JSON.this.gson.instance().toJsonTree(src.getSubject());
 
-			// For each joinIDs IJoin relation, get the related objects IDs and add them as a new [property]#ids property.
-			Map<Field, IJoin> joinIDsByField = new HashMap<>();
-			for (IJoin<T, ? extends Yopable> join : JSON.this.joinIDs) {
-				Field field = join.getField(JSON.this.target);
-				joinIDsByField.put(field, join);
-				Collection<? extends Yopable> next = join.getTarget((T) src);
+			// For each joinIDs IJoin relation, get the related objects IDs and add them as '[property]#ids'.
+			Map<Field, Collection<IJoin>> nextJoinIDs = new HashMap<>();
+			for (IJoin join : src.getJoinIDs()) {
+				Field field = src.getField(join);
+				element.getAsJsonObject().add(field.getName() + ID_SUFFIX, context.serialize(src.nextIds(join)));
+				nextJoinIDs.put(field, join.getJoins());
+			}
 
+			// For each join IJoin relation, serialize using the context.
+			// This should recursively call the current method
+			for (IJoin join : src.getJoins()) {
+				Field field = src.getField(join);
 				element.getAsJsonObject().add(
-					field.getName() + ID_SUFFIX,
-					gson.toJsonTree(next.stream().map(Yopable::getId).filter(Objects::nonNull).collect(Collectors.toSet()))
+					field.getName(),
+					context.serialize(src.next(join, nextJoinIDs.getOrDefault(field, Collections.EMPTY_LIST)))
 				);
 			}
 
-			// For each join IJoin relation, serialize using a new 'JSON.from' request
-			for (IJoin<T, ? extends Yopable> join : JSON.this.joins) {
-				Field field = join.getField(JSON.this.target);
-				Collection newElements = join.getTarget((T) src);
-
-				JSON<Yopable> next = JSON.from(join.getTarget(field)).onto(newElements);
-				JSON.this.serializers.forEach(next::register);
-				next.joins.addAll((Collection) join.getJoins());
-				if (joinIDsByField.containsKey(field)) {
-					next.joinIDs.addAll(joinIDsByField.get(field).getJoins());
-				}
-
-				element.getAsJsonObject().add(field.getName(), next.toJSONTree());
-			}
-
 			return element;
-		}
-	}
-
-	/**
-	 * Custom strategy for {@link Yopable} : do not serialize {@link JoinTable} annotated fields.
-	 * <br>
-	 * These fields will be serialized using {@link JSON.Serializer#serialize(Yopable, Type, JsonSerializationContext)}.
-	 */
-	private static class YopableStrategy implements ExclusionStrategy {
-		@Override
-		public boolean shouldSkipField(FieldAttributes f) {
-			return f.getAnnotation(JoinTable.class) != null;
-		}
-
-		@Override
-		public boolean shouldSkipClass(Class<?> clazz) {
-			return false;
 		}
 	}
 }
