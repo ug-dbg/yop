@@ -43,7 +43,17 @@ See the "yop-android-poc" for an infamous POC.
 * Identifying cycles in your data graph : YOP kinda deals with data trees !
 * Handling your connections/transactions yourself
 
+
 ## What does it look like ?
+Yop is available on Maven central : 
+```xml
+<dependency>
+    <groupId>org.y-op</groupId>
+    <artifactId>yop</artifactId>
+    <version>0.3.0</version>
+</dependency>
+```
+
 * You annotate your persistent objects using a limited set of annotations
 * You use the transient keyword to indicate cycles in your data graphs
 * You use an SQL-like java API whose syntax looks like :
