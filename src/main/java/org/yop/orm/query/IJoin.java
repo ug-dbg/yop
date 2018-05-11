@@ -128,7 +128,6 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 	 * @param joins  the target joins collection
 	 * @param <T> the source type
 	 */
-	@SuppressWarnings("unchecked")
 	static <T extends Yopable> void joinAll(Class<T> source, Collection<IJoin<T, ?  extends Yopable>> joins) {
 		List<Field> fields = Reflection.getFields(source, JoinTable.class);
 		for (Field field : fields) {
