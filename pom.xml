@@ -7,7 +7,7 @@
 
 	<artifactId>yop</artifactId>
 	<groupId>org.y-op</groupId>
-	<version>0.3.0-SNAPSHOT</version>
+	<version>0.3.0</version>
 	<packaging>jar</packaging>
 	<description>
 		YOP is a lightweight ORM wannabe. Hit and run, no session, no bytecode generation, SQL-like syntax.
