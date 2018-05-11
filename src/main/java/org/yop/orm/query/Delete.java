@@ -32,6 +32,17 @@ import java.util.stream.Collectors;
  * <b>
  *     ⚠⚠⚠ Some DB does not support delete with joins ! Please use selects then deletes :-( ⚠⚠⚠
  * </b>
+ * <br><br>
+ * Example :
+ * <pre>
+ * {@code
+ * Delete
+ *  .from(Genre.class)
+ *  .where(Where.compare(Genre::getName, Operator.LIKE, "%Vegetarian progressive grindcore%"))
+ *  .join(JoinSet.to(Genre::getTracksOfGenre))
+ *  .executeQueries(this.getConnection());
+ * }
+ * </pre>
  *
  * @param <T> the type to delete.
  */

@@ -24,6 +24,14 @@ import java.util.stream.Collectors;
 
 /**
  * Upsert : save or update instances of T to the database.
+ * <br><br>
+ * Example :
+ * <br>
+ * <pre>
+ * {@code
+ * Upsert.from(Organisation.class).checkNaturalID().onto(organisation).joinAll().execute(connection);
+ * }
+ * </pre>
  *
  * @param <T> the type to upsert.
  */

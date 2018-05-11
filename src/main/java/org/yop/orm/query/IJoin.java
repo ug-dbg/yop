@@ -14,6 +14,19 @@ import java.util.Set;
 /**
  * A join clause.
  * [From class / From table] → [relation field / relation table] → [Target class / Target table]
+ * <br>
+ * The join clause is referenced by the getter method.
+ * <br>
+ * Because of cardinality management there are 2 join clause implementations :
+ * <ul>
+ *     <li>{@link Join}</li>
+ *     <li>{@link JoinSet}</li>
+ * </ul>
+ * <br>
+ * You can concatenate join clauses :
+ * <pre>
+ * {@code JoinSet.to(Genre::getTracksOfGenre).join(Join.to(Track::getAlbum).join(Join.to(Album::getArtist)))}
+ * </pre>
  * @param <From> the source type
  * @param <To>   the target type
  */

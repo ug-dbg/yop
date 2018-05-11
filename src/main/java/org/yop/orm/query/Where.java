@@ -15,6 +15,30 @@ import java.util.stream.Collectors;
 
 /**
  * SQL WHERE clause for the given target type.
+ * <br><br>
+ * A where clause is a collection of {@link Evaluation} that are joined with the 'AND' SQL keyword.
+ * <br>
+ * An {@link Or} evaluation - whose own evaluations will be joined with the 'OR' SQL keyword -
+ * can be added into {@link #evaluations}.
+ * <br><br>
+ * You can do standard comparisons (see {@link Comparison}) between a field (using a method reference)
+ * and a reference value.
+ * <br>
+ * You can do an Evaluation given a natural ID : {@link #naturalID(Yopable)}.
+ * <br>
+ * You can also do standard comparisons between a field and an other target field anywhere in the data graph :
+ * see {@link Path}. Example :
+ * <pre>
+ * {@code
+ * Path<Pojo, String> jopoName = Path.pathSet(Pojo::getJopos).to(Jopo::getName);
+ * Set<Pojo> matches = Select
+ *  .from(Pojo.class)
+ *  .join(JoinSet.to(Pojo::getJopos))
+ *  .join(JoinSet.to(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
+ *  .execute(connection);
+ * }
+ * </pre>
+ *
  * @param <T> the target type
  */
 public class Where<T extends Yopable>  {

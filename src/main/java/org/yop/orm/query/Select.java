@@ -28,6 +28,18 @@ import java.util.stream.Collectors;
  *     <li>WHERE</li>
  * </ul>
  * This API aims at writing inlined requests.
+ * <br>
+ * Example :
+ * <pre>
+ * {@code
+ * Select
+ *   .from(Pojo.class)
+ *   .joinAll()
+ *   .join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
+ *   .where(Where.naturalId(reference))
+ *   .execute(connection);
+ * }
+ * </pre>
  *
  * @param <T> the type to search for.
  */

@@ -13,6 +13,12 @@ import java.util.stream.Collectors;
 
 /**
  * Hydration is a simple tool that uses {@link Select} to fetch relations on Yopable objects whose IDs are set.
+ * <br><br>
+ * Example :
+ * <pre>
+ * {@code Hydrate.from(Pojo.class).onto(pojoInstance).fetchSet(Pojo::getJopos).execute(connection); }
+ * </pre>
+ *
  * @param <T> the target type
  */
 public class Hydrate<T extends Yopable> {

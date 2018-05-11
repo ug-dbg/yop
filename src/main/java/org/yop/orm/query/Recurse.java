@@ -36,6 +36,19 @@ import java.util.stream.Collectors;
  *  <br>
  *  ⚠⚠⚠
  *  </b>
+ *  <br><br>
+ *  Example :
+ *  <br>
+ *  <pre>
+ *  {@code
+ *  Recurse
+ *   .from(Employee.class)
+ *   .onto(jane)
+ *   .join(JoinSet.to(Employee::getReporters))
+ *   .join(Join.to(Employee::getReportsTo))
+ *   .execute(this.getConnection());
+ *  }
+ *  </pre>
  * @param <T> the target type.
  */
 public class Recurse<T extends Yopable> {
