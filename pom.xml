@@ -9,12 +9,21 @@
 	<groupId>org.y-op</groupId>
 	<version>0.3.0</version>
 	<packaging>jar</packaging>
+	<name>yop</name>
+	<url>https://github.com/ug-dbg/yop</url>
 	<description>
 		YOP is a lightweight ORM wannabe. Hit and run, no session, no bytecode generation, SQL-like syntax.
 		Strong constraints on the Database schema.
 		Java 8 is required.
 		Ω≡{Ⓐ}
 	</description>
+
+	<developers>
+		<developer>
+			<id>ug_dbg</id>
+			<timezone>Europe/Paris</timezone>
+		</developer>
+	</developers>
 
 	<licenses>
 		<license>
