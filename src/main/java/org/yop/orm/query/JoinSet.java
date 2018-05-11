@@ -14,7 +14,7 @@ import java.util.function.Function;
  */
 public class JoinSet<From extends Yopable, To extends Yopable> extends AbstractJoin<From, To> {
 
-	/** The field getter (From → field & getter → To) */
+	/** The field getter (From → field and getter → To) */
 	protected Function<From, ? extends Collection<To>> getter;
 
 	private Field field;

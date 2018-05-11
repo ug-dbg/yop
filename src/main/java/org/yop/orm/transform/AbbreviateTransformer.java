@@ -16,7 +16,7 @@ public class AbbreviateTransformer implements ITransformer<String> {
 	/**
 	 * {@inheritDoc}
 	 * <br><br>
-	 * If the string length is > column.length : cut, throw an exception or do nothing, given the length strategy.
+	 * If the string length is {@literal >} column.length : cut, throw an exception or do nothing, given the length strategy.
 	 */
 	@Override
 	public Object forSQL(String s, Column column) {

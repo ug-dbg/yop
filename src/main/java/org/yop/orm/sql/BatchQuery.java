@@ -10,14 +10,13 @@ import java.util.stream.Collectors;
 
 /**
  * A batch query is an SQL query with several batches of parameters.
- * <br>
- *     <b>
- *         If there are some {@link #elements} in this query, it is somehow assumed that :
+ * <br><br>
+ *     <b> If there are some {@link #elements} in this query, it is somehow assumed that : </b>
  *         <ul>
  *             <li>There are as many elements as parameter batches</li>
  *             <li>element[i] ↔ parameter_batch[i]</li>
  *         </ul>
- *     </b>
+ *
  *     This is not some very good design. I should do something about it.
  * <br>
  */

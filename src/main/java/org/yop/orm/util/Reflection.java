@@ -133,7 +133,7 @@ public class Reflection {
 	}
 
 	/**
-	 * Return the type parameter for a 1-arg generic field. <br />
+	 * Return the type parameter for a 1-arg generic field. <br>
 	 * Throws an exception if not a 1-arg generic field.
 	 *
 	 * @param field the generic field.
