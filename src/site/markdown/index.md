@@ -29,8 +29,8 @@ Yop has strong constraints on the Database schema.
 
 ## Principles :
 - 1 object → 1 table
-- 1 relation → 1 join table
-- No foreign key in object table
+- <strike>1 relation → 1 join table</strike>
+- <strike>No foreign key in object table</strike>
 - Limited set of mapping annotations
 - One unique constraint can be provided for an object → equals/hashcode & natural id
 - 'transient' keyword → cut cycles in the datagraph
