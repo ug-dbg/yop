@@ -36,9 +36,9 @@ See the "yop-android-poc" for an infamous POC.
 * **Java 8** (→ method references are a key requirement of YOP)
 * *Sqlite/mysql/postgres/oracle/mssql* database
 * Accepting some *strong and not very casual DB constraints* : 
-  * 1 table per java object
-  * 1 table per relation between java objects (*makes everything easier, actually*)
   * 1 auto incremented ID per class/table
+  * <strike>1 table per relation between java objects (*makes everything easier, actually*)</strike>
+  not required anymore starting from yop 0.4
 * Using a (very) limited set of mapping annotations and implementing the *Serializable like* Yopable interface. 
 * Identifying cycles in your data graph : YOP kinda deals with data trees !
 * Handling your connections/transactions yourself
