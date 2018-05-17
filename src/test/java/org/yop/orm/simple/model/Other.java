@@ -1,9 +1,6 @@
 package org.yop.orm.simple.model;
 
-import org.yop.orm.annotations.Column;
-import org.yop.orm.annotations.Id;
-import org.yop.orm.annotations.JoinTable;
-import org.yop.orm.annotations.NaturalId;
+import org.yop.orm.annotations.*;
 import org.yop.orm.model.Yopable;
 
 import java.time.LocalDateTime;
@@ -27,6 +24,9 @@ public class Other implements Yopable {
 	@JoinTable(table = "POJO_OTHER_relation", sourceColumn = "idOther", targetColumn = "idPojo")
 	private transient Set<Pojo> pojos = new HashSet<>();
 
+	@JoinColumn(local = "id_extra", remote = "id_other")
+	private Extra extra;
+
 	public Set<Pojo> getPojos() {
 		return pojos;
 	}
@@ -45,6 +45,14 @@ public class Other implements Yopable {
 
 	public void setTimestamp(LocalDateTime timestamp) {
 		this.timestamp = timestamp;
+	}
+
+	public Extra getExtra() {
+		return this.extra;
+	}
+
+	public void setExtra(Extra extra) {
+		this.extra = extra;
 	}
 
 	@Override

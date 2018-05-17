@@ -105,7 +105,7 @@ public class IdMap {
 		IdMap map) {
 
 		map.put(yopable, readId(results, yopable, context));
-		List<Field> fields = Reflection.getFields(yopable, JoinTable.class, false);
+		List<Field> fields = ORMUtil.joinedFields(yopable);
 		for (Field field : fields) {
 			String newContext = context + SEPARATOR + field.getName() + SEPARATOR;
 			if(Collection.class.isAssignableFrom(field.getType())) {

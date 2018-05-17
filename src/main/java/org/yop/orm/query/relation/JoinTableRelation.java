@@ -1,7 +1,8 @@
-package org.yop.orm.query;
+package org.yop.orm.query.relation;
 
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.IJoin;
 import org.yop.orm.sql.BatchQuery;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
@@ -14,18 +15,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * A relationship between two Yopable classes.
+ * A {@link JoinTable} relation between Java objects, that can generate UPSERT/DELETE queries.
  * <br>
- * This class can generate the SQL you need to update a relation table from a {@link Join}.
+ * The generated SQL is simply about adding/removing entries from a join table.
  * <br>
- * A relation is oriented (<i>From → To</i>) and comes from a {@link Join} clause.
- * <br>
- * So {@code Relation<From, To>} ≠ {@code Relation<To, From>}
- * <br>
- * @param <From> the source type
- * @param <To>   the target type
+ * Then, there is no UPDATE query that will be generated using this Relation.
+ * @param <From> the relation source type
+ * @param <To>   the relation target type
  */
-public class Relation<From extends Yopable, To extends Yopable> {
+class JoinTableRelation<From extends Yopable, To extends Yopable> implements Relation {
 
 	private static final String DELETE_IN = " DELETE FROM {0} WHERE {1} IN ({2}) ";
 	private static final String INSERT    = " INSERT INTO {0} ({1},{2}) VALUES (?, ?) ";
@@ -54,16 +52,21 @@ public class Relation<From extends Yopable, To extends Yopable> {
 	 * @param join    the join clause
 	 */
 	@SuppressWarnings("unchecked")
-	public Relation(Collection<From> sources, IJoin<From, To> join) {
+	JoinTableRelation(Collection<From> sources, IJoin<From, To> join) {
 		sources.forEach(source -> this.relations.put(source, join.getTarget(source)));
 
 		if(! sources.isEmpty()) {
 			From source = sources.iterator().next();
 			Field field = join.getField((Class<From>) source.getClass());
 			JoinTable joinTable = field.getAnnotation(JoinTable.class);
-			this.relationTable = joinTable.table();
-			this.sourceColumn = joinTable.sourceColumn();
-			this.targetColumn = joinTable.targetColumn();
+
+			if (joinTable != null) {
+				this.relationTable = joinTable.table();
+				this.sourceColumn = joinTable.sourceColumn();
+				this.targetColumn = joinTable.targetColumn();
+			} else {
+				this.relations.clear();
+			}
 		}
 	}
 
@@ -73,7 +76,12 @@ public class Relation<From extends Yopable, To extends Yopable> {
 	 * It is actually one single query that deletes every row for the given source objects IDs.
 	 * @return the delete query, as a singleton list
 	 */
+	@Override
 	public Collection<Query> toSQLDelete() {
+		if (this.relations.isEmpty()) {
+			return new ArrayList<>(0);
+		}
+
 		Parameters parameters = new Parameters();
 		String sql = deleteIn(
 			this.relationTable,
@@ -92,6 +100,7 @@ public class Relation<From extends Yopable, To extends Yopable> {
 	 * You should have used {@link #toSQLDelete()} before :)
 	 * @return the insert queries
 	 */
+	@Override
 	public Collection<Query> toSQLInsert() {
 		Collection<Query> inserts = new ArrayList<>();
 
@@ -116,8 +125,9 @@ public class Relation<From extends Yopable, To extends Yopable> {
 	 * You should have used {@link #toSQLDelete()} before :)
 	 * @return the insert queries
 	 */
-	public Collection<BatchQuery> toSQLBatchInsert() {
-		Collection<BatchQuery> inserts = new ArrayList<>();
+	@Override
+	public Collection<Query> toSQLBatchInsert() {
+		Collection<Query> inserts = new ArrayList<>();
 
 		for (Map.Entry<From, Collection<To>> relation : this.relations.entrySet()) {
 			String insert = insert(this.relationTable, this.sourceColumn, this.targetColumn);

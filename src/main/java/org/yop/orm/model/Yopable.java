@@ -2,7 +2,6 @@ package org.yop.orm.model;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.yop.orm.annotations.Column;
-import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.util.ORMUtil;
@@ -10,7 +9,6 @@ import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 /**
  * Interface Yop (persistent) objects must implement. <br>
@@ -62,18 +60,6 @@ public interface Yopable {
 
 	default Collection<Field> getNaturalId() {
 		return Reflection.getFields(this.getClass(), NaturalId.class);
-	}
-
-	/**
-	 * Find all the @JoinTable fields of the current instance that are transient.
-	 * @return the transient @JoinTable fields
-	 */
-	default Collection<Field> getTransientRelations() {
-		return  Reflection
-			.getFields(this.getClass(), JoinTable.class, false)
-			.stream()
-			.filter(f -> !Reflection.isNotTransient(f))
-			.collect(Collectors.toList());
 	}
 
 	/**

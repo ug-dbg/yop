@@ -1,14 +1,12 @@
 package org.yop.orm.util;
 
 import com.google.common.primitives.Primitives;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.annotations.Column;
-import org.yop.orm.annotations.Id;
-import org.yop.orm.annotations.NaturalId;
-import org.yop.orm.annotations.Table;
+import org.yop.orm.annotations.*;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
@@ -19,6 +17,7 @@ import org.yop.orm.transform.ITransformer;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.yop.orm.util.Reflection.isNotTransient;
 
@@ -284,5 +283,71 @@ public class ORMUtil {
 			return seq;
 		}
 		return "";
+	}
+
+	/**
+	 * Get all the fields with either a {@link JoinTable} or {@link JoinColumn} annotation - be they transient or not.
+	 * @param clazz the clazz to inspect for @JoinTable/@JoinColumn fields
+	 * @return the matching fields
+	 */
+	public static List<Field> joinedFields(Class clazz) {
+		return ListUtils.union(joinTableFields(clazz), joinColumnFields(clazz));
+	}
+
+	/**
+	 * Get all the fields with either a {@link JoinTable} or {@link JoinColumn} annotation that are not transient.
+	 * @param clazz the clazz to inspect for @JoinTable/@JoinColumn fields
+	 * @return the matching fields
+	 */
+	public static List<Field> nonTransientJoinedFields(Class clazz) {
+		return ListUtils.union(nonTransientJoinTableFields(clazz), nonTransientJoinColumnFields(clazz));
+	}
+
+	/**
+	 * Get all the fields with a {@link JoinTable} annotation - be they transient or not.
+	 * @param clazz the clazz to inspect for @JoinTable fields
+	 * @return the matching fields
+	 */
+	public static List<Field> joinTableFields(Class clazz) {
+		return Reflection.getFields(clazz, JoinTable.class, false);
+	}
+
+	/**
+	 * Get all the fields with a {@link JoinTable} annotation that are not transient.
+	 * @param clazz the clazz to inspect for @JoinTable fields
+	 * @return the matching fields
+	 */
+	public static List<Field> nonTransientJoinTableFields(Class clazz) {
+		return Reflection.getFields(clazz, JoinTable.class, true);
+	}
+
+	/**
+	 * Get all the fields with a {@link JoinColumn} annotation - be they transient or not.
+	 * @param clazz the clazz to inspect for @JoinColumn fields
+	 * @return the matching fields
+	 */
+	public static List<Field> joinColumnFields(Class clazz) {
+		return Reflection.getFields(clazz, JoinColumn.class, false);
+	}
+
+	/**
+	 * Get all the fields with a {@link JoinColumn} annotation which target a Yopable - be they transient or not.
+	 * @param clazz the clazz to inspect for @JoinColumn fields
+	 * @return the matching fields
+	 */
+	public static List<Field> joinColumnYopableFields(Class clazz) {
+		return Reflection.getFields(clazz, JoinColumn.class, false)
+			.stream()
+			.filter(f -> Yopable.class.isAssignableFrom(f.getType()))
+			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Get all the fields with a {@link JoinColumn} annotation that are not transient.
+	 * @param clazz the clazz to inspect for @JoinColumn fields
+	 * @return the matching fields
+	 */
+	public static List<Field> nonTransientJoinColumnFields(Class clazz) {
+		return Reflection.getFields(clazz, JoinColumn.class, true);
 	}
 }

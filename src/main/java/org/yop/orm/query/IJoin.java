@@ -1,10 +1,9 @@
 package org.yop.orm.query;
 
-import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.JoinClause;
-import org.yop.orm.util.Reflection;
+import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -129,7 +128,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 	 * @param <T> the source type
 	 */
 	static <T extends Yopable> void joinAll(Class<T> source, Collection<IJoin<T, ?  extends Yopable>> joins) {
-		List<Field> fields = Reflection.getFields(source, JoinTable.class);
+		List<Field> fields = ORMUtil.nonTransientJoinedFields(source);
 		for (Field field : fields) {
 			IJoin<T, Yopable> join = AbstractJoin.create(field);
 			joins.add(join);

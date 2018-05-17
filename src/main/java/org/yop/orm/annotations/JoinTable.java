@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * A relation to another Yopable object.
  * <br>
- * Yop makes no difference between One-to-One, One-to-Many and Many-to-Many : yop always require a join table.
+ * Yop makes no difference between One-to-One, One-to-Many and Many-to-Many. You can always use a Join Table.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

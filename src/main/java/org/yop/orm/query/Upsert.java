@@ -6,10 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
+import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.evaluation.NaturalKey;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.relation.Relation;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
@@ -242,10 +244,11 @@ public class Upsert<T extends Yopable> {
 		Collection<T> elements,
 		IJoin<T, ? extends Yopable> join) {
 
-		Relation<T, ? extends Yopable> relation = new Relation<>(elements, join);
+		Relation relation = Relation.relation(elements, join);
 		Collection<org.yop.orm.sql.Query> relationsQueries = new ArrayList<>();
 		relationsQueries.addAll(relation.toSQLDelete());
 		relationsQueries.addAll(relation.toSQLInsert());
+		relationsQueries.addAll(relation.toSQLUpdate());
 		for (org.yop.orm.sql.Query query : relationsQueries) {
 			Executor.executeQuery(connection, query);
 		}
@@ -343,18 +346,7 @@ public class Upsert<T extends Yopable> {
 		Parameters parameters = new Parameters();
 		for (Field field : fields) {
 			if(field.equals(idField)) {
-				Object value = getUpsertIdValue(element);
-
-				if(value != null) {
-					boolean isSequence = ORMUtil.useSequence()
-					&& !ORMUtil.readSequence(idField).isEmpty();
-
-					if (isSequence) {
-						parameters.addSequenceParameter(element.getIdColumn(), value);
-					} else {
-						parameters.addParameter(element.getIdColumn(), value);
-					}
-				}
+				setIdField(field, element, parameters);
 				continue;
 			}
 			try {
@@ -366,7 +358,44 @@ public class Upsert<T extends Yopable> {
 			}
 		}
 
+		fields = ORMUtil.joinColumnYopableFields(this.target);
+		for (Field field : fields) {
+			try {
+				Yopable fieldValue = (Yopable) this.getFieldValue(field, element);
+				parameters.addParameter(
+					field.getAnnotation(JoinColumn.class).local(),
+					() -> fieldValue == null ? null : fieldValue.getId()
+				);
+			} catch (IllegalAccessException e) {
+				throw new YopMappingException(
+					"Could not read [" + field.getGenericType() + "#" + field.getName() + "] on [" + element + "]"
+				);
+			}
+		}
+
 		return parameters;
+	}
+
+	/**
+	 * Add the ID field value to the query parameters. <br>
+	 * Check if the field is a sequence.
+	 * @param idField    the id field
+	 * @param element    the element where to read the field
+	 * @param parameters the query parameters.
+	 */
+	private static void setIdField(Field idField, Yopable element, Parameters parameters) {
+		Object value = getUpsertIdValue(element);
+
+		if(value != null) {
+			boolean isSequence = ORMUtil.useSequence()
+			&& !ORMUtil.readSequence(idField).isEmpty();
+
+			if (isSequence) {
+				parameters.addSequenceParameter(element.getIdColumn(), value);
+			} else {
+				parameters.addParameter(element.getIdColumn(), value);
+			}
+		}
 	}
 
 	/**

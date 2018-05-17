@@ -9,9 +9,9 @@ import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
-import org.yop.orm.query.Relation;
 import org.yop.orm.query.Select;
 import org.yop.orm.query.Upsert;
+import org.yop.orm.query.relation.Relation;
 import org.yop.orm.sql.Constants;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
@@ -333,14 +333,19 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 		IJoin<T, ? extends Yopable> join,
 		DelayedQueries delayed) {
 
-		Relation<T, ? extends Yopable> relation = new Relation<>(elements, join);
+		Relation relation = Relation.relation(elements, join);
 		for (Query query : relation.toSQLDelete()) {
 			Executor.executeQuery(connection, query);
 		}
 
-		for (org.yop.orm.sql.BatchQuery insert : relation.toSQLBatchInsert()) {
+		for (Query insert : relation.toSQLBatchInsert()) {
 			delayed.putIfAbsent(insert.getSql(), new ArrayList<>());
 			delayed.get(insert.getSql()).add(insert);
+		}
+
+		for (Query update : relation.toSQLBatchUpdate()) {
+			delayed.putIfAbsent(update.getSql(), new ArrayList<>());
+			delayed.get(update.getSql()).add(update);
 		}
 	}
 

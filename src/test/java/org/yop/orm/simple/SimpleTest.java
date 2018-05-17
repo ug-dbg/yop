@@ -11,9 +11,7 @@ import org.yop.orm.evaluation.Path;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.query.*;
-import org.yop.orm.simple.model.Jopo;
-import org.yop.orm.simple.model.Other;
-import org.yop.orm.simple.model.Pojo;
+import org.yop.orm.simple.model.*;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
@@ -114,11 +112,17 @@ public class SimpleTest extends DBMSSwitch {
 			other.setName("other name :)");
 			newPojo.getOthers().add(other);
 
+			Extra extra = new Extra();
+			extra.setStyle("rad");
+			extra.setUserName("roger");
+			extra.setOther(other);
+			other.setExtra(extra);
+
 			Upsert
 				.from(Pojo.class)
 				.onto(newPojo)
 				.join(JoinSet.to(Pojo::getJopos))
-				.join(JoinSet.to(Pojo::getOthers))
+				.join(JoinSet.to(Pojo::getOthers).join(Join.to(Other::getExtra).join(Join.to(Extra::getOther))))
 				.checkNaturalID()
 				.execute(connection);
 
@@ -126,15 +130,23 @@ public class SimpleTest extends DBMSSwitch {
 				.from(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
 				.joinAll()
+				.join(JoinSet.to(Pojo::getOthers).join(Join.to(Other::getExtra).join(Join.to(Extra::getOther))))
 				.execute(connection, Select.Strategy.EXISTS);
 			Assert.assertEquals(1, found.size());
+			Pojo foundPojo = found.iterator().next();
+			Other foundOther = foundPojo.getOthers().iterator().next();
+			Assert.assertTrue(foundOther == foundOther.getExtra().getOther());
 
 			Set<Pojo> foundWith2Queries = Select
 				.from(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
 				.joinAll()
+				.join(JoinSet.to(Pojo::getOthers).join(Join.to(Other::getExtra).join(Join.to(Extra::getOther))))
 				.executeWithTwoQueries(connection);
 			Assert.assertEquals(found, foundWith2Queries);
+			foundPojo = foundWith2Queries.iterator().next();
+			foundOther = foundPojo.getOthers().iterator().next();
+			Assert.assertTrue(foundOther == foundOther.getExtra().getOther());
 
 			found = Select
 				.from(Pojo.class)
@@ -173,10 +185,15 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertEquals(newPojo.getOthers().iterator().next(), newPojoFromSelect.getOthers().iterator().next());
 			Assert.assertEquals(newPojo.getJopos().iterator().next(), newPojoFromSelect.getJopos().iterator().next());
 
-			Delete.from(Pojo.class).executeQuery(connection);
+			Delete.from(Pojo.class)
+				.join(JoinSet.to(Pojo::getOthers).join(Join.to(Other::getExtra)))
+				.executeQueries(connection);
 
 			Set<Pojo> afterDelete = Select.from(Pojo.class).joinAll().execute(connection);
 			Assert.assertEquals(0, afterDelete.size());
+
+			Set<Extra> extras = Select.from(Extra.class).execute(connection);
+			Assert.assertEquals(0, extras.size());
 
 			// Assertion that the relation was cleaned in the association table.
 			Executor.Action action = results -> {
@@ -190,6 +207,46 @@ public class SimpleTest extends DBMSSwitch {
 				new SimpleQuery("SELECT COUNT(*) FROM POJO_JOPO_relation", Query.Type.SELECT, new Parameters()),
 				action
 			);
+		}
+	}
+
+	@Test
+	public void testJoinColumn() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			SuperExtra superExtra = new SuperExtra();
+			superExtra.setSize(11L);
+
+			Extra extra = new Extra();
+			extra.setStyle("rough");
+			extra.setUserName("Raoul");
+			superExtra.getExtras().add(extra);
+
+			extra = new Extra();
+			extra.setStyle("sharp");
+			extra.setUserName("Léon");
+			superExtra.getExtras().add(extra);
+
+			Upsert.from(SuperExtra.class).onto(superExtra).joinAll().execute(connection);
+
+			Set<Extra> extras = Select
+				.from(Extra.class)
+				.join(Join.to(Extra::getSuperExtra).join(JoinSet.to(SuperExtra::getExtras)))
+				.execute(connection);
+			Assert.assertEquals(2, extras.size());
+			for (Extra extraFromDB : extras) {
+				Assert.assertTrue(extraFromDB.getSuperExtra().getExtras().contains(extraFromDB));
+			}
+
+			superExtra.setSize(13L);
+			Upsert.from(SuperExtra.class).onto(superExtra).execute(connection);
+
+			extras = Select
+				.from(Extra.class)
+				.join(Join.to(Extra::getSuperExtra).join(JoinSet.to(SuperExtra::getExtras)))
+				.execute(connection);
+			for (Extra extraFromDB : extras) {
+				Assert.assertEquals(13L, extraFromDB.getSuperExtra().getSize().longValue());
+			}
 		}
 	}
 

@@ -2,6 +2,7 @@ package org.yop.orm.gen;
 
 import org.apache.commons.lang.StringUtils;
 import org.reflections.Reflections;
+import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Constants;
@@ -140,6 +141,13 @@ public class Table implements Comparable<Table> {
 			.map(field -> Column.fromField(field, types))
 			.collect(Collectors.toList());
 
+		table.columns.addAll(
+			ORMUtil.joinColumnYopableFields(clazz)
+			.stream()
+			.map(field -> Column.fromJoinColumnField(field, types))
+			.collect(Collectors.toList())
+		);
+
 		return table;
 	}
 
@@ -170,8 +178,8 @@ public class Table implements Comparable<Table> {
 	}
 
 	private static void readRelationTables(Class<? extends Yopable> clazz, ORMTypes types, Set<Table> tables) {
-		tables.addAll(Reflection
-			.getFields(clazz, org.yop.orm.annotations.JoinTable.class, false)
+		tables.addAll(ORMUtil
+			.joinTableFields(clazz)
 			.stream()
 			.map(field -> fromRelationField(field, types))
 			.collect(Collectors.toSet()));

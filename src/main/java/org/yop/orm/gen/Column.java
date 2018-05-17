@@ -2,6 +2,7 @@ package org.yop.orm.gen;
 
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.Id;
+import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.util.ORMTypes;
@@ -125,6 +126,19 @@ public class Column implements Comparable<Column> {
 				column.sequences.add(seq);
 			}
 		}
+		column.naturalKey = field.isAnnotationPresent(NaturalId.class);
+		return column;
+	}
+
+	static Column fromJoinColumnField(Field field, ORMTypes types) {
+		JoinColumn joinColumn = field.getAnnotation(JoinColumn.class);
+		Column column = new Column(
+			joinColumn.local(),
+			types.getForType(Long.class),
+			50,
+			types
+		);
+		column.notNull = false;
 		column.naturalKey = field.isAnnotationPresent(NaturalId.class);
 		return column;
 	}
