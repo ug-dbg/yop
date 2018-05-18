@@ -97,6 +97,18 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		return from.to(this.getTarget(field), field);
 	}
 
+	/**
+	 * What is the join type to use for this join directive ?
+	 * <br><br>
+	 * For now we only use left join, for simplicity purposes.
+	 * <br>
+	 * We want to ensure all the data the user needs gets retrieved.
+	 * <br>
+	 * The select directive then uses EXISTS with a sub-select.
+	 * <br>
+	 * We should certainly try to use {@link ToSQL.JoinType#INNER_JOIN} when {@link #where} contains restrictions.
+	 * @return {@link ToSQL.JoinType#LEFT_JOIN}
+	 */
 	protected ToSQL.JoinType joinType() {
 		return ToSQL.JoinType.LEFT_JOIN;
 	}
