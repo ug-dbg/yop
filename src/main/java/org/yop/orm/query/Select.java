@@ -370,7 +370,7 @@ public class Select<T extends Yopable> {
 	 * @return the SQL join clause
 	 */
 	private JoinClause.JoinClauses toSQLJoin(boolean evaluate) {
-		return ToSQL.toSQLJoin(this.joins, this.context, evaluate);
+		return AbstractJoin.toSQLJoin(this.joins, this.context, evaluate);
 	}
 
 	/**

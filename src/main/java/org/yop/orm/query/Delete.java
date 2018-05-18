@@ -222,7 +222,7 @@ public class Delete<T extends Yopable> {
 	 * @return the SQL join clause
 	 */
 	private JoinClause.JoinClauses toSQLJoin() {
-		return ToSQL.toSQLJoin(this.joins, Context.root(this.target), false);
+		return AbstractJoin.toSQLJoin(this.joins, Context.root(this.target), false);
 	}
 
 	/**
@@ -252,8 +252,8 @@ public class Delete<T extends Yopable> {
 		}
 
 		@Override
-		protected ToSQL.JoinType joinType() {
-			return ToSQL.JoinType.LEFT_JOIN;
+		protected AbstractJoin.JoinType joinType() {
+			return AbstractJoin.JoinType.LEFT_JOIN;
 		}
 	}
 
@@ -271,8 +271,8 @@ public class Delete<T extends Yopable> {
 		}
 
 		@Override
-		protected ToSQL.JoinType joinType() {
-			return ToSQL.JoinType.LEFT_JOIN;
+		protected AbstractJoin.JoinType joinType() {
+			return AbstractJoin.JoinType.LEFT_JOIN;
 		}
 	}
 }

@@ -130,7 +130,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 	static <T extends Yopable> void joinAll(Class<T> source, Collection<IJoin<T, ?  extends Yopable>> joins) {
 		List<Field> fields = ORMUtil.nonTransientJoinedFields(source);
 		for (Field field : fields) {
-			IJoin<T, Yopable> join = AbstractJoin.create(field);
+			IJoin<T, Yopable> join = new FieldJoin<>(field);
 			joins.add(join);
 
 			Class<Yopable> newTarget = join.getTarget(field);
