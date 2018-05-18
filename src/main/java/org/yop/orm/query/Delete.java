@@ -11,7 +11,6 @@ import org.yop.orm.sql.adapter.IConnection;
 
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -236,43 +235,6 @@ public class Delete<T extends Yopable> {
 		tables.add(join.joinTableAlias(context));
 		for (Object subJoin : join.getJoins()) {
 			joinTables(((IJoin)subJoin), join.to(context), tables);
-		}
-	}
-
-	/**
-	 * A custom Join clause. For now, very similar to the original join clause.
-	 * @param <From> the source type
-	 * @param <To>   the target type
-	 */
-	public static class Join<From extends Yopable, To extends Yopable> extends org.yop.orm.query.Join<From, To> {
-		public static <From extends Yopable, To extends Yopable> Join<From, To> to(Function<From, To> getter) {
-			Join<From, To> join = new Join<>();
-			join.getter = getter;
-			return join;
-		}
-
-		@Override
-		protected AbstractJoin.JoinType joinType() {
-			return AbstractJoin.JoinType.LEFT_JOIN;
-		}
-	}
-
-	/**
-	 * A custom Join clause for multi-valued relationships. For now, very similar to the original join clause.
-	 * @param <From> the source type
-	 * @param <To>   the target type
-	 */
-	public static class JoinSet<From extends Yopable, To extends Yopable> extends org.yop.orm.query.JoinSet<From, To> {
-		public static <From extends Yopable, To extends Yopable> JoinSet<From, To> to(
-			Function<From, ? extends Collection<To>> getter) {
-			JoinSet<From, To> join = new JoinSet<>();
-			join.getter = getter;
-			return join;
-		}
-
-		@Override
-		protected AbstractJoin.JoinType joinType() {
-			return AbstractJoin.JoinType.LEFT_JOIN;
 		}
 	}
 }

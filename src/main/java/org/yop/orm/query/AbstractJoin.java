@@ -125,7 +125,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	 * We should certainly try to use {@link JoinType#INNER_JOIN} when {@link #where} contains restrictions.
 	 * @return {@link JoinType#LEFT_JOIN}
 	 */
-	protected JoinType joinType() {
+	private JoinType joinType() {
 		return JoinType.LEFT_JOIN;
 	}
 
@@ -136,7 +136,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	 * @param evaluate   true to add {@link IJoin#where()} clauses evaluations
 	 * @return the SQL join clauses
 	 */
-	public static <T extends Yopable> JoinClause.JoinClauses toSQLJoin(
+	static <T extends Yopable> JoinClause.JoinClauses toSQLJoin(
 		Collection<IJoin<T, ? extends Yopable>> joins,
 		Context<T> context,
 		boolean evaluate) {
