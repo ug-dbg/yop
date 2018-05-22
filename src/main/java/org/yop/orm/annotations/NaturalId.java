@@ -8,9 +8,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Natural ID : one or severa fields on a class can be marked as an SQL unicity constraint.
+ * Natural ID : one or several fields on a class can be marked as an SQL unique constraint.
  * <br>
- * This annotation is then used at runtime when the user explicitely needs it.
+ * This annotation is then used at runtime when the user explicitly needs it.
  * For instance see {@link org.yop.orm.query.Where#naturalID(Yopable)}.
  */
 @Retention(RetentionPolicy.RUNTIME)
