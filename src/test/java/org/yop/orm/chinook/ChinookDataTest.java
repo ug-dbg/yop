@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
+import org.yop.orm.Yop;
 import org.yop.orm.annotations.LongTest;
 import org.yop.orm.chinook.model.Artist;
 import org.yop.orm.chinook.model.Employee;
@@ -49,7 +50,7 @@ public class ChinookDataTest extends DBMSSwitch {
 			// Batch insert the data !
 			// This can be preeeeetty long with SQLite
 			long start = System.currentTimeMillis();
-			BatchUpsert.from(Artist.class).onto(this.source.artists.values()).joinAll().execute(this.getConnection());
+			Yop.batchUpsert(Artist.class).onto(this.source.artists.values()).joinAll().execute(this.getConnection());
 			logger.info("Batch upsert Music in [" + (System.currentTimeMillis() - start + "] ms"));
 
 			// Insert all the employees data in the DB

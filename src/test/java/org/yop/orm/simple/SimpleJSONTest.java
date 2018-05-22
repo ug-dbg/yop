@@ -7,7 +7,6 @@ import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.yop.orm.query.Join;
 import org.yop.orm.query.JoinSet;
-import org.yop.orm.query.json.JSON;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
 import org.yop.orm.simple.model.Pojo;
@@ -17,6 +16,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
+
+import static org.yop.orm.Yop.*;
 
 public class SimpleJSONTest {
 
@@ -40,8 +41,7 @@ public class SimpleJSONTest {
 		other.setName("other name :)");
 		pojo.getOthers().add(other);
 
-		String json = JSON
-			.from(Pojo.class)
+		String json = json(Pojo.class)
 			.joinIDsAll()
 			.onto(pojo)
 			.toJSON();
@@ -76,8 +76,7 @@ public class SimpleJSONTest {
 		anotherPojo.setId(2L);
 		other.getPojos().add(anotherPojo);
 
-		String json = JSON
-			.from(Pojo.class)
+		String json = json(Pojo.class)
 			.joinAll()
 			.joinIDs(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
 			.joinIDs(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))

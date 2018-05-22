@@ -28,6 +28,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
+import static org.yop.orm.Yop.*;
+
 /**
  * Simple test with simple objects for simple CRUD.
  * I should find a more explicit name. Sorry about that.
@@ -58,26 +60,23 @@ public class SimpleTest extends DBMSSwitch {
 			other.setName("test path ref");
 			newPojo.getOthers().add(other);
 
-			Upsert
-				.from(Pojo.class)
+			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(JoinSet.to(Pojo::getJopos))
-				.join(JoinSet.to(Pojo::getOthers))
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers))
 				.checkNaturalID()
 				.execute(connection);
 
 			Path<Pojo, String> jopoName = Path.pathSet(Pojo::getJopos).to(Jopo::getName);
-			Set<Pojo> matches = Select
-				.from(Pojo.class)
-				.join(JoinSet.to(Pojo::getJopos))
-				.join(JoinSet.to(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
+			Set<Pojo> matches = select(Pojo.class)
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
 				.execute(connection);
 			Assert.assertEquals(1, matches.size());
 
-			matches = Select
-				.from(Pojo.class)
-				.join(JoinSet.to(Pojo::getJopos))
-				.join(JoinSet.to(Pojo::getOthers).where(Where.compare(Other::getName, Operator.NE, jopoName)))
+			matches = select(Pojo.class)
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers).where(Where.compare(Other::getName, Operator.NE, jopoName)))
 				.execute(connection);
 			Assert.assertEquals(0, matches.size());
 		}
@@ -88,9 +87,8 @@ public class SimpleTest extends DBMSSwitch {
 		try (IConnection connection = this.getConnection()) {
 			// Path to Jopo does not match a declared join !
 			Path<Pojo, String> jopoName = Path.pathSet(Pojo::getJopos).to(Jopo::getName);
-			Select
-				.from(Pojo.class)
-				.join(JoinSet.to(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
+			select(Pojo.class)
+				.join(toSet(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
 				.execute(connection);
 		}
 	}
@@ -118,59 +116,52 @@ public class SimpleTest extends DBMSSwitch {
 			extra.setOther(other);
 			other.setExtra(extra);
 
-			Upsert
-				.from(Pojo.class)
+			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(JoinSet.to(Pojo::getJopos))
-				.join(JoinSet.to(Pojo::getOthers).join(Join.to(Other::getExtra).join(Join.to(Extra::getOther))))
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
 				.checkNaturalID()
 				.execute(connection);
 
-			Set<Pojo> found = Select
-				.from(Pojo.class)
+			Set<Pojo> found = select(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
 				.joinAll()
-				.join(JoinSet.to(Pojo::getOthers).join(Join.to(Other::getExtra).join(Join.to(Extra::getOther))))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
 				.execute(connection, Select.Strategy.EXISTS);
 			Assert.assertEquals(1, found.size());
 			Pojo foundPojo = found.iterator().next();
 			Other foundOther = foundPojo.getOthers().iterator().next();
 			Assert.assertTrue(foundOther == foundOther.getExtra().getOther());
 
-			Set<Pojo> foundWith2Queries = Select
-				.from(Pojo.class)
+			Set<Pojo> foundWith2Queries = select(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
 				.joinAll()
-				.join(JoinSet.to(Pojo::getOthers).join(Join.to(Other::getExtra).join(Join.to(Extra::getOther))))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
 				.executeWithTwoQueries(connection);
 			Assert.assertEquals(found, foundWith2Queries);
 			foundPojo = foundWith2Queries.iterator().next();
 			foundOther = foundPojo.getOthers().iterator().next();
 			Assert.assertTrue(foundOther == foundOther.getExtra().getOther());
 
-			found = Select
-				.from(Pojo.class)
+			found = select(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion() + 1))
 				.joinAll()
 				.execute(connection, Select.Strategy.EXISTS);
 			Assert.assertEquals(0, found.size());
 
-			found = Select
-				.from(Pojo.class)
+			found = select(Pojo.class)
 				.where(Where.compare(Pojo::isActive, Operator.EQ, true))
 				.joinAll()
 				.execute(connection, Select.Strategy.EXISTS);
 			Assert.assertEquals(1, found.size());
 
-			found = Select
-				.from(Pojo.class)
+			found = select(Pojo.class)
 				.where(Where.compare(Pojo::isActive, Operator.EQ, false))
 				.joinAll()
 				.execute(connection, Select.Strategy.EXISTS);
 			Assert.assertEquals(0, found.size());
 
-			found = Select
-				.from(Pojo.class)
+			found = select(Pojo.class)
 				.where(Where.naturalId(newPojo))
 				.joinAll()
 				.execute(connection, Select.Strategy.EXISTS);
@@ -185,14 +176,14 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertEquals(newPojo.getOthers().iterator().next(), newPojoFromSelect.getOthers().iterator().next());
 			Assert.assertEquals(newPojo.getJopos().iterator().next(), newPojoFromSelect.getJopos().iterator().next());
 
-			Delete.from(Pojo.class)
-				.join(JoinSet.to(Pojo::getOthers).join(Join.to(Other::getExtra)))
+			delete(Pojo.class)
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)))
 				.executeQueries(connection);
 
-			Set<Pojo> afterDelete = Select.from(Pojo.class).joinAll().execute(connection);
+			Set<Pojo> afterDelete = select(Pojo.class).joinAll().execute(connection);
 			Assert.assertEquals(0, afterDelete.size());
 
-			Set<Extra> extras = Select.from(Extra.class).execute(connection);
+			Set<Extra> extras = select(Extra.class).execute(connection);
 			Assert.assertEquals(0, extras.size());
 
 			// Assertion that the relation was cleaned in the association table.
@@ -226,11 +217,10 @@ public class SimpleTest extends DBMSSwitch {
 			extra.setUserName("Léon");
 			superExtra.getExtras().add(extra);
 
-			Upsert.from(SuperExtra.class).onto(superExtra).joinAll().execute(connection);
+			upsert(SuperExtra.class).onto(superExtra).joinAll().execute(connection);
 
-			Set<Extra> extras = Select
-				.from(Extra.class)
-				.join(Join.to(Extra::getSuperExtra).join(JoinSet.to(SuperExtra::getExtras)))
+			Set<Extra> extras = select(Extra.class)
+				.join(to(Extra::getSuperExtra).join(toSet(SuperExtra::getExtras)))
 				.execute(connection);
 			Assert.assertEquals(2, extras.size());
 			for (Extra extraFromDB : extras) {
@@ -238,11 +228,10 @@ public class SimpleTest extends DBMSSwitch {
 			}
 
 			superExtra.setSize(13L);
-			Upsert.from(SuperExtra.class).onto(superExtra).execute(connection);
+			upsert(SuperExtra.class).onto(superExtra).execute(connection);
 
-			extras = Select
-				.from(Extra.class)
-				.join(Join.to(Extra::getSuperExtra).join(JoinSet.to(SuperExtra::getExtras)))
+			extras = select(Extra.class)
+				.join(to(Extra::getSuperExtra).join(toSet(SuperExtra::getExtras)))
 				.execute(connection);
 			for (Extra extraFromDB : extras) {
 				Assert.assertEquals(13L, extraFromDB.getSuperExtra().getSize().longValue());
@@ -264,17 +253,17 @@ public class SimpleTest extends DBMSSwitch {
 				pojo.getJopos().add(jopo);
 			}
 
-			Upsert.from(Pojo.class).joinAll().onto(pojo).execute(connection);
+			upsert(Pojo.class).joinAll().onto(pojo).execute(connection);
 
-			Set<Jopo> jopos = Select.from(Jopo.class).join(Join.to(Jopo::getPojo)).execute(connection);
+			Set<Jopo> jopos = select(Jopo.class).join(to(Jopo::getPojo)).execute(connection);
 			Assert.assertEquals(50, jopos.size());
 
 			for (Jopo jopo : jopos) {
 				Assert.assertEquals(pojo, jopo.getPojo());
 			}
 
-			Delete.from(Jopo.class).executeQuery(connection);
-			jopos = Select.from(Jopo.class).join(Join.to(Jopo::getPojo)).execute(connection);
+			delete(Jopo.class).executeQuery(connection);
+			jopos = select(Jopo.class).join(to(Jopo::getPojo)).execute(connection);
 			Assert.assertEquals(0, jopos.size());
 
 			// Assertion that the relation was cleaned in the association table.
@@ -306,15 +295,14 @@ public class SimpleTest extends DBMSSwitch {
 				pojo.getJopos().add(jopo);
 			}
 
-			Upsert.from(Pojo.class).joinAll().onto(pojo).execute(connection);
+			upsert(Pojo.class).joinAll().onto(pojo).execute(connection);
 
-			// Stupid joins that should make some column/table aliases length > 64 charcters
-			Set<Pojo> found = Select.from(Pojo.class)
-				.join(
-					JoinSet.to(Pojo::getJopos)
-					.join(Join.to(Jopo::getPojo).join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)
-						.join(JoinSet.to(Pojo::getJopos)
-							.join(Join.to(Jopo::getPojo).join(JoinSet.to(Pojo::getJopos))))
+			// Stupid joins that should make some column/table aliases length > 64 characters
+			Set<Pojo> found = select(Pojo.class)
+				.join(toSet(Pojo::getJopos)
+					.join(to(Jopo::getPojo).join(toSet(Pojo::getJopos).join(to(Jopo::getPojo)
+						.join(toSet(Pojo::getJopos)
+							.join(to(Jopo::getPojo).join(toSet(Pojo::getJopos))))
 					)))
 				)
 				.execute(connection);
@@ -330,13 +318,12 @@ public class SimpleTest extends DBMSSwitch {
 			newPojo.setVersion(1337);
 			newPojo.setType(Pojo.Type.FOO);
 
-			Upsert
-				.from(Pojo.class)
+			upsert(Pojo.class)
 				.onto(newPojo)
 				.checkNaturalID()
 				.execute(connection);
 
-			Select<Pojo> select = Select.from(Pojo.class).where(Where.naturalId(newPojo));
+			Select<Pojo> select = select(Pojo.class).where(Where.naturalId(newPojo));
 			Set<Pojo> found = select.execute(connection, Select.Strategy.EXISTS);
 			Assert.assertEquals(1, found.size());
 
@@ -369,15 +356,14 @@ public class SimpleTest extends DBMSSwitch {
 			other.setName("other name :)");
 			newPojo.getOthers().add(other);
 
-			Upsert
-				.from(Pojo.class)
+			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(JoinSet.to(Pojo::getJopos))
-				.join(JoinSet.to(Pojo::getOthers))
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers))
 				.checkNaturalID()
 				.execute(connection);
 
-			Select<Pojo> select = Select.from(Pojo.class).where(Where.naturalId(newPojo)).joinAll();
+			Select<Pojo> select = select(Pojo.class).where(Where.naturalId(newPojo)).joinAll();
 			Set<Pojo> found = select.execute(connection, Select.Strategy.EXISTS);
 			Assert.assertEquals(1, found.size());
 
@@ -415,20 +401,19 @@ public class SimpleTest extends DBMSSwitch {
 			other.setName("other name :)");
 			newPojo.getOthers().add(other);
 
-			Upsert
-				.from(Pojo.class)
+			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(JoinSet.to(Pojo::getJopos))
-				.join(JoinSet.to(Pojo::getOthers))
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers))
 				.checkNaturalID()
 				.execute(connection);
 
-			Select<Pojo> select = Select.from(Pojo.class).where(Where.naturalId(newPojo));
+			Select<Pojo> select = select(Pojo.class).where(Where.naturalId(newPojo));
 			Set<Pojo> found = select.execute(connection);
 			Assert.assertEquals(1, found.size());
 			Pojo fromNaturalID = found.iterator().next();
 
-			Hydrate.from(Pojo.class).onto(fromNaturalID).fetchSet(Pojo::getJopos).execute(connection);
+			hydrate(Pojo.class).onto(fromNaturalID).fetchSet(Pojo::getJopos).execute(connection);
 			Assert.assertEquals(newPojo.getJopos(), fromNaturalID.getJopos());
 			Assert.assertEquals(0, fromNaturalID.getOthers().size());
 
@@ -436,7 +421,7 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertEquals(1, found.size());
 			fromNaturalID = found.iterator().next();
 
-			Hydrate.from(Pojo.class).onto(fromNaturalID).fetchAll().execute(connection);
+			hydrate(Pojo.class).onto(fromNaturalID).fetchAll().execute(connection);
 			Assert.assertEquals(newPojo.getJopos(),  fromNaturalID.getJopos());
 			Assert.assertEquals(newPojo.getOthers(), fromNaturalID.getOthers());
 
@@ -446,17 +431,16 @@ public class SimpleTest extends DBMSSwitch {
 			parent.setVersion(0);
 			newPojo.setParent(parent);
 
-			Upsert
-				.from(Pojo.class)
+			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(Join.to(Pojo::getParent))
+				.join(to(Pojo::getParent))
 				.checkNaturalID()
 				.execute(connection);
 
 			found = select.execute(connection);
 			Assert.assertEquals(1, found.size());
 			fromNaturalID = found.iterator().next();
-			Hydrate.from(Pojo.class).onto(fromNaturalID).fetchAll().fetch(Pojo::getParent).execute(connection);
+			hydrate(Pojo.class).onto(fromNaturalID).fetchAll().fetch(Pojo::getParent).execute(connection);
 			Assert.assertEquals(newPojo.getJopos(),  fromNaturalID.getJopos());
 			Assert.assertEquals(newPojo.getOthers(), fromNaturalID.getOthers());
 			Assert.assertEquals(parent, fromNaturalID.getParent());
@@ -468,8 +452,7 @@ public class SimpleTest extends DBMSSwitch {
 			Pojo pojo2 = new Pojo();
 			pojo2.setId(parent.getId());
 
-			Hydrate
-				.from(Pojo.class)
+			hydrate(Pojo.class)
 				.onto(Arrays.asList(pojo1, pojo2))
 				.fetchAll()
 				.fetch(Pojo::getParent)
@@ -502,18 +485,17 @@ public class SimpleTest extends DBMSSwitch {
 			other.setName("other name :)");
 			newPojo.getOthers().add(other);
 
-			Upsert
-				.from(Pojo.class)
+			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(JoinSet.to(Pojo::getJopos))
-				.join(JoinSet.to(Pojo::getOthers))
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers))
 				.checkNaturalID()
 				.execute(connection);
 
-			Select<Pojo> select = Select.from(Pojo.class).where(Where.naturalId(newPojo));
+			Select<Pojo> select = select(Pojo.class).where(Where.naturalId(newPojo));
 			Pojo fromNaturalID = select.uniqueResult(connection);
 
-			Recurse.from(Pojo.class).onto(fromNaturalID).joinAll().execute(connection);
+			recurse(Pojo.class).onto(fromNaturalID).joinAll().execute(connection);
 			Assert.assertEquals(newPojo.getJopos(), fromNaturalID.getJopos());
 			Assert.assertEquals(1, fromNaturalID.getOthers().size());
 
@@ -523,30 +505,28 @@ public class SimpleTest extends DBMSSwitch {
 			parent.setVersion(0);
 			newPojo.setParent(parent);
 
-			Upsert
-				.from(Pojo.class)
+			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(Join.to(Pojo::getParent))
+				.join(to(Pojo::getParent))
 				.checkNaturalID()
 				.execute(connection);
 
 			fromNaturalID = select.uniqueResult(connection);
-			Recurse.from(Pojo.class).onto(fromNaturalID).joinAll().join(Join.to(Pojo::getParent)).execute(connection);
+			recurse(Pojo.class).onto(fromNaturalID).joinAll().join(to(Pojo::getParent)).execute(connection);
 			Assert.assertEquals(newPojo.getJopos(),  fromNaturalID.getJopos());
 			Assert.assertEquals(newPojo.getOthers(), fromNaturalID.getOthers());
 			Assert.assertEquals(parent, fromNaturalID.getParent());
 
-			Pojo pojo1 = Select.from(Pojo.class).where(Where.id(newPojo.getId())).uniqueResult(this.getConnection());
-			Pojo pojo2 = Select.from(Pojo.class).where(Where.id(parent.getId())).uniqueResult(this.getConnection());
+			Pojo pojo1 = select(Pojo.class).where(Where.id(newPojo.getId())).uniqueResult(this.getConnection());
+			Pojo pojo2 = select(Pojo.class).where(Where.id(parent.getId())).uniqueResult(this.getConnection());
 
-			Recurse
-				.from(Pojo.class)
+			recurse(Pojo.class)
 				.onto(Arrays.asList(pojo1, pojo2))
 				.joinAll()
-				.join(Join.to(Pojo::getParent))
-				.join(JoinSet.to(Pojo::getChildren))
-				.join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
-				.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
+				.join(to(Pojo::getParent))
+				.join(toSet(Pojo::getChildren))
+				.join(toSet(Pojo::getOthers).join(toSet(Other::getPojos)))
+				.join(toSet(Pojo::getJopos).join(to(Jopo::getPojo)))
 				.execute(connection);
 
 			Assert.assertEquals(parent, pojo1.getParent());
@@ -567,9 +547,9 @@ public class SimpleTest extends DBMSSwitch {
 		pojo.setaVeryLongInteger(new BigInteger("1234567890123456780"));
 		pojo.setaVeryLongFloat(new BigDecimal("123.456465665685454949454484964654"));
 
-		Upsert.from(Pojo.class).onto(pojo).execute(this.getConnection());
+		upsert(Pojo.class).onto(pojo).execute(this.getConnection());
 
-		Pojo pojoFromDB = Select.from(Pojo.class).where(Where.naturalId(pojo)).uniqueResult(this.getConnection());
+		Pojo pojoFromDB = select(Pojo.class).where(Where.naturalId(pojo)).uniqueResult(this.getConnection());
 		Assert.assertEquals(pojo.getaVeryLongInteger(), pojoFromDB.getaVeryLongInteger());
 		Assert.assertEquals(pojo.getaVeryLongFloat(),   pojoFromDB.getaVeryLongFloat());
 	}
