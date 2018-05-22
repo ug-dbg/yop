@@ -22,8 +22,8 @@ import java.util.function.Function;
  * </ul>
  * You will also find static methods to YOP join directives ({@link IJoin} implementations):
  * <ul>
- *     <il>to a single {@link Yopable} → {@link Join} : {@link #to(Function)}</il>
- *     <il>to a collection of {@link Yopable} → {@link JoinSet} : {@link #toSet(Function)}</il>
+ *     <li>to a single {@link Yopable} → {@link Join} : {@link #to(Function)}</li>
+ *     <li>to a collection of {@link Yopable} → {@link JoinSet} : {@link #toSet(Function)}</li>
  * </ul>
  * Consider this class an API <i>vade mecum</i>.
  */
