@@ -29,6 +29,9 @@ import java.util.function.Function;
  */
 public class Yop {
 
+	/** Private constructor. This is an utility class. */
+	private Yop() {}
+
 	/**
 	 * Shortcut to {@link Select#from(Class)}.
 	 * @param what the target {@link Yopable} annotated class
