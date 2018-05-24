@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
-import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.evaluation.NaturalKey;
 import org.yop.orm.exception.YopMappingException;
@@ -351,21 +350,6 @@ public class Upsert<T extends Yopable> {
 			}
 			try {
 				parameters.addParameter(field.getAnnotation(Column.class).name(), this.getFieldValue(field, element));
-			} catch (IllegalAccessException e) {
-				throw new YopMappingException(
-					"Could not read [" + field.getGenericType() + "#" + field.getName() + "] on [" + element + "]"
-				);
-			}
-		}
-
-		fields = ORMUtil.joinColumnYopableFields(this.target);
-		for (Field field : fields) {
-			try {
-				Yopable fieldValue = (Yopable) this.getFieldValue(field, element);
-				parameters.addParameter(
-					field.getAnnotation(JoinColumn.class).local(),
-					() -> fieldValue == null ? null : fieldValue.getId()
-				);
 			} catch (IllegalAccessException e) {
 				throw new YopMappingException(
 					"Could not read [" + field.getGenericType() + "#" + field.getName() + "] on [" + element + "]"
