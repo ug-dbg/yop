@@ -1,7 +1,6 @@
 package org.yop.orm.map;
 
 import com.google.common.base.Joiner;
-import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
@@ -9,7 +8,6 @@ import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Results;
 import org.yop.orm.util.ORMUtil;
-import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -109,7 +107,7 @@ public class IdMap {
 		for (Field field : fields) {
 			String newContext = context + SEPARATOR + field.getName() + SEPARATOR;
 			if(Collection.class.isAssignableFrom(field.getType())) {
-				Class<? extends Yopable> targetClass = Mapper.getRelationFieldType(field);
+				Class<? extends Yopable> targetClass = ORMUtil.getRelationFieldType(field);
 				newContext += ORMUtil.getTargetName(targetClass);
 
 				if(Mapper.noContext(results, newContext, targetClass)) continue;

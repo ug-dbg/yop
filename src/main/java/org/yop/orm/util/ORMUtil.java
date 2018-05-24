@@ -15,8 +15,11 @@ import org.yop.orm.sql.Constants;
 import org.yop.orm.transform.ITransformer;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.yop.orm.util.Reflection.isNotTransient;
@@ -27,6 +30,12 @@ import static org.yop.orm.util.Reflection.isNotTransient;
 public class ORMUtil {
 
 	private static final Logger logger = LoggerFactory.getLogger(ORMUtil.class);
+
+	/** [Yopable class → target name] cache map : {@link Class#getSimpleName()} can be a bit slow */
+	private static final Map<Class, String> TARGET_NAMES = new HashMap<>();
+
+	/** [Field → parametrized type] cache map : {@link Field#getGenericType()} can be a bit slow */
+	private static final Map<Field, Class> FIELD_PARAMETRIZED_TYPES = new HashMap<>();
 
 	/**
 	 * Get the table name for the given yopable target
@@ -63,13 +72,18 @@ public class ORMUtil {
 	 * <br>
 	 * Restriction is you cannot use 2 classes with the same name in a request.
 	 * I don't feel it is totally absurd.
-	 * <br>
+	 * <br><br>
+	 * This method first checks the cache map {@link #TARGET_NAMES}.
+	 * It adds the computed value and adds it to the cache map if it was not yet known.
 	 * @param target the target class
 	 * @param <T> the target class type ({@link Yopable})
 	 * @return the target class context name
 	 */
 	public static <T extends Yopable> String getTargetName(Class<T> target) {
-		return target.getSimpleName();
+		if (!TARGET_NAMES.containsKey(target)) {
+			TARGET_NAMES.put(target, target.getSimpleName());
+		}
+		return TARGET_NAMES.get(target);
 	}
 
 	/**
@@ -152,6 +166,28 @@ public class ORMUtil {
 	 */
 	public static String getColumnType(Field field, ORMTypes types) {
 		return types.getForType(field.getType());
+	}
+
+	/**
+	 * Read the target type of a Collection relationship.
+	 * <br>
+	 * Example : {@code ArrayList<Pojo> → Pojo.class}
+	 * <br><br>
+	 * This method checks the cache map {@link #FIELD_PARAMETRIZED_TYPES}.
+	 * It adds the field type to the cache map if it not yet known.
+	 * @param field the field to read
+	 * @param <T> the target type
+	 * @return the target class
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> Class<T> getRelationFieldType(Field field) {
+		if (! FIELD_PARAMETRIZED_TYPES.containsKey(field)) {
+			FIELD_PARAMETRIZED_TYPES.put(
+				field,
+				(Class<T>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]
+			);
+		}
+		return FIELD_PARAMETRIZED_TYPES.get(field);
 	}
 
 	/**

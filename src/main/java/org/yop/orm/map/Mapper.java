@@ -3,7 +3,6 @@ package org.yop.orm.map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
-import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.exception.YopMapperException;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopSQLException;
@@ -16,7 +15,6 @@ import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
 /**
@@ -243,7 +241,7 @@ public class Mapper {
 			String newContext = context + SEPARATOR + field.getName() + SEPARATOR;
 			Yopable target;
 			if(Collection.class.isAssignableFrom(field.getType())) {
-				Class<? extends Yopable> targetClass = getRelationFieldType(field);
+				Class<? extends Yopable> targetClass = ORMUtil.getRelationFieldType(field);
 				target = targetClass.newInstance();
 
 				newContext += ORMUtil.getTargetName(target.getClass());
@@ -317,18 +315,5 @@ public class Mapper {
 		}
 		elements.add(cache.put(element));
 		return element;
-	}
-
-	/**
-	 * Read the target type of a Collection relationship.
-	 * <br>
-	 * Example : {@code ArrayList<Pojo> → Pojo.class}
-	 * @param field the field to read
-	 * @param <T> the target type
-	 * @return the target class
-	 */
-	@SuppressWarnings("unchecked")
-	static <T> Class<T> getRelationFieldType(Field field) {
-		return (Class<T>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
 	}
 }
