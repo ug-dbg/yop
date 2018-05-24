@@ -100,8 +100,8 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 				String sql = update(this.sourceTable, this.sourceColumn, entry.getKey().getIdColumn());
 				for (To to : entry.getValue()) {
 					Parameters parameters = new Parameters()
-						.addParameter(this.sourceTable + "#" + this.sourceColumn, from::getId)
-						.addParameter(this.sourceTable + "#id", to::getId);
+						.addParameter(this.sourceTable + "#" + this.sourceColumn, to::getId)
+						.addParameter(this.sourceTable + "#id", from::getId);
 					updates.add(new SimpleQuery(sql, Query.Type.UPDATE, parameters));
 				}
 			}
