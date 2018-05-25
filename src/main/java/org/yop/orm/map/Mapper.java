@@ -204,7 +204,7 @@ public class Mapper {
 	/**
 	 * Map the relation fields of the target instance from the resultset entry.
 	 * <br>
-	 * This is where it gets a bit tricky. For every @JoinTable field of the target element :
+	 * This is where it gets a bit tricky. For every @JoinTable/@JoinTable field of the target element :
 	 * <ol>
 	 *     <li>build a new context : context = context→fieldName</li>
 	 *     <li>
