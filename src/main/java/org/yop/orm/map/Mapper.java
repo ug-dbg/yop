@@ -81,7 +81,7 @@ public class Mapper {
 		while (results.getCursor().next()) {
 			T element = clazz.newInstance();
 			element = mapSimpleFields(results, element, context, cache);
-			element = cycleBreaker(element, out, cache);
+			element = searchForSelf(element, out, cache);
 			mapRelationFields(results, element, context, cache);
 			out.add(element);
 		}
@@ -248,7 +248,7 @@ public class Mapper {
 
 				target = targetClass.newInstance();
 				target = mapSimpleFields(results, target, newContext, cache);
-				target = cycleBreaker(target, (Collection) field.get(element), cache);
+				target = searchForSelf(target, (Collection) field.get(element), cache);
 				mapRelationFields(results, target, newContext, cache);
 			} else if (Yopable.class.isAssignableFrom(field.getType())){
 				Class<? extends Yopable> targetClass = (Class<? extends Yopable>) field.getType();
@@ -309,7 +309,7 @@ public class Mapper {
 	 * @param <T> the target type
 	 * @return the found element or the input element after it is added in the collection
 	 */
-	private static <T extends Yopable> T cycleBreaker(T element, Collection<T> elements, FirstLevelCache cache) {
+	private static <T extends Yopable> T searchForSelf(T element, Collection<T> elements, FirstLevelCache cache) {
 		Optional<T> any = elements.stream().filter(element::equals).findFirst();
 		if(any.isPresent()) {
 			return any.get();
