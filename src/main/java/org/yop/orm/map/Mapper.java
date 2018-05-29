@@ -242,22 +242,23 @@ public class Mapper {
 			Yopable target;
 			if(Collection.class.isAssignableFrom(field.getType())) {
 				Class<? extends Yopable> targetClass = ORMUtil.getRelationFieldType(field);
-				target = targetClass.newInstance();
 
-				newContext += ORMUtil.getTargetName(target.getClass());
+				newContext += ORMUtil.getTargetName(targetClass);
 				if(noContext(results, newContext, targetClass)) continue;
 
+				target = targetClass.newInstance();
 				target = mapSimpleFields(results, target, newContext, cache);
 				target = cycleBreaker(target, (Collection) field.get(element), cache);
 				mapRelationFields(results, target, newContext, cache);
 			} else if (Yopable.class.isAssignableFrom(field.getType())){
+				Class<? extends Yopable> targetClass = (Class<? extends Yopable>) field.getType();
+				newContext += ORMUtil.getTargetName(targetClass);
+				if(noContext(results, newContext, targetClass)) continue;
+
 				target = (Yopable) ORMUtil.readField(field, element);
 				if(target == null) {
 					target = (Yopable) field.getType().newInstance();
 				}
-
-				newContext += ORMUtil.getTargetName(target.getClass());
-				if(noContext(results, newContext, target.getClass())) continue;
 
 				target = mapSimpleFields(results, target, newContext, cache);
 				field.set(element, target);
