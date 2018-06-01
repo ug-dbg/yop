@@ -102,7 +102,7 @@ public class JDBCRequest implements IRequest {
 	 *     <li>Keep a reference to the {@link Query#target} class to read the right column </li>
 	 * </ul>
 	 * @param statement the statement that was executed
-	 * @throws SQLException an SQL error occured reading the resultset
+	 * @throws SQLException an SQL error occurred reading the resultset
 	 */
 	private void readGeneratedKey(Statement statement) throws SQLException {
 		if(this.query.askGeneratedKeys()) {

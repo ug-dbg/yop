@@ -42,7 +42,7 @@ public interface IRequest extends AutoCloseable {
 
 	/**
 	 * Release the resources this request holds.
-	 * @throws SQLException an error occured closing the request
+	 * @throws SQLException an error occurred closing the request
 	 */
 	void close() throws SQLException;
 }

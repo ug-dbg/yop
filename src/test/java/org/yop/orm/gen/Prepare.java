@@ -214,7 +214,7 @@ public class Prepare {
 	 * @param packagePrefix the package prefix (find all Yopables)
 	 * @param connection    the DB connection to use
 	 * @param dialect       the dialect (one of the singleton from the {@link org.yop.orm.util.dialect} package)
-	 * @throws SQLException an error occured running and committing the generation script
+	 * @throws SQLException an error occurred running and committing the generation script
 	 */
 	private static void prepare(String packagePrefix, IConnection connection, ORMTypes dialect) throws SQLException {
 		connection.setAutoCommit(true);

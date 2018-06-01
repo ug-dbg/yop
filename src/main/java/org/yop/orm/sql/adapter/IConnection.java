@@ -27,14 +27,14 @@ public interface IConnection extends AutoCloseable {
 
 	/**
 	 * Close the underlying connection
-	 * @throws SQLException an error occured closing the connection
+	 * @throws SQLException an error occurred closing the connection
 	 */
 	void close() throws SQLException;
 
 	/**
 	 * Sets this connection's auto-commit mode to the given state.
 	 * @param autocommit the auto-commit state
-	 * @throws SQLException an error occured setting the auto-commit mode
+	 * @throws SQLException an error occurred setting the auto-commit mode
 	 */
 	void setAutoCommit(boolean autocommit) throws SQLException;
 
@@ -42,7 +42,7 @@ public interface IConnection extends AutoCloseable {
 	 * Makes all changes made since the previous commit/rollback permanent
 	 * and releases any database locks currently held by this Connection object.
 	 * This method should be used only when auto-commit mode has been disabled.
-	 * @throws SQLException an error occured committing the current state
+	 * @throws SQLException an error occurred committing the current state
 	 */
 	void commit() throws SQLException;
 }

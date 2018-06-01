@@ -71,7 +71,7 @@ public interface IResultCursor extends AutoCloseable {
 	/**
 	 * Move the cursor to the next row.
 	 * @return true if the new current row is valid; false if there are no more rows
-	 * @throws org.yop.orm.exception.YopSQLException a database access error occured or the cursor is closed
+	 * @throws org.yop.orm.exception.YopSQLException a database access error occurred or the cursor is closed
 	 */
 	boolean next();
 
@@ -79,7 +79,7 @@ public interface IResultCursor extends AutoCloseable {
 	 * Release all the resources this cursor holds.
 	 * <br>
 	 * Calling the method close on an object that is already closed is a no-op.
-	 * @throws SQLException database access error occured
+	 * @throws SQLException database access error occurred
 	 */
 	void close() throws SQLException;
 }

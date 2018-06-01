@@ -136,7 +136,7 @@ public class IdMap {
 	 * @param context the current context
 	 * @param <T> the target type
 	 * @return the ID on the current row, whose column matches [context→columnIDName]
-	 * @throws org.yop.orm.exception.YopSQLException an error occured reading the resultset
+	 * @throws org.yop.orm.exception.YopSQLException an error occurred reading the resultset
 	 */
 	private static <T extends Yopable> Long readId(Results results, Class<T> target, String context) {
 		String idColumn = ORMUtil.getIdColumn(target);

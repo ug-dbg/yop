@@ -34,7 +34,7 @@ public class Executor {
 	 * @param query      the SQL query
 	 * @param target     the target class on which the results of the query will be mapped
 	 * @return the request execution ResultSet
-	 * @throws YopSQLException an SQL error occured.
+	 * @throws YopSQLException an SQL error occurred.
 	 */
 	public static <T extends Yopable> Set<T> executeSelectQuery(IConnection connection, Query query, Class<T> target) {
 		return executeSelectQuery(connection, query, target, new FirstLevelCache());
@@ -51,7 +51,7 @@ public class Executor {
 	 * @param target     the target class on which the results of the query will be mapped
 	 * @param cache      first level cache to use when mapping objects. The idea is to share it among requests.
 	 * @return the request execution ResultSet
-	 * @throws YopSQLException an SQL error occured.
+	 * @throws YopSQLException an SQL error occurred.
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T extends Yopable> Set<T> executeSelectQuery(
@@ -73,7 +73,7 @@ public class Executor {
 	 * This method handles the too long aliases that might be present in the SQL query. At least I hope so :)
 	 * @param connection the SQL connection to use
 	 * @param query      the SQL query
-	 * @throws YopSQLException an SQL error occured.
+	 * @throws YopSQLException an SQL error occurred.
 	 */
 	public static void executeQuery(IConnection connection, Query query) {
 		executeQuery(connection, query, null);
@@ -91,7 +91,7 @@ public class Executor {
 	 *                   If null → {@link IRequest#executeUpdate()} is called. <br>
 	 *                   If not  → {@link IRequest#execute()} is called and then {@link Action#perform(Results)} <br>
 	 * @return the return of {@link Action#perform(Results)}, or null if action is null.
-	 * @throws YopSQLException an SQL error occured.
+	 * @throws YopSQLException an SQL error occurred.
 	 */
 	public static Object executeQuery(
 		IConnection connection,

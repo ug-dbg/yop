@@ -175,8 +175,8 @@ public class Select<T extends Yopable> {
 	 * </ul>
 	 * @param connection the connection to use for the request
 	 * @return the SELECT result, as a set of T
-	 * @throws YopSQLException An SQL error occured
-	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
+	 * @throws YopSQLException An SQL error occurred
+	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occurred
 	 */
 	public Set<T> executeWithTwoQueries(IConnection connection) {
 		Set<Long> ids;
@@ -217,8 +217,8 @@ public class Select<T extends Yopable> {
 	 * @param connection the connection to use for the request
 	 * @param strategy the strategy to use for the select query
 	 * @return the SELECT result, as a set of T
-	 * @throws YopSQLException An SQL error occured
-	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
+	 * @throws YopSQLException An SQL error occurred
+	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occurred
 	 */
 	public Set<T> execute(IConnection connection, Strategy strategy) {
 		Parameters parameters = new Parameters();
@@ -239,8 +239,8 @@ public class Select<T extends Yopable> {
 	 * Execute the SELECT request using the {@link Strategy#EXISTS} strategy.
 	 * @param connection the connection to use for the request
 	 * @return the SELECT result, as a set of T
-	 * @throws YopSQLException An SQL error occured
-	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
+	 * @throws YopSQLException An SQL error occurred
+	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occurred
 	 */
 	public Set<T> execute(IConnection connection) {
 		return execute(connection, Strategy.EXISTS);
@@ -262,8 +262,8 @@ public class Select<T extends Yopable> {
 	 * Execute the SELECT request using the {@link Strategy#EXISTS} strategy to fetch the IDs of every target class.
 	 * @param connection the connection to use for the request
 	 * @return an {@link IdMap} instance, with a set of Ids for every class.
-	 * @throws YopSQLException An SQL error occured
-	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occured
+	 * @throws YopSQLException An SQL error occurred
+	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occurred
 	 */
 	public IdMap executeForIds(IConnection connection) {
 		Parameters parameters = new Parameters();
