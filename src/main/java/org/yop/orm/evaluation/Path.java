@@ -157,7 +157,7 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 	 * <br>
 	 * <ul>
 	 *   <li>if target class is {@link Yopable} : →fieldName→targetClassName </li>
-	 *   <li>if target class is not {@link Yopable} : .fieldName </li>
+	 *   <li>if target class is not {@link Yopable} : .column_name(field) </li>
 	 * </ul>
 	 * @param field the considered field
 	 * @return the field path portion.
@@ -169,7 +169,7 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 			out += SQL_SEPARATOR + ORMUtil.getTargetName((Class<? extends Yopable>) target);
 			return out;
 		} else {
-			return DOT + field.getName();
+			return DOT + ORMUtil.getColumnName(field);
 		}
 	}
 }
