@@ -3,15 +3,17 @@ package org.yop.orm.util;
 import com.google.common.primitives.Primitives;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ClassUtils;
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
+import org.yop.orm.model.Yopable;
 import sun.reflect.ReflectionFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -20,25 +22,10 @@ import static org.yop.orm.util.MessageUtil.concat;
 /**
  * Utility class for reflection-based method. <br>
  * YOP mostly relies on reflection to get the field values to persist. <br>
- *
- * Created by ugz on 10/03/15.
  */
-@SuppressWarnings("unused")
 public class Reflection {
 
 	private static final Logger logger = LoggerFactory.getLogger(Reflection.class);
-
-	/**
-	 * Reference implementations for common interfaces
-	 */
-	private static final Map<Class<?>, Class<?>> KNOWN_IMPLEMENTATIONS = new HashMap<Class<?>, Class<?>>() {{
-		this.put(Iterable.class,   ArrayList.class);
-		this.put(Collection.class, ArrayList.class);
-		this.put(List.class,       ArrayList.class);
-		this.put(Set.class,        HashSet.class);
-		this.put(Queue.class,      LinkedList.class);
-		this.put(Map.class,        HashMap.class);
-	}};
 
 	private static final boolean TEST_BOOL   = true;
 	private static final byte    TEST_BYTE   = 111;
@@ -48,6 +35,23 @@ public class Reflection {
 	private static final long    TEST_LONG   = 1337666;
 	private static final float   TEST_FLOAT  = 13.37f;
 	private static final double  TEST_DOUBLE = 1.337;
+
+	/**
+	 * It is useful to know if a {@link Yopable} field is a Collection or a Yopable. Or neither.
+	 */
+	enum FieldType {
+		COLLECTION, YOPABLE, OTHER;
+
+		public static FieldType fromField(Field field) {
+			if (Collection.class.isAssignableFrom(field.getType())) {
+				return COLLECTION;
+			}
+			if (Yopable.class.isAssignableFrom(field.getType())) {
+				return YOPABLE;
+			}
+			return OTHER;
+		}
+	}
 
 	/**
 	 * Get all the non synthetic fields of a class. <br>
@@ -61,7 +65,7 @@ public class Reflection {
 
 		Class<?> i = type;
 		while (i != null && i != Object.class) {
-			for (Field field : i.getDeclaredFields()) {
+			for (Field field : ReflectionCache.getDeclaredFields(i)) {
 				if (!field.isSynthetic() && (isNotTransient(field) || !nonTransient)) {
 					field.setAccessible(true);
 					result.add(field);
@@ -97,7 +101,7 @@ public class Reflection {
 
 		Class<?> i = type;
 		while (i != null && i != Object.class) {
-			for (Field field : i.getDeclaredFields()) {
+			for (Field field : ReflectionCache.getDeclaredFields(i)) {
 
 				if (!field.isSynthetic() && (isNotTransient(field) || !nonTransient)
 				&& field.isAnnotationPresent(withAnnotation)) {
@@ -121,7 +125,7 @@ public class Reflection {
 	public static Field get(Class type, String name){
 		Class<?> i = type;
 		while (i != null && i != Object.class) {
-			for (Field field : i.getDeclaredFields()) {
+			for (Field field : ReflectionCache.getDeclaredFields(i)) {
 				if (!field.isSynthetic() && StringUtils.equals(field.getName(), name)) {
 					field.setAccessible(true);
 					return field;
@@ -292,11 +296,26 @@ public class Reflection {
 	 * @param field the (collection) field
 	 * @param <S> source type
 	 * @param <T> target type
-	 * @return the field type for the given getter
+	 * @return the field target for the given collection field
 	 */
 	@SuppressWarnings("unchecked")
 	public static <S, T> Class<T> getCollectionTarget(Field field) {
 		return (Class<T>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+	}
+
+	/**
+	 * Find the target class of a field be it a collection or not.
+	 *
+	 * @param field the field
+	 * @param <T> target type
+	 * @return the field target
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> Class<T> getTarget(Field field) {
+		if (Collection.class.isAssignableFrom(field.getType())) {
+			return getCollectionTarget(field);
+		}
+		return (Class<T>) field.getType();
 	}
 
 	/**
@@ -441,7 +460,7 @@ public class Reflection {
 	 * @param <T> the type to check
 	 * @return true if clazz is neither an interface nor an abstract class
 	 */
-	private static <T> boolean isConcrete(Class<T> clazz) {
+	static <T> boolean isConcrete(Class<T> clazz) {
 		return !(clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers()));
 	}
 
@@ -449,35 +468,13 @@ public class Reflection {
 	 * Returns the first known implementation of a class.
 	 * <br>
 	 * It can be itself if the class {@link #isConcrete(Class)}.
-	 * <br>
-	 * Several strategies :
-	 * <ul>
-	 *     <li>concrete → return the class itself</li>
-	 *     <li>{@link #KNOWN_IMPLEMENTATIONS} has a reference implementation → go for it</li>
-	 *     <li>
-	 *         else → use {@link Reflections} to find all the subtypes in the whole context.
-	 *         <br>
-	 *         Take the first concrete sub type, add it to the {@link #KNOWN_IMPLEMENTATIONS} and return !
-	 *     </li>
-	 * </ul>
-	 * @param clazz the class whose implementation is seeked
+	 * @param clazz the class whose implementation is sought
 	 * @param <T> the class generic type
-	 * @return the first implementation found, self if concrete, null if no knwon implementation
+	 * @return the first implementation found, self if concrete, null if no known implementation
 	 */
 	@SuppressWarnings("unchecked")
 	private static <T> Class<? extends T> implementationOf(Class<T> clazz) {
-		if(isConcrete(clazz)) {
-			return clazz;
-		}
-
-		if(KNOWN_IMPLEMENTATIONS.containsKey(clazz)){
-			return (Class<? extends T>) KNOWN_IMPLEMENTATIONS.get(clazz);
-		}
-
-		Set<Class<? extends T>> subTypes = new Reflections().getSubTypesOf(clazz);
-		Class<? extends T> impl = subTypes.stream().filter(Reflection::isConcrete).findFirst().orElse(null);
-		KNOWN_IMPLEMENTATIONS.put(clazz, impl);
-		return impl;
+		return ReflectionCache.implementationOf(clazz);
 	}
 
 	/**
@@ -501,5 +498,32 @@ public class Reflection {
 			logger.trace("Could not find constructor [{}]([{}])", on.getName(), withParameter.getName(), e);
 		}
 		return null;
+	}
+
+	/**
+	 * Is this field a {@link FieldType#COLLECTION} ?
+	 * @param field the field to check
+	 * @return true if a {@link Collection} is assignable from the field type.
+	 */
+	public static boolean isCollection(Field field) {
+		return ReflectionCache.isCollection(field);
+	}
+
+	/**
+	 * Is this field a {@link FieldType#YOPABLE} ?
+	 * @param field the field to check
+	 * @return true if a {@link Yopable} is assignable from the field type.
+	 */
+	public static boolean isYopable(Field field) {
+		return ReflectionCache.isYopable(field);
+	}
+
+	/**
+	 * Get the joined fields ({@link org.yop.orm.annotations.JoinColumn} and {@link org.yop.orm.annotations.JoinTable}).
+	 * @param clazz the given class
+	 * @return all the @JoinColumn/@JoinTable fields from the given class
+	 */
+	public static Collection<Field> getJoinedFields(Class clazz) {
+		return ReflectionCache.getJoinedFields(clazz);
 	}
 }

@@ -7,20 +7,28 @@ import org.yop.orm.sql.Constants;
 import org.yop.orm.sql.Results;
 import org.yop.orm.util.ORMUtil;
 
+import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * A very basic cache mechanism.
- * <br>
- * It relies on a double map. Cache key for an object is : [class, id].
+ * You will find here :
+ * <ul>
+ *     <li>a {@link Yopable} objects cache, a double map whose key for a given object is : [class, id]</li>
+ *     <li>an association cache, a triple map whose key for an associated object is [field, source id, target id]</li>
+ * </ul>
  */
 public class FirstLevelCache {
 
 	private static final Logger logger = LoggerFactory.getLogger(FirstLevelCache.class);
 
-	/** The cache map */
+	/** The {@link Yopable} objects cache map. Cache key for an object is : [class, id] */
 	private final Map<Class<? extends Yopable>, Map<Long, Yopable>> cache = new HashMap<>();
+
+	/** Association cache : for a given collection field, then a Yopable ID → a map of associated objects, by ID */
+	private final Map<Field, Map<Long, Map<Long, Yopable>>> associationsCache = new HashMap<>();
 
 	/**
 	 * Try to hit the cache.
@@ -85,5 +93,42 @@ public class FirstLevelCache {
 
 		this.cache.get(element.getClass()).putIfAbsent(element.getId(), element);
 		return element;
+	}
+
+	/**
+	 * Search for the target element into the cache associated
+	 * to the given {@link org.yop.orm.util.Reflection.FieldType#COLLECTION} field and the given source.
+	 * <br>
+	 * If not found, add the target to the source object (through the association field) and to association cache.
+	 * <br>
+	 * The name of this method is after {@link Map#getOrDefault(Object, Object)}. This might not be a good idea.
+	 * @param collectionField the collection field (from the source object).
+	 * @param source          the source object
+	 * @param target          the target object
+	 * @param <T> the target type
+	 * @return the element from cache.
+	 * @throws IllegalAccessException could not read the collection field
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Yopable> T getOrDefault(
+		Field collectionField,
+		Yopable source,
+		T target)
+		throws IllegalAccessException {
+
+		if (! this.associationsCache.containsKey(collectionField)) {
+			this.associationsCache.put(collectionField, new HashMap<>());
+		}
+
+		if (! this.associationsCache.get(collectionField).containsKey(source.getId())) {
+			this.associationsCache.get(collectionField).put(source.getId(), new HashMap<>());
+		}
+
+		Map<Long, Yopable> fieldValueAsMap = this.associationsCache.get(collectionField).get(source.getId());
+		if (! fieldValueAsMap.containsKey(target.getId())) {
+			((Collection) collectionField.get(source)).add(target);
+			fieldValueAsMap.put(target.getId(), target);
+		}
+		return (T) fieldValueAsMap.get(target.getId());
 	}
 }

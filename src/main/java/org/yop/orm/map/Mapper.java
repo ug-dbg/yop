@@ -47,7 +47,7 @@ public class Mapper {
 			throw new YopMapperException("Error mapping resultset to [" + clazz.getName() + "]", e);
 		} catch (YopSQLException e) {
 			throw new YopSQLException(
-				"An SQL error occured mapping resultset to [" + clazz.getName() + "]",
+				"An SQL error occurred mapping resultset to [" + clazz.getName() + "]",
 				results.getQuery(),
 				e
 			);
@@ -77,15 +77,15 @@ public class Mapper {
 		FirstLevelCache cache)
 		throws IllegalAccessException, InstantiationException {
 
-		Set<T> out = new LinkedHashSet<>();
+		Map<Long, T> out = new LinkedHashMap<>();
 		while (results.getCursor().next()) {
 			T element = clazz.newInstance();
 			element = mapSimpleFields(results, element, context, cache);
 			element = searchForSelf(element, out, cache);
 			mapRelationFields(results, element, context, cache);
-			out.add(element);
+			out.put(element.getId(), element);
 		}
-		return out;
+		return new LinkedHashSet<>(out.values());
 	}
 
 	/**
@@ -236,11 +236,11 @@ public class Mapper {
 		FirstLevelCache cache)
 		throws IllegalAccessException, InstantiationException {
 
-		List<Field> fields = ORMUtil.joinedFields(element.getClass());
+		Collection<Field> fields = Reflection.getJoinedFields(element.getClass());
 		for (Field field : fields) {
 			String newContext = context + SEPARATOR + field.getName() + SEPARATOR;
 			Yopable target;
-			if(Collection.class.isAssignableFrom(field.getType())) {
+			if(Reflection.isCollection(field)) {
 				Class<? extends Yopable> targetClass = ORMUtil.getRelationFieldType(field);
 
 				newContext += ORMUtil.getTargetName(targetClass);
@@ -248,9 +248,9 @@ public class Mapper {
 
 				target = targetClass.newInstance();
 				target = mapSimpleFields(results, target, newContext, cache);
-				target = searchForSelf(target, (Collection) field.get(element), cache);
+				target = cache.getOrDefault(field, element, target);
 				mapRelationFields(results, target, newContext, cache);
-			} else if (Yopable.class.isAssignableFrom(field.getType())){
+			} else if (Reflection.isYopable(field)){
 				Class<? extends Yopable> targetClass = (Class<? extends Yopable>) field.getType();
 				newContext += ORMUtil.getTargetName(targetClass);
 				if(noContext(results, newContext, targetClass)) continue;
@@ -306,15 +306,15 @@ public class Mapper {
 	 * Check for an element in the given collection. Add to the collection if does not exist.
 	 * @param element  the element to find
 	 * @param elements the elements to check into
+	 * @param cache    the first level cache. If 'element' was not in 'elements', it gets added to the cache too.
 	 * @param <T> the target type
 	 * @return the found element or the input element after it is added in the collection
 	 */
-	private static <T extends Yopable> T searchForSelf(T element, Collection<T> elements, FirstLevelCache cache) {
-		Optional<T> any = elements.stream().filter(element::equals).findFirst();
-		if(any.isPresent()) {
-			return any.get();
+	private static <T extends Yopable> T searchForSelf(T element, Map<Long, T> elements, FirstLevelCache cache) {
+		if(elements.containsKey(element.getId())) {
+			return elements.get(element.getId());
 		}
-		elements.add(cache.put(element));
+		elements.put(element.getId(), cache.put(element));
 		return element;
 	}
 }
