@@ -137,6 +137,52 @@ public class Reflection {
 	}
 
 	/**
+	 * Set the value value of a field for a given instance.
+	 * <br>
+	 * This method only throws {@link RuntimeException} exceptions.
+	 * @param field the field to set
+	 * @param onto  the target instance
+	 * @param value the field value to set
+	 * @throws YopRuntimeException exception with context, if any exception (Illegal Access or Runtime) occurs.
+	 */
+	public static void set(Field field, Object onto, Object value) {
+		try {
+			field.set(onto, value);
+		} catch (IllegalAccessException | RuntimeException e) {
+			throw new YopRuntimeException(
+				"Unable to set " +
+				"field [" + field.getDeclaringClass() + "#" + field.getName() + "] " +
+				"value [" + value + "] " +
+				"onto  [" + onto + "]",
+				e
+			);
+		}
+	}
+
+	/**
+	 * Set the value value of a field for a given instance, from another instance.
+	 * <br>
+	 * This method only throws {@link RuntimeException} exceptions.
+	 * @param field the field to set
+	 * @param from the source instance
+	 * @param onto the target instance
+	 * @throws YopRuntimeException exception with context, if any exception (Illegal Access or Runtime) occurs.
+	 */
+	public static void setFrom(Field field, Object from, Object onto) {
+		try {
+			set(field, onto, field.get(from));
+		} catch (IllegalAccessException | RuntimeException e) {
+			throw new YopRuntimeException(
+				"Unable to set " +
+				"field [" + field.getDeclaringClass() + "#" + field.getName() + "] " +
+				"from [" + from + "] " +
+				"onto [" + onto + "]",
+				e
+			);
+		}
+	}
+
+	/**
 	 * Return the type parameter for a 1-arg generic field. <br>
 	 * Throws an exception if not a 1-arg generic field.
 	 *

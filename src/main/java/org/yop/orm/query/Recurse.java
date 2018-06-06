@@ -2,10 +2,10 @@ package org.yop.orm.query;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -179,29 +179,17 @@ public class Recurse<T extends Yopable> {
 
 		// Get the data using a SELECT query on the target elements and the join clauses.
 		Map<Long, T> byID = this.elements.stream().collect(Collectors.toMap(Yopable::getId, Function.identity()));
-		Select<T> select = Select
-			.from(this.target)
-			.setCache(cache)
-			.where(Where.id(this.elements.stream().map(Yopable::getId).collect(Collectors.toList())));
+		Select<T> select = Select.from(this.target).setCache(cache).where(Where.id(byID.keySet()));
 		this.joins.forEach(select::join);
 		Set<T> fetched = select.execute(connection, Select.Strategy.EXISTS);
 
 		Collection<T> next = new HashSet<>();
 		for (IJoin<T, ?> join : this.joins) {
-			// Assign the data
+			// Assign the data, reading the field from the join directive and the fetched data
 			Field field = join.getField(this.target);
-			fetched.forEach(t -> {
-				T onto = byID.get(t.getId());
-				try {
-					field.set(onto, field.get(t));
-				} catch (IllegalAccessException | RuntimeException e) {
-					throw new YopRuntimeException(
-						"Unable to set field [" + field.getDeclaringClass() + "#" + field.getName() + "]"
-						+ " from [" + t + "] onto [" + onto + "]"
-					);
-				}
-			});
-			// Walk through the fetched data using the 'join' and grab any target type object
+			fetched.forEach(from -> Reflection.setFrom(field, from, byID.get(from.getId())));
+
+			// Walk through the fetched data using the 'join' directive and grab any target type object
 			recurseCandidates(join, this.elements, next, this.target);
 		}
 
