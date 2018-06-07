@@ -48,6 +48,6 @@ public interface Evaluation {
 				return ORMUtil.getIdColumn(targetContext);
 			}
 		}
-		return context.getPath() + Constants.DOT + ORMUtil.getColumnName(field);
+		return context.getPath(field);
 	}
 }

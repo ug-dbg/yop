@@ -234,7 +234,7 @@ public class ORMUtil {
 	 * @return the qualified ID column
 	 */
 	public static String getIdColumn(Context<? extends Yopable> context) {
-		return context.getPath() + Constants.DOT + getIdColumn(context.getTarget());
+		return context.getPath(getIdField(context.getTarget()));
 	}
 
 	/**

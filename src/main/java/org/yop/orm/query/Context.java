@@ -27,7 +27,7 @@ import java.util.Set;
 public class Context<T extends Yopable> {
 
 	public static final String SQL_SEPARATOR = Constants.SQL_SEPARATOR;
-	static final String DOT = ".";
+	static final String DOT = Constants.DOT;
 
 	/** Parent context. If null, this context is the root context. */
 	private final Context<? extends Yopable> parent;
@@ -98,6 +98,17 @@ public class Context<T extends Yopable> {
 		}
 
 		return path.toString();
+	}
+
+	/**
+	 * Build the context path recursively, for a given field.
+	 * <br>
+	 * The resulting path should look like this :
+	 * <b>RootClass→relationA→IntermediaryClass→relationB→currentContextClass.FIELD_COLUMN_NAME</b>
+	 * @return the fully qualified context path for the given field
+	 */
+	public String getPath(Field columnField) {
+		return this.getPath() + DOT + ORMUtil.getColumnName(columnField);
 	}
 
 	/**
