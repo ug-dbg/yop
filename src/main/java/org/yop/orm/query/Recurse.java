@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.Constants;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.Reflection;
 
@@ -179,6 +180,15 @@ public class Recurse<T extends Yopable> {
 
 		// Get the data using a SELECT query on the target elements and the join clauses.
 		Map<Long, T> byID = this.elements.stream().collect(Collectors.toMap(Yopable::getId, Function.identity()));
+
+		if (byID.size() > Constants.MAX_PARAMS) {
+			logger.warn(
+				"Recursing over [{}] elements. This is more than the max params [{}]. Yop should do batches here :-(",
+				byID.size(),
+				Constants.MAX_PARAMS
+			);
+		}
+
 		Select<T> select = Select.from(this.target).setCache(cache).where(Where.id(byID.keySet()));
 		this.joins.forEach(select::join);
 		Set<T> fetched = select.execute(connection, Select.Strategy.EXISTS);
