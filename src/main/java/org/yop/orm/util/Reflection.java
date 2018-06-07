@@ -194,7 +194,9 @@ public class Reflection {
 		Type[] typeParameter = type.getActualTypeArguments();
 
 		if(typeParameter.length != 1){
-			throw new YopRuntimeException(concat("Persisted field [", field.getName(), "] has [", typeParameter.length, "] parameters. Unsupported."));
+			throw new YopRuntimeException(concat(
+				"Persisted field [", field.getName(), "] has [", typeParameter.length, "] parameters. Unsupported."
+			));
 		}
 		return typeParameter[0];
 	}
