@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 /**
  * A wrapper class for a {@link Yopable} that should be serialized to Json using {@link JSON}.
  * <br>
- * It aggregates the {@link #subject} but also the join and joindID instructions from the subject.
+ * It aggregates the {@link #subject} but also the join and joinID instructions from the subject.
  */
 class YopableForJSON {
 

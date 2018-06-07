@@ -385,7 +385,7 @@ public class Reflection {
 	/**
 	 * Find the target class of a setter.
 	 * @param source the source class, holding the field
-	 * @param setter the setter (lambda bi consummer)
+	 * @param setter the setter (lambda bi consumer)
 	 * @param <S> source type
 	 * @param <T> target type
 	 * @return the field type for the given setter

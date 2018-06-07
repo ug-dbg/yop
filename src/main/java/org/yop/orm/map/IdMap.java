@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * This object is required to find all the IDs that will have to be deleted
  * if the DBMS does not support multi-table delete.
  * <br>
- * But actually, can't it be quite usefull to get a data map of ID for a given data graph ?
+ * But actually, can't it be quite useful to get a data map of ID for a given data graph ?
  * {@code Class<? extends Yopable>} → {@code Set<Long>}
  */
 public class IdMap {

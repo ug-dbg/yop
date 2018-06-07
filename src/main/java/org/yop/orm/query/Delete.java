@@ -166,7 +166,7 @@ public class Delete<T extends Yopable> {
 
 	/**
 	 * Generate the SQL DELETE query
-	 * @param parameters the SQL paramters that will be populated with actual query parameters
+	 * @param parameters the SQL parameters that will be populated with actual query parameters
 	 * @return the SQL DELETE query string
 	 */
 	private String toSQL(Parameters parameters) {

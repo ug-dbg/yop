@@ -22,9 +22,9 @@ import java.util.Collection;
 public interface Evaluation {
 
 	/**
-	 * Build the SQL portion for the evaluation, fill the given paramaters with the evaluation value(s)
+	 * Build the SQL portion for the evaluation, fill the given parameters with the evaluation value(s)
 	 * @param context    the current context for the evaluation
-	 * @param parameters the SQL query paramters
+	 * @param parameters the SQL query parameters
 	 * @param <T> the target evaluation type
 	 * @return the SQL query portion for the evaluation, from the context
 	 */
@@ -33,7 +33,7 @@ public interface Evaluation {
 	/**
 	 * Read the field @Column annotation, or the ID column for a @JoinTable
 	 * @param field the field to read
-	 * @return the column name. If no @Column/@Jointable annotation, returns the class name in upper case.
+	 * @return the column name. If no @Column/@JoinTable annotation, returns the class name in upper case.
 	 */
 	@SuppressWarnings("unchecked")
 	static String columnName(Field field, Context<? extends Yopable> context) {

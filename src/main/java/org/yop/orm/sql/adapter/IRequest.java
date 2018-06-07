@@ -30,7 +30,7 @@ public interface IRequest extends AutoCloseable {
 	IResultCursor execute();
 
 	/**
-	 * Excecute the request that does not return any result.
+	 * Execute the request that does not return any result.
 	 * <br><br>
 	 * Typically for 'DELETE', 'UPDATE' or 'INSERT' queries.
 	 * <br><br>

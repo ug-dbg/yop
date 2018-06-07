@@ -66,7 +66,7 @@ public interface ITransformer<What> {
 	}
 
 	/**
-	 * A void transforer does nothing and returns the parameter object to transform 'as is'.
+	 * A void transformer does nothing and returns the parameter object to transform 'as is'.
 	 * @return the singleton instance of the {@link VoidTransformer}
 	 */
 	static ITransformer<Object> voidTransformer() {

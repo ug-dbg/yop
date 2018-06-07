@@ -138,7 +138,7 @@ public abstract class Query {
 
 	/**
 	 * Ask for generated IDs or not.
-	 * @param value  true to ask the statement to resturn the generated IDs
+	 * @param value  true to ask the statement to return the generated IDs
 	 * @param target the target class for which there will be generated keys
 	 * @return the current query, for chaining purposes
 	 */

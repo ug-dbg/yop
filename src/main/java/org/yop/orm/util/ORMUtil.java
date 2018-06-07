@@ -101,7 +101,7 @@ public class ORMUtil {
 	/**
 	 * Get the ID field for a Yopable class.
 	 * <br>
-	 * For now, Yop only supports one single techical Long ID field, that might have (or not) an @Id annotation.
+	 * For now, Yop only supports one single technical Long ID field, that might have (or not) an @Id annotation.
 	 * @param clazz the Yopable class
 	 * @param <T> the yopable type
 	 * @return the ID field
@@ -271,7 +271,7 @@ public class ORMUtil {
 	 * using {@link ITransformer#forSQL(Object, Column)}.
 	 * @param field   the field to read
 	 * @param element the element on which the field is to read
-	 * @return the field value, that might have been transformed using the speficied {@link ITransformer}.
+	 * @return the field value, that might have been transformed using the specified {@link ITransformer}.
 	 */
 	@SuppressWarnings("unchecked")
 	public static Object readField(Field field, Yopable element) {

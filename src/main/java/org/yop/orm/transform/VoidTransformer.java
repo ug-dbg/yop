@@ -3,7 +3,7 @@ package org.yop.orm.transform;
 import org.yop.orm.annotations.Column;
 
 /**
- * A void transforer does nothing and returns the parameter object to transform 'as is'.
+ * A void transformer does nothing and returns the parameter object to transform 'as is'.
  */
 public class VoidTransformer implements ITransformer<Object> {
 

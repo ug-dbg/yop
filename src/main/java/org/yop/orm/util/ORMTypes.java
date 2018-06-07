@@ -123,7 +123,7 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 	 * An extra list of sql queries to be executed for this table.
 	 * <br>
 	 * Default : do nothing :-)
-	 * @return an ordered list of queries to execute so the table is entirely operationnal.
+	 * @return an ordered list of queries to execute so the table is entirely operational.
 	 */
 	public List<String> otherSQL(Table table) {
 		return new ArrayList<>(0);
@@ -195,8 +195,8 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 			return new ArrayList<>(0);
 		}
 
-		String constaintName = table.qualifiedName() + "_NK";
-		String constraint = MessageFormat.format(NK, constaintName, MessageUtil.join(",", nkColumnNames));
+		String constraintName = table.qualifiedName() + "_NK";
+		String constraint = MessageFormat.format(NK, constraintName, MessageUtil.join(",", nkColumnNames));
 		return Collections.singletonList(constraint);
 	}
 

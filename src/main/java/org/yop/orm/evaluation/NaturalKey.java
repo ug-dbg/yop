@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Natural Key Evaluation : give me an object reference and I'll build an SQL evaluation for its naturel key fields
+ * Natural Key Evaluation : give me an object reference and I'll build an SQL evaluation for its natural key fields
  * @param <T> the target type
  */
 public class NaturalKey<T extends Yopable> implements Evaluation {

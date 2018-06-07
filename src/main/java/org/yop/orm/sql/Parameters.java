@@ -33,7 +33,7 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 
 	/**
 	 * Add a new SQL sequence parameter.
-	 * A sequence parameter will not be added as a JDBC param but must be explicitely written in the SQL query.
+	 * A sequence parameter will not be added as a JDBC param but must be explicitly written in the SQL query.
 	 * @param name  the SQL parameter name (will be displayed in the logs if show_sql = true)
 	 * @param value the SQL parameter value
 	 * @return the current Parameters object, for chaining purposes
@@ -72,7 +72,7 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 		/**
 		 * Returns the parameter value that can be added to the SQL query.
 		 * <ul>
-		 *     <li>parameter is a sequence paramater → {@link #value}</li>
+		 *     <li>parameter is a sequence parameter → {@link #value}</li>
 		 *     <li>else → '?'</li>
 		 * </ul>
 		 * @return the parameter SQL value

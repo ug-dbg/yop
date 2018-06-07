@@ -80,8 +80,8 @@ public class Where<T extends Yopable>  {
 	 * @return the current WHERE clause, for chaining purposes
 	 */
 	public final Where<T> or(Comparison... in) {
-		List<Evaluation> comparaisons = Arrays.asList(in);
-		return this.matches(new Or(comparaisons));
+		List<Evaluation> comparisons = Arrays.asList(in);
+		return this.matches(new Or(comparisons));
 	}
 
 	/**
@@ -106,7 +106,7 @@ public class Where<T extends Yopable>  {
 	/**
 	 * Create the current WHERE clause SQL.
 	 * @param context    the context from which the query clause must be built
-	 * @param parameters the query parameters that will be updated with this where clause paramters
+	 * @param parameters the query parameters that will be updated with this where clause parameters
 	 * @return the SQL WHERE clause
 	 */
 	public String toSQL(Context<T> context, Parameters parameters) {

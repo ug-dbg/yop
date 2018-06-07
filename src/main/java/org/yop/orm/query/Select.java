@@ -327,7 +327,7 @@ public class Select<T extends Yopable> {
 
 	/**
 	 * Find the target type ID alias
-	 * @param prefix a context prefxi
+	 * @param prefix a context prefix
 	 * @return the target type T id alias that will be added before the computed id alias
 	 */
 	private String idAlias(String prefix) {

@@ -20,7 +20,7 @@ public @interface Id {
 	String sequence() default "";
 
 	/**
-	 * @return true if the ID column is autoincremented (and ID field shoud not be in insert queries) Defaults to true.
+	 * @return true if the ID column is auto-incremented (and ID field should not be in insert queries) Defaults to true.
 	 */
 	boolean autoincrement() default true;
 }
