@@ -92,7 +92,7 @@ Yop has been (poorly) unit tested on :
   
 ## Yop Principles : 
 - 1 object/table → 1 technical ID
-- Limited set of mapping annotations
+- Data objects must implement a Serializable-like interface (Yopable) and use a very limited set of annotations
 - There can be a natural ID on an object and the Upsert method can check it before inserting
 - 'transient' keyword → cut cycles in the data graph
 - No session
