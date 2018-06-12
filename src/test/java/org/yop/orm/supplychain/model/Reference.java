@@ -6,7 +6,7 @@ import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
 
-@Table(name = "reference")
+@Table(name = "supplychain_reference")
 public class Reference extends Persistent {
 
 	@NaturalId

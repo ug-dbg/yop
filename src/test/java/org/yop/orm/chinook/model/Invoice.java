@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Table(name = "invoice")
+@Table(name = "chinook_invoice")
 public class Invoice extends Persistent {
 
 	@Column(name = "invoice_date")

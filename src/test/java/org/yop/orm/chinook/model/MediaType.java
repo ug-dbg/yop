@@ -2,11 +2,13 @@ package org.yop.orm.chinook.model;
 
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
+import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
 
 import java.util.HashSet;
 import java.util.Set;
 
+@Table(name = "chinook_mediatype")
 public class MediaType extends Persistent {
 
 	@Column(name = "name")

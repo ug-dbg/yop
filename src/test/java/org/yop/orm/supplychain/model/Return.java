@@ -7,7 +7,7 @@ import org.yop.orm.model.Persistent;
 
 import java.time.LocalDateTime;
 
-@Table(name = "return_table")
+@Table(name = "supplychain_return")
 public class Return extends Persistent {
 
 	@Column(name = "return_date")

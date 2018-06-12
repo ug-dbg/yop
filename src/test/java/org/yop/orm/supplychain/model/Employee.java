@@ -5,7 +5,7 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
 
-@Table(name = "employee")
+@Table(name = "supplychain_employee")
 public class Employee extends Persistent {
 
 	public enum Role {CEO, CTO, GURU, NO_IDEA}

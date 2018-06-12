@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-@Table(name = "customer")
+@Table(name = "supplychain_customer")
 public class Customer extends Persistent {
 
 	@NaturalId

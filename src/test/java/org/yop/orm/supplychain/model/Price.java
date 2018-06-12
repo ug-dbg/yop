@@ -5,7 +5,7 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
 
-@Table(name="price")
+@Table(name="supplychain_price")
 public class Price extends Persistent {
 
 	@Column(name = "value")

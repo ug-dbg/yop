@@ -9,7 +9,7 @@ import org.yop.orm.transform.AbbreviateTransformer;
 import java.util.HashSet;
 import java.util.Set;
 
-@Table(name = "Track")
+@Table(name = "chinook_track")
 public class Track extends Persistent {
 
 	@Column(name = "name", length = 200)

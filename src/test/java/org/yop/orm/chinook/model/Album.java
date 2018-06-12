@@ -9,7 +9,7 @@ import org.yop.orm.transform.AbbreviateTransformer;
 import java.util.HashSet;
 import java.util.Set;
 
-@Table(name = "album")
+@Table(name = "chinook_album")
 public class Album extends Persistent {
 
 	@Column(

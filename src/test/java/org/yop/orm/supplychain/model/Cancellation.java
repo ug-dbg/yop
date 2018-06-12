@@ -6,7 +6,7 @@ import org.yop.orm.annotations.Table;
 
 import java.time.LocalDateTime;
 
-@Table(name = "cancellation")
+@Table(name = "supplychain_cancellation")
 public class Cancellation {
 
 	@Column(name = "reason")

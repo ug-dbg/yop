@@ -8,7 +8,7 @@ import org.yop.orm.model.Persistent;
 import java.util.HashSet;
 import java.util.Set;
 
-@Table(name = "playlist")
+@Table(name = "chinook_playlist")
 public class Playlist extends Persistent {
 
 	@Column(name = "name")

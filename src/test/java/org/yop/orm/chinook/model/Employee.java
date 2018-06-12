@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
-@Table(name = "employee_chinook")
+@Table(name = "chinook_employee")
 public class Employee extends Persistent {
 
 	@NaturalId

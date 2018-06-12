@@ -9,7 +9,7 @@ import org.yop.orm.model.Persistent;
 import java.util.ArrayList;
 import java.util.List;
 
-@Table(name="organisation")
+@Table(name="supplychain_organisation")
 public class Organisation extends Persistent {
 
 	@NaturalId

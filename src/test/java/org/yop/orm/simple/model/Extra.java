@@ -3,8 +3,10 @@ package org.yop.orm.simple.model;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.JoinColumn;
+import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Yopable;
 
+@Table(name = "simple_extra")
 public class Extra implements Yopable {
 
 	@Id(sequence = "seq_EXTRA")

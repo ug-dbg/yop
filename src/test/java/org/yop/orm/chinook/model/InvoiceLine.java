@@ -5,7 +5,7 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
 
-@Table(name = "invoice_line")
+@Table(name = "chinook_invoice_line")
 public class InvoiceLine extends Persistent {
 
 	@Column(name = "unit_price")

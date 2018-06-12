@@ -9,7 +9,7 @@ import org.yop.orm.model.Persistent;
 import java.util.HashSet;
 import java.util.Set;
 
-@Table(name = "genre")
+@Table(name = "chinook_genre")
 public class Genre extends Persistent {
 
 	@NaturalId

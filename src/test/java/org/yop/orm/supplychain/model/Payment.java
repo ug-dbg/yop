@@ -7,7 +7,7 @@ import org.yop.orm.model.Persistent;
 
 import java.time.LocalDateTime;
 
-@Table(name = "payment")
+@Table(name = "supplychain_payment")
 public class Payment extends Persistent {
 
 	public enum Method {CREDIT_CARD, CASH, CHEQUE, MONOPOLY_MONEY}

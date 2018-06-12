@@ -1,15 +1,13 @@
 package org.yop.orm.simple.model;
 
-import org.yop.orm.annotations.Column;
-import org.yop.orm.annotations.Id;
-import org.yop.orm.annotations.JoinTable;
-import org.yop.orm.annotations.NaturalId;
+import org.yop.orm.annotations.*;
 import org.yop.orm.model.Yopable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 
+@Table(name = "simple_pojo")
 public class Pojo implements Yopable {
 
 	public enum Type {FOO, BAR}

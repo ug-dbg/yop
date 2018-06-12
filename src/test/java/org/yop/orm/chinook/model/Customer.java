@@ -9,7 +9,7 @@ import org.yop.orm.model.Persistent;
 import java.util.HashSet;
 import java.util.Set;
 
-@Table(name = "customer_chinook")
+@Table(name = "chinook_customer")
 public class Customer extends Persistent {
 
 	@Column(name = "first_name")

@@ -4,7 +4,7 @@ import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
 
-@Table(name = "voucher")
+@Table(name = "supplychain_voucher")
 public class Voucher extends Persistent {
 
 	@Column(name = "label")

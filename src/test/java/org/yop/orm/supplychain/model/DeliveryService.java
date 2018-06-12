@@ -9,7 +9,7 @@ import org.yop.orm.model.Persistent;
 import java.util.ArrayList;
 import java.util.List;
 
-@Table(name = "deliveryservice")
+@Table(name = "supplychain_deliveryservice")
 public class DeliveryService extends Persistent {
 
 	@Column(name = "name")

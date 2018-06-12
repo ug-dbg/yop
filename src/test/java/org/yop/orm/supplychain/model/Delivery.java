@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Table(name = "delivery")
+@Table(name = "supplychain_delivery")
 public class Delivery extends Persistent {
 
 	@Column(name = "expected")

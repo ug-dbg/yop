@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Table(name = "order_table")
+@Table(name = "supplychain_order_table")
 public class Order extends Persistent {
 
 	@Column(name = "timestamp", not_null = true)

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Table(name = "product")
+@Table(name = "supplychain_product")
 public class Product  extends Persistent {
 
 	@NaturalId

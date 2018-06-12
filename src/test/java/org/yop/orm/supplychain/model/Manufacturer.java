@@ -4,7 +4,7 @@ import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Persistent;
 
-@Table(name = "manufacturer")
+@Table(name = "supplychain_manufacturer")
 public class Manufacturer extends Persistent {
 
 	@Column(name = "name")

@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+@Table(name = "simple_other")
 public class Other implements Yopable {
 
 	@Id(sequence = "seq_OTHER")
