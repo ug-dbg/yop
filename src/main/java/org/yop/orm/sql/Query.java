@@ -18,11 +18,24 @@ import java.util.*;
  *     <li>Simple : see {@link SimpleQuery}</li>
  *     <li>Batch : see {@link BatchQuery}</li>
  * </ul>
+ * Query generation in Yop is very rough : SQL portions are generated from different classes and concatenated.
+ * <br>
+ * In this class we try to take care of the SQL query so it can be safely executed. Here is what we do :
+ * <ul>
+ *     <li>Split the query into words</li>
+ *     <li>Identify aliases whose length is {@link >} {@link Constants#SQL_ALIAS_MAX_LENGTH}</li>
+ *     <li>Shorten these aliases using {@link ORMUtil#uniqueShortened(String)}</li>
+ *     <li>Keep track of the alias → shorten alias conversions</li>
+ *     <li>Keep track of the original query so it can be logged when required</li>
+ * </ul>
+ * This is highly questionable and query generation should use an SQL grammar tool.
  */
 public abstract class Query {
 
 	/** Query type enum, with an 'unknown' value */
 	public enum Type {CREATE, DROP, SELECT, INSERT, UPDATE, DELETE, UNKNOWN}
+
+	private static final String SQL_WORD_SPLIT_PATTERN = " ,;\"";
 
 	private static final Comparator<String> ALIAS_COMPARATOR = Comparator
 		.comparing(String::length)
@@ -58,6 +71,9 @@ public abstract class Query {
 
 	/**
 	 * Default constructor : SQL query.
+	 * <br>
+	 * In the SQL query, aliases whose length is {@literal >} {@link Constants#SQL_ALIAS_MAX_LENGTH} will be
+	 * replaced with {@link ORMUtil#uniqueShortened(String)}.
 	 * @param sql        the SQL query to execute
 	 */
 	public Query(String sql, Type type) {
@@ -67,7 +83,7 @@ public abstract class Query {
 
 		// Search table/column aliases that are too long for SQL : longest alias first !
 		Set<String> tooLongAliases = new TreeSet<>(ALIAS_COMPARATOR);
-		for (String word : StringUtils.split(sql, " ,;\"")) {
+		for (String word : StringUtils.split(sql, SQL_WORD_SPLIT_PATTERN)) {
 			// if the word is not too long, that's OK
 			// if the word contains a "." this is not an alias
 			if(word.length() <= Constants.SQL_ALIAS_MAX_LENGTH || word.contains(Constants.DOT)) {

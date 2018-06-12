@@ -1,10 +1,14 @@
 package org.yop.orm.sql;
 
+/**
+ * A query implementation with no batch mechanism : {@link #nextBatch()} returns true once, then false.
+ */
 public class SimpleQuery extends Query {
 
 	/** The SQL query parameters (i.e. for '?' in the query) */
 	private final Parameters parameters;
 
+	/** Fake single entry batch cursor. Default to true. Set to false on {@link #next} first call */
 	private boolean next = true;
 
 	/**
@@ -18,6 +22,11 @@ public class SimpleQuery extends Query {
 		this.parameters = parameters;
 	}
 
+	/**
+	 * Fake single entry batch : return true once then false.
+	 * See {@link #next}.
+	 * @return true on first call, then false.
+	 */
 	@Override
 	public boolean nextBatch() {
 		if(this.next) {
