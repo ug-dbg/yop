@@ -35,6 +35,7 @@ public abstract class Query {
 	/** Query type enum, with an 'unknown' value */
 	public enum Type {CREATE, DROP, SELECT, INSERT, UPDATE, DELETE, UNKNOWN}
 
+	/** The regex used to split the query into words. Yes, it is dubious. */
 	private static final String SQL_WORD_SPLIT_PATTERN = " ,;\"";
 
 	private static final Comparator<String> ALIAS_COMPARATOR = Comparator
