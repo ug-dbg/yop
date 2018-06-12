@@ -37,7 +37,7 @@ public class MySQL extends ORMTypes {
 	/**
 	 * Is this column nullable ?
 	 * With MySQL, for now, there is a trick with timestamps (in strict mode).
-	 * We set a timestamp to default 'NULL' if not a natural key or marked explicitely as 'not null'
+	 * We set a timestamp to default 'NULL' if not a natural key or marked explicitly as 'not null'
 	 * @param column the column to check.
 	 * @return NULL / NOT NULL / ∅
 	 */
