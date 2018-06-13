@@ -33,6 +33,7 @@ public class Executor {
 	 * @param connection the SQL connection to use
 	 * @param query      the SQL query
 	 * @param target     the target class on which the results of the query will be mapped
+	 * @param <T> the Yopable type the query searches for.
 	 * @return the request execution ResultSet
 	 * @throws YopSQLException an SQL error occurred.
 	 */
@@ -50,6 +51,7 @@ public class Executor {
 	 * @param query      the SQL query
 	 * @param target     the target class on which the results of the query will be mapped
 	 * @param cache      first level cache to use when mapping objects. The idea is to share it among requests.
+	 * @param <T> the Yopable type the query searches for.
 	 * @return the request execution ResultSet
 	 * @throws YopSQLException an SQL error occurred.
 	 */
