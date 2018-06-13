@@ -120,9 +120,10 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 	}
 
 	/**
-	 * An extra list of sql queries to be executed for this table.
+	 * An extra list of sql queries to be executed for a table.
 	 * <br>
 	 * Default : do nothing :-)
+	 * @param table the considered table
 	 * @return an ordered list of queries to execute so the table is entirely operational.
 	 */
 	public List<String> otherSQL(Table table) {
