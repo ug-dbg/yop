@@ -183,6 +183,7 @@ public class JSON<T extends Yopable> {
 	 * Execute the directive : serialize to JSON, as String.
 	 * <br>
 	 * <b>⚠ {@link #elements} are ignored ! ⚠</b>
+	 * @param singleElement the single Yopable element to serialize
 	 * @return a JSON string (singleElement, serialized as JSON Object)
 	 */
 	public String toJSON(Yopable singleElement) {
