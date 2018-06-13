@@ -160,14 +160,16 @@ public class Where<T extends Yopable>  {
 	}
 
 	/**
-	 * See : {@link #id(Collection)}.
+	 * Create an "ID" evaluation, against the given ID values.
+	 * @param ids the expected IDs for the target type.
+	 * @return an 'ID IN (?)' Evaluation object that can be added to the where clause
 	 */
 	public static Evaluation id(Long... ids) {
 		return id(Arrays.asList(ids));
 	}
 
 	/**
-	 * Create an "ID" evaluation, against a given ID value.
+	 * Create an "ID" evaluation, against ths given ID values.
 	 * @param ids the expected IDs for the target type.
 	 * @return an 'ID IN (?)' Evaluation object that can be added to the where clause
 	 */
