@@ -96,8 +96,7 @@ public class FirstLevelCache {
 	}
 
 	/**
-	 * Search for the target element into the cache associated
-	 * to the given {@link org.yop.orm.util.Reflection.FieldType#COLLECTION} field and the given source.
+	 * Search for the target element into the cache associated to the given (Collection) field and the given source.
 	 * <br>
 	 * If not found, add the target to the source object (through the association field) and to association cache.
 	 * <br>
