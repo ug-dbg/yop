@@ -337,6 +337,7 @@ public class Upsert<T extends Yopable> {
 	 * Find all the columns and values to set.
 	 * <br>
 	 * A sequence parameter might be set if specified !
+	 * @param element the element to read for its values
 	 * @return the columns to select
 	 */
 	protected Parameters values(T element) {
