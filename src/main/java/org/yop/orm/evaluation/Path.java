@@ -123,7 +123,8 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 	/**
 	 * Build the path, so it can be inserted into an SQL Query.
 	 * <br>
-	 * It looks like Pojo→relationToJopo→Jopo.attributeName
+	 * It looks like 'Pojo→relationToJopo→Jopo.attributeName', where Pojo is the root class.
+	 * @param root the class from which the path is built.
 	 * @return the built path.
 	 */
 	public String toPath(Class<From> root) {
