@@ -43,8 +43,9 @@ public class MessageUtil {
 	/**
 	 * Concat objects as Strings using a separator.
 	 * <br>
-	 * Skip null or blanks
-	 * @param strings the strings to concat.
+	 * Skip null or blanks.
+	 * @param separator the separator to use
+	 * @param strings   the strings to concat.
 	 * @return the resulting string.
 	 */
 	public static String join(String separator, String... strings){
@@ -54,8 +55,9 @@ public class MessageUtil {
 	/**
 	 * Concat objects as Strings using a separator.
 	 * <br>
-	 * Skip null or blanks
-	 * @param objects the Objects to concat. {@link Objects#toString(Object)} will be used on each non null.
+	 * Skip null or blanks.
+	 * @param separator the separator to use
+	 * @param objects   the Objects to concat. {@link Objects#toString(Object)} will be used on each non null.
 	 * @return the resulting string.
 	 */
 	public static String join(String separator, Collection<?> objects){
