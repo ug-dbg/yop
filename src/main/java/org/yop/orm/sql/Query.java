@@ -138,7 +138,11 @@ public abstract class Query {
 		return this.type;
 	}
 
-	/** Get the original alias for a shortened one. Return the given parameter if no entry */
+	/**
+	 * Get the original alias for a shortened one. Return the given parameter if no entry.
+	 * @param shortened the shortened value of the alias
+	 * @return the original alias value, or the input value if nothing found.
+	 */
 	public String getAlias(String shortened) {
 		return this.tooLongAliases.entrySet()
 			.stream()
@@ -148,7 +152,11 @@ public abstract class Query {
 			.orElse(shortened);
 	}
 
-	/** Get the shortened version of an alias. Return the given parameter if no entry */
+	/**
+	 * Get the shortened version of an alias. Return the given parameter if no entry.
+	 * @param alias the (not shortened) alias
+	 * @return the shortened value for this alias, or the input alias value if nothing found.
+	 */
 	public String getShortened(String alias) {
 		return this.tooLongAliases.getOrDefault(alias, alias);
 	}
