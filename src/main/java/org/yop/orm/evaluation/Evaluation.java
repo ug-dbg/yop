@@ -32,7 +32,8 @@ public interface Evaluation {
 
 	/**
 	 * Read the field @Column annotation, or the ID column for a @JoinTable
-	 * @param field the field to read
+	 * @param field   the field to read
+	 * @param context the context from which the column name must be built. See {@link Context#getPath()}.
 	 * @return the column name. If no @Column/@JoinTable annotation, returns the class name in upper case.
 	 */
 	@SuppressWarnings("unchecked")
