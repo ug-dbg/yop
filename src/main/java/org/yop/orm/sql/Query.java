@@ -75,7 +75,8 @@ public abstract class Query {
 	 * <br>
 	 * In the SQL query, aliases whose length is {@literal >} {@link Constants#SQL_ALIAS_MAX_LENGTH} will be
 	 * replaced with {@link ORMUtil#uniqueShortened(String)}.
-	 * @param sql        the SQL query to execute
+	 * @param sql  the SQL query to execute
+	 * @param type the query type
 	 */
 	public Query(String sql, Type type) {
 		this.sql = sql;
