@@ -50,7 +50,7 @@ Yop is available on Maven central :
 <dependency>
     <groupId>org.y-op</groupId>
     <artifactId>yop</artifactId>
-    <version>0.4.0</version>
+    <version>0.4</version>
 </dependency>
 ```
 
