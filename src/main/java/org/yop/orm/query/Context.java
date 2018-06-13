@@ -105,6 +105,7 @@ public class Context<T extends Yopable> {
 	 * <br>
 	 * The resulting path should look like this :
 	 * <b>RootClass→relationA→IntermediaryClass→relationB→currentContextClass.FIELD_COLUMN_NAME</b>
+	 * @param columnField the considered field for the path building. Must be a @Column field.
 	 * @return the fully qualified context path for the given field
 	 */
 	public String getPath(Field columnField) {
