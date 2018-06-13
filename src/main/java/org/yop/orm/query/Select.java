@@ -252,6 +252,8 @@ public class Select<T extends Yopable> {
 	 * See {@link #execute(IConnection)}
 	 * <br>
 	 * TODO : effectively limit the SQL query result
+	 * @param connection the connection to use for the request
+	 * @return the SELECT result, as an unique T
 	 */
 	public T uniqueResult(IConnection connection) {
 		Set<T> results = execute(connection, Strategy.EXISTS);
