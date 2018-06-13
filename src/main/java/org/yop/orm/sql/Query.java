@@ -23,7 +23,7 @@ import java.util.*;
  * In this class we try to take care of the SQL query so it can be safely executed. Here is what we do :
  * <ul>
  *     <li>Split the query into words</li>
- *     <li>Identify aliases whose length is {@link >} {@link Constants#SQL_ALIAS_MAX_LENGTH}</li>
+ *     <li>Identify aliases whose length is {@literal >} {@link Constants#SQL_ALIAS_MAX_LENGTH}</li>
  *     <li>Shorten these aliases using {@link ORMUtil#uniqueShortened(String)}</li>
  *     <li>Keep track of the alias → shorten alias conversions</li>
  *     <li>Keep track of the original query so it can be logged when required</li>
