@@ -31,7 +31,8 @@ public class BatchQuery extends Query {
 	/**
 	 * Default constructor : SQL query.
 	 *
-	 * @param sql the SQL query to execute
+	 * @param sql  the SQL query to execute
+	 * @param type the query type
 	 */
 	public BatchQuery(String sql, Type type) {
 		super(sql, type);
