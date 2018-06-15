@@ -469,7 +469,6 @@ public class Reflection {
 		}
 
 		try {
-			@SuppressWarnings("unchecked")
 			Constructor<T> silentConstructor = (Constructor<T>) ReflectionFactory
 				.getReflectionFactory()
 				.newConstructorForSerialization(target, Object.class.getDeclaredConstructor());
@@ -520,7 +519,6 @@ public class Reflection {
 	 * @param <T> the class generic type
 	 * @return the first implementation found, self if concrete, null if no known implementation
 	 */
-	@SuppressWarnings("unchecked")
 	private static <T> Class<? extends T> implementationOf(Class<T> clazz) {
 		return ReflectionCache.implementationOf(clazz);
 	}
