@@ -13,12 +13,29 @@ import java.util.Collection;
 /**
  * Interface Yop (persistent) objects must implement. <br>
  * It relies on a long ID. <br>
- * A yopable must then provide an @Id annotated field. <br>
- *
+ * A yopable must provide an ID field that is a Long/long. It can either be :
+ * <ul>
+ *     <li>named 'id'</li>
+ *     <li>annotated with {@link org.yop.orm.annotations.Id}</li>
+ *     <li>both :)</li>
+ * </ul>
+ * Yop uses the default getter/setter methods that can find the ID field a lot.
+ * <b>
+ * Overriding {@link #getId()} and {@link #setId(Long)} in each Yopable should result in huge performance gain.
+ * </b>
  * Created by hugues on 23/01/15.
  */
 public interface Yopable {
 
+	/**
+	 * Get the current object ID.
+	 * <br>
+	 * A yopable must have a 'Long' id field. It can be named 'id' or not.
+	 * If not, it must be {@link org.yop.orm.annotations.Id} annotated.
+	 * <br>
+	 * Overriding this method to return explicitly the ID value can result in huge performance gain.
+	 * @return the id field value
+	 */
 	default Long getId() {
 		Field idField = this.getIdField();
 		idField.setAccessible(true);
@@ -32,6 +49,15 @@ public interface Yopable {
 		}
 	}
 
+	/**
+	 * Set the current object ID.
+	 * <br>
+	 * A yopable must have a 'Long' id field. It can be named 'id' or not.
+	 * If not, it must be {@link org.yop.orm.annotations.Id} annotated.
+	 * <br>
+	 * Overriding this method to set explicitly the ID value can result in huge performance gain.
+	 * @param id the id field value
+	 */
 	default void setId(Long id) {
 		Field idField = this.getIdField();
 		idField.setAccessible(true);
@@ -45,19 +71,35 @@ public interface Yopable {
 		}
 	}
 
+	/**
+	 * Get the ID field name.
+	 * @return the ID field name
+	 */
 	default String getIdFieldName() {
 		return this.getIdField().getName();
 	}
 
+	/**
+	 * Get the ID field.
+	 * @return the ID field
+	 */
 	default Field getIdField() {
 		return ORMUtil.getIdField(this.getClass());
 	}
 
+	/**
+	 * Get the ID column name : {@link Column#name()} or, if no @Column annotation, 'ID'.
+	 * @return the ID column name
+	 */
 	default String getIdColumn() {
 		Field field = this.getIdField();
 		return field.isAnnotationPresent(Column.class) ? field.getAnnotation(Column.class).name() : "ID";
 	}
 
+	/**
+	 * Get all the fields that are {@link NaturalId} annotated.
+	 * @return the natural ID fields
+	 */
 	default Collection<Field> getNaturalId() {
 		return Reflection.getFields(this.getClass(), NaturalId.class);
 	}
