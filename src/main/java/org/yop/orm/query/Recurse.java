@@ -38,6 +38,18 @@ import java.util.stream.Collectors;
  *  ⚠⚠⚠
  *  </b>
  *  <br><br>
+ * <b>
+ *  ⚠⚠⚠
+ *  <br>
+ *  The 'Recurse' API can lead to very long executions : for every 'root' class object retrieved,
+ *  the join directives are recursively applied.
+ *  <br>
+ *  If you don't pay attention to your data graph,
+ *  you can get involved into selecting much more data than you might think.
+ *  <br>
+ *  ⚠⚠⚠
+ *  </b>
+ *  <br><br>
  *  Example :
  *  <br>
  *  <pre>
