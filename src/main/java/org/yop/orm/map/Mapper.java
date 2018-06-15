@@ -244,7 +244,7 @@ public class Mapper {
 				Class<? extends Yopable> targetClass = ORMUtil.getRelationFieldType(field);
 
 				newContext += ORMUtil.getTargetName(targetClass);
-				if(noContext(results, newContext, targetClass)) continue;
+				if(results.noContext(newContext, targetClass)) continue;
 
 				target = targetClass.newInstance();
 				target = mapSimpleFields(results, target, newContext, cache);
@@ -253,7 +253,7 @@ public class Mapper {
 			} else if (Reflection.isYopable(field)){
 				Class<? extends Yopable> targetClass = (Class<? extends Yopable>) field.getType();
 				newContext += ORMUtil.getTargetName(targetClass);
-				if(noContext(results, newContext, targetClass)) continue;
+				if(results.noContext(newContext, targetClass)) continue;
 
 				target = (Yopable) ORMUtil.readField(field, element);
 				if(target == null) {
@@ -271,35 +271,6 @@ public class Mapper {
 				);
 			}
 		}
-	}
-
-	/**
-	 * Check if there is some data for the given context or not.
-	 * <b>⚠⚠⚠ This method DOES NOT iterate over the resultset ! ⚠⚠⚠</b>
-	 * @param results     the resultset entry to check
-	 * @param context     the context to check
-	 * @param targetClass the target class
-	 * @return true if there are no column AND no data for the given context
-	 * @throws YopSQLException error reading the resultset
-	 */
-	static boolean noContext(Results results, String context, Class<? extends Yopable> targetClass) {
-		String idColumn = results.getQuery().getShortened(context + SEPARATOR + ORMUtil.getIdColumn(targetClass));
-		if(!results.getCursor().hasColumn(idColumn)) {
-			return true;
-		}
-
-		if(results.getCursor().getObject(idColumn) == null) {
-			return true;
-		}
-
-		int columns = results.getCursor().getColumnCount();
-		for (int x = 1; x <= columns; x++) {
-			if (results.getQuery().getAlias(results.getCursor().getColumnName(x)).startsWith(context)) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	/**
