@@ -150,6 +150,17 @@ public class Recurse<T extends Yopable> {
 	}
 
 	/**
+	 * Recursively the join relations on the target {@link #elements},
+	 * with a {@link org.yop.orm.query.Select.Strategy#EXISTS} for the sub-selects.
+	 * <br>
+	 * See {@link #execute(IConnection, Select.Strategy)}.
+	 * @param connection the connection to use.
+	 */
+	public void execute(IConnection connection) {
+		this.recurse(connection, new FirstLevelCache(), new ArrayList<>(), Select.Strategy.EXISTS);
+	}
+
+	/**
 	 * Recursively the join relations on the target {@link #elements}.
 	 * <br>
 	 * It means whenever new objects are fetched for the relation,
@@ -159,9 +170,10 @@ public class Recurse<T extends Yopable> {
 	 * <br>
 	 * Thus, there <i>should</i> be no duplicates in memory (1 DB object ↔ 1 single object in memory).
 	 * @param connection the connection to use.
+	 * @param strategy   the select strategy to use for the sub-selects. This can have a huge impact on performance.
 	 */
-	public void execute(IConnection connection) {
-		this.recurse(connection, new FirstLevelCache(), new ArrayList<>());
+	public void execute(IConnection connection, Select.Strategy strategy) {
+		this.recurse(connection, new FirstLevelCache(), new ArrayList<>(), strategy);
 	}
 
 	/**
@@ -183,7 +195,7 @@ public class Recurse<T extends Yopable> {
 	 * @param done       the elements we have already recursed on (stop condition)
 	 */
 	@SuppressWarnings("unchecked")
-	private void recurse(IConnection connection, FirstLevelCache cache, Collection<T> done) {
+	private void recurse(IConnection connection, FirstLevelCache cache, Collection<T> done, Select.Strategy strategy) {
 		if(this.elements.isEmpty()) {
 			logger.warn("Recurse on no element. Are you sure you did not forget using #onto() ?");
 			return;
@@ -203,7 +215,7 @@ public class Recurse<T extends Yopable> {
 
 		Select<T> select = Select.from(this.target).setCache(cache).where(Where.id(byID.keySet()));
 		this.joins.forEach(select::join);
-		Set<T> fetched = select.execute(connection, Select.Strategy.IN);
+		Set<T> fetched = select.execute(connection, strategy);
 
 		Collection<T> next = new HashSet<>();
 		for (IJoin<T, ?> join : this.joins) {
@@ -224,7 +236,7 @@ public class Recurse<T extends Yopable> {
 		// Recurse !
 		if (! next.isEmpty()) {
 			done.addAll(next);
-			Recurse.from(this.target).join(this.joins).onto(next).recurse(connection, cache, done);
+			Recurse.from(this.target).join(this.joins).onto(next).recurse(connection, cache, done, strategy);
 		}
 	}
 
