@@ -548,6 +548,8 @@ public class Reflection {
 
 	/**
 	 * Is this field a {@link FieldType#COLLECTION} ?
+	 * <br>
+	 * This method uses a field type cache : {@link ReflectionCache#FIELD_TYPES}.
 	 * @param field the field to check
 	 * @return true if a {@link Collection} is assignable from the field type.
 	 */
@@ -557,6 +559,8 @@ public class Reflection {
 
 	/**
 	 * Is this field a {@link FieldType#YOPABLE} ?
+	 * <br>
+	 * This method uses a field type cache : {@link ReflectionCache#FIELD_TYPES}.
 	 * @param field the field to check
 	 * @return true if a {@link Yopable} is assignable from the field type.
 	 */
@@ -566,6 +570,8 @@ public class Reflection {
 
 	/**
 	 * Get the joined fields ({@link org.yop.orm.annotations.JoinColumn} and {@link org.yop.orm.annotations.JoinTable}).
+	 * <br>
+	 * This method uses a field type cache : {@link ReflectionCache#JOINED_FIELDS}.
 	 * @param clazz the given class
 	 * @return all the @JoinColumn/@JoinTable fields from the given class
 	 */
