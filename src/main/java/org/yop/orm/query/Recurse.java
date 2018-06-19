@@ -203,7 +203,7 @@ public class Recurse<T extends Yopable> {
 
 		Select<T> select = Select.from(this.target).setCache(cache).where(Where.id(byID.keySet()));
 		this.joins.forEach(select::join);
-		Set<T> fetched = select.execute(connection, Select.Strategy.EXISTS);
+		Set<T> fetched = select.execute(connection, Select.Strategy.IN);
 
 		Collection<T> next = new HashSet<>();
 		for (IJoin<T, ?> join : this.joins) {

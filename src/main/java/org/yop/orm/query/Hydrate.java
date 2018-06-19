@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -158,9 +159,9 @@ public class Hydrate<T extends Yopable> {
 		Field relationField = join.getField(this.target);
 
 		try {
-			if (Collection.class.isAssignableFrom(relationField.getType())) {
+			if (Reflection.isCollection(relationField)) {
 				relationField.set(element, relationValue);
-			} else if (Yopable.class.isAssignableFrom(relationField.getType())) {
+			} else if (Reflection.isYopable(relationField)) {
 				if (relationValue.size() > 1) {
 					throw new YopRuntimeException(
 						"Something very weird happened : "

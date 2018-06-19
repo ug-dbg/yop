@@ -2,6 +2,7 @@ package org.yop.orm.query.json;
 
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
+import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -103,7 +104,7 @@ class YopableForJSON {
 	Object nextIds(IJoin join) {
 		Field field = this.getField(join);
 		Collection<Yopable> next = join.getTarget(this.subject);
-		if (Collection.class.isAssignableFrom(field.getType())) {
+		if (Reflection.isCollection(field)) {
 			return next.stream().map(Yopable::getId).collect(Collectors.toSet());
 		}
 		if (next.isEmpty()) {
@@ -129,7 +130,7 @@ class YopableForJSON {
 	Object next(IJoin join, Collection<IJoin> nextJoinIDs) {
 		Field field = this.getField(join);
 		Collection<Yopable> next = join.getTarget(this.subject);
-		if (Collection.class.isAssignableFrom(field.getType())) {
+		if (Reflection.isCollection(field)) {
 			return next
 				.stream()
 				.map(y -> new YopableForJSON(y, join.getJoins(), nextJoinIDs, this.fieldCache))

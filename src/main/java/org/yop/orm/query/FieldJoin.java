@@ -48,7 +48,7 @@ class FieldJoin<From extends Yopable, To extends Yopable> extends AbstractJoin<F
 	@Override
 	@SuppressWarnings("unchecked")
 	public Class<To> getTarget(Field field) {
-		if(Collection.class.isAssignableFrom(field.getType())) {
+		if(Reflection.isCollection(field)) {
 			return Reflection.getCollectionTarget(field);
 		}
 		return (Class<To>) field.getType();

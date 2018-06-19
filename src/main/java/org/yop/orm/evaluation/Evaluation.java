@@ -4,13 +4,11 @@ package org.yop.orm.evaluation;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
-import org.yop.orm.sql.Constants;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
-import java.util.Collection;
 
 /**
  * An evaluation is an SQL portion that can be used in a WHERE clause.
@@ -39,7 +37,7 @@ public interface Evaluation {
 	@SuppressWarnings("unchecked")
 	static String columnName(Field field, Context<? extends Yopable> context) {
 		if (field.isAnnotationPresent(JoinTable.class)) {
-			if(Collection.class.isAssignableFrom(field.getType())) {
+			if(Reflection.isCollection(field)) {
 				Class<? extends Yopable> target = Reflection.getCollectionTarget(field);
 				Context<? extends Yopable> targetContext = context.to(target, field);
 				return ORMUtil.getIdColumn(targetContext);

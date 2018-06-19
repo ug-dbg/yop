@@ -151,6 +151,7 @@ public class Table implements Comparable<Table> {
 		return table;
 	}
 
+	@SuppressWarnings("unchecked")
 	private static Table fromRelationField(Field relationField, ORMTypes types) {
 		JoinTable joinTable = relationField.getAnnotation(JoinTable.class);
 
@@ -159,16 +160,16 @@ public class Table implements Comparable<Table> {
 		table.schema = joinTable.schema();
 		table.name   = joinTable.table();
 
-		@SuppressWarnings("unchecked")
 		Class<? extends Yopable> sourceClass = (Class<? extends Yopable>) relationField.getDeclaringClass();
 		Column source = new Column(joinTable.sourceColumn(), types.getForType(Long.class), 0, types);
 		createJoinTableColumnAttributes(source, sourceClass, joinTable.sourceForeignKey(), joinTable);
 		table.columns.add(source);
 
-		@SuppressWarnings("unchecked")
-		Class<? extends Yopable> targetClass = (Class<? extends Yopable>)relationField.getType();
-		if(Collection.class.isAssignableFrom(targetClass)) {
+		Class<? extends Yopable> targetClass;
+		if(Reflection.isCollection(relationField)) {
 			targetClass = Reflection.getCollectionTarget(relationField);
+		} else {
+			targetClass = (Class<? extends Yopable>)relationField.getType();
 		}
 		Column target = new Column(joinTable.targetColumn(), types.getForType(Long.class), 0, types);
 		createJoinTableColumnAttributes(target, targetClass, joinTable.targetForeignKey(), joinTable);

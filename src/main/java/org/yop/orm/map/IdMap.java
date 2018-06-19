@@ -8,6 +8,7 @@ import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Results;
 import org.yop.orm.util.ORMUtil;
+import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -106,13 +107,13 @@ public class IdMap {
 		List<Field> fields = ORMUtil.joinedFields(yopable);
 		for (Field field : fields) {
 			String newContext = context + SEPARATOR + field.getName() + SEPARATOR;
-			if(Collection.class.isAssignableFrom(field.getType())) {
+			if(Reflection.isCollection(field)) {
 				Class<? extends Yopable> targetClass = ORMUtil.getRelationFieldType(field);
 				newContext += ORMUtil.getTargetName(targetClass);
 
 				if(results.noContext(newContext, targetClass)) continue;
 				map(results, targetClass, newContext, map);
-			} else if (Yopable.class.isAssignableFrom(field.getType())){
+			} else if (Reflection.isYopable(field)){
 				@SuppressWarnings("unchecked")
 				Class<? extends Yopable> targetClass = (Class<? extends Yopable>) field.getType();
 				newContext += ORMUtil.getTargetName(targetClass);
