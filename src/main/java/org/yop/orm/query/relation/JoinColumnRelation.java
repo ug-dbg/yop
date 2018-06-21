@@ -2,8 +2,6 @@ package org.yop.orm.query.relation;
 
 import com.google.common.base.Joiner;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
@@ -31,8 +29,6 @@ import java.util.stream.Collectors;
  * @param <To>   the relation target type
  */
 class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Relation {
-
-	private static final Logger logger = LoggerFactory.getLogger(JoinColumnRelation.class);
 
 	private static final String UPDATE = " UPDATE {0} SET {1} = {2} WHERE {3} = {4} ";
 
