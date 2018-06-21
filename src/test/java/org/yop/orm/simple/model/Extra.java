@@ -6,6 +6,8 @@ import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Yopable;
 
+import java.util.Objects;
+
 @Table(name = "simple_extra")
 public class Extra implements Yopable {
 
@@ -55,5 +57,18 @@ public class Extra implements Yopable {
 
 	public void setSuperExtra(SuperExtra superExtra) {
 		this.superExtra = superExtra;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Extra extra = (Extra) o;
+		return Objects.equals(userName, extra.userName) && Objects.equals(style, extra.style);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(userName, style);
 	}
 }

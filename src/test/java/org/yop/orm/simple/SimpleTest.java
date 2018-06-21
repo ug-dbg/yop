@@ -116,22 +116,34 @@ public class SimpleTest extends DBMSSwitch {
 			extra.setOther(other);
 			other.setExtra(extra);
 
+			SuperExtra superExtra = new SuperExtra();
+			superExtra.setSize(123456789L);
+			extra.setSuperExtra(superExtra);
+
 			upsert(Pojo.class)
 				.onto(newPojo)
 				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+					.join(to(Extra::getOther))
+					.join(to(Extra::getSuperExtra))
+				))
 				.checkNaturalID()
 				.execute(connection);
 
 			Set<Pojo> found = select(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
 				.joinAll()
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+					.join(to(Extra::getOther))
+					.join(to(Extra::getSuperExtra))
+				))
 				.execute(connection, Select.Strategy.EXISTS);
 			Assert.assertEquals(1, found.size());
 			Pojo foundPojo = found.iterator().next();
 			Other foundOther = foundPojo.getOthers().iterator().next();
 			Assert.assertTrue(foundOther == foundOther.getExtra().getOther());
+			Assert.assertEquals(extra, foundOther.getExtra());
+			Assert.assertEquals(superExtra, foundOther.getExtra().getSuperExtra());
 
 			Set<Pojo> foundWith2Queries = select(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
@@ -177,7 +189,7 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertEquals(newPojo.getJopos().iterator().next(), newPojoFromSelect.getJopos().iterator().next());
 
 			delete(Pojo.class)
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
 				.executeQueries(connection);
 
 			Set<Pojo> afterDelete = select(Pojo.class).joinAll().execute(connection);
@@ -185,6 +197,9 @@ public class SimpleTest extends DBMSSwitch {
 
 			Set<Extra> extras = select(Extra.class).execute(connection);
 			Assert.assertEquals(0, extras.size());
+
+			Set<SuperExtra> superExtras = select(SuperExtra.class).execute(connection);
+			Assert.assertEquals(0, superExtras.size());
 
 			// Assertion that the relation was cleaned in the association table.
 			Executor.Action action = results -> {

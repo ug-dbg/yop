@@ -8,6 +8,7 @@ import org.yop.orm.model.Yopable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 @Table(name = "simple_superextra")
 public class SuperExtra implements Yopable {
@@ -32,5 +33,18 @@ public class SuperExtra implements Yopable {
 
 	public void setSize(Long size) {
 		this.size = size;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		SuperExtra that = (SuperExtra) o;
+		return Objects.equals(size, that.size);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(size);
 	}
 }
