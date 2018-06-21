@@ -133,19 +133,6 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 		return BatchQuery.merge((List<Query>) queries);
 	}
 
-	/**
-	 * Generate SQL delete queries, for the given source objects, using the join directive.
-	 * <br>
-	 * This does nothing for now :-(
-	 * @return a collection of delete queries.
-	 */
-	@Override
-	public Collection<Query> toSQLDelete() {
-		// Something should be probably done here : we don't have the related elements but the user asked for deletion
-		logger.info("[HDG] Asked for @JoinColumn relation deletion [{}]", this);
-		return new ArrayList<>(0);
-	}
-
 	@Override
 	public String toString() {
 		return "JoinColumnRelation{" +
