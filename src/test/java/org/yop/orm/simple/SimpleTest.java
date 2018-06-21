@@ -217,6 +217,76 @@ public class SimpleTest extends DBMSSwitch {
 	}
 
 	@Test
+	public void testSelectStrategies() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Pojo newPojo = new Pojo();
+			newPojo.setVersion(10564337);
+			newPojo.setType(Pojo.Type.FOO);
+			newPojo.setActive(true);
+			Jopo jopo = new Jopo();
+			jopo.setName("jopo From code !");
+			jopo.setPojo(newPojo);
+			newPojo.getJopos().add(jopo);
+
+			Other other = new Other();
+			other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
+			other.setName("other name :)");
+			newPojo.getOthers().add(other);
+
+			Extra extra = new Extra();
+			extra.setStyle("rad");
+			extra.setUserName("roger");
+			extra.setOther(other);
+			other.setExtra(extra);
+
+			SuperExtra superExtra = new SuperExtra();
+			superExtra.setSize(123456789L);
+			extra.setSuperExtra(superExtra);
+
+			upsert(Pojo.class)
+				.onto(newPojo)
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+					.join(to(Extra::getOther))
+					.join(to(Extra::getSuperExtra))
+				))
+				.checkNaturalID()
+				.execute(connection);
+
+			Set<Pojo> found = select(Pojo.class)
+				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
+				.joinAll()
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+					.join(to(Extra::getOther))
+					.join(to(Extra::getSuperExtra))
+				))
+				.execute(connection, Select.Strategy.EXISTS);
+			Assert.assertEquals(1, found.size());
+			Pojo foundPojo = found.iterator().next();
+			Other foundOther = foundPojo.getOthers().iterator().next();
+			Assert.assertTrue(foundOther == foundOther.getExtra().getOther());
+			Assert.assertEquals(extra, foundOther.getExtra());
+			Assert.assertEquals(superExtra, foundOther.getExtra().getSuperExtra());
+
+			Set<Pojo> foundWithIN = select(Pojo.class)
+				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
+				.joinAll()
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+					.join(to(Extra::getOther))
+					.join(to(Extra::getSuperExtra))
+				))
+				.execute(connection, Select.Strategy.IN);
+			Assert.assertEquals(1, found.size());
+			Assert.assertEquals(found, foundWithIN);
+			Pojo foundPojoWithIN = found.iterator().next();
+			Other foundOtherWithIN = foundPojoWithIN.getOthers().iterator().next();
+			Assert.assertTrue(foundOther == foundOtherWithIN.getExtra().getOther());
+			Assert.assertEquals(extra, foundOtherWithIN.getExtra());
+			Assert.assertEquals(superExtra, foundOtherWithIN.getExtra().getSuperExtra());
+		}
+	}
+
+	@Test
 	public void testJoinColumn() throws SQLException, ClassNotFoundException {
 		try (IConnection connection = this.getConnection()) {
 			SuperExtra superExtra = new SuperExtra();
