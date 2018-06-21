@@ -28,7 +28,7 @@ public class Extra implements Yopable {
 	private transient SuperExtra superExtra;
 
 	public String getUserName() {
-		return userName;
+		return this.userName;
 	}
 
 	public void setUserName(String userName) {
@@ -36,7 +36,7 @@ public class Extra implements Yopable {
 	}
 
 	public String getStyle() {
-		return style;
+		return this.style;
 	}
 
 	public void setStyle(String style) {
@@ -44,7 +44,7 @@ public class Extra implements Yopable {
 	}
 
 	public Other getOther() {
-		return other;
+		return this.other;
 	}
 
 	public void setOther(Other other) {
@@ -52,7 +52,7 @@ public class Extra implements Yopable {
 	}
 
 	public SuperExtra getSuperExtra() {
-		return superExtra;
+		return this.superExtra;
 	}
 
 	public void setSuperExtra(SuperExtra superExtra) {
@@ -64,11 +64,11 @@ public class Extra implements Yopable {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Extra extra = (Extra) o;
-		return Objects.equals(userName, extra.userName) && Objects.equals(style, extra.style);
+		return Objects.equals(this.userName, extra.userName) && Objects.equals(this.style, extra.style);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(userName, style);
+		return Objects.hash(this.userName, this.style);
 	}
 }

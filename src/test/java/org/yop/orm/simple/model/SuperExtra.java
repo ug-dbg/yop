@@ -24,11 +24,11 @@ public class SuperExtra implements Yopable {
 	private Collection<Extra> extras = new ArrayList<>();
 
 	public Collection<Extra> getExtras() {
-		return extras;
+		return this.extras;
 	}
 
 	public Long getSize() {
-		return size;
+		return this.size;
 	}
 
 	public void setSize(Long size) {
@@ -40,11 +40,11 @@ public class SuperExtra implements Yopable {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		SuperExtra that = (SuperExtra) o;
-		return Objects.equals(size, that.size);
+		return Objects.equals(this.size, that.size);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(size);
+		return Objects.hash(this.size);
 	}
 }
