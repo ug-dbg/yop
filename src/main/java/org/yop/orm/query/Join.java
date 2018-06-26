@@ -43,7 +43,7 @@ public class Join<From extends Yopable, To extends Yopable> extends AbstractJoin
 
 	@Override
 	public String toString() {
-		if (this.field != null) {
+		if (this.field == null) {
 			return super.toString();
 		}
 		return this.getClass().getSimpleName()
