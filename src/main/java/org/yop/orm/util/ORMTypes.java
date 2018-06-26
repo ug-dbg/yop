@@ -12,6 +12,7 @@ import java.text.MessageFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -44,12 +45,22 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 
 	/**
 	 * Get the SQL type for the given Java type.
+	 * <br>
+	 * 2 passes : exact match, then 'assignable from'.
+	 * <br>
+	 * (java.sql.Date is assignable from java.util.Date)
 	 * @param type the java type
 	 * @return the SQL type
 	 */
 	public String getForType(Class<?> type) {
 		Class<?> wrapped = Primitives.wrap(type);
 
+		// first pass : exact match.
+		for (Entry<Class<?>, String> entry : this.entrySet()) {
+			if(wrapped.equals(entry.getKey())) return entry.getValue();
+		}
+
+		// second pass : 'assignable from' is OK.
 		for (Entry<Class<?>, String> entry : this.entrySet()) {
 			if(wrapped.isAssignableFrom(entry.getKey())) return entry.getValue();
 		}
@@ -75,13 +86,14 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 		this.put(Float.class,  "REAL");
 		this.put(Double.class, "REAL");
 
-		this.put(Date.class,          "DATE");
+		this.put(Date.class,          "TIMESTAMP");
 		this.put(Calendar.class,      "TIMESTAMP");
 		this.put(Instant.class,       "TIMESTAMP");
+		this.put(LocalTime.class,     "TIME");
 		this.put(LocalDate.class,     "DATE");
 		this.put(LocalDateTime.class, "TIMESTAMP");
 
-		this.put(Time.class,               "TIMESTAMP");
+		this.put(Time.class,               "TIME");
 		this.put(java.sql.Date.class,      "DATE");
 		this.put(java.sql.Timestamp.class, "TIMESTAMP");
 	}

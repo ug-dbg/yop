@@ -54,6 +54,28 @@ public class Reflection {
 	}
 
 	/**
+	 * Get an existing method on a given class, with the given parameters.
+	 * <br>
+	 * This is a call to {@link Class#getDeclaredMethod(String, Class...)}.
+	 * <br>
+	 * If the method does not exist, simply return null, do not throw any {@link NoSuchMethodException}.
+	 * @param clazz          the class of the target method
+	 * @param name           the name of the method
+	 * @param parameterTypes the method parameter types.
+	 * @return the target method, accessible for your convenience, or null if no method found
+	 */
+	public static Method getMethod(Class<?> clazz, String name, Class<?>... parameterTypes) {
+		try {
+			Method method = clazz.getDeclaredMethod(name, parameterTypes);
+			method.setAccessible(true);
+			return method;
+		} catch (NoSuchMethodException e) {
+			logger.debug("No method [{}]#[{}] with parameter types {}", clazz, name, parameterTypes, e);
+		}
+		return null;
+	}
+
+	/**
 	 * Get all the non synthetic fields of a class. <br>
 	 * Also retrieve the non transient and non synthetic fields from superclasses.
 	 * @param type         the class
@@ -241,12 +263,13 @@ public class Reflection {
 	 * @throws YopRuntimeException if no field matches the getter
 	 */
 	public static <T, R> Field findField(Class<T> clazz, Function<T, R> getter) {
+		Class<?> fieldType = null;
 		try {
 			List<Field> fields = getFields(clazz, false);
 			T instance = newInstanceNoArgs(clazz);
 
 			for (Field field : fields) {
-				Class<?> fieldType = field.getType();
+				fieldType = field.getType();
 				Object testValue = newInstanceUnsafe(fieldType);
 				field.set(instance, testValue);
 				R fieldValue = getter.apply(instance);
@@ -261,7 +284,7 @@ public class Reflection {
 			}
 
 		} catch (IllegalAccessException | RuntimeException e) {
-			throw new YopRuntimeException("Unable to find field from [" + clazz + "] for the given accessors !", e);
+			throw new YopRuntimeException("Unable to find field from [" + clazz + "] for the given accessors ! Last field type was [" + fieldType + "]", e);
 		}
 		throw new YopRuntimeException("Unable to find field from [" + clazz + "] for the given accessors !");
 	}

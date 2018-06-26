@@ -3,6 +3,8 @@ package org.yop.orm.util.dialect;
 import org.yop.orm.gen.Column;
 import org.yop.orm.util.ORMTypes;
 
+import java.util.Calendar;
+
 /**
  * MySQL dialect {@link ORMTypes} extension.
  * @see <a href="https://www.mysql.com/">https://www.mysql.com/</a>
@@ -21,6 +23,7 @@ public class MySQL extends ORMTypes {
 	 */
 	private MySQL() {
 		super("VARCHAR");
+		this.put(Calendar.class, "DATETIME");
 	}
 
 	/**

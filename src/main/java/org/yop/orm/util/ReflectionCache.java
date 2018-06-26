@@ -32,6 +32,7 @@ class ReflectionCache {
 		this.put(Set.class,        HashSet.class);
 		this.put(Queue.class,      LinkedList.class);
 		this.put(Map.class,        HashMap.class);
+		this.put(Calendar.class,   GregorianCalendar.class);
 	}};
 
 	static Collection<Field> getDeclaredFields(Class clazz) {

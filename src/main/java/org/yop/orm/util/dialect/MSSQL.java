@@ -39,7 +39,7 @@ public class MSSQL extends ORMTypes {
 
 		this.put(Float.class,  "REAL");
 		this.put(Double.class, "REAL");
-		this.put(Date.class,          "DATE");
+		this.put(Date.class,          "DATETIME");
 		this.put(Calendar.class,      "DATETIME");
 		this.put(Instant.class,       "DATETIME");
 		this.put(LocalDate.class,     "DATE");

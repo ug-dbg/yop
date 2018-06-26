@@ -5,6 +5,7 @@ import org.yop.orm.gen.Table;
 import org.yop.orm.util.ORMTypes;
 
 import java.text.MessageFormat;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +34,9 @@ public class Oracle extends ORMTypes {
 		this.put(Long.class,    "NUMBER");
 		this.put(Short.class,   "NUMBER");
 		this.put(Byte.class,    "NUMBER");
+
+		this.put(LocalTime.class,     "TIMESTAMP");
+		this.put(java.sql.Time.class, "TIMESTAMP");
 	}
 
 	@Override

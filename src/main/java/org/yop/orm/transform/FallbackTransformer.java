@@ -11,12 +11,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Calendar;
-import java.util.Date;
 
 /**
  * A fall back transformer is used when the {@link java.sql.ResultSet#getObject(int, Class)} fails.
@@ -34,6 +31,8 @@ public class FallbackTransformer implements ITransformer<Object> {
 	/**
 	 * Try to transform a given object into a target class, using some strategies.
 	 * This mostly is to be used if the JDBC driver does not support {@link java.sql.ResultSet#getObject(int, Class)}.
+	 * <br>
+	 * Let's say 'what' is the input from the JDBC driver :
 	 * <ol>
 	 *     <li>what is null or what is already the target type : do nothing</li>
 	 *     <li>what is java.sql → convert to string</li>
@@ -60,39 +59,33 @@ public class FallbackTransformer implements ITransformer<Object> {
 		}
 
 		if(what instanceof java.sql.Timestamp) {
-			LocalDateTime localDateTime = ((Timestamp) what).toLocalDateTime();
-			what = localDateTime.toString();
+			if (LocalDateTime.class.isAssignableFrom(into)) {
+				return ((Timestamp) what).toLocalDateTime();
+			} else {
+				what = ((Timestamp) what).toInstant().toString();
+			}
 		}
 
 		if(what instanceof java.sql.Date) {
-			LocalDate localDate = ((java.sql.Date) what).toLocalDate();
-			what = localDate.toString();
+			what = ((java.sql.Date) what).toLocalDate().toString();
 		}
 
 		if(what instanceof java.sql.Time) {
-			LocalTime localTime = ((java.sql.Time) what).toLocalTime();
-			what = localTime.toString();
+			what = ((java.sql.Time) what).toLocalTime().toString();
 		}
 
 		if(what instanceof String) {
-			if(Boolean.class.isAssignableFrom(Primitives.wrap(into))) {
+			if (Boolean.class.isAssignableFrom(Primitives.wrap(into))) {
 				return Boolean.valueOf((String) what);
 			}
-			if (Instant.class.isAssignableFrom(into)) {
-				return Instant.parse((CharSequence) what);
+			if (LocalTime.class.isAssignableFrom(into)) {
+				return LocalTime.parse((CharSequence) what);
 			}
 			if (LocalDate.class.isAssignableFrom(into)) {
 				return LocalDate.parse((CharSequence) what);
 			}
 			if (LocalDateTime.class.isAssignableFrom(into)) {
 				return LocalDateTime.parse((CharSequence) what);
-			}
-			if (Date.class.isAssignableFrom(into)) {
-				return new Date(Instant.parse((CharSequence) what).toEpochMilli());
-			}
-			if (Calendar.class.isAssignableFrom(into)) {
-				Calendar instance = Calendar.getInstance();
-				instance.setTime(new Date(Instant.parse((CharSequence) what).toEpochMilli()));
 			}
 			if (BigDecimal.class.isAssignableFrom(into)) {
 				// Oracle seems to store a BigDecimal (as VARCHAR) with "," instead of "."
@@ -132,7 +125,7 @@ public class FallbackTransformer implements ITransformer<Object> {
 			}
 		}
 
-		return what;
+		return fromJDBC;
 	}
 
 	/**
