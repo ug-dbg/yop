@@ -143,7 +143,7 @@ public class SimpleTest extends DBMSSwitch {
 			Other foundOther = foundPojo.getOthers().iterator().next();
 			Assert.assertTrue(foundOther == foundOther.getExtra().getOther());
 			Assert.assertEquals(extra, foundOther.getExtra());
-			Assert.assertEquals(superExtra, foundOther.getExtra().getSuperExtra());
+			Assert.assertTrue(superExtra.acceptable(foundOther.getExtra().getSuperExtra()));
 
 			Set<Pojo> foundWith2Queries = select(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
@@ -266,7 +266,7 @@ public class SimpleTest extends DBMSSwitch {
 			Other foundOther = foundPojo.getOthers().iterator().next();
 			Assert.assertTrue(foundOther == foundOther.getExtra().getOther());
 			Assert.assertEquals(extra, foundOther.getExtra());
-			Assert.assertEquals(superExtra, foundOther.getExtra().getSuperExtra());
+			Assert.assertTrue(superExtra.acceptable(foundOther.getExtra().getSuperExtra()));
 
 			Set<Pojo> foundWithIN = select(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
@@ -282,7 +282,7 @@ public class SimpleTest extends DBMSSwitch {
 			Other foundOtherWithIN = foundPojoWithIN.getOthers().iterator().next();
 			Assert.assertTrue(foundOther == foundOtherWithIN.getExtra().getOther());
 			Assert.assertEquals(extra, foundOtherWithIN.getExtra());
-			Assert.assertEquals(superExtra, foundOtherWithIN.getExtra().getSuperExtra());
+			Assert.assertTrue(superExtra.acceptable(foundOtherWithIN.getExtra().getSuperExtra()));
 		}
 	}
 
@@ -319,7 +319,7 @@ public class SimpleTest extends DBMSSwitch {
 				.join(to(Extra::getSuperExtra).join(toSet(SuperExtra::getExtras)))
 				.execute(connection);
 			for (Extra extraFromDB : extras) {
-				Assert.assertEquals(13L, extraFromDB.getSuperExtra().getSize().longValue());
+				Assert.assertTrue(superExtra.acceptable(extraFromDB.getSuperExtra()));
 			}
 		}
 	}
