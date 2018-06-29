@@ -8,6 +8,7 @@ import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.evaluation.NaturalKey;
+import org.yop.orm.exception.YopMapperException;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.relation.Relation;
@@ -390,15 +391,30 @@ public class Upsert<T extends Yopable> {
 	 * @param element the element holding the field
 	 * @return the field value
 	 * @throws IllegalAccessException could not access the filed
-	 * @throws YopMappingException    invalid enum strategy on the field. What did you do bro ?
+	 * @throws YopMapperException     Could not read value or invalid enum strategy on the field. What did you do bro ?
 	 */
 	private Object getFieldValue(Field field, T element) throws IllegalAccessException {
 		if(field.getType().isEnum()) {
-			Column.EnumStrategy strategy = field.getAnnotation(Column.class).enum_strategy();
-			switch (strategy) {
-				case NAME:    return ((Enum)field.get(element)).name();
-				case ORDINAL: return ((Enum)field.get(element)).ordinal();
-				default: throw new YopMappingException("Unknown enum strategy [" + strategy.name() + "] !");
+			Column column = field.getAnnotation(Column.class);
+			Column.EnumStrategy strategy = column.enum_strategy();
+
+			try {
+				Enum fieldValue = (Enum) field.get(element);
+				if (!column.not_null() && fieldValue == null){
+					return null;
+				}
+
+				switch (strategy) {
+					case NAME:    return fieldValue.name();
+					case ORDINAL: return fieldValue.ordinal();
+					default:      throw new YopMappingException("Unknown enum strategy [" + strategy.name() + "] !");
+				}
+			} catch (RuntimeException e) {
+				throw new YopMapperException(
+					"Unable to read enum field [" + field.getDeclaringClass().getName() + "#" + field.getName() + "] "
+					+ "with strategy [" + strategy + "]",
+					e
+				);
 			}
 		}
 		return ORMUtil.readField(field, element);
