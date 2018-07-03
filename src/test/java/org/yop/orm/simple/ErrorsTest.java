@@ -69,6 +69,16 @@ public class ErrorsTest extends DBMSSwitch {
 		}
 	}
 
+	@Test(expected = YopMappingException.class)
+	public void test_unknown_type_jointable_field() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			PojoUnknownTypeField pojo = new PojoUnknownTypeField();
+			pojo.setVersion(4);
+			Yop.upsert(PojoUnknownTypeField.class).onto(pojo).execute(connection);
+			Yop.select(PojoUnknownTypeField.class).execute(connection);
+		}
+	}
+
 	@Test(expected = YopMapperException.class)
 	public void test_static_final_field() throws SQLException, ClassNotFoundException {
 		try (IConnection connection = this.getConnection()) {
