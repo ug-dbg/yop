@@ -266,7 +266,7 @@ public class Mapper {
 			} else {
 				throw new YopMappingException(
 					" Field type [" + field.getType().getName()
-					+ "] @ [" + field.getDeclaringClass().getName() + "#" + field.getName()
+					+ "] @ [" + Reflection.fieldToString(field)
 					+ "] is unsupported. Sorry about that :-( "
 				);
 			}

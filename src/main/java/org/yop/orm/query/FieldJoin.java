@@ -36,11 +36,9 @@ class FieldJoin<From extends Yopable, To extends Yopable> extends AbstractJoin<F
 	@Override
 	public String toString() {
 		return this.getClass().getSimpleName() + "{"
-			+ this.field.getDeclaringClass().getName()
-			+ "#"
-			+ this.field.getName()
+			+ Reflection.fieldToString(this.field)
 			+ " → "
-			+ this.getTarget(field).getName()
+			+ this.getTarget(this.field).getName()
 		+ "}";
 	}
 

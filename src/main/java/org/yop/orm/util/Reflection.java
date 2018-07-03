@@ -76,6 +76,17 @@ public class Reflection {
 	}
 
 	/**
+	 * A 'toString' method for logging a field with its source class.
+	 * <br>
+	 * e.g : Field from SomeClass → com.package.SomeClass#fieldName
+	 * @param field the field to use. Can be null.
+	 * @return [fullyQualifiedClassName]#[fieldName] or "null" if the field is null.
+	 */
+	public static String fieldToString(Field field) {
+		return field == null ? "null" : (field.getDeclaringClass().getName() + "#" + field.getName());
+	}
+
+	/**
 	 * Get all the non synthetic fields of a class. <br>
 	 * Also retrieve the non transient and non synthetic fields from superclasses.
 	 * @param type         the class

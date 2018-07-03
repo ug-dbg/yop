@@ -91,14 +91,14 @@ public class Upsert<T extends Yopable> {
 			}
 
 			throw new YopMappingException(
-				"Invalid type [" + children.getClass().getName()
-				+ "] for [" + field.getDeclaringClass().getName() + "#" + field.getName()
-				+ "] on [" + on + "]"
+				"Invalid type [" + children.getClass().getName() + "] " +
+				"for [" + Reflection.fieldToString(field) + "] " +
+				"on [" + on + "]"
 			);
 
 		} catch (IllegalAccessException e) {
 			throw new YopMappingException(
-				"Could not access [" + field.getDeclaringClass().getName() + "#" + field.getName() + "] on [" + on + "]"
+				"Could not access [" + Reflection.fieldToString(field) + "] on [" + on + "]"
 			);
 		}
 	}
@@ -411,7 +411,7 @@ public class Upsert<T extends Yopable> {
 				}
 			} catch (RuntimeException e) {
 				throw new YopMapperException(
-					"Unable to read enum field [" + field.getDeclaringClass().getName() + "#" + field.getName() + "] "
+					"Unable to read enum field [" + Reflection.fieldToString(field) + "] "
 					+ "with strategy [" + strategy + "]",
 					e
 				);

@@ -18,6 +18,7 @@ import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.ORMUtil;
+import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.sql.Statement;
@@ -167,15 +168,13 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 			}
 
 			throw new YopMappingException(
-				"Invalid type [" + children.getClass().getName()
-				+ "] for [" + field.getDeclaringClass().getName() + "#" + field.getName()
-				+ "] on [" + on + "]"
+				"Invalid type [" + children.getClass().getName() + "] " +
+				"for [" + Reflection.fieldToString(field) + "] " +
+				"on [" + on + "]"
 			);
 
 		} catch (IllegalAccessException e) {
-			throw new YopMappingException(
-				"Could not access [" + field.getDeclaringClass().getName() + "#" + field.getName() + "] on [" + on + "]"
-			);
+			throw new YopMappingException("Could not access [" + Reflection.fieldToString(field) + "] on [" + on + "]");
 		}
 	}
 
