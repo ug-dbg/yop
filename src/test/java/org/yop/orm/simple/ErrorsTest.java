@@ -1,6 +1,9 @@
 package org.yop.orm.simple;
 
+import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
 import org.yop.orm.Yop;
 import org.yop.orm.annotations.Column;
@@ -19,6 +22,8 @@ import java.util.Map;
  * This test class uses some invalid Yopables for error test cases.
  */
 public class ErrorsTest extends DBMSSwitch {
+
+	private static final Logger logger = LoggerFactory.getLogger(ErrorsTest.class);
 
 	@Override
 	protected String getPackagePrefix() {
@@ -45,6 +50,22 @@ public class ErrorsTest extends DBMSSwitch {
 	public void test_column_does_not_exist() throws SQLException, ClassNotFoundException {
 		try (IConnection connection = this.getConnection()) {
 			Yop.select(PojoInvalidField.class).execute(connection);
+		}
+	}
+
+	@Test
+	public void test_array_type_column() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			PojoInvalidTypeField pojo = new PojoInvalidTypeField();
+			pojo.setVersion(new Integer[]{1, 2});
+			try {
+				// Fault tolerant SQLite driver does not fail at upsert, but at select.
+				Yop.upsert(PojoInvalidTypeField.class).onto(pojo).execute(connection);
+				Yop.select(PojoInvalidTypeField.class).execute(connection);
+				Assert.fail("There is an invalid @column array field. An exception should have occurred.");
+			} catch (YopSQLException | YopMapperException e) {
+				logger.debug("Error with an @Column array field. That's OK");
+			}
 		}
 	}
 
