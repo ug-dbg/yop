@@ -101,16 +101,14 @@ public class Mapper {
 	 * @param context the target element context
 	 * @param <T> the target type
 	 * @return the input element, or the cached element of it !
-	 * @throws YopSQLException        an error occurred reading the resultset
-	 * @throws IllegalAccessException could not access a field on the target instance
+	 * @throws YopMapperException Unable to map a field, because of an underlying exception
 	 */
 	@SuppressWarnings("unchecked")
 	private static <T extends Yopable> T mapSimpleFields(
 		Results results,
 		T element,
 		String context,
-		FirstLevelCache cache)
-		throws IllegalAccessException {
+		FirstLevelCache cache) {
 
 		T fromCache = cache.tryCache(results, (Class<T>) element.getClass(), context);
 		if(fromCache != null) {
@@ -119,36 +117,70 @@ public class Mapper {
 
 		List<Field> fields = Reflection.getFields(element.getClass(), Column.class);
 		for (Field field : fields) {
-			String columnName = field.getAnnotation(Column.class).name();
-			columnName = context + SEPARATOR + columnName;
-			String shortened = results.getQuery().getShortened(columnName);
-			Class<?> fieldType = field.getType();
-
-			if (results.getCursor().getObject(shortened) != null) {
-				if (fieldType.isEnum()) {
-					setEnumValue(results.getCursor(), field, shortened, element);
-				} else {
-					ITransformer transformer = ORMUtil.getTransformerFor(field);
-					try {
-						field.set(element, transformer.fromSQL(
-							results.getCursor().getObject(shortened, fieldType),
-							fieldType)
-						);
-					} catch (YopSQLException | AbstractMethodError e) {
-						logger.debug("Error mapping [{}] of type [{}]. Manual fallback.", columnName, fieldType);
-						Object object = results.getCursor().getObject(shortened);
-						field.set(element, transformer.fromSQL(
-							ITransformer.fallbackTransformer().fromSQL(object, fieldType),
-							fieldType)
-						);
-						logger.debug("Mapping [{}] of type [{}]. Manual fallback success.", columnName, fieldType);
-					}
-				}
-			} else if (!fieldType.isPrimitive()){
-				field.set(element, null);
+			try {
+				setFieldValue(field, element, context, results);
+			} catch (IllegalAccessException | RuntimeException e) {
+				throw new YopMapperException(
+					"Unable to map field [" + Reflection.fieldToString(field) + "] " +
+					"for context [" + context + "] from result set",
+					e
+				);
 			}
 		}
 		return cache.put(element);
+	}
+
+	/**
+	 * Map a given field from a Resultset line for a given context.
+	 * <br>
+	 * If the field @Column defines a {@link ITransformer}, this method uses it.
+	 * <br>
+	 * If it fails, it tries to use {@link org.yop.orm.transform.FallbackTransformer#fromSQL(Object, Class)} first.
+	 * <br>
+	 * <b>⚠⚠⚠ This method DOES NOT iterate over the resultset ! ⚠⚠⚠</b>
+	 * @param field   the field to map
+	 * @param element the target element
+	 * @param context the target element context
+	 * @param results the SQL query results
+	 * @throws YopSQLException        an error occurred reading the resultset
+	 * @throws IllegalAccessException could not access a field on the target instance
+	 */
+	@SuppressWarnings("unchecked")
+	private static void setFieldValue(
+		Field field,
+		Yopable element,
+		String context,
+		Results results)
+		throws IllegalAccessException {
+
+		String columnName = field.getAnnotation(Column.class).name();
+		columnName = context + SEPARATOR + columnName;
+		String shortened = results.getQuery().getShortened(columnName);
+		Class<?> fieldType = field.getType();
+
+		if (results.getCursor().getObject(shortened) != null) {
+			if (fieldType.isEnum()) {
+				setEnumValue(results.getCursor(), field, shortened, element);
+			} else {
+				ITransformer transformer = ORMUtil.getTransformerFor(field);
+				try {
+					field.set(element, transformer.fromSQL(
+						results.getCursor().getObject(shortened, fieldType),
+						fieldType)
+					);
+				} catch (YopSQLException | AbstractMethodError e) {
+					logger.debug("Error mapping [{}] of type [{}]. Manual fallback.", columnName, fieldType);
+					Object object = results.getCursor().getObject(shortened);
+					field.set(element, transformer.fromSQL(
+						ITransformer.fallbackTransformer().fromSQL(object, fieldType),
+						fieldType)
+					);
+					logger.debug("Mapping [{}] of type [{}]. Manual fallback success.", columnName, fieldType);
+				}
+			}
+		} else if (!fieldType.isPrimitive()){
+			field.set(element, null);
+		}
 	}
 
 	/**
