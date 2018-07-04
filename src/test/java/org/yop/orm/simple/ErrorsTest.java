@@ -41,6 +41,29 @@ public class ErrorsTest extends DBMSSwitch {
 		}
 	}
 
+	// This test is actually not an error test.
+	@Test
+	public void test_no_annotated_id() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Yop.select(PojoNoAnnotatedId.class).execute(connection);
+		}
+	}
+
+	@Test(expected = YopMappingException.class)
+	public void test_not_long_id() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Yop.select(PojoNotLongId.class).execute(connection);
+		}
+	}
+
+	@Test(expected = YopMappingException.class)
+	public void test_several_ids() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Yop.select(PojoSeveralIds.class).execute(connection);
+		}
+	}
+
+
 	@Test(expected = YopSQLException.class)
 	public void test_table_does_not_exist() throws SQLException, ClassNotFoundException {
 		try (IConnection connection = this.getConnection()) {
