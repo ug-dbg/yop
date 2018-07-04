@@ -223,12 +223,19 @@ public class Reflection {
 	 * @return the type.
 	 */
 	public static Type get1ArgParameter(Field field){
-		ParameterizedType type = (ParameterizedType) field.getGenericType();
+		Type genericType = field.getGenericType();
+		if (! (genericType instanceof ParameterizedType)) {
+			throw new YopRuntimeException(concat(
+				"Field [", fieldToString(field), "] is not generic. Unsupported."
+			));
+		}
+
+		ParameterizedType type = (ParameterizedType) genericType;
 		Type[] typeParameter = type.getActualTypeArguments();
 
 		if(typeParameter.length != 1){
 			throw new YopRuntimeException(concat(
-				"Persisted field [", field.getName(), "] has [", typeParameter.length, "] parameters. Unsupported."
+				"Field [", fieldToString(field), "] has [", typeParameter.length, "] parameters. Unsupported."
 			));
 		}
 		return typeParameter[0];
