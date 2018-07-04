@@ -100,7 +100,6 @@ public class ErrorsTest extends DBMSSwitch {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test(expected = YopMapperException.class)
 	public void test_upsert_silly_enum_strategy() throws SQLException, ReflectiveOperationException {
 		Map<String, Object> typeAnnotationValues = DynamicEnum.getFieldAnnotationValues(
@@ -121,7 +120,6 @@ public class ErrorsTest extends DBMSSwitch {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test(expected = YopMapperException.class)
 	public void test_select_silly_enum_strategy() throws SQLException, ReflectiveOperationException {
 		Map<String, Object> typeAnnotationValues = DynamicEnum.getFieldAnnotationValues(
