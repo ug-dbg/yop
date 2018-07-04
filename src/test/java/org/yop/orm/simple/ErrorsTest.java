@@ -9,12 +9,14 @@ import org.yop.orm.Yop;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.exception.YopMapperException;
 import org.yop.orm.exception.YopMappingException;
+import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.reflection.DynamicEnum;
 import org.yop.orm.simple.invalid_model.*;
 import org.yop.orm.simple.model.Pojo;
 import org.yop.orm.sql.adapter.IConnection;
 
+import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.Map;
 
@@ -139,6 +141,15 @@ public class ErrorsTest extends DBMSSwitch {
 			Yop.select(Pojo.class).execute(connection);
 		} finally {
 			typeAnnotationValues.put("enum_strategy", Column.EnumStrategy.NAME);
+		}
+	}
+
+	@Test(expected = YopRuntimeException.class)
+	public void test_bad_transformer() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			PojoBadTransformer pojo = new PojoBadTransformer();
+			pojo.setaVeryLongInteger(new BigInteger("123456"));
+			Yop.upsert(PojoBadTransformer.class).onto(pojo).execute(connection);
 		}
 	}
 }
