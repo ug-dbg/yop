@@ -38,13 +38,11 @@ public interface Yopable {
 	 */
 	default Long getId() {
 		Field idField = this.getIdField();
-		idField.setAccessible(true);
-
 		try {
 			return (Long) idField.get(this);
 		} catch (IllegalAccessException e) {
 			throw new YopRuntimeException(
-				"Unable to access Id field [" + idField.getName() + "] on [" + this.getClass().getName() + "]"
+				"Unable to access Id field [" + Reflection.fieldToString(idField) + "]"
 			);
 		}
 	}
@@ -60,13 +58,11 @@ public interface Yopable {
 	 */
 	default void setId(Long id) {
 		Field idField = this.getIdField();
-		idField.setAccessible(true);
-
 		try {
 			idField.set(this, id);
 		} catch (IllegalAccessException e) {
 			throw new YopRuntimeException(
-				"Unable to access Id field [" + idField.getName() + "] on [" + this.getClass().getName() + "]"
+				"Unable to access Id field [" + Reflection.fieldToString(idField) + "]"
 			);
 		}
 	}
@@ -146,7 +142,7 @@ public interface Yopable {
 					}
 				} catch (IllegalAccessException e) {
 					throw new YopRuntimeException(
-						"Unable to read @NaturalId field [" + field.getName() + "] from [" + this.getClass() + "]",
+						"Unable to read @NaturalId field [" + Reflection.fieldToString(field) + "]",
 						e
 					);
 				}
@@ -181,7 +177,7 @@ public interface Yopable {
 					builder.append(field.get(o));
 				} catch (IllegalAccessException e) {
 					throw new YopRuntimeException(
-						"Unable to read @NaturalId field [" + field.getName() + "] from [" + o.getClass() + "]",
+						"Unable to read @NaturalId field [" + Reflection.fieldToString(field) + "]",
 						e
 					);
 				}

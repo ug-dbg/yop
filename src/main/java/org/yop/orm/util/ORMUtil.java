@@ -104,7 +104,7 @@ public class ORMUtil {
 	 * For now, Yop only supports one single technical Long ID field, that might have (or not) an @Id annotation.
 	 * @param clazz the Yopable class
 	 * @param <T> the yopable type
-	 * @return the ID field
+	 * @return the ID field, set accessible.
 	 * @throws YopMappingException no Yop compatible ID field found or several ones.
 	 */
 	public static <T extends Yopable> Field getIdField(Class<T> clazz) {
@@ -124,6 +124,7 @@ public class ORMUtil {
 		if(!Long.class.isAssignableFrom(field.getType())) {
 			throw new YopMappingException("@Id field is not Long compatible !");
 		}
+		field.setAccessible(true);
 		return field;
 	}
 
