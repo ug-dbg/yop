@@ -160,7 +160,7 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 			.stream()
 			.findAny();
 
-		return "From(" + from + ")→To(" + (sample.isPresent() ? sample.get().getClass().getName() : "?") + ")";
+		return "From(" + from + ")→To(" + (sample.map(to -> to.getClass().getName()).orElse("?")) + ")";
 	}
 
 	/**
