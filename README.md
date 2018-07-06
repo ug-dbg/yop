@@ -1,4 +1,7 @@
-# YOP !
+# YOP ! 
+[![Build Status](http://jenkins.y-op.org/job/yop-test-MySQL/badge/icon)](http://jenkins.y-op.org/job/yop-test-MySQL/)
+[![Coverage](http://jenkins.y-op.org/job/yop-test-MySQL/ws/target/jacoco.svg)](http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco)
+  
 The 'Hit & Run' Object-Relational-Mapping tool :-) 
 
 ## What is YOP ?
