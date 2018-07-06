@@ -9,26 +9,41 @@
         <width>64</width>
         <height>64</height>
     </bannerLeft>
+
     <bannerRight>
         <name>
             Y-OP
         </name>
     </bannerRight>
+
     <publishDate position="right"/>
     <version position="right"/>
-    <body>
 
+    <body>
         <breadcrumbs>
+            <item
+                name=""
+                alt="jenkins build status"
+                img="http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/badge/icon"
+                href="http://jenkins.y-op.org/job/yop-test-MySQL/"
+            />
+            <item
+                name=""
+                alt="jenkins coverage"
+                img="http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/ws/target/jacoco.svg"
+                href="http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco"
+            />
             <item name="YOP" href="/"/>
         </breadcrumbs>
 
         <menu ref="reports" inherit="top" />
         <menu name="Liens"  inherit="top" >
-            <item name="Home" href="http://y-op.org" />
-            <item name="Quick start" href="http://y-op.org/quickstart" />
-            <item name="Wiki" href="http://y-op.org/wiki" />
+            <item name="Home"    href="http://maven.y-op.org" />
+            <item name="Jenkins" href="http://jenkins.y-op.org" />
+            <item name="GitHub"  href="http://github.com/ug-dbg/yop" />
         </menu>
     </body>
+
     <skin>
         <groupId>org.apache.maven.skins</groupId>
         <artifactId>maven-fluido-skin</artifactId>
