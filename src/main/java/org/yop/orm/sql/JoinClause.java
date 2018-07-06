@@ -42,11 +42,11 @@ public class JoinClause implements Comparable<JoinClause> {
 	}
 
 	public Context<?> getContext() {
-		return context;
+		return this.context;
 	}
 
 	public Parameters getParameters() {
-		return parameters;
+		return this.parameters;
 	}
 
 	@Override
