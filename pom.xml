@@ -83,6 +83,27 @@
 							</execution>
 						</executions>
 					</plugin>
+
+					<!-- Generate a badge from a unified JaCoCo report -->
+					<plugin>
+						<groupId>com.sigpwned</groupId>
+						<artifactId>jacoco-badge-maven-plugin</artifactId>
+						<version>0.1.3</version>
+						<executions>
+							<execution>
+								<id>generate-jacoco-badge</id>
+								<phase>test</phase>
+								<goals>
+									<goal>badge</goal>
+								</goals>
+								<configuration>
+									<passing>70</passing>
+									<metric>instruction</metric>
+									<reportFile>${project.reporting.outputDirectory}/jacoco/jacoco.csv</reportFile>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
 				</plugins>
 			</build>
 		</profile>
