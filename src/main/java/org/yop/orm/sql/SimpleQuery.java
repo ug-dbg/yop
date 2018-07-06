@@ -8,7 +8,7 @@ public class SimpleQuery extends Query {
 	/** The SQL query parameters (i.e. for '?' in the query) */
 	private final Parameters parameters;
 
-	/** Fake single entry batch cursor. Default to true. Set to false on {@link #next} first call */
+	/** Fake single entry batch cursor. Default to true. Set to false on {@link #nextBatch()} first call */
 	private boolean next = true;
 
 	/**
