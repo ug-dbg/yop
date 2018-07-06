@@ -2,7 +2,6 @@ package org.yop.orm.gen;
 
 import org.apache.commons.lang.StringUtils;
 import org.reflections.Reflections;
-import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Constants;
