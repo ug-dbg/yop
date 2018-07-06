@@ -88,7 +88,7 @@
 					<plugin>
 						<groupId>com.sigpwned</groupId>
 						<artifactId>jacoco-badge-maven-plugin</artifactId>
-						<version>0.1.3</version>
+						<version>0.1.4</version>
 						<executions>
 							<execution>
 								<id>generate-jacoco-badge</id>
@@ -100,6 +100,7 @@
 									<passing>70</passing>
 									<metric>instruction</metric>
 									<reportFile>${project.reporting.outputDirectory}/jacoco/jacoco.csv</reportFile>
+									<badgeFile>${project.build.directory}/jacoco.svg</badgeFile>
 								</configuration>
 							</execution>
 						</executions>
