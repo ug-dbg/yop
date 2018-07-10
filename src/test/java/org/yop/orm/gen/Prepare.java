@@ -20,6 +20,8 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Prepare a target database (DROP and CREATE tables) and get a connection.
@@ -205,6 +207,23 @@ public class Prepare {
 		try (IConnection connection = getMSSQLConnection()) {
 			prepare(packagePrefix, connection, MSSQL.INSTANCE);
 		}
+	}
+
+	/**
+	 * Generate the DB scripts for a given package for all {@link ORMTypes}. Do not execute anything.
+	 * <br>
+	 * Let's face it : this is just to improve code coverage.
+	 * @param packagePrefix the package prefix (find all Yopables)
+	 */
+	public static void generateScripts(String packagePrefix) {
+		List<ORMTypes> ormTypes = Arrays.asList(
+			SQLite.INSTANCE,
+			MySQL.INSTANCE,
+			Postgres.INSTANCE,
+			MSSQL.INSTANCE,
+			Oracle.INSTANCE
+		);
+		ormTypes.forEach(dialect -> dialect.generateScript(packagePrefix));
 	}
 
 	/**

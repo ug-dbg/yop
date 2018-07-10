@@ -82,8 +82,14 @@ public abstract class DBMSSwitch {
 			"DBMSSwitch.check() method returned false. Test class [" + this.getClass().getName() + "] won't be run.",
 			this.check()
 		);
-
 		String packagePrefix = this.getPackagePrefix();
+
+		// Generate the scripts for every dialect.
+		// This (artificially) improves code coverage.
+		// And it is not very expensive to ensure it runs with no exception thrown.
+		Prepare.generateScripts(packagePrefix);
+
+		// Generate and execute the preparation scripts for the package and the target database.
 		switch (dbms()) {
 			case "mysql" :     Prepare.prepareMySQL(packagePrefix);    break;
 			case "postgres" :  Prepare.preparePostgres(packagePrefix); break;
