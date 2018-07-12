@@ -33,17 +33,15 @@ Select
 .execute(connection
 ```
 YOP *could* be able to run on **Android**.  
-See the "yop-android-poc" for an infamous POC.
+See the [yop-android-poc](https://github.com/ug-dbg/yop-android-poc) for an infamous POC.
 
 ## What are the requirements ?
 * **Java 8** (→ method references are a key requirement of YOP)
 * *Sqlite/mysql/postgres/oracle/mssql* database
 * Accepting some *strong and not very casual DB constraints* : 
-  * 1 auto incremented ID per class/table
-  * <strike>1 table per relation between java objects (*makes everything easier, actually*)</strike>
-  not required anymore starting from yop 0.4
+  * 1 auto incremented (or with a sequence) ID per class/table
 * Using a (very) limited set of mapping annotations and implementing the *Serializable like* Yopable interface. 
-* Identifying cycles in your data graph : YOP kinda deals with data trees !
+* Identifying cycles in your data graph. Use 'transient' keyword to cut cycles if you need the 'joinAll' clause.
 * Handling your connections/transactions yourself
 
 
@@ -66,7 +64,7 @@ Upsert.from(myClass).onto(instance).checkNaturalKey().join(Join.to(MyClass::getR
 ```
 
 → The API aims at inlining requests as much as possible.  
-→ *transient* keyword cuts the cycles : for instance - the 'joinAll' clause will stop at transient relationships 
+→ *transient* keyword cuts the cycles : the 'joinAll' clause will stop at transient relationships 
 but **you always can join on a transient relation explicitly**.  
 → Using Yop, you will NEVER ensure you fully fetched/saved/deleted your data graph if there is a cycle in it. 
 But you can do it piece by piece :-)  
@@ -76,10 +74,10 @@ It is complicated to persist data graphs with cycles in SQL. Some frameworks do 
 Then, it is also a bit complicated to serialize data graphs with cycles in json/XML. 
 I actually feel it is **quite the same problem**.  
 We do enjoy data graph cycles in the JVM memory because of a reference mechanism.  
-Since you will mostly want to bring your data out of the Java heap space, why not try to ease it once and for all ?  
+Since you will mostly want to serialize this data, why not try to ease it once and for all ?  
 Of course you will still be allowed to have cycles in your java objects data graph, but :
 * you will have to cut them using 'transient' and CRUD them explicitly
-* you will have to think your data as sets of acyclic graphs when you want to CRUD it to SQL/Json  
+* you will have to *think* your data as sets of acyclic graphs when you want to CRUD it to SQL/Json  
   
 And there is a **'Recurse'** API that can recursively fetch cyclic relations using sub-queries. 
 
