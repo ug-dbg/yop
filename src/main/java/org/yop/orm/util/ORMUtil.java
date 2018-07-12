@@ -285,7 +285,7 @@ public class ORMUtil {
 			return value;
 		} catch (IllegalAccessException e) {
 			throw new YopRuntimeException(
-				"Could not read [" + field.getDeclaringClass() + "#" + field.getName()+ "] on [" + element + "] !"
+				"Could not read [" + Reflection.fieldToString(field) + "] on [" + element + "] !"
 			);
 		}
 	}

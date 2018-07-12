@@ -354,7 +354,7 @@ public class Upsert<T extends Yopable> {
 				parameters.addParameter(field.getAnnotation(Column.class).name(), this.getFieldValue(field, element));
 			} catch (IllegalAccessException e) {
 				throw new YopMappingException(
-					"Could not read [" + field.getGenericType() + "#" + field.getName() + "] on [" + element + "]"
+					"Could not read [" + Reflection.fieldToString(field) + "] on [" + element + "]"
 				);
 			}
 		}

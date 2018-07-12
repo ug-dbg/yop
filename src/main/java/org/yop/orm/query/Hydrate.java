@@ -166,7 +166,7 @@ public class Hydrate<T extends Yopable> {
 					throw new YopRuntimeException(
 						"Something very weird happened : "
 						+ "found more than 1 target value for relation ["
-						+ relationField.getDeclaringClass().getName() + "#" + relationField.getName() + "] "
+						+ Reflection.fieldToString(relationField) + "] "
 						+ " on element [" + element + "]"
 					);
 				}
@@ -179,7 +179,7 @@ public class Hydrate<T extends Yopable> {
 		} catch (IllegalAccessException e) {
 			throw new YopRuntimeException(
 				"Could not access ["
-				+ relationField.getDeclaringClass().getName() + "#" + relationField.getName() + "] "
+				+ Reflection.fieldToString(relationField) + "] "
 				+ "for element [" + element + "]",
 				e
 			);

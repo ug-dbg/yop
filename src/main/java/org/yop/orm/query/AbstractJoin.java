@@ -162,7 +162,6 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		Context<To> to,
 		Field field) {
 
-		Class<From> from = parent.getTarget();
 		JoinTable joinTableAnnotation   = field.getAnnotation(JoinTable.class);
 		JoinColumn joinColumnAnnotation = field.getAnnotation(JoinColumn.class);
 
@@ -172,7 +171,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 			return toSQLJoin(type, parent, to, joinColumnAnnotation, field.getName());
 		} else {
 			throw new YopMappingException(
-				"Field [" + from.getName() + "#" + field.getName() + "] has no JoinTable/JoinColumn annotation !"
+				"Field [" + Reflection.fieldToString(field) + "] has no JoinTable/JoinColumn annotation !"
 			);
 		}
 	}
