@@ -12,14 +12,6 @@ public class YopSQLException extends RuntimeException {
 	/** The query */
 	private Query query;
 
-	public YopSQLException(String message) {
-		super(message);
-	}
-
-	public YopSQLException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
 	public YopSQLException(String message, Query query, Throwable cause) {
 		super(message, cause);
 		this.query = query;

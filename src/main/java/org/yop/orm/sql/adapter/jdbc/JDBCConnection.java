@@ -88,7 +88,7 @@ public class JDBCConnection implements IConnection {
 				}
 			}
 		} catch (SQLException e) {
-			throw new YopSQLException("Exception preparing statement for query [" + query + "]", e);
+			throw new YopSQLException("Exception preparing statement for query [" + query + "]", query, e);
 		}
 
 		return new JDBCRequest(statement, query);

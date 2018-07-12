@@ -139,6 +139,7 @@ public class JDBCCursor implements IResultCursor {
 		} catch (SQLException e) {
 			throw new YopSQLException(
 				"Could not move to next row on the resultset of [" + this.query + "]",
+				this.query,
 				e
 			);
 		}
