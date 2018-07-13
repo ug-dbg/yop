@@ -158,31 +158,22 @@ public class Hydrate<T extends Yopable> {
 		Collection<? extends Yopable> relationValue = join.getTarget(fromDB);
 		Field relationField = join.getField(this.target);
 
-		try {
-			if (Reflection.isCollection(relationField)) {
-				relationField.set(element, relationValue);
-			} else if (Reflection.isYopable(relationField)) {
-				if (relationValue.size() > 1) {
-					throw new YopRuntimeException(
-						"Something very weird happened : "
-						+ "found more than 1 target value for relation ["
-						+ Reflection.fieldToString(relationField) + "] "
-						+ " on element [" + element + "]"
-					);
-				}
-				if (relationValue.isEmpty()) {
-					relationField.set(element, null);
-				} else {
-					relationField.set(element, relationValue.iterator().next());
-				}
+		if (Reflection.isCollection(relationField)) {
+			Reflection.set(relationField, element, relationValue);
+		} else if (Reflection.isYopable(relationField)) {
+			if (relationValue.size() > 1) {
+				throw new YopRuntimeException(
+					"Something very weird happened : "
+					+ "found more than 1 target value for relation ["
+					+ Reflection.fieldToString(relationField) + "] "
+					+ " on element [" + element + "]"
+				);
 			}
-		} catch (IllegalAccessException e) {
-			throw new YopRuntimeException(
-				"Could not access ["
-				+ Reflection.fieldToString(relationField) + "] "
-				+ "for element [" + element + "]",
-				e
-			);
+			if (relationValue.isEmpty()) {
+				Reflection.set(relationField, element, null);
+			} else {
+				Reflection.set(relationField, element, relationValue.iterator().next());
+			}
 		}
 	}
 }

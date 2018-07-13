@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.chinook.model.*;
 import org.yop.orm.chinook.model.xml.ChinookDataSet;
+import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.util.Reflection;
 
@@ -194,8 +195,8 @@ class ChinookData {
 
 				field.setAccessible(true);
 				targetField.setAccessible(true);
-				targetField.set(to, field.get(from));
-			} catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException e) {
+				Reflection.set(targetField, to, Reflection.readField(field, from));
+			} catch (NoSuchFieldException | IllegalArgumentException | YopRuntimeException e) {
 				logger.trace(
 					"Could not map field [{}#{}] onto [{}]",
 					field.getDeclaringClass(),

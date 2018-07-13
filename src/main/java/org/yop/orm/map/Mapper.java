@@ -119,7 +119,7 @@ public class Mapper {
 		for (Field field : fields) {
 			try {
 				setFieldValue(field, element, context, results);
-			} catch (IllegalAccessException | RuntimeException e) {
+			} catch (RuntimeException e) {
 				throw new YopMapperException(
 					"Unable to map field [" + Reflection.fieldToString(field) + "] " +
 					"for context [" + context + "] from result set",
@@ -143,16 +143,10 @@ public class Mapper {
 	 * @param context the target element context
 	 * @param results the SQL query results
 	 * @throws YopSQLException        an error occurred reading the resultset
-	 * @throws IllegalAccessException could not access a field on the target instance
+	 * @throws org.yop.orm.exception.YopRuntimeException could not access a field on the target instance
 	 */
 	@SuppressWarnings("unchecked")
-	private static void setFieldValue(
-		Field field,
-		Yopable element,
-		String context,
-		Results results)
-		throws IllegalAccessException {
-
+	private static void setFieldValue(Field field, Yopable element, String context, Results results) {
 		String columnName = field.getAnnotation(Column.class).name();
 		columnName = context + SEPARATOR + columnName;
 		String shortened = results.getQuery().getShortened(columnName);
@@ -164,22 +158,24 @@ public class Mapper {
 			} else {
 				ITransformer transformer = ORMUtil.getTransformerFor(field);
 				try {
-					field.set(element, transformer.fromSQL(
-						results.getCursor().getObject(shortened, fieldType),
-						fieldType)
+					Reflection.set(
+						field,
+						element,
+						transformer.fromSQL(results.getCursor().getObject(shortened, fieldType), fieldType)
 					);
 				} catch (YopSQLException | AbstractMethodError e) {
 					logger.debug("Error mapping [{}] of type [{}]. Manual fallback.", columnName, fieldType);
 					Object object = results.getCursor().getObject(shortened);
-					field.set(element, transformer.fromSQL(
-						ITransformer.fallbackTransformer().fromSQL(object, fieldType),
-						fieldType)
+					Reflection.set(
+						field,
+						element,
+						transformer.fromSQL(ITransformer.fallbackTransformer().fromSQL(object, fieldType), fieldType)
 					);
 					logger.debug("Mapping [{}] of type [{}]. Manual fallback success.", columnName, fieldType);
 				}
 			}
 		} else if (!fieldType.isPrimitive()){
-			field.set(element, null);
+			Reflection.set(field, element, null);
 		}
 	}
 
@@ -195,33 +191,31 @@ public class Mapper {
 	 * @param columnName the column name to read in the result set
 	 * @param element    the element on which the field must be set
 	 * @throws YopSQLException        Error reading the result set
-	 * @throws IllegalAccessException Error accessing the enum field on the element
+	 * @throws YopMapperException Error accessing the enum field on the element
 	 */
 	@SuppressWarnings("unchecked")
-	private static void setEnumValue(
-		IResultCursor resultSet,
-		Field enumField,
-		String columnName,
-		Object element)
-		throws IllegalAccessException {
-
+	private static void setEnumValue(IResultCursor resultSet, Field enumField, String columnName, Object element) {
 		Column.EnumStrategy strategy = enumField.getAnnotation(Column.class).enum_strategy();
 		Class<? extends Enum> enumType = (Class<? extends Enum>) enumField.getType();
 		Object value = resultSet.getObject(columnName);
 
 		if(value == null) {
-			enumField.set(element, null);
+			Reflection.set(enumField, element, null);
 			return;
 		}
 
 		try {
 			switch (strategy) {
 				case NAME:
-					enumField.set(element, Enum.valueOf(enumType, String.valueOf(value)));
+					Reflection.set(enumField, element, Enum.valueOf(enumType, String.valueOf(value)));
 					break;
 				case ORDINAL:
 					// Integer.valueOf(Objects.toString(val)) → ordinal is stored as a string... A bit preposterous !
-					enumField.set(element, enumType.getEnumConstants()[Integer.valueOf(Objects.toString(value))]);
+					Reflection.set(
+						enumField,
+						element,
+						enumType.getEnumConstants()[Integer.valueOf(Objects.toString(value))]
+					);
 					break;
 				default:
 					throw new YopMappingException("Unknown enum strategy [" + strategy.name() + "] !");

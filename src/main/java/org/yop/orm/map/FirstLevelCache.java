@@ -6,6 +6,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Constants;
 import org.yop.orm.sql.Results;
 import org.yop.orm.util.ORMUtil;
+import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -106,14 +107,9 @@ public class FirstLevelCache {
 	 * @param target          the target object
 	 * @param <T> the target type
 	 * @return the element from cache.
-	 * @throws IllegalAccessException could not read the collection field
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends Yopable> T getOrDefault(
-		Field collectionField,
-		Yopable source,
-		T target)
-		throws IllegalAccessException {
+	public <T extends Yopable> T getOrDefault(Field collectionField, Yopable source, T target) {
 
 		if (! this.associationsCache.containsKey(collectionField)) {
 			this.associationsCache.put(collectionField, new HashMap<>());
@@ -125,7 +121,7 @@ public class FirstLevelCache {
 
 		Map<Long, Yopable> fieldValueAsMap = this.associationsCache.get(collectionField).get(source.getId());
 		if (! fieldValueAsMap.containsKey(target.getId())) {
-			((Collection) collectionField.get(source)).add(target);
+			((Collection) Reflection.readField(collectionField, source)).add(target);
 			fieldValueAsMap.put(target.getId(), target);
 		}
 		return (T) fieldValueAsMap.get(target.getId());

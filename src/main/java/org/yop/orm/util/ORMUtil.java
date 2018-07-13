@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.*;
 import org.yop.orm.exception.YopMappingException;
-import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Constants;
@@ -276,18 +275,12 @@ public class ORMUtil {
 	 */
 	@SuppressWarnings("unchecked")
 	public static Object readField(Field field, Yopable element) {
-		try {
-			Object value = field.get(element);
-			if(field.isAnnotationPresent(Column.class)) {
-				Column column = field.getAnnotation(Column.class);
-				return ITransformer.getTransformer(column.transformer()).forSQL(value, column);
-			}
-			return value;
-		} catch (IllegalAccessException e) {
-			throw new YopRuntimeException(
-				"Could not read [" + Reflection.fieldToString(field) + "] on [" + element + "] !"
-			);
+		Object value = Reflection.readField(field, element);
+		if(field.isAnnotationPresent(Column.class)) {
+			Column column = field.getAnnotation(Column.class);
+			return ITransformer.getTransformer(column.transformer()).forSQL(value, column);
 		}
+		return value;
 	}
 
 	/**

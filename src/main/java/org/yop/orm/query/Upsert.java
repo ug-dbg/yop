@@ -75,32 +75,26 @@ public class Upsert<T extends Yopable> {
 	@SuppressWarnings("unchecked")
 	private <U extends Yopable> Upsert<U> subUpsert(IJoin<T, U> join, T on) {
 		Field field = join.getField(this.target);
-		try {
-			Object children = field.get(on);
-			if(children == null) {
-				return null;
-			}
-
-			if (children instanceof Collection) {
-				if(! ((Collection) children).isEmpty()) {
-					return new Upsert<>(join.getTarget(field)).onto((Collection<U>) children);
-				}
-				return null;
-			} else if (children instanceof Yopable) {
-				return new Upsert<>(join.getTarget(field)).onto((U) children);
-			}
-
-			throw new YopMappingException(
-				"Invalid type [" + children.getClass().getName() + "] " +
-				"for [" + Reflection.fieldToString(field) + "] " +
-				"on [" + on + "]"
-			);
-
-		} catch (IllegalAccessException e) {
-			throw new YopMappingException(
-				"Could not access [" + Reflection.fieldToString(field) + "] on [" + on + "]"
-			);
+		Object children = Reflection.readField(field, on);
+		if(children == null) {
+			return null;
 		}
+
+		if (children instanceof Collection) {
+			if(! ((Collection) children).isEmpty()) {
+				return new Upsert<>(join.getTarget(field)).onto((Collection<U>) children);
+			}
+			return null;
+		} else if (children instanceof Yopable) {
+			return new Upsert<>(join.getTarget(field)).onto((U) children);
+		}
+
+		throw new YopMappingException(
+			"Invalid type [" + children.getClass().getName() + "] " +
+			"for [" + Reflection.fieldToString(field) + "] " +
+			"on [" + on + "]"
+		);
+
 	}
 
 	/**
@@ -350,13 +344,7 @@ public class Upsert<T extends Yopable> {
 				setIdField(field, element, parameters);
 				continue;
 			}
-			try {
-				parameters.addParameter(field.getAnnotation(Column.class).name(), this.getFieldValue(field, element));
-			} catch (IllegalAccessException e) {
-				throw new YopMappingException(
-					"Could not read [" + Reflection.fieldToString(field) + "] on [" + element + "]"
-				);
-			}
+			parameters.addParameter(field.getAnnotation(Column.class).name(), this.getFieldValue(field, element));
 		}
 
 		return parameters;
@@ -390,16 +378,15 @@ public class Upsert<T extends Yopable> {
 	 * @param field   the field to read
 	 * @param element the element holding the field
 	 * @return the field value
-	 * @throws IllegalAccessException could not access the filed
 	 * @throws YopMapperException     Could not read value or invalid enum strategy on the field. What did you do bro ?
 	 */
-	private Object getFieldValue(Field field, T element) throws IllegalAccessException {
+	private Object getFieldValue(Field field, T element) {
 		if(field.getType().isEnum()) {
 			Column column = field.getAnnotation(Column.class);
 			Column.EnumStrategy strategy = column.enum_strategy();
 
 			try {
-				Enum fieldValue = (Enum) field.get(element);
+				Enum fieldValue = (Enum) Reflection.readField(field, element);
 				if (!column.not_null() && fieldValue == null){
 					return null;
 				}

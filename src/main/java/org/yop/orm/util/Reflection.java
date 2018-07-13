@@ -87,6 +87,25 @@ public class Reflection {
 	}
 
 	/**
+	 * Read the value of a field on a target objet.
+	 * <br>
+	 * This method does not throw any {@link IllegalAccessException} !
+	 * @param field the field to read
+	 * @param onto  the target object where to read the field
+	 * @return the field value
+	 * @throws YopRuntimeException if the field could not be read for any reason.
+	 */
+	public static Object readField(Field field, Object onto) {
+		try {
+			return field.get(onto);
+		} catch (IllegalAccessException | RuntimeException e) {
+			throw new YopRuntimeException(
+				"Could not read [" + Reflection.fieldToString(field) + "] on [" + onto + "]"
+			);
+		}
+	}
+
+	/**
 	 * Get all the non synthetic fields of a class. <br>
 	 * Also retrieve the non transient and non synthetic fields from superclasses.
 	 * @param type         the class
@@ -203,8 +222,8 @@ public class Reflection {
 	 */
 	public static void setFrom(Field field, Object from, Object onto) {
 		try {
-			set(field, onto, field.get(from));
-		} catch (IllegalAccessException | RuntimeException e) {
+			set(field, onto, Reflection.readField(field, from));
+		} catch (RuntimeException e) {
 			throw new YopRuntimeException(
 				"Unable to set " +
 				"field [" + field.getDeclaringClass() + "#" + field.getName() + "] " +
@@ -289,7 +308,7 @@ public class Reflection {
 			for (Field field : fields) {
 				fieldType = field.getType();
 				Object testValue = newInstanceUnsafe(fieldType);
-				field.set(instance, testValue);
+				set(field, instance, testValue);
 				R fieldValue = getter.apply(instance);
 
 				if(testValue == fieldValue && ! ClassUtils.isPrimitiveOrWrapper(fieldType)) {
@@ -301,8 +320,12 @@ public class Reflection {
 				}
 			}
 
-		} catch (IllegalAccessException | RuntimeException e) {
-			throw new YopRuntimeException("Unable to find field from [" + clazz + "] for the given accessors ! Last field type was [" + fieldType + "]", e);
+		} catch (RuntimeException e) {
+			throw new YopRuntimeException(
+				"Unable to find field from [" + clazz + "] " +
+				"for the given accessors ! Last field type was [" + fieldType + "]",
+				e
+			);
 		}
 		throw new YopRuntimeException("Unable to find field from [" + clazz + "] for the given accessors !");
 	}
@@ -318,19 +341,18 @@ public class Reflection {
 	 * @param <T> the type holding the setter
 	 * @param <R> the target type
 	 * @return true if the getter actually returned the field value, twice
-	 * @throws IllegalAccessException could not read the field
+	 * @throws YopRuntimeException could not read the field
 	 */
 	private static <T, R> boolean primitiveCheck(
 		Field field,
 		Function<T, R> getter,
 		T instance,
 		Object testValue,
-		R fieldValue)
-		throws IllegalAccessException {
+		R fieldValue) {
 
 		if(ClassUtils.isPrimitiveOrWrapper(field.getType()) && testValue != null && testValue.equals(fieldValue)) {
 			Object confirmValue = primitiveTestValue(field.getType(), 1);
-			field.set(instance, confirmValue);
+			set(field, instance, confirmValue);
 			return getter.apply(instance).equals(confirmValue);
 		}
 		return false;
@@ -360,7 +382,7 @@ public class Reflection {
 					R testValue = (R) newInstanceUnsafe(fieldType);
 					setter.accept(instance, testValue);
 
-					Object fieldValue = field.get(instance);
+					Object fieldValue = Reflection.readField(field, instance);
 					if(testValue == fieldValue) {
 						return field;
 					}
@@ -373,7 +395,7 @@ public class Reflection {
 				}
 			}
 
-		} catch (IllegalAccessException | RuntimeException e) {
+		} catch (RuntimeException e) {
 			throw new YopRuntimeException("Unable to find field from [" + clazz + "] for the given accessors !", e);
 		}
 		throw new YopRuntimeException("Unable to find field from [" + clazz + "] for the given accessors !");

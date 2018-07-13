@@ -152,30 +152,26 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	@SuppressWarnings("unchecked")
 	private <U extends Yopable> BatchUpsert<U> subUpsert(IJoin<T, U> join, T on) {
 		Field field = join.getField(this.target);
-		try {
-			Object children = field.get(on);
-			if(children == null) {
-				return null;
-			}
-
-			if (children instanceof Collection) {
-				if(! ((Collection) children).isEmpty()) {
-					return (BatchUpsert<U>) new BatchUpsert<>(join.getTarget(field)).onto((Collection<U>) children);
-				}
-				return null;
-			} else if (children instanceof Yopable) {
-				return (BatchUpsert<U>) new BatchUpsert<>(join.getTarget(field)).onto((U) children);
-			}
-
-			throw new YopMappingException(
-				"Invalid type [" + children.getClass().getName() + "] " +
-				"for [" + Reflection.fieldToString(field) + "] " +
-				"on [" + on + "]"
-			);
-
-		} catch (IllegalAccessException e) {
-			throw new YopMappingException("Could not access [" + Reflection.fieldToString(field) + "] on [" + on + "]");
+		Object children = Reflection.readField(field, on);
+		if(children == null) {
+			return null;
 		}
+
+		if (children instanceof Collection) {
+			if(! ((Collection) children).isEmpty()) {
+				return (BatchUpsert<U>) new BatchUpsert<>(join.getTarget(field)).onto((Collection<U>) children);
+			}
+			return null;
+		} else if (children instanceof Yopable) {
+			return (BatchUpsert<U>) new BatchUpsert<>(join.getTarget(field)).onto((U) children);
+		}
+
+		throw new YopMappingException(
+			"Invalid type [" + children.getClass().getName() + "] " +
+			"for [" + Reflection.fieldToString(field) + "] " +
+			"on [" + on + "]"
+		);
+
 	}
 
 	/**

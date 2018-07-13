@@ -3,7 +3,6 @@ package org.yop.orm.model;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.NaturalId;
-import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
@@ -37,14 +36,7 @@ public interface Yopable {
 	 * @return the id field value
 	 */
 	default Long getId() {
-		Field idField = this.getIdField();
-		try {
-			return (Long) idField.get(this);
-		} catch (IllegalAccessException e) {
-			throw new YopRuntimeException(
-				"Unable to access Id field [" + Reflection.fieldToString(idField) + "]"
-			);
-		}
+		return (Long) Reflection.readField(this.getIdField(), this);
 	}
 
 	/**
@@ -57,14 +49,7 @@ public interface Yopable {
 	 * @param id the id field value
 	 */
 	default void setId(Long id) {
-		Field idField = this.getIdField();
-		try {
-			idField.set(this, id);
-		} catch (IllegalAccessException e) {
-			throw new YopRuntimeException(
-				"Unable to access Id field [" + Reflection.fieldToString(idField) + "]"
-			);
-		}
+		Reflection.set(this.getIdField(), this, id);
 	}
 
 	/**
@@ -133,18 +118,11 @@ public interface Yopable {
 		Collection<Field> naturalId = this.getNaturalId();
 		if(! naturalId.isEmpty()) {
 			for (Field field : naturalId) {
-				try {
-					Object thisField = field.get(this);
-					Object thatField = field.get(o);
-					if ((thisField == null && thatField != null) || (thisField != null && thatField == null)
-					||  (thisField != null && !thisField.equals(thatField))) {
-						return false;
-					}
-				} catch (IllegalAccessException e) {
-					throw new YopRuntimeException(
-						"Unable to read @NaturalId field [" + Reflection.fieldToString(field) + "]",
-						e
-					);
+				Object thisField = Reflection.readField(field, this);
+				Object thatField = Reflection.readField(field, o);
+				if ((thisField == null && thatField != null) || (thisField != null && thatField == null)
+				||  (thisField != null && !thisField.equals(thatField))) {
+					return false;
 				}
 			}
 			return true;
@@ -173,14 +151,7 @@ public interface Yopable {
 		if(! naturalId.isEmpty()) {
 			HashCodeBuilder builder = new HashCodeBuilder();
 			for (Field field : naturalId) {
-				try {
-					builder.append(field.get(o));
-				} catch (IllegalAccessException e) {
-					throw new YopRuntimeException(
-						"Unable to read @NaturalId field [" + Reflection.fieldToString(field) + "]",
-						e
-					);
-				}
+				builder.append(Reflection.readField(field, o));
 			}
 			return builder.toHashCode();
 		}
