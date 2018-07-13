@@ -60,13 +60,9 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 			Field field = join.getField((Class<From>) source.getClass());
 			JoinTable joinTable = field.getAnnotation(JoinTable.class);
 
-			if (joinTable != null) {
-				this.relationTable = joinTable.table();
-				this.sourceColumn = joinTable.sourceColumn();
-				this.targetColumn = joinTable.targetColumn();
-			} else {
-				this.relations.clear();
-			}
+			this.relationTable = joinTable.table();
+			this.sourceColumn = joinTable.sourceColumn();
+			this.targetColumn = joinTable.targetColumn();
 		}
 	}
 
