@@ -1,6 +1,5 @@
 package org.yop.orm.query.relation;
 
-import com.google.common.base.Joiner;
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.model.Yopable;
@@ -14,7 +13,6 @@ import org.yop.orm.util.ORMUtil;
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * A {@link JoinColumn} relation between Java objects, that can generate UPSERT/DELETE queries.
@@ -132,49 +130,13 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 	@Override
 	public String toString() {
 		return "JoinColumnRelation{" +
-			"sourceTable='" + sourceTable + '\'' +
-			", targetTable='" + targetTable + '\'' +
-			", sourceColumn='" + sourceColumn + '\'' +
-			", targetColumn='" + targetColumn + '\'' +
-			", " + toStringFromTo() +
-			", relations=" + this.relationsToString() +
+			"sourceTable='" + this.sourceTable + '\'' +
+			", targetTable='" + this.targetTable + '\'' +
+			", sourceColumn='" + this.sourceColumn + '\'' +
+			", targetColumn='" + this.targetColumn + '\'' +
+			", From(" + RelationsToString.from(this.relations) + ")→To(" + RelationsToString.to(this.relations) + ")" +
+			", relations=" + RelationsToString.toString(this.relations) +
 		'}';
-	}
-
-	/**
-	 * An utility method to get a hint of the From → To relation.
-	 * @return "From(source class)→To(target class)"
-	 */
-	private String toStringFromTo() {
-		if (this.relations.isEmpty()) {
-			return "From(?)→To(?)";
-		}
-
-		String from = this.relations.keySet().iterator().next().getClass().getName();
-		Optional<To> sample = this.relations
-			.values()
-			.stream()
-			.filter(c -> !c.isEmpty())
-			.findAny()
-			.orElse(new ArrayList<>(0))
-			.stream()
-			.findAny();
-
-		return "From(" + from + ")→To(" + (sample.map(to -> to.getClass().getName()).orElse("?")) + ")";
-	}
-
-	/**
-	 *  An utility method to turn {@link #relations} into a human readable String, for logging purposes mostly.
-	 * @return {source1ID→[target1ID, target2ID], source2ID[target1ID, target3ID]}
-	 */
-	private String relationsToString() {
-		return "{" + Joiner.on(",").join(
-			this.relations
-			.entrySet()
-			.stream()
-			.map(e -> e.getKey().getId() + "→" + e.getValue().stream().map(Yopable::getId).collect(Collectors.toList()))
-			.collect(Collectors.toList()))
-		+ "}";
 	}
 
 	/**

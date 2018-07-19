@@ -142,6 +142,17 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 		return inserts;
 	}
 
+	@Override
+	public String toString() {
+		return "JoinColumnRelation{" +
+			"relationTable='" + this.relationTable+ '\'' +
+			", sourceColumn='" + this.sourceColumn + '\'' +
+			", targetColumn='" + this.targetColumn + '\'' +
+			", From(" + RelationsToString.from(this.relations) + ")→To(" + RelationsToString.to(this.relations) + ")" +
+			", relations=" + RelationsToString.toString(this.relations) +
+		'}';
+	}
+
 	/**
 	 * Generate a 'DELETE IN' query
 	 * @param from         the relation table name
