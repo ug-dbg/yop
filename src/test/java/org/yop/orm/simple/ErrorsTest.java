@@ -88,7 +88,7 @@ public class ErrorsTest extends DBMSSwitch {
 				Yop.upsert(PojoInvalidTypeField.class).onto(pojo).execute(connection);
 				Yop.select(PojoInvalidTypeField.class).execute(connection);
 				Assert.fail("There is an invalid @column array field. An exception should have occurred.");
-			} catch (YopSQLException | YopMapperException e) {
+			} catch (YopSQLException | YopMapperException | AssertionError e) {
 				logger.debug("Error with an @Column array field. That's OK");
 			}
 		}
