@@ -1,0 +1,131 @@
+<project
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<artifactId>yop</artifactId>
+		<groupId>org.y-op</groupId>
+		<version>0.6.0-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>rest</artifactId>
+	<packaging>jar</packaging>
+	<name>yop-rest</name>
+
+	<description>
+		YOP-rest is a simple REST exposition for YOP-orm.
+		Ω≡{Ⓐ}
+	</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.y-op</groupId>
+			<artifactId>orm</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.y-op</groupId>
+			<artifactId>orm</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Logging -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+		</dependency>
+
+		<!-- Servlet API, HTTP commons and embedded Tomcat for testing  -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.5.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-core</artifactId>
+			<version>9.0.10</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Test dependencies : JUnit & SQL drivers -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.skyscreamer</groupId>
+			<artifactId>jsonassert</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.21.0.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.45</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>42.2.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.microsoft.sqlserver</groupId>
+			<artifactId>mssql-jdbc</artifactId>
+			<version>6.4.0.jre8</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Oracle test dependencies. Oracle drivers are not very accessible. -->
+		<!--
+			You need access to the Oracle maven repo for ojdbc8.
+			Or download ojdbc8.jar from oracle and install using :
+			mvn install:install-file
+				-Dfile={Path/to/your/ojdbc8.jar}
+				-DgroupId=com.oracle
+				-DartifactId=ojdbc8
+				-Dversion=12.2.0.1
+				-Dpackaging=jar
+		-->
+		<dependency>
+			<groupId>com.oracle</groupId>
+			<artifactId>ojdbc8</artifactId>
+			<version>12.2.0.1</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!--
+			Not JDBC 4.2
+			Does not work well with Yop.
+			But you should be able to use Transformers to deal with specific types - e.g. oracle.sql.TIMESTAMP.
+		-->
+		<!--<dependency>-->
+			<!--<groupId>com.oracle</groupId>-->
+			<!--<artifactId>ojdbc6</artifactId>-->
+			<!--<version>11.2.0.4.0-atlassian-hosted</version>-->
+			<!--<scope>test</scope>-->
+		<!--</dependency>-->
+	</dependencies>
+
+</project>
