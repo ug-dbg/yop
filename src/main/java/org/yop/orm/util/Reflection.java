@@ -76,6 +76,25 @@ public class Reflection {
 	}
 
 	/**
+	 * Find the given annotation instance on the given target class or from its class hierarchy.
+	 * @param target     the target class
+	 * @param annotation the annotation class
+	 * @param <A> the annotation type
+	 * @return the annotation instance or null if no annotation found on target class or any of its superclasses.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <A extends Annotation> A getAnnotation(Class target, Class<A> annotation) {
+		Class i = target;
+		while (i != null && i != Object.class) {
+			if (i.isAnnotationPresent(annotation)) {
+				return (A) i.getAnnotation(annotation);
+			}
+			i = i.getSuperclass();
+		}
+		return null;
+	}
+
+	/**
 	 * A 'toString' method for logging a field with its source class.
 	 * <br>
 	 * e.g : Field from SomeClass → com.package.SomeClass#fieldName

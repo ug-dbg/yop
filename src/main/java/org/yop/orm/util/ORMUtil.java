@@ -43,8 +43,9 @@ public class ORMUtil {
 	 * @return the table name for the current context
 	 */
 	public static String getTableName(Class<? extends Yopable> target) {
-		if(target.isAnnotationPresent(Table.class)) {
-			return target.getAnnotation(Table.class).name();
+		Table table = Reflection.getAnnotation(target, Table.class);
+		if(table != null) {
+			return table.name();
 		}
 		return target.getSimpleName().toUpperCase();
 	}
@@ -56,8 +57,9 @@ public class ORMUtil {
 	 * @return the table name for the current context
 	 */
 	public static String getSchemaName(Class<? extends Yopable> target) {
-		if(target.isAnnotationPresent(Table.class)) {
-			return target.getAnnotation(Table.class).schema();
+		Table table = Reflection.getAnnotation(target, Table.class);
+		if(table != null) {
+			return table.schema();
 		}
 		return "";
 	}
