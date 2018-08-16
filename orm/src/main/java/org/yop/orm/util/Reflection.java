@@ -11,9 +11,7 @@ import sun.reflect.ReflectionFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -73,6 +71,24 @@ public class Reflection {
 			logger.debug("No method [{}]#[{}] with parameter types {}", clazz, name, parameterTypes, e);
 		}
 		return null;
+	}
+
+	/**
+	 * Gets an array of all methods in a class hierarchy walking up recursively to parent classes.
+	 * @param target the class
+	 * @return the methods array
+	 */
+	public static Set<Method> getMethods(Class<?> target) {
+		Set<Method> allMethods = new HashSet<>();
+		Method[] declaredMethods = target.getDeclaredMethods();
+		Method[] methods = target.getMethods();
+		if (target.getSuperclass() != null) {
+			Class<?> superClass = target.getSuperclass();
+			allMethods.addAll(getMethods(superClass));
+		}
+		allMethods.addAll(Arrays.asList(declaredMethods));
+		allMethods.addAll(Arrays.asList(methods));
+		return allMethods;
 	}
 
 	/**
