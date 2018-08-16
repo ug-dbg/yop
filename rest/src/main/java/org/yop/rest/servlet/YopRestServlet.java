@@ -2,22 +2,19 @@ package org.yop.rest.servlet;
 
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.Header;
 import org.apache.http.NameValuePair;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.entity.ContentType;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.evaluation.IdIn;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.Select;
-import org.yop.orm.query.json.JSON;
-import org.yop.rest.annotations.Rest;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
+import org.yop.orm.util.Reflection;
+import org.yop.rest.annotations.Rest;
+import org.yop.rest.exception.YopResourceInvocationException;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -30,8 +27,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -41,6 +37,8 @@ public class YopRestServlet extends HttpServlet {
 
 	static final String PACKAGE_INIT_PARAM = "packages";
 	static final String DATASOURCE_JNDI_INIT_PARAM = "datasource_jndi";
+
+	private static final String CONTENT = "content";
 
 	private final Map<String, Class<Yopable>> yopablePaths = new HashMap<>();
 	private String dataSourceJNDIName;
@@ -87,78 +85,54 @@ public class YopRestServlet extends HttpServlet {
 		logger.info("Finding REST resource for GET [{}] ", req.getRequestURI());
 		RestRequest restRequest = new RestRequest(req);
 
-		if (StringUtils.isBlank(restRequest.restResource)) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "No Yop REST resource set in path !");
-			return;
-		}
-		if (! this.yopablePaths.containsKey(restRequest.restResource)) {
-			resp.sendError(
-				HttpServletResponse.SC_NOT_FOUND,
-				"The yop REST resource [" + restRequest.restResource + "] was not found."
-			);
+		if (this.isInvalidResource(restRequest, resp)) {
 			return;
 		}
 
 		Class<Yopable> target = this.yopablePaths.get(restRequest.restResource);
-		Select<Yopable> select = Select.from(target);
-		if (restRequest.joinAll || restRequest.joinIDs) {
-			select.joinAll();
-		}
 
 		if (StringUtils.isNotBlank(restRequest.subResource)) {
-			try {
-				String out = this.invokeSubResource(restRequest, target);
-				resp.setContentType("application/json");
-				resp.setCharacterEncoding("UTF-8");
-				resp.getWriter().write(out);
-				resp.setStatus(HttpServletResponse.SC_OK);
-				return;
-			} catch (UnsupportedOperationException e) {
-				resp.sendError(
-					HttpServletResponse.SC_NOT_FOUND,
-					"The yop REST sub resource [" + restRequest.subResource + "] was not found."
-				);
-				return;
-			}
+			this.invokeSubResource(restRequest, target, resp);
+			return;
 		}
 
-		JSON<Yopable> json = JSON.from(target);
-		if (restRequest.id > 0) {
-			select.where(new IdIn(Collections.singletonList(restRequest.id)));
-			Yopable foundByID = select.uniqueResult(this.getConnection());
-			json.onto(foundByID);
-		} else {
-			Set<Yopable> all = select.execute(this.getConnection());
-			json.onto(all);
-			if (restRequest.joinIDs) {
-				json.joinIDsAll();
-			}
-			if (restRequest.joinAll) {
-				json.joinAll();
-			}
-		}
-
-		if (restRequest.joinIDs) {
-			json.joinIDsAll();
-		}
-		if (restRequest.joinAll) {
-			json.joinAll();
-		}
-
-		resp.setContentType("application/json");
-		resp.setCharacterEncoding("UTF-8");
-		resp.getWriter().write(json.toJSON());
-		resp.setStatus(HttpServletResponse.SC_OK);
+		Get.doGet(restRequest, target, resp, this.getConnection());
 	}
 
 	@Override
-	protected void doHead(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		super.doHead(req, resp);
+	protected void doHead(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		logger.info("Finding REST resource for HEAD [{}] ", req.getRequestURI());
+		RestRequest restRequest = new RestRequest(req);
+
+		if (this.isInvalidResource(restRequest, resp)) {
+			return;
+		}
+
+		Class<Yopable> target = this.yopablePaths.get(restRequest.restResource);
+
+		if (StringUtils.isNotBlank(restRequest.subResource)) {
+			this.invokeSubResource(restRequest, target, resp);
+			return;
+		}
+		Head.doHead(restRequest, target, resp, this.getConnection());
 	}
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		super.doPost(req, resp);
+		logger.info("Finding REST resource for POST [{}] ", req.getRequestURI());
+		RestRequest restRequest = new RestRequest(req);
+
+		if (this.isInvalidResource(restRequest, resp)) {
+			return;
+		}
+
+		Class<Yopable> target = this.yopablePaths.get(restRequest.restResource);
+
+		if (StringUtils.isNotBlank(restRequest.subResource)) {
+			this.invokeSubResource(restRequest, target, resp);
+			return;
+		}
+		//Post.doPost(restRequest, target, resp, this.getConnection());
 	}
 
 	@Override
@@ -181,10 +155,35 @@ public class YopRestServlet extends HttpServlet {
 		super.doTrace(req, resp);
 	}
 
-	private String invokeSubResource(RestRequest restRequest, Class<Yopable> target) {
-		Optional<Method> candidate = Arrays.stream(target.getDeclaredMethods()).filter(restRequest::matches).findFirst();
+	private boolean isInvalidResource(RestRequest restRequest, HttpServletResponse resp) throws IOException {
+		if (StringUtils.isBlank(restRequest.restResource)) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "No Yop REST resource set in path !");
+			return true;
+		}
+		if (! this.yopablePaths.containsKey(restRequest.restResource)) {
+			resp.sendError(
+				HttpServletResponse.SC_NOT_FOUND,
+				"The yop REST resource [" + restRequest.restResource + "] was not found."
+			);
+			return true;
+		}
+		return false;
+	}
+
+	private void invokeSubResource(
+		RestRequest restRequest,
+		Class<Yopable> target,
+		HttpServletResponse resp)
+		throws IOException {
+
+		Optional<Method> candidate = Reflection.getMethods(target).stream().filter(restRequest::matches).findFirst();
 		if (! candidate.isPresent()) {
-			throw new UnsupportedOperationException("No method for subresource [" + restRequest.subResource + "]");
+			logger.warn("No method for subresource [{}]", restRequest.subResource);
+			resp.sendError(
+				HttpServletResponse.SC_NOT_FOUND,
+				"The yop REST sub resource [" + restRequest.subResource + "] was not found."
+			);
+			return;
 		}
 
 		try {
@@ -199,67 +198,28 @@ public class YopRestServlet extends HttpServlet {
 					parameters[i] = restRequest.headers;
 				} else if(NameValuePair[].class.isAssignableFrom(parameter.getType())) {
 					parameters[i] = restRequest.parameters;
+				} else if (String.class.isAssignableFrom(parameter.getType())) {
+					if (CONTENT.equals(parameter.getName())) {
+						parameters[i] = restRequest.content;
+					}
 				}
 			}
-			return Objects.toString(method.invoke(target, parameters));
+
+			String content = Objects.toString(method.invoke(target, parameters));
+			resp.setContentType(ContentType.APPLICATION_JSON.getMimeType());
+			resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+			resp.setContentLength(content.getBytes(StandardCharsets.UTF_8).length);
+
+			if (StringUtils.isNotBlank(content) && ! "HEAD".equals(restRequest.method)) {
+				resp.getWriter().write(content);
+			}
+
+			resp.setStatus(HttpServletResponse.SC_OK);
 		} catch (IllegalAccessException | InvocationTargetException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
-	private static class RestRequest {
-		private String method;
-		private String restResource;
-		private String subResource;
-		private Long id = 0L;
-		private boolean joinAll;
-		private boolean joinIDs;
-		private NameValuePair[] parameters;
-		private Header[] headers;
-
-		private RestRequest(HttpServletRequest req) {
-			this.method = req.getMethod();
-
-			String requestPath  = req.getRequestURI();
-			String servletPath  = req.getServletPath();
-			String resourcePath = StringUtils.removeStart(requestPath, servletPath);
-			this.joinAll = req.getParameterMap().containsKey("joinAll");
-			this.joinIDs = req.getParameterMap().containsKey("joinIDs");
-
-			List<NameValuePair> parameters = new ArrayList<>();
-			for (Map.Entry<String, String[]> parameter : req.getParameterMap().entrySet()) {
-				Arrays
-					.stream(parameter.getValue())
-					.forEach(v -> parameters.add(new BasicNameValuePair(parameter.getKey(), v)));
-			}
-			this.parameters = parameters.toArray(new NameValuePair[0]);
-
-			List<Header> headers = new ArrayList<>();
-			for(Enumeration<String> headerNames = req.getHeaderNames(); headerNames.hasMoreElements();) {
-				String header = headerNames.nextElement();
-				headers.add(new BasicHeader(header, req.getHeader(header)));
-			}
-			this.headers = headers.toArray(new Header[0]);
-
-			Path path = Paths.get(resourcePath);
-			if (path.getNameCount() > 0) {
-				this.restResource = path.getName(0).toString().trim();
-			}
-			if (path.getNameCount() >= 2) {
-				String subPath = path.getName(1).toString();
-				if (NumberUtils.isCreatable(subPath)) {
-					this.id = Long.valueOf(subPath);
-				} else {
-					this.subResource = subPath;
-				}
-			}
-		}
-
-		private boolean matches(Method method) {
-			return method.isAnnotationPresent(Rest.class)
-				&& Arrays.stream(method.getAnnotation(Rest.class).methods()).anyMatch(s -> this.method.equals(s))
-				&& StringUtils.equals(method.getAnnotation(Rest.class).path(), this.subResource);
+			throw new YopResourceInvocationException(
+				"Error invoking YOP resource [" + Objects.toString(candidate.get()) + "]",
+				e
+			);
 		}
 	}
 }

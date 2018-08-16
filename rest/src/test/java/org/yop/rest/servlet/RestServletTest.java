@@ -6,6 +6,8 @@ import org.apache.catalina.startup.Tomcat;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.junit.After;
@@ -115,6 +117,13 @@ public class RestServletTest extends DBMSSwitch {
 		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
 			HttpGet httpGet = new HttpGet("http://localhost:1234/yop/rest/pojo?joinAll");
 			try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
+				String output = IOUtils.toString(response.getEntity().getContent());
+				Assert.assertNotNull(output);
+			}
+
+			HttpPost httpPost = new HttpPost("http://localhost:1234/yop/rest/pojo/search?joinAll");
+			httpPost.setEntity(new StringEntity("This is a test"));
+			try (CloseableHttpResponse response = httpclient.execute(httpPost)) {
 				String output = IOUtils.toString(response.getEntity().getContent());
 				Assert.assertNotNull(output);
 			}
