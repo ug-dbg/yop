@@ -5,6 +5,8 @@ import org.apache.http.NameValuePair;
 import org.yop.orm.query.Select;
 import org.yop.orm.query.json.JSON;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.rest.annotations.ContentParam;
+import org.yop.rest.annotations.PathParam;
 import org.yop.rest.annotations.Rest;
 
 @Rest(path = "pojo")
@@ -16,7 +18,13 @@ public class Pojo extends org.yop.orm.simple.model.Pojo {
 	}
 
 	@Rest(path = "search", methods = "POST")
-	public static String search(IConnection connection, Header[] headers, String content, NameValuePair[] parameters) {
+	public static String search(
+		IConnection connection,
+		Header[] headers,
+		@ContentParam String content,
+		@PathParam String path,
+		NameValuePair[] parameters) {
+
 		Pojo first = Select.from(Pojo.class).uniqueResult(connection);
 		return JSON.from(Pojo.class).onto(first).toJSON();
 	}

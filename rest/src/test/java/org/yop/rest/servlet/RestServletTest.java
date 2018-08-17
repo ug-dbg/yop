@@ -5,6 +5,7 @@ import org.apache.catalina.LifecycleException;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -22,6 +23,7 @@ import org.yop.orm.sql.adapter.IConnection;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -127,6 +129,27 @@ public class RestServletTest extends DBMSSwitch {
 				String output = IOUtils.toString(response.getEntity().getContent());
 				Assert.assertNotNull(output);
 			}
+
+			HttpUpsert httpUpsert = new HttpUpsert("http://localhost:1234/yop/rest/pojo");
+			httpUpsert.setEntity(new StringEntity("This is a test"));
+			try (CloseableHttpResponse response = httpclient.execute(httpUpsert)) {
+				String output = IOUtils.toString(response.getEntity().getContent());
+				Assert.assertNotNull(output);
+				System.out.println("UPSERT → " + output);
+			}
+		}
+	}
+
+	private static class HttpUpsert extends HttpEntityEnclosingRequestBase {
+
+		public HttpUpsert(final String uri) {
+			super();
+			setURI(URI.create(uri));
+		}
+
+		@Override
+		public String getMethod() {
+			return "UPSERT";
 		}
 	}
 }
