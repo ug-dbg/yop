@@ -15,7 +15,10 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
+import org.yop.orm.query.json.JSON;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
 import org.yop.orm.simple.model.Pojo;
@@ -32,7 +35,14 @@ import java.time.ZoneId;
 import static org.yop.orm.Yop.toSet;
 import static org.yop.orm.Yop.upsert;
 
+/**
+ * Testing the {@link YopRestServlet} into an embedded Tomcat : {@link #tomcat}.
+ * <br>
+ * Using Apache http components to send requests to the embedded tomcat.
+ */
 public class RestServletTest extends DBMSSwitch {
+
+	private static final Logger logger = LoggerFactory.getLogger(RestServletTest.class);
 
 	private class YopRestServletWithConnection extends YopRestServlet {
 		@Override
@@ -70,6 +80,7 @@ public class RestServletTest extends DBMSSwitch {
 		context.addServletMappingDecoded("/yop/rest/*", YopRestServletWithConnection.class.getSimpleName());
 
 		try {
+			logger.info("Starting embedded Tomcat on port [{}]", this.tomcat.getServer().getPort());
 			this.tomcat.getConnector();
 			this.tomcat.start();
 		} catch (LifecycleException e) {
@@ -80,6 +91,7 @@ public class RestServletTest extends DBMSSwitch {
 	@After
 	public void finish() {
 		try {
+			logger.info("Stopping embedded Tomcat.");
 			this.tomcat.stop();
 		} catch (LifecycleException e) {
 			throw new RuntimeException("Embedded Tomcat Lifecycle exception when stopping !", e);
@@ -88,8 +100,9 @@ public class RestServletTest extends DBMSSwitch {
 
 	@Test
 	public void test() throws SQLException, ClassNotFoundException, IOException, InterruptedException {
+		Pojo newPojo;
 		try (IConnection connection = this.getConnection()) {
-			Pojo newPojo = new Pojo();
+			newPojo = new Pojo();
 			newPojo.setVersion(1);
 			newPojo.setType(Pojo.Type.FOO);
 			newPojo.setActive(true);
@@ -110,6 +123,7 @@ public class RestServletTest extends DBMSSwitch {
 				.checkNaturalID()
 				.execute(connection);
 		}
+
 		// This keeps the tomcat server running, e.g. if you want to use the browser
 //		while (true) {
 //			Thread.sleep(1000);
@@ -119,6 +133,7 @@ public class RestServletTest extends DBMSSwitch {
 		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
 			HttpGet httpGet = new HttpGet("http://localhost:1234/yop/rest/pojo?joinAll");
 			try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
+				logger.info("GET Status → [{}]", response.getStatusLine().getStatusCode());
 				String output = IOUtils.toString(response.getEntity().getContent());
 				Assert.assertNotNull(output);
 			}
@@ -126,6 +141,7 @@ public class RestServletTest extends DBMSSwitch {
 			HttpPost httpPost = new HttpPost("http://localhost:1234/yop/rest/pojo/search?joinAll");
 			httpPost.setEntity(new StringEntity("This is a test"));
 			try (CloseableHttpResponse response = httpclient.execute(httpPost)) {
+				logger.info("POST Status → [{}]", response.getStatusLine().getStatusCode());
 				String output = IOUtils.toString(response.getEntity().getContent());
 				Assert.assertNotNull(output);
 			}
@@ -133,23 +149,32 @@ public class RestServletTest extends DBMSSwitch {
 			HttpUpsert httpUpsert = new HttpUpsert("http://localhost:1234/yop/rest/pojo");
 			httpUpsert.setEntity(new StringEntity("This is a test"));
 			try (CloseableHttpResponse response = httpclient.execute(httpUpsert)) {
+				logger.info("UPSERT Status → [{}]", response.getStatusLine().getStatusCode());
+				Assert.assertEquals(400, response.getStatusLine().getStatusCode());
 				String output = IOUtils.toString(response.getEntity().getContent());
 				Assert.assertNotNull(output);
-				System.out.println("UPSERT → " + output);
+			}
+
+			httpUpsert = new HttpUpsert("http://localhost:1234/yop/rest/pojo");
+			httpUpsert.setEntity(new StringEntity(JSON.from(Pojo.class).onto(newPojo).toJSON()));
+			try (CloseableHttpResponse response = httpclient.execute(httpUpsert)) {
+				logger.info("UPSERT Status → [{}]", response.getStatusLine().getStatusCode());
+				Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+				String output = IOUtils.toString(response.getEntity().getContent());
+				Assert.assertNotNull(output);
 			}
 		}
 	}
 
 	private static class HttpUpsert extends HttpEntityEnclosingRequestBase {
-
-		public HttpUpsert(final String uri) {
+		HttpUpsert(final String uri) {
 			super();
 			setURI(URI.create(uri));
 		}
 
 		@Override
 		public String getMethod() {
-			return "UPSERT";
+			return Upsert.UPSERT;
 		}
 	}
 }

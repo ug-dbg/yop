@@ -21,6 +21,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+/**
+ * A rest request to a {@link Yopable} with a reference to the response.
+ */
 class RestRequest {
 
 	private static final Logger logger = LoggerFactory.getLogger(RestRequest.class);
@@ -30,7 +33,6 @@ class RestRequest {
 	private Long id = 0L;
 
 	private String requestPath;
-	private String servletPath;
 
 	private Class<Yopable> restResource;
 	private String subResource;
@@ -39,8 +41,8 @@ class RestRequest {
 
 	private String content;
 
-	Map<String, String[]> parameters = new HashMap<>();
-	List<Header> headers = new ArrayList<>();
+	private Map<String, String[]> parameters = new HashMap<>();
+	private List<Header> headers = new ArrayList<>();
 
 	RestRequest(HttpServletRequest req, HttpServletResponse resp, Map<String, Class<Yopable>> yopablePaths) {
 		this.method = req.getMethod();
@@ -48,7 +50,7 @@ class RestRequest {
 		this.response = resp;
 
 		this.requestPath  = req.getRequestURI();
-		this.servletPath  = req.getServletPath();
+		String servletPath  = req.getServletPath();
 		String resourcePath = StringUtils.removeStart(requestPath, servletPath);
 
 		try {
@@ -126,6 +128,10 @@ class RestRequest {
 
 	boolean joinIDs() {
 		return this.parameters.containsKey("joinIDs");
+	}
+
+	boolean checkNaturalID() {
+		return this.parameters.containsKey("checkNaturalID");
 	}
 
 	String getContent() {

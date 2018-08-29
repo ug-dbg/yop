@@ -8,4 +8,11 @@
   <root level="warn">
     <appender-ref ref="STDOUT" />
   </root>
+  <logger name="org.yop.rest.servlet" level="INFO" />
+
+  <!--
+    Tomcat (>=8) logging through SLF4J is done with DelegateToSlf4jLogger,
+    referenced in META-INF/services/org.apache.juli.logging.Log
+  -->
+  <logger name="org.apache.catalina"  level="INFO" />
 </configuration>

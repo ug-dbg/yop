@@ -9,6 +9,9 @@ import org.yop.rest.annotations.ContentParam;
 import org.yop.rest.annotations.PathParam;
 import org.yop.rest.annotations.Rest;
 
+/**
+ * This POJO simply extends the ORM model {@link Pojo} to add extra REST configuration/behavior.
+ */
 @Rest(path = "pojo")
 public class Pojo extends org.yop.orm.simple.model.Pojo {
 	@Rest(path = "search")

@@ -10,6 +10,8 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
 import org.yop.rest.annotations.Rest;
+import org.yop.rest.exception.YopBadContentException;
+import org.yop.rest.exception.YopResourceInvocationException;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -24,6 +26,27 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A servlet that will answer HTTP requests for the {@link Rest} annotated {@link Yopable} objects.
+ * <br>
+ * Configure the servlet in your web.xml with the given parameters :
+ * <ul>
+ *     <li>{@link #PACKAGE_INIT_PARAM} : the package prefix to scan for {@link Rest} {@link Yopable} objects.</li>
+ *     <li>
+ *         {@link #DATASOURCE_JNDI_INIT_PARAM} the JNDI name of the datasource to use.
+ *         Feel free to override {@link #getConnection()} if you directly have a JDBC connection with no JNDI.
+ *     </li>
+ * </ul>
+ * Supported HTTP methods :
+ * <ul>
+ *     <li>{@link Head}</li>
+ *     <li>{@link Get}</li>
+ *     <li>{@link Post} (not implemented yet)</li>
+ *     <li>{@link Upsert} (custom HTTP method)</li>
+ *     <li>{@link Put} (does {@link Upsert}, not idempotent)</li>
+ *     <li>{@link Delete} (not implemented yet)</li>
+ * </ul>
+ */
 public class YopRestServlet extends HttpServlet {
 
 	private static final Logger logger = LoggerFactory.getLogger(YopRestServlet.class);
@@ -73,29 +96,31 @@ public class YopRestServlet extends HttpServlet {
 	}
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
 		logger.info("Finding REST resource for GET [{}] ", req.getRequestURI());
 		this.doExecute(req, resp, Get.INSTANCE);
 		resp.setStatus(HttpServletResponse.SC_OK);
 	}
 
 	@Override
-	protected void doHead(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+	protected void doHead(HttpServletRequest req, HttpServletResponse resp) {
 		logger.info("Finding REST resource for HEAD [{}] ", req.getRequestURI());
 		this.doExecute(req, resp, Head.INSTANCE);
 		resp.setStatus(HttpServletResponse.SC_OK);
 	}
 
 	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
 		logger.info("Finding REST resource for POST [{}] ", req.getRequestURI());
 		this.doExecute(req, resp, Post.INSTANCE);
 		resp.setStatus(HttpServletResponse.SC_OK);
 	}
 
 	@Override
-	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		super.doPut(req, resp);
+	protected void doPut(HttpServletRequest req, HttpServletResponse resp) {
+		logger.info("Finding REST resource for PUT [{}] ", req.getRequestURI());
+		this.doExecute(req, resp, Put.INSTANCE);
+		resp.setStatus(HttpServletResponse.SC_OK);
 	}
 
 	@Override
@@ -115,23 +140,29 @@ public class YopRestServlet extends HttpServlet {
 
 	@Override
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		if ("UPSERT".equals(req.getMethod())) {
-			this.doUpsert(req, resp);
-			return;
+		try {
+			if (Upsert.UPSERT.equals(req.getMethod())) {
+				this.doUpsert(req, resp);
+				return;
+			}
+			super.service(req, resp);
+		} catch (YopResourceInvocationException e) {
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+		} catch (YopBadContentException e) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+		} catch (RuntimeException e) {
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
 		}
-		super.service(req, resp);
 	}
 
-	private void doUpsert(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		resp.getWriter().write("It works !");
+	private void doUpsert(HttpServletRequest req, HttpServletResponse resp) {
+		this.doExecute(req, resp, Upsert.INSTANCE);
 		resp.setStatus(HttpServletResponse.SC_OK);
 	}
 
-	private void doExecute(HttpServletRequest req, HttpServletResponse resp, HttpMethod method) throws IOException {
+	private void doExecute(HttpServletRequest req, HttpServletResponse resp, HttpMethod method) {
 		RestRequest restRequest = new RestRequest(req, resp, this.yopablePaths);
-		if (method.isInvalidResource(restRequest)) {
-			return;
-		}
+		method.checkResource(restRequest);
 		Object out = method.execute(restRequest, this.getConnection());
 		String serialized = method.serialize(out, restRequest);
 
