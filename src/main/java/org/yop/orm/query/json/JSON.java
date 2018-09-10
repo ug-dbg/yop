@@ -7,6 +7,7 @@ import org.yop.orm.query.IJoin;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
+import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -70,9 +71,11 @@ public class JSON<T extends Yopable> {
 	private JSON(Class<T> target) {
 		this.target = target;
 		this.gson.register(YopableForJSON.class, new Serializer());
-		this.gson.register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()));
-		this.gson.register(LocalDate.class,     (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()));
-		this.gson.register(LocalTime.class,     (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()));
+
+		this.gson.register(LocalDateTime.class, (JsonSerializer) (src, type, ctx) -> new JsonPrimitive(src.toString()));
+		this.gson.register(LocalDate.class,     (JsonSerializer) (src, type, ctx) -> new JsonPrimitive(src.toString()));
+		this.gson.register(LocalTime.class,     (JsonSerializer) (src, type, ctx) -> new JsonPrimitive(src.toString()));
+		this.gson.register(Time.class,          (JsonSerializer) (src, type, ctx) -> new JsonPrimitive(((Time)src).getTime()));
 	}
 
 	/**
@@ -125,6 +128,16 @@ public class JSON<T extends Yopable> {
 	 */
 	public <R extends Yopable> JSON<T> join(IJoin<T, R> join) {
 		this.joins.add(join);
+		return this;
+	}
+
+	/**
+	 * Add relations - to others Yopable types - to be serialized.
+	 * @param joins the join clauses
+	 * @return the current SELECT request, for chaining purpose
+	 */
+	public JSON<T> join(Collection<IJoin<T, ?>> joins) {
+		this.joins.addAll(joins);
 		return this;
 	}
 
@@ -212,7 +225,7 @@ public class JSON<T extends Yopable> {
 	 * Execute the directive : serialize {@link #elements} to JSON, as GSON {@link JsonElement}
 	 * @return a GSON JSON element (JSON array)
 	 */
-	private JsonElement toJSONTree() {
+	public JsonElement toJSONTree() {
 		return this.gson.instance().toJsonTree(
 			this.elements.stream().map(e -> YopableForJSON.create(e, this)).collect(Collectors.toList())
 		);

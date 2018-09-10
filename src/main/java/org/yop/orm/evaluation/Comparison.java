@@ -1,9 +1,11 @@
 package org.yop.orm.evaluation;
 
+import com.google.gson.JsonElement;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.IJoin;
+import org.yop.orm.query.JsonAble;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.Reflection;
 
@@ -21,17 +23,21 @@ import java.util.function.Function;
  */
 public class Comparison implements Evaluation {
 
+	private static final String REF_TYPE = "refType";
+
 	/** The field getter. */
-	private final Function<?, ?> getter;
+	private Function<?, ?> getter;
 
 	/** The comparison operator */
-	private final Operator op;
+	private Operator op;
 
 	/** The comparison value reference */
-	private final Comparable ref;
+	private Comparable ref;
 
 	/** The target field. Deduced from {@link #getter} in {@link #toSQL(Context, Parameters)}*/
 	private Field field;
+
+	private Comparison(){}
 
 	/**
 	 * Default constructor : gimme all I need !
@@ -44,9 +50,41 @@ public class Comparison implements Evaluation {
 	 * @param ref    the comparison reference value. Will be set as a JDBC query parameter if applicable.
 	 */
 	public Comparison(Function<? extends Yopable, ?> getter, Operator op, Comparable ref) {
+		this();
 		this.getter = getter;
 		this.op = op;
 		this.ref = ref;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T extends Yopable> JsonElement toJSON(Context<T> context) {
+		if (this.field == null) {
+			this.field = Reflection.findField(context.getTarget(), (Function<T, ?>) this.getter);
+		}
+		JsonElement element = Evaluation.super.toJSON(context);
+		element.getAsJsonObject().addProperty(FIELD, this.field.getName());
+		if (this.ref instanceof Path) {
+			element.getAsJsonObject().addProperty(REF_TYPE, "path");
+		}
+		return element;
+	}
+
+	@Override
+	public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element) {
+		Evaluation.super.fromJSON(context, element);
+		this.field = Reflection.get(context.getTarget(), element.getAsJsonObject().get(FIELD).getAsString());
+		this.getter = o -> Reflection.readField(this.field, o);
+		JsonElement ref = element.getAsJsonObject().get("ref");
+
+		if (element.getAsJsonObject().has(REF_TYPE)) {
+			String refType = element.getAsJsonObject().get(REF_TYPE).getAsString();
+			if (Path.PATH_TYPE.equals(refType)) {
+				this.ref = Path.explicit(ref.getAsJsonObject().get(Path.PATH_TYPE).getAsString());
+			}
+		} else {
+			this.ref = (Comparable) JsonAble.fieldValue(context, field, ref);
+		}
 	}
 
 	/**

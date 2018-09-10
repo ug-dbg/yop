@@ -6,7 +6,6 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.MessageUtil;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -41,10 +40,10 @@ import java.util.stream.Collectors;
  *
  * @param <T> the target type
  */
-public class Where<T extends Yopable>  {
+public class Where<T extends Yopable> implements JsonAble {
 
 	/** The where clause evaluations. Joined with AND. Use {@link Or} to create an OR evaluation. */
-	private final Collection<Evaluation> evaluations = new ArrayList<>();
+	private final Evaluation.Evaluations evaluations = new Evaluation.Evaluations();
 
 	/**
 	 * Default constructor.

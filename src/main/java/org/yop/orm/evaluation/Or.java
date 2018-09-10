@@ -16,13 +16,16 @@ import java.util.stream.Collectors;
  */
 public class Or implements Evaluation {
 	/** The evaluations to join */
-	private final List<Evaluation> evaluations = new ArrayList<>();
+	private final Evaluations evaluations = new Evaluations();
+
+	private Or() {}
 
 	/**
 	 * Default constructor with explicit vararg evaluations feeding
 	 * @param evaluations the evaluations to join
 	 */
 	public Or(Evaluation... evaluations) {
+		this();
 		this.evaluations.addAll(Arrays.asList(evaluations));
 	}
 
@@ -31,6 +34,7 @@ public class Or implements Evaluation {
 	 * @param evaluations the evaluations to join
 	 */
 	public Or(Collection<Evaluation> evaluations) {
+		this();
 		this.evaluations.addAll(evaluations);
 	}
 

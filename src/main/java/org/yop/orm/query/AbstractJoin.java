@@ -14,7 +14,6 @@ import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -43,10 +42,10 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	protected final Where<To> where = new Where<>();
 
 	/** Sub-join clauses */
-	private final Collection<IJoin<To, ? extends Yopable>> joins = new ArrayList<>();
+	private final Joins<To> joins = new Joins<>();
 
 	@Override
-	public Collection<IJoin<To, ? extends Yopable>> getJoins() {
+	public Joins<To> getJoins() {
 		return this.joins;
 	}
 

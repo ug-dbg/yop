@@ -1,7 +1,11 @@
 package org.yop.orm.evaluation;
 
 import com.google.common.base.Joiner;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.Context;
+import org.yop.orm.query.JsonAble;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
@@ -37,7 +41,9 @@ import static org.yop.orm.sql.Constants.SQL_SEPARATOR;
  * @param <To>   the target type of the path (the type of the last field of the path)
  */
 @SuppressWarnings("unchecked")
-public class Path<From extends Yopable, To> implements Comparable<Path<From, To>>{
+public class Path<From extends Yopable, To> implements Comparable<Path<From, To>>, JsonAble {
+
+	static final String PATH_TYPE = "path";
 
 	/** All the getters to use to get from "From" to "To" */
 	private List<Function<?, ?>> steps = new ArrayList<>();
@@ -74,6 +80,15 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 		Path<From, To> path = new Path<>();
 		path.steps.add(getter);
 		return path;
+	}
+
+	/**
+	 * A new path for when it is explicitly needed.
+	 * @param path the path value (e.g. Pojo.jopos.Jopo.name)
+	 * @return an {@link ExplicitPath} instance for the given path
+	 */
+	static Path explicit(String path) {
+		return new ExplicitPath(path);
 	}
 
 	/**
@@ -153,6 +168,11 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 		return "Path {steps length [" + this.steps.size() + "]}";
 	}
 
+	@Override
+	public <T extends Yopable> JsonElement toJSON(Context<T> context) {
+		return new ExplicitPath(this.toPath((Class<From>) context.root().getTarget())).toJSON(context);
+	}
+
 	/**
 	 * Build the path portion for a field.
 	 * <br>
@@ -171,6 +191,50 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 			return out;
 		} else {
 			return DOT + ORMUtil.getColumnName(field);
+		}
+	}
+
+	/**
+	 * When the path is explicitly known and you don't want it to be built from a set of getters.
+	 * <br>
+	 * This class was created as a convenience {@link JsonAble} implementation for {@link Path}.
+	 * <br>
+	 * <b>⚠⚠⚠
+	 * {@link #to(Function)} and {@link #toSet(Function)} simply throw {@link UnsupportedOperationException} !
+	 * ⚠⚠⚠</b>
+	 */
+	static class ExplicitPath extends Path {
+		private String path;
+
+		private ExplicitPath(String path) {
+			this.path = path;
+		}
+
+		@Override
+		public String toString() {
+			return "ExplicitPath{" + "path='" + this.path + '\'' + '}';
+		}
+
+		@Override
+		public String toPath(Class root) {
+			return this.path;
+		}
+
+		@Override
+		public JsonElement toJSON(Context context) {
+			JsonObject out = new JsonObject();
+			out.addProperty("path", this.path);
+			return out;
+		}
+
+		@Override
+		public Path to(Function getter) {
+			throw new UnsupportedOperationException("You cannot add sub path to an explicit path !");
+		}
+
+		@Override
+		public Path toSet(Function getter) {
+			throw new UnsupportedOperationException("You cannot add sub path to an explicit path !");
 		}
 	}
 }

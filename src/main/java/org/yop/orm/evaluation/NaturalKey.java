@@ -20,11 +20,14 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 	/** The object from which is taken the Natural ID */
 	private T reference;
 
+	private NaturalKey() {}
+
 	/**
 	 * Default constructor : give me an object reference so I can read the natural ID !
 	 * @param reference the target object reference
 	 */
 	public NaturalKey(T reference) {
+		this();
 		if(reference == null) {
 			throw new YopRuntimeException("Natural key reference cannot be null !");
 		}

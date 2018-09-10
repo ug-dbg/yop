@@ -54,6 +54,22 @@ public class Reflection {
 	}
 
 	/**
+	 * Find a class for a given class name. Do not throw checked exception.
+	 * @param name the class name
+	 * @param <T> the target type
+	 * @return the class name
+	 * @throws YopRuntimeException instead of {@link ClassNotFoundException}
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> Class<T> forName(String name) {
+		try {
+			return (Class<T>) Class.forName(name);
+		} catch (ClassNotFoundException e) {
+			throw new YopRuntimeException("Could not find class for name [" + name + "]", e);
+		}
+	}
+
+	/**
 	 * Get an existing method on a given class, with the given parameters.
 	 * <br>
 	 * This is a call to {@link Class#getDeclaredMethod(String, Class...)}.

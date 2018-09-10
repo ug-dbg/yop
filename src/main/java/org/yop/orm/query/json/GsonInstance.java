@@ -2,6 +2,7 @@ package org.yop.orm.query.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
@@ -25,6 +26,9 @@ class GsonInstance {
 	/** Some custom serializers (e.g. for {@link java.time}) */
 	private final Map<Type, JsonSerializer> serializers = new HashMap<>();
 
+	/** Some custom deserializers (e.g. for {@link java.time}) */
+	private final Map<Type, JsonDeserializer> deserializers = new HashMap<>();
+
 	/**
 	 * Default constructor. Everything is set later.
 	 */
@@ -45,6 +49,16 @@ class GsonInstance {
 	}
 
 	/**
+	 * Register a new deserializer for a given type.
+	 * See {@link GsonBuilder#registerTypeAdapter(Type, Object)}.
+	 * @param type       the data type for which the serializer is registered
+	 * @param serializer the deserializer implementation
+	 */
+	void register(Type type, JsonDeserializer serializer) {
+		this.deserializers.put(type, serializer);
+	}
+
+	/**
 	 * Give me the {@link Gson} instance!
 	 * <br>
 	 * If already built, the current instance is returned. Else an instance is built and returned.
@@ -61,10 +75,11 @@ class GsonInstance {
 	}
 
 	/**
-	 * Create a new {@link GsonBuilder} with {@link YopableStrategy} and registered serializers.
+	 * Create a new {@link GsonBuilder} with {@link YopableStrategy} and registered serializers/deserializers.
 	 */
 	private void configureBuilder() {
 		this.builder.setExclusionStrategies(new YopableStrategy());
 		this.serializers.forEach(this.builder::registerTypeAdapter);
+		this.deserializers.forEach(this.builder::registerTypeAdapter);
 	}
 }

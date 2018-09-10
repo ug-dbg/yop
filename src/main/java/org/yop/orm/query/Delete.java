@@ -52,7 +52,7 @@ public class Delete<T extends Yopable> {
 
 	private final Class<T> target;
 	private Where<T> where;
-	private final Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
+	private final IJoin.Joins<T> joins = new IJoin.Joins<>();
 
 	private Delete(Class<T> target) {
 		this.target = target;

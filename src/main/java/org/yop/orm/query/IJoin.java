@@ -1,11 +1,15 @@
 package org.yop.orm.query;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.JoinClause;
 import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -29,7 +33,17 @@ import java.util.Set;
  * @param <From> the source type
  * @param <To>   the target type
  */
-public interface IJoin<From extends Yopable, To extends Yopable> {
+public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAble {
+
+	String FIELD = "field";
+
+	@Override
+	@SuppressWarnings("unchecked")
+	default <T extends Yopable> JsonElement toJSON(Context<T> context) {
+		JsonObject element = (JsonObject) JsonAble.super.toJSON(context);
+		element.addProperty(FIELD, this.getField((Class) context.getTarget()).getName());
+		return element;
+	}
 
 	/**
 	 * Create a context from the 'From' type context to the 'To' context.
@@ -135,6 +149,27 @@ public interface IJoin<From extends Yopable, To extends Yopable> {
 
 			Class<Yopable> newTarget = join.getTarget(field);
 			joinAll(newTarget, join.getJoins());
+		}
+	}
+
+	/**
+	 * A collection of {@link IJoin} that is serializable to a JSON array.
+	 * <br>
+	 * <b>Implementation note</b> : when unserializing an {@link IJoin}, we return an explicit {@link FieldJoin} instance.
+	 * @param <From> the joins source context type
+	 */
+	class Joins<From extends Yopable> extends ArrayList<IJoin<From, ? extends Yopable>> implements JsonAble {
+		@Override
+		public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element) {
+			element.getAsJsonArray().forEach(e -> this.add(FieldJoin.from(context, e.getAsJsonObject())));
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public <T extends Yopable> JsonElement toJSON(Context<T> context) {
+			JsonArray out = new JsonArray();
+			this.forEach(j -> out.add(j.toJSON(j.to((Context) context))));
+			return out;
 		}
 	}
 }
