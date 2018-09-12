@@ -2,12 +2,17 @@ package org.yop.orm.query;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.commons.lang3.StringUtils;
 import org.yop.orm.evaluation.Evaluation;
+import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.map.IdMap;
+import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.util.Reflection;
 
 import java.text.MessageFormat;
 import java.util.*;
@@ -45,7 +50,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to delete.
  */
-public class Delete<T extends Yopable> {
+public class Delete<T extends Yopable> implements JsonAble {
 
 	private static final String DELETE = " DELETE {0} FROM {1} {2} WHERE {3} ";
 	private static final String DEFAULT_WHERE = " 1=1 ";
@@ -74,6 +79,43 @@ public class Delete<T extends Yopable> {
 
 	public static <T extends Yopable> Delete<T> from(Class<T> target) {
 		return new Delete<>(target);
+	}
+
+	/**
+	 * Serialize the current Delete query into a Gson JSON object.
+	 * @return the JSON representation of the query
+	 */
+	public JsonObject toJSON() {
+		return this.toJSON(Context.root(this.target));
+	}
+
+	@Override
+	public <U extends Yopable> JsonObject toJSON(Context<U> context) {
+		JsonObject out = (JsonObject) JsonAble.super.toJSON(context);
+		out.addProperty("target", this.target.getCanonicalName());
+		return out;
+	}
+
+	/**
+	 * Create a Delete query from the given json String representation.
+	 * @param <T> the target context type. This should match the one set in the JSON representation of the query !
+	 * @param json the Delete query JSON representation
+	 * @return a new Delete query whose state is set from its JSON representation
+	 */
+	public static <T extends Yopable> Delete<T> fromJSON(String json) {
+		try {
+			JsonParser parser = new JsonParser();
+			JsonObject selectJSON = (JsonObject) parser.parse(json);
+			String targetClassName = selectJSON.getAsJsonPrimitive("target").getAsString();
+			Class<T> target = Reflection.forName(targetClassName);
+			Delete<T> delete = Delete.from(target);
+			delete.fromJSON(Context.root(delete.target), selectJSON);
+			return delete;
+		} catch (RuntimeException e) {
+			throw new YopSerializableQueryException(
+				"Could not create query from JSON [" + org.apache.commons.lang.StringUtils.abbreviate(json, 30) + "]", e
+			);
+		}
 	}
 
 	/**
