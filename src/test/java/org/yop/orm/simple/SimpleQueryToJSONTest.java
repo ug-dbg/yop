@@ -74,13 +74,24 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 					new In(Pojo::getType, Arrays.asList(Pojo.Type.FOO, Pojo.Type.BAR))
 				))
 				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).where(Where.compare(Other::getName, Operator.NE, jopoName)));;
+				.join(toSet(Pojo::getOthers).where(Where.compare(Other::getName, Operator.NE, jopoName)));
 
 			Set<Pojo> found_ref = select.execute(connection);
 
 			JsonObject selectJSON = select.toJSON();
 			Select<Pojo> selectFromJSON = Select.fromJSON(selectJSON.toString());
 			Set<Pojo> found = selectFromJSON.execute(connection);
+
+			Assert.assertEquals(found_ref, found);
+
+			select = select(Pojo.class)
+				.where(Where.naturalId(newPojo))
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers).where(Where.compare(Other::getName, Operator.NE, jopoName)));
+
+			selectJSON = select.toJSON();
+			selectFromJSON = Select.fromJSON(selectJSON.toString());
+			found = selectFromJSON.execute(connection);
 
 			Assert.assertEquals(found_ref, found);
 		}

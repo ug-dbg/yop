@@ -7,6 +7,8 @@ import org.yop.orm.query.Context;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -111,7 +113,7 @@ public interface JsonAble {
 	 */
 	@SuppressWarnings("unchecked")
 	static Object fieldValue(Context<? extends Yopable> context, Field field, JsonElement fieldValueJSON) {
-		Class fieldType = field.getType();
+		Class fieldType = Primitives.wrap(field.getType());
 		if (fieldType.isEnum()) {
 			return Enum.valueOf(fieldType, fieldValueJSON.getAsString());
 		}
@@ -120,14 +122,31 @@ public interface JsonAble {
 			fieldValue.fromJSON(context, fieldValueJSON);
 			return fieldValue;
 		}
-		if (Boolean.class.isAssignableFrom(Primitives.wrap(fieldType))) {
+		if (Boolean.class.isAssignableFrom(fieldType)) {
 			return fieldValueJSON.getAsBoolean();
 		}
 		if (String.class.isAssignableFrom(fieldType)) {
 			return fieldValueJSON.getAsString();
 		}
-		if (Number.class.isAssignableFrom(Primitives.wrap(fieldType))) {
-			return fieldValueJSON.getAsDouble();
+		if (Number.class.isAssignableFrom(fieldType)) {
+			if (Integer.class.isAssignableFrom(fieldType)) {
+				return fieldValueJSON.getAsInt();
+			}
+			if (Long.class.isAssignableFrom(fieldType)) {
+				return fieldValueJSON.getAsLong();
+			}
+			if (Float.class.isAssignableFrom(fieldType)) {
+				return fieldValueJSON.getAsFloat();
+			}
+			if (Double.class.isAssignableFrom(fieldType)) {
+				return fieldValueJSON.getAsDouble();
+			}
+			if (BigDecimal.class.isAssignableFrom(fieldType)) {
+				return fieldValueJSON.getAsBigDecimal();
+			}
+			if (BigInteger.class.isAssignableFrom(fieldType)) {
+				return fieldValueJSON.getAsBigInteger();
+			}
 		}
 		return null;
 	}

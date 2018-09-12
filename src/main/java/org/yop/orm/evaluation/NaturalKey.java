@@ -1,11 +1,16 @@
 package org.yop.orm.evaluation;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.yop.orm.exception.YopRuntimeException;
+import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.Where;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.ORMUtil;
+import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -16,6 +21,9 @@ import java.util.stream.Collectors;
  * @param <T> the target type
  */
 public class NaturalKey<T extends Yopable> implements Evaluation {
+
+	/** JSON query serialization : the reference object will be serialized as a JSON object for that key. */
+	private static final String REFERENCE = "reference";
 
 	/** The object from which is taken the Natural ID */
 	private T reference;
@@ -43,6 +51,33 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 				.map(field -> getFieldRestriction(context, field, parameters))
 				.collect(Collectors.toList()
 		));
+	}
+
+	@Override
+	public <U extends Yopable> JsonElement toJSON(Context<U> context) {
+		List<Field> naturalKeys = ORMUtil.getNaturalKeyFields(this.reference.getClass());
+		JsonObject out = new JsonObject();
+		out.addProperty(TYPE, this.getClass().getSimpleName());
+		JsonObject ref = new JsonObject();
+		out.add(REFERENCE, ref);
+		Gson gson = new Gson();
+		for (Field naturalKeyField : naturalKeys) {
+			ref.add(naturalKeyField.getName(), gson.toJsonTree(Reflection.readField(naturalKeyField, this.reference)));
+		}
+		return out;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <U extends Yopable> void fromJSON(Context<U> context, JsonElement element) {
+		Class target = context.getTarget();
+		this.reference = (T) Reflection.newInstanceNoArgs(target);
+		JsonObject ref = element.getAsJsonObject().get(REFERENCE).getAsJsonObject();
+		List<Field> naturalKeys = ORMUtil.getNaturalKeyFields(target);
+		for (Field naturalKeyField : naturalKeys) {
+			JsonElement fieldJSON = ref.get(naturalKeyField.getName());
+			Reflection.set(naturalKeyField, this.reference, JsonAble.fieldValue(context, naturalKeyField, fieldJSON));
+		}
 	}
 
 	/**
