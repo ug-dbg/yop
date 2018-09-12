@@ -292,7 +292,10 @@ public class Reflection {
 				"Field [", fieldToString(field), "] has [", typeParameter.length, "] parameters. Unsupported."
 			));
 		}
-		return typeParameter[0];
+		return
+			typeParameter[0] instanceof ParameterizedType
+			? ((ParameterizedType)typeParameter[0]).getRawType()
+			: typeParameter[0];
 	}
 
 	/**
