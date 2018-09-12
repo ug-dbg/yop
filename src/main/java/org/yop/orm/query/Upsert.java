@@ -14,6 +14,7 @@ import org.yop.orm.evaluation.NaturalKey;
 import org.yop.orm.exception.YopMapperException;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopSerializableQueryException;
+import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.model.Yopables;
 import org.yop.orm.query.relation.Relation;
@@ -42,7 +43,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to upsert.
  */
-public class Upsert<T extends Yopable> implements JsonAble{
+public class Upsert<T extends Yopable> implements JsonAble {
 
 	private static final Logger logger = LoggerFactory.getLogger(Upsert.class);
 

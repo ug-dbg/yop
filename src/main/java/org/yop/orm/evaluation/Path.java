@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
-import org.yop.orm.query.JsonAble;
+import org.yop.orm.model.JsonAble;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 

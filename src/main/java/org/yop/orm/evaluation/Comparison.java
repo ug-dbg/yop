@@ -2,10 +2,10 @@ package org.yop.orm.evaluation;
 
 import com.google.gson.JsonElement;
 import org.yop.orm.annotations.Column;
+import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.IJoin;
-import org.yop.orm.query.JsonAble;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.Reflection;
 

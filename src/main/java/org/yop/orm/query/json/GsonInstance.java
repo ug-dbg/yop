@@ -1,12 +1,11 @@
 package org.yop.orm.query.json;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
+import com.google.gson.*;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,6 +15,8 @@ import java.util.Map;
  * The Gson instance will only be built once.
  */
 class GsonInstance {
+
+	private List<ExclusionStrategy> exclusionStrategies = new ArrayList<>();
 
 	/** GSON utility builder. The user can provide his own ! */
 	private GsonBuilder builder = new GsonBuilder();
@@ -34,8 +35,41 @@ class GsonInstance {
 	 */
 	GsonInstance() {}
 
-	void customBuilder(GsonBuilder builder) {
+	/**
+	 * Use a custom GSON builder for this instance
+	 * @param builder the custom builder
+	 * @return the current instance, for chaining purposes
+	 */
+	GsonInstance customBuilder(GsonBuilder builder) {
 		this.builder = builder == null ? this.builder : builder;
+		return this;
+	}
+
+	/**
+	 * Use the default exclusion strategy ({@link YopableStrategy}) for this instance.
+	 * @return the current instance, for chaining purposes
+	 */
+	GsonInstance defaultExclusionStrategy() {
+		this.exclusionStrategies.add(new YopableStrategy());
+		return this;
+	}
+
+	/**
+	 * Use the default serializers ({@link Serializers#ALL}) for this instance.
+	 * @return the current instance, for chaining purposes
+	 */
+	GsonInstance defaultSerializers() {
+		this.serializers.putAll(Serializers.ALL);
+		return this;
+	}
+
+	/**
+	 * Use the default deserializers ({@link DeSerializers#ALL}) for this instance.
+	 * @return the current instance, for chaining purposes
+	 */
+	GsonInstance defaultDeserializers() {
+		this.deserializers.putAll(DeSerializers.ALL);
+		return this;
 	}
 
 	/**
@@ -78,7 +112,9 @@ class GsonInstance {
 	 * Create a new {@link GsonBuilder} with {@link YopableStrategy} and registered serializers/deserializers.
 	 */
 	private void configureBuilder() {
-		this.builder.setExclusionStrategies(new YopableStrategy());
+		this.builder.setExclusionStrategies(
+			this.exclusionStrategies.toArray(new ExclusionStrategy[this.exclusionStrategies.size()])
+		);
 		this.serializers.forEach(this.builder::registerTypeAdapter);
 		this.deserializers.forEach(this.builder::registerTypeAdapter);
 	}

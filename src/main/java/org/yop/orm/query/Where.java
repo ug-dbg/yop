@@ -2,6 +2,7 @@ package org.yop.orm.query;
 
 import com.google.common.base.Joiner;
 import org.yop.orm.evaluation.*;
+import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.MessageUtil;

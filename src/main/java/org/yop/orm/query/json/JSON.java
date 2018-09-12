@@ -6,11 +6,8 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.sql.Time;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,12 +67,7 @@ public class JSON<T extends Yopable> {
 	 */
 	private JSON(Class<T> target) {
 		this.target = target;
-		this.gson.register(YopableForJSON.class, new Serializer());
-
-		this.gson.register(LocalDateTime.class, (JsonSerializer) (src, type, ctx) -> new JsonPrimitive(src.toString()));
-		this.gson.register(LocalDate.class,     (JsonSerializer) (src, type, ctx) -> new JsonPrimitive(src.toString()));
-		this.gson.register(LocalTime.class,     (JsonSerializer) (src, type, ctx) -> new JsonPrimitive(src.toString()));
-		this.gson.register(Time.class,          (JsonSerializer) (src, type, ctx) -> new JsonPrimitive(((Time)src).getTime()));
+		this.gson.defaultExclusionStrategy().defaultSerializers().register(YopableForJSON.class, new Serializer());
 	}
 
 	/**
@@ -86,6 +78,40 @@ public class JSON<T extends Yopable> {
 	 */
 	public static <T extends Yopable> JSON<T> from(Class<T> target) {
 		return new JSON<>(target);
+	}
+
+	/**
+	 * Deserialize a JSON array of Yopables.
+	 * @param target   the target type of the Yopables
+	 * @param elements the JSON array of serialized Yopables
+	 * @param <T> the target type
+	 * @return a collection of T which are the deserialized elements
+	 */
+	public static <T extends Yopable> Collection<T> from(Class<T> target, JsonArray elements) {
+		GsonInstance instance = new GsonInstance().defaultDeserializers();
+		instance.customBuilder(new GsonBuilder().excludeFieldsWithModifiers(Modifier.STATIC));
+		Gson gson = instance.instance();
+		Collection<T> out = new ArrayList<>();
+		for (JsonElement element : elements) {
+			out.add(gson.fromJson(element, target));
+		}
+		return out;
+	}
+
+	/**
+	 * Deserialize a JSON object of a serialized Yopable.
+	 * @param target   the target type of the Yopable
+	 * @param element  the JSON object serialized Yopable
+	 * @param <T> the target type
+	 * @return an instance of T that is the element, deserialized as T.
+	 */
+
+	public static <T extends Yopable> T from(Class<T> target, JsonObject element) {
+		GsonInstance instance = new GsonInstance()
+			.defaultDeserializers()
+			.customBuilder(new GsonBuilder().excludeFieldsWithModifiers(Modifier.STATIC));
+		Gson gson = instance.instance();
+		return gson.fromJson(element, target);
 	}
 
 	/**

@@ -10,6 +10,7 @@ import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.map.IdMap;
+import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;

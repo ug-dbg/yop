@@ -1,18 +1,18 @@
-package org.yop.orm.query;
+package org.yop.orm.model;
 
 import com.google.common.primitives.Primitives;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.yop.orm.model.Yopable;
+import org.yop.orm.query.Context;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.List;
 
 /**
- * This is the YOP interface to mark JSON query elements as JSON serializable.
+ * This is the YOP interface to mark JSON query elements (Select, Join, Evaluation...) as JSON serializable.
  * <br>
- * <b>Using Yop does not require using this interface.</b>
+ * <b>Using Yop does not require implementing this interface.</b>
  */
 public interface JsonAble {
 
