@@ -1,5 +1,6 @@
 package org.yop.orm.simple;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.junit.Assert;
 import org.junit.Test;
@@ -8,10 +9,10 @@ import org.yop.orm.evaluation.In;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.evaluation.Or;
 import org.yop.orm.evaluation.Path;
-import org.yop.orm.query.Delete;
-import org.yop.orm.query.Select;
-import org.yop.orm.query.Upsert;
-import org.yop.orm.query.Where;
+import org.yop.orm.exception.YopSerializableQueryException;
+import org.yop.orm.model.JsonAble;
+import org.yop.orm.model.Yopable;
+import org.yop.orm.query.*;
 import org.yop.orm.simple.model.*;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
@@ -19,12 +20,16 @@ import org.yop.orm.sql.Query;
 import org.yop.orm.sql.SimpleQuery;
 import org.yop.orm.sql.adapter.IConnection;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.yop.orm.Yop.*;
 
@@ -106,6 +111,113 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 	}
 
 	@Test
+	public void testSerializeSelect_withNaturalKey() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Pojo newPojo = new Pojo();
+			newPojo.setVersion(10564337);
+			newPojo.setType(Pojo.Type.FOO);
+			newPojo.setActive(true);
+			Jopo jopo = new Jopo();
+			jopo.setName("jopo From code !");
+			jopo.setPojo(newPojo);
+			newPojo.getJopos().add(jopo);
+
+			Other other = new Other();
+			other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
+			other.setName("other name :)");
+			newPojo.getOthers().add(other);
+
+			Extra extra = new Extra();
+			extra.setStyle("rad");
+			extra.setUserName("roger");
+			extra.setOther(other);
+			other.setExtra(extra);
+
+			SuperExtra superExtra = new SuperExtra();
+			superExtra.setSize(123456789L);
+			extra.setSuperExtra(superExtra);
+
+			upsert(Pojo.class)
+				.onto(newPojo)
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+					.join(to(Extra::getOther))
+					.join(to(Extra::getSuperExtra))
+				))
+				.checkNaturalID()
+				.execute(connection);
+
+			Select<Pojo> select = select(Pojo.class)
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers).where(Where.naturalId(other)));
+
+			Set<Pojo> found_ref = select.execute(connection);
+
+			JsonObject selectJSON = select.toJSON();
+			Select<Pojo> selectFromJSON = Select.fromJSON(selectJSON.toString());
+			Set<Pojo> found = selectFromJSON.execute(connection);
+
+			Assert.assertEquals(found_ref, found);
+		}
+	}
+
+	@Test
+	public void testSerializeSelect_withIdIn() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Pojo newPojo = new Pojo();
+			newPojo.setVersion(10564337);
+			newPojo.setType(Pojo.Type.FOO);
+			newPojo.setActive(true);
+			Jopo jopo = new Jopo();
+			jopo.setName("jopo From code !");
+			jopo.setPojo(newPojo);
+			newPojo.getJopos().add(jopo);
+
+			Other other = new Other();
+			other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
+			other.setName("other name :)");
+			newPojo.getOthers().add(other);
+
+			Extra extra = new Extra();
+			extra.setStyle("rad");
+			extra.setUserName("roger");
+			extra.setOther(other);
+			other.setExtra(extra);
+
+			SuperExtra superExtra = new SuperExtra();
+			superExtra.setSize(123456789L);
+			extra.setSuperExtra(superExtra);
+
+			upsert(Pojo.class)
+				.onto(newPojo)
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+					.join(to(Extra::getOther))
+					.join(to(Extra::getSuperExtra))
+				))
+				.checkNaturalID()
+				.execute(connection);
+
+			Select<Pojo> select = select(Pojo.class)
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers).where(Where.id(other.getId())));
+
+			Set<Pojo> found_ref = select.execute(connection);
+
+			JsonObject selectJSON = select.toJSON();
+			Select<Pojo> selectFromJSON = Select.fromJSON(selectJSON.toString());
+			Set<Pojo> found = selectFromJSON.execute(connection);
+
+			Assert.assertEquals(found_ref, found);
+		}
+	}
+
+	@Test(expected = YopSerializableQueryException.class)
+	public void testSerializeSelect_BadJSON() {
+		Select.fromJSON("{badJson: yes}");
+	}
+
+	@Test
 	public void testSerializeUpsert() throws SQLException, ClassNotFoundException {
 		try (IConnection connection = this.getConnection()) {
 			Pojo newPojo = new Pojo();
@@ -152,6 +264,11 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 
 			Assert.assertTrue(fromDB.getOthers().iterator().next().getExtra().getSuperExtra() != null);
 		}
+	}
+
+	@Test(expected = YopSerializableQueryException.class)
+	public void testSerializeUpsert_BadJSON() {
+		Upsert.fromJSON("{badJson: yes}");
 	}
 
 	@Test
@@ -221,4 +338,59 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 		}
 	}
 
+	@Test(expected = YopSerializableQueryException.class)
+	public void testSerializeDelete_BadJSON() {
+		Delete.fromJSON("{badJson: yes}");
+	}
+
+	@Test
+	public void test_JsonAble_default_methods() {
+		Context<PojoWithManyFields> context = Context.root(PojoWithManyFields.class);
+		PojoWithManyFields pojo = new PojoWithManyFields();
+		JsonElement pojoAsJSon = pojo.toJSON(context);
+		PojoWithManyFields deserialized = new PojoWithManyFields();
+		deserialized.fromJSON(context, pojoAsJSon);
+		Assert.assertEquals(pojo, deserialized);
+	}
+
+	private static class PojoWithManyFields implements Yopable, JsonAble {
+		private boolean booleanField = ThreadLocalRandom.current().nextBoolean();
+		private int integerField = ThreadLocalRandom.current().nextInt();
+		private Long longField = ThreadLocalRandom.current().nextLong();
+		private float floatField = ThreadLocalRandom.current().nextFloat();
+		private Double doubleField = ThreadLocalRandom.current().nextDouble();
+		private BigInteger bigIntField = new BigInteger(String.valueOf(ThreadLocalRandom.current().nextLong()));
+		private BigDecimal bigDecimalField = new BigDecimal(ThreadLocalRandom.current().nextDouble());
+		private String stringField = "This is a String field #" + ThreadLocalRandom.current().nextInt();
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			PojoWithManyFields that = (PojoWithManyFields) o;
+			return
+				this.booleanField == that.booleanField
+				&& this.integerField == that.integerField
+				&& Float.compare(this.floatField, that.floatField) == 0
+				&& Objects.equals(this.longField, that.longField)
+				&& Objects.equals(this.doubleField, that.doubleField)
+				&& Objects.equals(this.bigIntField, that.bigIntField)
+				&& Objects.equals(this.bigDecimalField, that.bigDecimalField)
+				&& Objects.equals(this.stringField, that.stringField);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(
+				this.booleanField,
+				this.integerField,
+				this.longField,
+				this.floatField,
+				this.doubleField,
+				this.bigIntField,
+				this.bigDecimalField,
+				this.stringField
+			);
+		}
+	}
 }
