@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.Where;
@@ -74,9 +73,10 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 		this.reference = (T) Reflection.newInstanceNoArgs(target);
 		JsonObject ref = element.getAsJsonObject().get(REFERENCE).getAsJsonObject();
 		List<Field> naturalKeys = ORMUtil.getNaturalKeyFields(target);
+		Gson gson = new Gson();
 		for (Field naturalKeyField : naturalKeys) {
 			JsonElement fieldJSON = ref.get(naturalKeyField.getName());
-			Reflection.set(naturalKeyField, this.reference, JsonAble.fieldValue(context, naturalKeyField, fieldJSON));
+			Reflection.set(naturalKeyField, this.reference, gson.fromJson(fieldJSON, naturalKeyField.getType()));
 		}
 	}
 
