@@ -38,6 +38,14 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 
 	String FIELD = "field";
 
+	/**
+	 * Do call {@link JsonAble#toJSON(Context)} default implementation
+	 * and add an extra {@link #FIELD} property with the target field name.
+	 * <br>
+	 * See {@link #getField(Class)}.
+	 * <br><br>
+	 * {@inheritDoc}
+	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	default <T extends Yopable> JsonElement toJSON(Context<T> context) {
