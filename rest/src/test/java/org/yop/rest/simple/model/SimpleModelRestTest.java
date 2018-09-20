@@ -32,7 +32,7 @@ public class SimpleModelRestTest extends RestServletTest {
 	private static final Logger logger = LoggerFactory.getLogger(SimpleModelRestTest.class);
 
 	@Override
-	protected String getPackagePrefix() {
+	protected String getPackagePrefixes() {
 		return "org.yop.orm.simple.model";
 	}
 
