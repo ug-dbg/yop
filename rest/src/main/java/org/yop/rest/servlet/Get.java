@@ -1,10 +1,19 @@
 package org.yop.rest.servlet;
 
+import io.swagger.oas.models.Operation;
+import io.swagger.oas.models.media.Content;
+import io.swagger.oas.models.media.MediaType;
+import io.swagger.oas.models.parameters.Parameter;
+import io.swagger.oas.models.responses.ApiResponse;
+import io.swagger.oas.models.responses.ApiResponses;
+import org.apache.http.entity.ContentType;
 import org.yop.orm.evaluation.IdIn;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Select;
 import org.yop.orm.sql.adapter.IConnection;
 
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.Collections;
 
 class Get implements HttpMethod {
@@ -24,7 +33,23 @@ class Get implements HttpMethod {
 			select.where(new IdIn(Collections.singletonList(restRequest.getId())));
 			return select.uniqueResult(connection);
 		} else {
-			return  select.execute(connection);
+			return select.execute(connection);
 		}
+	}
+
+	@Override
+	public Operation openAPIDefaultModel(String resource) {
+		Operation get = new Operation();
+		get.setSummary("Get all [" + resource + "] or by ID");
+		get.setResponses(new ApiResponses());
+		get.setParameters(new ArrayList<>());
+		get.getParameters().add(new Parameter().name("id").required(false).description("[" + resource + "] ID"));
+
+		ApiResponse responseItem = new ApiResponse();
+		responseItem.setDescription("A set of [" + resource + "]");
+		responseItem.setContent(new Content());
+		responseItem.getContent().addMediaType(ContentType.APPLICATION_JSON.getMimeType(), new MediaType());
+		get.getResponses().addApiResponse(String.valueOf(HttpServletResponse.SC_OK), responseItem);
+		return get;
 	}
 }

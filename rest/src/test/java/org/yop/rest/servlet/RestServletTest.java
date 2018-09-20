@@ -2,45 +2,33 @@ package org.yop.rest.servlet;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
+import org.apache.catalina.WebResource;
+import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
-import org.yop.orm.query.json.JSON;
-import org.yop.orm.simple.model.Jopo;
-import org.yop.orm.simple.model.Other;
-import org.yop.orm.simple.model.Pojo;
 import org.yop.orm.sql.adapter.IConnection;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-
-import static org.yop.orm.Yop.toSet;
-import static org.yop.orm.Yop.upsert;
 
 /**
  * Testing the {@link YopRestServlet} into an embedded Tomcat : {@link #tomcat}.
  * <br>
  * Using Apache http components to send requests to the embedded tomcat.
  */
-public class RestServletTest extends DBMSSwitch {
+public abstract class RestServletTest extends DBMSSwitch {
 
 	private static final Logger logger = LoggerFactory.getLogger(RestServletTest.class);
 
@@ -57,11 +45,6 @@ public class RestServletTest extends DBMSSwitch {
 
 	private Tomcat tomcat;
 
-	@Override
-	protected String getPackagePrefix() {
-		return "org.yop.orm.simple.model";
-	}
-
 	@Before
 	@Override
 	public void setUp() throws SQLException, IOException, ClassNotFoundException {
@@ -71,6 +54,8 @@ public class RestServletTest extends DBMSSwitch {
 		this.tomcat.enableNaming();
 
 		Context context = this.tomcat.addContext("/", new File(".").getAbsolutePath());
+		createDefaultServlet(context);
+
 		org.apache.catalina.Wrapper wrapper = Tomcat.addServlet(
 			context,
 			YopRestServletWithConnection.class.getSimpleName(),
@@ -78,6 +63,15 @@ public class RestServletTest extends DBMSSwitch {
 		);
 		wrapper.addInitParameter(YopRestServlet.PACKAGE_INIT_PARAM, "org.yop");
 		context.addServletMappingDecoded("/yop/rest/*", YopRestServletWithConnection.class.getSimpleName());
+
+		wrapper = Tomcat.addServlet(
+			context,
+			OpenAPIServlet.class.getSimpleName(),
+			new OpenAPIServlet()
+		);
+		wrapper.addInitParameter(OpenAPIServlet.PACKAGE_INIT_PARAM, "org.yop");
+		wrapper.addInitParameter(OpenAPIServlet.EXPOSITION_PATH, "/yop/rest");
+		context.addServletMappingDecoded("/yop/openapi", OpenAPIServlet.class.getSimpleName());
 
 		try {
 			logger.info("Starting embedded Tomcat on port [{}]", this.tomcat.getServer().getPort());
@@ -98,76 +92,44 @@ public class RestServletTest extends DBMSSwitch {
 		}
 	}
 
-	@Test
-	public void test() throws SQLException, ClassNotFoundException, IOException, InterruptedException {
-		Pojo newPojo;
-		try (IConnection connection = this.getConnection()) {
-			newPojo = new Pojo();
-			newPojo.setVersion(1);
-			newPojo.setType(Pojo.Type.FOO);
-			newPojo.setActive(true);
-			Jopo jopo = new Jopo();
-			jopo.setName("test path ref");
-			jopo.setPojo(newPojo);
-			newPojo.getJopos().add(jopo);
+	private static void createDefaultServlet(Context rootContext) {
+		Wrapper defaultServlet = rootContext.createWrapper();
+		defaultServlet.setName("default");
+		defaultServlet.setServletClass("org.yop.rest.servlet.RestServletTest$DefaultServlet");
+		defaultServlet.addInitParameter("debug", "0");
+		defaultServlet.addInitParameter("listings", "true");
+		defaultServlet.setLoadOnStartup(1);
+		rootContext.addChild(defaultServlet);
+		rootContext.addServletMappingDecoded("/", "default");
+	}
 
-			Other other = new Other();
-			other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
-			other.setName("test path ref");
-			newPojo.getOthers().add(other);
+	public static class DefaultServlet extends org.apache.catalina.servlets.DefaultServlet {
 
-			upsert(Pojo.class)
-				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers))
-				.checkNaturalID()
-				.execute(connection);
-		}
+		public DefaultServlet() {}
 
-		// This keeps the tomcat server running, e.g. if you want to use the browser
-//		while (true) {
-//			Thread.sleep(1000);
-//			if (false) break;
-//		}
+		@Override
+		protected void serveResource(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			boolean content,
+			String inputEncoding)
+			throws IOException, ServletException {
 
-		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
-			HttpGet httpGet = new HttpGet("http://localhost:1234/yop/rest/pojo?joinAll");
-			try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
-				logger.info("GET Status → [{}]", response.getStatusLine().getStatusCode());
-				String output = IOUtils.toString(response.getEntity().getContent());
-				Assert.assertNotNull(output);
+			String path = getRelativePath(request, true);
+			if (path.matches(".*/swagger-ui/.*/index.html")) {
+				WebResource resource = this.resources.getResource(path);
+				String html = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);
+				html = html.replaceAll("url: \"https://.*.json\"", "url: \"http://localhost:1234/yop/openapi\"");
+				response.getWriter().write(html);
+				return;
 			}
 
-			HttpPost httpPost = new HttpPost("http://localhost:1234/yop/rest/pojo/search?joinAll");
-			httpPost.setEntity(new StringEntity("This is a test"));
-			try (CloseableHttpResponse response = httpclient.execute(httpPost)) {
-				logger.info("POST Status → [{}]", response.getStatusLine().getStatusCode());
-				String output = IOUtils.toString(response.getEntity().getContent());
-				Assert.assertNotNull(output);
-			}
-
-			HttpUpsert httpUpsert = new HttpUpsert("http://localhost:1234/yop/rest/pojo");
-			httpUpsert.setEntity(new StringEntity("This is a test"));
-			try (CloseableHttpResponse response = httpclient.execute(httpUpsert)) {
-				logger.info("UPSERT Status → [{}]", response.getStatusLine().getStatusCode());
-				Assert.assertEquals(400, response.getStatusLine().getStatusCode());
-				String output = IOUtils.toString(response.getEntity().getContent());
-				Assert.assertNotNull(output);
-			}
-
-			httpUpsert = new HttpUpsert("http://localhost:1234/yop/rest/pojo");
-			httpUpsert.setEntity(new StringEntity(JSON.from(Pojo.class).onto(newPojo).toJSON()));
-			try (CloseableHttpResponse response = httpclient.execute(httpUpsert)) {
-				logger.info("UPSERT Status → [{}]", response.getStatusLine().getStatusCode());
-				Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-				String output = IOUtils.toString(response.getEntity().getContent());
-				Assert.assertNotNull(output);
-			}
+			super.serveResource(request, response, content, inputEncoding);
 		}
 	}
 
-	private static class HttpUpsert extends HttpEntityEnclosingRequestBase {
-		HttpUpsert(final String uri) {
+	protected static class HttpUpsert extends HttpEntityEnclosingRequestBase {
+		public HttpUpsert(final String uri) {
 			super();
 			setURI(URI.create(uri));
 		}

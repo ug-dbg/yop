@@ -92,8 +92,9 @@ class RestRequest {
 		return this.requestPath;
 	}
 
-	ContentType getAccept() {
-		return this.accept != null ? ContentType.create(this.accept) : ContentType.APPLICATION_JSON;
+	boolean accept(ContentType contentType) {
+		// laziest.implementation.ever
+		return StringUtils.containsIgnoreCase(this.accept, contentType.getMimeType());
 	}
 
 	NameValuePair[] getParameters() {

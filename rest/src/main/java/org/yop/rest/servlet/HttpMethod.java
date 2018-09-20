@@ -1,5 +1,6 @@
 package org.yop.rest.servlet;
 
+import io.swagger.oas.models.Operation;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.NameValuePair;
@@ -49,6 +50,24 @@ public interface HttpMethod {
 
 	String CONTENT = "content";
 	String PATH = "path";
+
+	/**
+	 * Return the method implementation for the given method name
+	 * @param method the method name (GET, POST...)
+	 * @return the HttpMethod implementation
+	 * @throws UnsupportedOperationException if the method name did not match any existing instance
+	 */
+	static HttpMethod instance(String method) {
+		switch (StringUtils.upperCase(method)) {
+			case "GET"     : return Get.INSTANCE;
+			case "POST"    : return Post.INSTANCE;
+			case "PUT"     : return Put.INSTANCE;
+			case "UPSERT"  : return Upsert.INSTANCE;
+			case "DELETE"  : return Delete.INSTANCE;
+			case "HEAD"    : return Head.INSTANCE;
+		}
+		throw new UnsupportedOperationException("HTTP method [" + method + "] is not supported ! Sorry about that.");
+	}
 
 	/**
 	 * Is the rest request associated to a valid resource ?
@@ -147,8 +166,8 @@ public interface HttpMethod {
 	 */
 	@SuppressWarnings("unchecked")
 	default String serialize(Object what, RestRequest restRequest) {
-		if (! ContentType.APPLICATION_JSON.getMimeType().equals(restRequest.getAccept().getMimeType())) {
-			throw new UnsupportedOperationException("For now, we just serialize to JSON. Sorry about that!");
+		if (! restRequest.accept(ContentType.APPLICATION_JSON)) {
+			logger.warn("For now, we just serialize to JSON. Sorry about that!");
 		}
 
 		if (what instanceof Yopable || what instanceof Collection) {
@@ -190,7 +209,7 @@ public interface HttpMethod {
 	default void write(String what, RestRequest request) {
 		String content = Objects.toString(what);
 		HttpServletResponse resp = request.getResponse();
-		resp.setContentType(request.getAccept().getMimeType());
+		resp.setContentType(ContentType.APPLICATION_JSON.getMimeType());
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.setContentLength(content.getBytes(StandardCharsets.UTF_8).length);
 
@@ -213,4 +232,13 @@ public interface HttpMethod {
 	 * @return the execution result
 	 */
 	Object executeDefault(RestRequest restRequest, IConnection connection);
+
+	/**
+	 * Generate an OpenAPI operation model for the given resource.
+	 * <br>
+	 * This operation should contain the default Yop REST behavior.
+	 * @param resource the resource (Yopable) name
+	 * @return the default Operation model for the resource name
+	 */
+	Operation openAPIDefaultModel(String resource);
 }

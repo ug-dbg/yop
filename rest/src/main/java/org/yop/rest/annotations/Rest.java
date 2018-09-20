@@ -15,5 +15,7 @@ import java.lang.annotation.Target;
 public @interface Rest {
 	String path();
 	String[] methods() default "GET";
+	String description() default "";
+	String summary() default "";
 }
 
