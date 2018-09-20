@@ -1,10 +1,12 @@
 package org.yop.orm.sql;
 
 import org.yop.orm.annotations.Column;
+import org.yop.orm.exception.YopMapperException;
 import org.yop.orm.util.ORMUtil;
+import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
 
 /**
  * SQL query parameters.
@@ -16,10 +18,11 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 	/**
 	 * Add a new SQL parameter.
 	 * <br>
-	 * If the field associated to the value is not null, its column configuration is read and both
+	 * If the field associated to the value is not null, its column configuration is read and configurations :
 	 * <ul>
 	 *     <li>{@link Column#enum_strategy()}</li>
 	 *     <li>{@link Column#transformer()}</li>
+	 *     <li>{@link Column#not_null()}</li>
 	 * </ul>
 	 * will be used when applicable.
 	 * @param name  the SQL parameter name (will be displayed in the logs if show_sql = true)
@@ -34,11 +37,19 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 		if (field != null && field.isAnnotationPresent(Column.class)) {
 			Column column = field.getAnnotation(Column.class);
 
+			if (column.not_null() && value == null) {
+				throw new YopMapperException(
+					"Field [" + Reflection.fieldToString(field) + "] is marked with @Column not null. "
+					+ "Parameter [" + name + "] value is null !"
+				);
+			}
+
 			if (value instanceof Enum) {
-				switch (column.enum_strategy()) {
+				Column.EnumStrategy enumStrategy = column.enum_strategy();
+				switch (enumStrategy) {
 					case ORDINAL: parameterValue = ((Enum) value).ordinal(); break;
 					case NAME:    parameterValue = ((Enum) value).name();    break;
-					default: break;
+					default: throw new YopMapperException("Unknown enum strategy [" + enumStrategy.name() + "] !");
 				}
 			}
 			parameterValue = ORMUtil.getTransformerFor(field).forSQL(parameterValue, column);
