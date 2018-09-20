@@ -30,7 +30,7 @@ public class SupplyChainTest extends DBMSSwitch {
 	private static final Logger logger = LoggerFactory.getLogger(SupplyChainTest.class);
 
 	@Override
-	protected String getPackagePrefix() {
+	protected String getPackagePrefixes() {
 		return "org.yop.orm.supplychain.model";
 	}
 
@@ -274,6 +274,7 @@ public class SupplyChainTest extends DBMSSwitch {
 			Order order = new Order();
 			order.getProducts().add(products.iterator().next());
 			order.setCustomer(me);
+			order.setOrderTimeStamp(LocalDateTime.now());
 
 			try {
 				Upsert.from(Order.class).joinAll().join(Join.to(Order::getCustomer)).onto(order).execute(connection);

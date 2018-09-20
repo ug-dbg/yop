@@ -1,18 +1,22 @@
 package org.yop.orm.query;
 
 import com.google.common.base.Joiner;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.evaluation.Comparison;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopSQLException;
+import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.map.IdMap;
+import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.util.Reflection;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -43,7 +47,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to search for.
  */
-public class Select<T extends Yopable> {
+public class Select<T extends Yopable> implements JsonAble {
 
 	public enum Strategy {IN, EXISTS}
 
@@ -66,7 +70,7 @@ public class Select<T extends Yopable> {
 	private OrderBy<T> orderBy = new OrderBy<>();
 
 	/** Join clauses */
-	private Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
+	private IJoin.Joins<T> joins = new IJoin.Joins<>();
 
 	/** A custom first level cache that can be specified in some very specific cases */
 	private FirstLevelCache cache;
@@ -89,7 +93,7 @@ public class Select<T extends Yopable> {
 	Select(Context<T> from, Where<T> where, Collection<IJoin<T, ? extends Yopable>> joins) {
 		this.context = from;
 		this.where = where;
-		this.joins = joins;
+		this.joins.addAll(joins);
 	}
 
 	/**
@@ -100,6 +104,43 @@ public class Select<T extends Yopable> {
 	 */
 	public static <Y extends Yopable> Select<Y> from(Class<Y> clazz) {
 		return new Select<>(clazz);
+	}
+
+	/**
+	 * Serialize the current Select query into a Gson JSON object.
+	 * @return the JSON representation of the query
+	 */
+	public JsonObject toJSON() {
+		return this.toJSON(this.context);
+	}
+
+	@Override
+	public <U extends Yopable> JsonObject toJSON(Context<U> context) {
+		JsonObject out = (JsonObject) JsonAble.super.toJSON(context);
+		out.addProperty("target", this.context.getTarget().getCanonicalName());
+		return out;
+	}
+
+	/**
+	 * Create a Select query from the given json String representation.
+	 * @param json the Select query JSON representation
+	 * @param <T> the target context type. This should match the one set in the JSON representation of the query !
+	 * @return a new Select query whose state is set from its JSON representation
+	 */
+	public static <T extends Yopable> Select<T> fromJSON(String json) {
+		try {
+			JsonParser parser = new JsonParser();
+			JsonObject selectJSON = (JsonObject) parser.parse(json);
+			String targetClassName = selectJSON.getAsJsonPrimitive("target").getAsString();
+			Class<T> target = Reflection.forName(targetClassName);
+			Select<T> select = Select.from(target);
+			select.fromJSON(select.context, selectJSON);
+			return select;
+		} catch (RuntimeException e) {
+			throw new YopSerializableQueryException(
+				"Could not create query from JSON [" + StringUtils.abbreviate(json, 30) + "]", e
+			);
+		}
 	}
 
 	/**

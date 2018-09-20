@@ -1,5 +1,6 @@
 package org.yop.orm.query;
 
+import com.google.gson.JsonObject;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
@@ -18,7 +19,9 @@ import java.util.Collections;
  */
 class FieldJoin<From extends Yopable, To extends Yopable> extends AbstractJoin<From, To> {
 
-	private final Field field;
+	private Field field;
+
+	private FieldJoin() {}
 
 	/**
 	 * Create a Join clause when the field is known.
@@ -69,4 +72,13 @@ class FieldJoin<From extends Yopable, To extends Yopable> extends AbstractJoin<F
 			);
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <From extends Yopable, To extends Yopable> FieldJoin<From, To> from(
+		Context context,
+		JsonObject element) {
+		FieldJoin join = new FieldJoin();
+		join.field = Reflection.get(context.getTarget(), element.get(FIELD).getAsString());
+		join.fromJSON(join.to(context), element);
+		return (FieldJoin) join;
+	}
 }

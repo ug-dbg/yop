@@ -39,7 +39,7 @@ public class SimpleTest extends DBMSSwitch {
 	private static final Logger logger = LoggerFactory.getLogger(SimpleTest.class);
 
 	@Override
-	protected String getPackagePrefix() {
+	protected String getPackagePrefixes() {
 		return "org.yop.orm.simple.model";
 	}
 

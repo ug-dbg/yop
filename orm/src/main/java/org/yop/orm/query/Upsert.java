@@ -2,15 +2,20 @@ package org.yop.orm.query;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.evaluation.NaturalKey;
-import org.yop.orm.exception.YopMapperException;
 import org.yop.orm.exception.YopMappingException;
+import org.yop.orm.exception.YopSerializableQueryException;
+import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.model.Yopables;
 import org.yop.orm.query.relation.Relation;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
@@ -37,7 +42,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to upsert.
  */
-public class Upsert<T extends Yopable> {
+public class Upsert<T extends Yopable> implements JsonAble {
 
 	private static final Logger logger = LoggerFactory.getLogger(Upsert.class);
 
@@ -47,11 +52,11 @@ public class Upsert<T extends Yopable> {
 	/** Target class */
 	protected Class<T> target;
 
-	/** Elements to save/update */
-	protected final Collection<T> elements = new ArrayList<>();
-
 	/** Join clauses */
-	protected final Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
+	protected final IJoin.Joins<T> joins = new IJoin.Joins<>();
+
+	/** Elements to save/update */
+	protected final Yopables<T> elements = new Yopables<>(this.joins);
 
 	/** If set to true, any insert will do a preliminary SELECT query to find any entry whose natural key matches */
 	protected boolean checkNaturalID = false;
@@ -105,6 +110,33 @@ public class Upsert<T extends Yopable> {
 	 */
 	public static <Y extends Yopable> Upsert<Y> from(Class<Y> clazz) {
 		return new Upsert<>(clazz);
+	}
+
+	public JsonObject toJSON() {
+		return this.toJSON(Context.root(this.target));
+	}
+
+	@Override
+	public <U extends Yopable> JsonObject toJSON(Context<U> context) {
+		JsonObject out = (JsonObject) JsonAble.super.toJSON(context);
+		out.addProperty("target", this.target.getCanonicalName());
+		return out;
+	}
+
+	public static <T extends Yopable> Upsert<T> fromJSON(String json) {
+		try {
+			JsonParser parser = new JsonParser();
+			JsonObject selectJSON = (JsonObject) parser.parse(json);
+			String targetClassName = selectJSON.getAsJsonPrimitive("target").getAsString();
+			Class<T> target = Reflection.forName(targetClassName);
+			Upsert<T> upsert = Upsert.from(target);
+			upsert.fromJSON(Context.root(upsert.target), selectJSON);
+			return upsert;
+		} catch (RuntimeException e) {
+			throw new YopSerializableQueryException(
+				"Could not create query from JSON [" + StringUtils.abbreviate(json, 30) + "]", e
+			);
+		}
 	}
 
 	/**
@@ -183,10 +215,10 @@ public class Upsert<T extends Yopable> {
 
 		// Recurse through the data graph to upsert data tables, by creating a sub upsert for every join
 		for (T element : this.elements) {
-			for (IJoin<T, ? extends Yopable> join : this.joins) {
+			for (IJoin<T, ?> join : this.joins) {
 				Upsert sub = this.subUpsert(join, element);
 				if(sub != null) {
-					for (IJoin<? extends Yopable, ? extends Yopable> iJoin : join.getJoins()) {
+					for (IJoin iJoin : join.getJoins()) {
 						sub.join(iJoin);
 					}
 					sub.execute(connection);
@@ -344,7 +376,11 @@ public class Upsert<T extends Yopable> {
 				setIdField(field, element, parameters);
 				continue;
 			}
-			parameters.addParameter(field.getAnnotation(Column.class).name(), this.getFieldValue(field, element));
+			parameters.addParameter(
+				field.getAnnotation(Column.class).name(),
+				ORMUtil.readField(field, element),
+				field
+			);
 		}
 
 		return parameters;
@@ -367,44 +403,9 @@ public class Upsert<T extends Yopable> {
 			if (isSequence) {
 				parameters.addSequenceParameter(element.getIdColumn(), value);
 			} else {
-				parameters.addParameter(element.getIdColumn(), value);
+				parameters.addParameter(element.getIdColumn(), value, idField);
 			}
 		}
-	}
-
-	/**
-	 * Read the value of a field so it can be inserted in an SQL query.
-	 * This method can handle the 'enum' case, i.e. read the strategy and return the name() or ordinal().
-	 * @param field   the field to read
-	 * @param element the element holding the field
-	 * @return the field value
-	 * @throws YopMapperException     Could not read value or invalid enum strategy on the field. What did you do bro ?
-	 */
-	private Object getFieldValue(Field field, T element) {
-		if(field.getType().isEnum()) {
-			Column column = field.getAnnotation(Column.class);
-			Column.EnumStrategy strategy = column.enum_strategy();
-
-			try {
-				Enum fieldValue = (Enum) Reflection.readField(field, element);
-				if (!column.not_null() && fieldValue == null){
-					return null;
-				}
-
-				switch (strategy) {
-					case NAME:    return fieldValue.name();
-					case ORDINAL: return fieldValue.ordinal();
-					default:      throw new YopMappingException("Unknown enum strategy [" + strategy.name() + "] !");
-				}
-			} catch (RuntimeException e) {
-				throw new YopMapperException(
-					"Unable to read enum field [" + Reflection.fieldToString(field) + "] "
-					+ "with strategy [" + strategy + "]",
-					e
-				);
-			}
-		}
-		return ORMUtil.readField(field, element);
 	}
 
 	/**

@@ -1,11 +1,11 @@
 package org.yop.orm.query.json;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSerializer;
+import com.google.gson.*;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,6 +16,8 @@ import java.util.Map;
  */
 class GsonInstance {
 
+	private List<ExclusionStrategy> exclusionStrategies = new ArrayList<>();
+
 	/** GSON utility builder. The user can provide his own ! */
 	private GsonBuilder builder = new GsonBuilder();
 
@@ -25,13 +27,49 @@ class GsonInstance {
 	/** Some custom serializers (e.g. for {@link java.time}) */
 	private final Map<Type, JsonSerializer> serializers = new HashMap<>();
 
+	/** Some custom deserializers (e.g. for {@link java.time}) */
+	private final Map<Type, JsonDeserializer> deserializers = new HashMap<>();
+
 	/**
 	 * Default constructor. Everything is set later.
 	 */
 	GsonInstance() {}
 
-	void customBuilder(GsonBuilder builder) {
+	/**
+	 * Use a custom GSON builder for this instance
+	 * @param builder the custom builder
+	 * @return the current instance, for chaining purposes
+	 */
+	GsonInstance customBuilder(GsonBuilder builder) {
 		this.builder = builder == null ? this.builder : builder;
+		return this;
+	}
+
+	/**
+	 * Use the default exclusion strategy ({@link YopableStrategy}) for this instance.
+	 * @return the current instance, for chaining purposes
+	 */
+	GsonInstance defaultExclusionStrategy() {
+		this.exclusionStrategies.add(new YopableStrategy());
+		return this;
+	}
+
+	/**
+	 * Use the default serializers ({@link Serializers#ALL}) for this instance.
+	 * @return the current instance, for chaining purposes
+	 */
+	GsonInstance defaultSerializers() {
+		this.serializers.putAll(Serializers.ALL);
+		return this;
+	}
+
+	/**
+	 * Use the default deserializers ({@link DeSerializers#ALL}) for this instance.
+	 * @return the current instance, for chaining purposes
+	 */
+	GsonInstance defaultDeserializers() {
+		this.deserializers.putAll(DeSerializers.ALL);
+		return this;
 	}
 
 	/**
@@ -42,6 +80,16 @@ class GsonInstance {
 	 */
 	void register(Type type, JsonSerializer serializer) {
 		this.serializers.put(type, serializer);
+	}
+
+	/**
+	 * Register a new deserializer for a given type.
+	 * See {@link GsonBuilder#registerTypeAdapter(Type, Object)}.
+	 * @param type       the data type for which the serializer is registered
+	 * @param serializer the deserializer implementation
+	 */
+	void register(Type type, JsonDeserializer serializer) {
+		this.deserializers.put(type, serializer);
 	}
 
 	/**
@@ -61,10 +109,13 @@ class GsonInstance {
 	}
 
 	/**
-	 * Create a new {@link GsonBuilder} with {@link YopableStrategy} and registered serializers.
+	 * Create a new {@link GsonBuilder} with {@link YopableStrategy} and registered serializers/deserializers.
 	 */
 	private void configureBuilder() {
-		this.builder.setExclusionStrategies(new YopableStrategy());
+		this.builder.setExclusionStrategies(
+			this.exclusionStrategies.toArray(new ExclusionStrategy[this.exclusionStrategies.size()])
+		);
 		this.serializers.forEach(this.builder::registerTypeAdapter);
+		this.deserializers.forEach(this.builder::registerTypeAdapter);
 	}
 }
