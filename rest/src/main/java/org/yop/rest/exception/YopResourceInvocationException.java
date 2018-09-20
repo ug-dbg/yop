@@ -1,6 +1,8 @@
 package org.yop.rest.exception;
 
-public class YopResourceInvocationException extends RuntimeException {
+import org.yop.orm.exception.YopRuntimeException;
+
+public class YopResourceInvocationException extends YopRuntimeException {
 
 	public YopResourceInvocationException(String message, Throwable cause) {
 		super(message, cause);

@@ -1,6 +1,8 @@
 package org.yop.rest.exception;
 
-public class YopBadContentException extends RuntimeException {
+import org.yop.orm.exception.YopRuntimeException;
+
+public class YopBadContentException extends YopRuntimeException {
 
 	public YopBadContentException(String message, Throwable cause) {
 		super(message, cause);

@@ -1,6 +1,8 @@
 package org.yop.rest.exception;
 
-public class YopNoResourceException extends RuntimeException {
+import org.yop.orm.exception.YopRuntimeException;
+
+public class YopNoResourceException extends YopRuntimeException {
 	public YopNoResourceException(String message) {
 		super(message);
 	}
