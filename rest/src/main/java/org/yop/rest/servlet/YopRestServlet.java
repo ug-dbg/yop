@@ -11,7 +11,6 @@ import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
 import org.yop.rest.annotations.Rest;
 import org.yop.rest.exception.YopBadContentException;
-import org.yop.rest.exception.YopResourceInvocationException;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -124,8 +123,10 @@ public class YopRestServlet extends HttpServlet {
 	}
 
 	@Override
-	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		super.doDelete(req, resp);
+	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) {
+		logger.info("Finding REST resource for DELETE [{}] ", req.getRequestURI());
+		this.doExecute(req, resp, Delete.INSTANCE);
+		resp.setStatus(HttpServletResponse.SC_OK);
 	}
 
 	@Override
@@ -146,11 +147,11 @@ public class YopRestServlet extends HttpServlet {
 				return;
 			}
 			super.service(req, resp);
-		} catch (YopResourceInvocationException e) {
-			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
 		} catch (YopBadContentException e) {
+			logger.error("YOP Rest resource invocation error, Bad request !", e);
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
 		} catch (RuntimeException e) {
+			logger.error("YOP Rest resource invocation error!", e);
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}
