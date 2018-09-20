@@ -11,7 +11,6 @@ import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.evaluation.NaturalKey;
-import org.yop.orm.exception.YopMapperException;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.model.JsonAble;
@@ -377,7 +376,11 @@ public class Upsert<T extends Yopable> implements JsonAble {
 				setIdField(field, element, parameters);
 				continue;
 			}
-			parameters.addParameter(field.getAnnotation(Column.class).name(), this.getFieldValue(field, element));
+			parameters.addParameter(
+				field.getAnnotation(Column.class).name(),
+				ORMUtil.readField(field, element),
+				field
+			);
 		}
 
 		return parameters;
@@ -400,44 +403,9 @@ public class Upsert<T extends Yopable> implements JsonAble {
 			if (isSequence) {
 				parameters.addSequenceParameter(element.getIdColumn(), value);
 			} else {
-				parameters.addParameter(element.getIdColumn(), value);
+				parameters.addParameter(element.getIdColumn(), value, idField);
 			}
 		}
-	}
-
-	/**
-	 * Read the value of a field so it can be inserted in an SQL query.
-	 * This method can handle the 'enum' case, i.e. read the strategy and return the name() or ordinal().
-	 * @param field   the field to read
-	 * @param element the element holding the field
-	 * @return the field value
-	 * @throws YopMapperException     Could not read value or invalid enum strategy on the field. What did you do bro ?
-	 */
-	private Object getFieldValue(Field field, T element) {
-		if(field.getType().isEnum()) {
-			Column column = field.getAnnotation(Column.class);
-			Column.EnumStrategy strategy = column.enum_strategy();
-
-			try {
-				Enum fieldValue = (Enum) Reflection.readField(field, element);
-				if (!column.not_null() && fieldValue == null){
-					return null;
-				}
-
-				switch (strategy) {
-					case NAME:    return fieldValue.name();
-					case ORDINAL: return fieldValue.ordinal();
-					default:      throw new YopMappingException("Unknown enum strategy [" + strategy.name() + "] !");
-				}
-			} catch (RuntimeException e) {
-				throw new YopMapperException(
-					"Unable to read enum field [" + Reflection.fieldToString(field) + "] "
-					+ "with strategy [" + strategy + "]",
-					e
-				);
-			}
-		}
-		return ORMUtil.readField(field, element);
 	}
 
 	/**

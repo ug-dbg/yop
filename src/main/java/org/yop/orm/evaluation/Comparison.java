@@ -106,9 +106,8 @@ public class Comparison implements Evaluation {
 		}
 
 		if(this.ref != null && ! (this.ref instanceof Path)) {
-			Object refValue = this.ref.getClass().isEnum() ? enumValue(this.field, (Enum) this.ref) : this.ref;
 			String name = context.getPath() + "#" + this.field.getName() + " " + this.op.toSQL() + "?";
-			parameters.addParameter(name, refValue);
+			parameters.addParameter(name, this.ref, this.field);
 		}
 
 		return Evaluation.columnName(this.field, context) + this.op.toSQL() + refSQL(this.ref, context);
@@ -123,13 +122,5 @@ public class Comparison implements Evaluation {
 			return ((Path) ref).toPath(context.root().getTarget());
 		}
 		return "?";
-	}
-
-	private static Object enumValue(Field field, Enum ref) {
-		switch (field.getAnnotation(Column.class).enum_strategy()) {
-			case NAME:    return ref.name();
-			case ORDINAL: return ref.ordinal();
-			default: return ref;
-		}
 	}
 }

@@ -8,6 +8,7 @@ import org.yop.orm.query.Context;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.ORMUtil;
 
+import java.lang.reflect.Field;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.HashSet;
@@ -48,13 +49,14 @@ public class IdIn  implements Evaluation {
 		}
 
 		String idColumn = ORMUtil.getIdColumn(context);
+		Field idField = ORMUtil.getIdField(context.getTarget());
 
 		return MessageFormat.format(
 			IN,
 			idColumn,
 			this.values
 				.stream()
-				.map(value -> {parameters.addParameter(idColumn + "=" + value, value); return "?";})
+				.map(value -> {parameters.addParameter(idColumn + "=" + value, value, idField); return "?";})
 				.collect(Collectors.joining(","))
 		);
 	}

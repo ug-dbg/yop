@@ -91,7 +91,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 		Object ref = ORMUtil.readField(field, this.reference);
 		if(ref != null) {
 			String name = context.getPath() + "#" + field.getName() + " = " + "?";
-			parameters.addParameter(name, ref);
+			parameters.addParameter(name, ref, field);
 		}
 		return Evaluation.columnName(field, context) + "=" + (ref == null ? "" : "?");
 	}

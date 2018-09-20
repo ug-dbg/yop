@@ -60,17 +60,18 @@ public class In implements Evaluation {
 			return "";
 		}
 
+		Field field = Reflection.findField(context.getTarget(), (Function<Y, ?>) this.getter);
 		String column =
 			context.getPath()
 			+ Constants.DOT
-			+ ORMUtil.getColumnName(Reflection.findField(context.getTarget(), (Function<Y, ?>)this.getter));
+			+ ORMUtil.getColumnName(field);
 
 		return MessageFormat.format(
 			IN,
 			column,
 			this.values
 				.stream()
-				.map(value -> {parameters.addParameter(column + "=" + value, value); return "?";})
+				.map(value -> {parameters.addParameter(column + "=" + value, value, field); return "?";})
 				.collect(Collectors.joining(","))
 		);
 	}
