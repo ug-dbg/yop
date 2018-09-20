@@ -36,7 +36,7 @@ public class ChinookDataTest extends DBMSSwitch {
 	private ChinookData source;
 
 	@Override
-	protected String getPackagePrefix() {
+	protected String getPackagePrefixes() {
 		return "org.yop.orm.chinook.model";
 	}
 

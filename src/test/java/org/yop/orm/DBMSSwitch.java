@@ -1,5 +1,6 @@
 package org.yop.orm;
 
+import org.apache.commons.lang.StringUtils;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -12,6 +13,7 @@ import org.yop.orm.sql.adapter.IConnection;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Arrays;
 
 /**
  * Extend this class to get a multiple DBMS support in your test case !
@@ -32,10 +34,19 @@ public abstract class DBMSSwitch {
 	private File db;
 
 	/**
-	 * Get the package prefix for which Yopable tables should be created
+	 * Get the package prefixes for which Yopable tables should be created.
+	 * <br>
+	 * Packages must be separated with any of the these chars :
+	 * <ul>
+	 *     <li>';'</li>
+	 *     <li>','</li>
+	 *     <li>'/'</li>
+	 *     <li>'|'</li>
+	 * </ul>
+	 * But not '.', obviously :-D
 	 * @return the Yopable data objects package prefix
 	 */
-	protected abstract String getPackagePrefix();
+	protected abstract String getPackagePrefixes();
 
 	/**
 	 * Get the current DBMS code.
@@ -82,21 +93,21 @@ public abstract class DBMSSwitch {
 			"DBMSSwitch.check() method returned false. Test class [" + this.getClass().getName() + "] won't be run.",
 			this.check()
 		);
-		String packagePrefix = this.getPackagePrefix();
+		String[] prefixes = StringUtils.split(this.getPackagePrefixes(), " ;,/|");
 
 		// Generate the scripts for every dialect.
 		// This (artificially) improves code coverage.
 		// And it is not very expensive to ensure it runs with no exception thrown.
-		Prepare.generateScripts(packagePrefix);
+		Arrays.stream(prefixes).forEach(Prepare::generateScripts);
 
 		// Generate and execute the preparation scripts for the package and the target database.
 		switch (dbms()) {
-			case "mysql" :     Prepare.prepareMySQL(packagePrefix);    break;
-			case "postgres" :  Prepare.preparePostgres(packagePrefix); break;
-			case "oracle" :    Prepare.prepareOracle(packagePrefix);   break;
-			case "mssql" :     Prepare.prepareMSSQL(packagePrefix);    break;
+			case "mysql" :     Prepare.prepareMySQL(prefixes);    break;
+			case "postgres" :  Prepare.preparePostgres(prefixes); break;
+			case "oracle" :    Prepare.prepareOracle(prefixes);   break;
+			case "mssql" :     Prepare.prepareMSSQL(prefixes);    break;
 			case "sqlite" :
-			default: this.db = Prepare.createSQLiteDatabase(SimpleTest.class.getName(), packagePrefix);
+			default: this.db = Prepare.createSQLiteDatabase(SimpleTest.class.getName(), prefixes);
 		}
 	}
 }

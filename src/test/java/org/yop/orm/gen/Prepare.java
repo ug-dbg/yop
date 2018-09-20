@@ -47,7 +47,7 @@ public class Prepare {
 	 * Create an SQLite database with the given name and for the given package prefix.
 	 * The db will be stored in a temp file with the 'delete on exit' flag.
 	 * @param name          the SQLite db name.
-	 * @param packagePrefix the package prefix to scan for Yopable objects
+	 * @param packagePrefixes the package prefix to scan for Yopable objects
 	 * @return the db file
 	 * @throws IOException Error reading/writing the SQLite database file
 	 * @throws SQLException SQL error opening connection
@@ -55,14 +55,16 @@ public class Prepare {
 	 */
 	public static File createSQLiteDatabase(
 		String name,
-		String packagePrefix)
+		String... packagePrefixes)
 		throws IOException, SQLException, ClassNotFoundException {
 
 		Path dbPath = Files.createTempFile(name, "_temp.db");
 		dbPath.toFile().deleteOnExit();
 
 		try (IConnection connection = getConnection(dbPath.toFile())) {
-			prepare(packagePrefix, connection, SQLite.INSTANCE);
+			for (String prefix : packagePrefixes) {
+				prepare(prefix, connection, SQLite.INSTANCE);
+			}
 		}
 		return dbPath.toFile();
 	}
@@ -112,13 +114,15 @@ public class Prepare {
 	 * <br><b>⚠⚠⚠  i.e. DROP AND RE-CREATE EVERY TABLE THAT MATCHES THE GIVEN PACKAGE PREFIX! ⚠⚠⚠ </b>
 	 * <br>
 	 * {@link com.mysql.jdbc.Driver} should be in the classpath.
-	 * @param packagePrefix the package prefix to scan for Yopable objects
+	 * @param packagePrefixes the package prefixes to scan for Yopable objects
 	 * @throws ClassNotFoundException {@link com.mysql.jdbc.Driver} not found
 	 * @throws SQLException SQL error opening connection
 	 */
-	public static void prepareMySQL(String packagePrefix) throws SQLException, ClassNotFoundException {
+	public static void prepareMySQL(String... packagePrefixes) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getMySQLConnection(false)) {
-			prepare(packagePrefix, connection, MySQL.INSTANCE);
+			for (String prefix : packagePrefixes) {
+				prepare(prefix, connection, MySQL.INSTANCE);
+			}
 		}
 	}
 
@@ -141,13 +145,15 @@ public class Prepare {
 	 * <br><b>⚠⚠⚠  i.e. DROP AND RE-CREATE EVERY TABLE THAT MATCHES THE GIVEN PACKAGE PREFIX! ⚠⚠⚠ </b>
 	 * <br>
 	 * {@link org.postgresql.Driver} should be in the classpath.
-	 * @param packagePrefix the package prefix to scan for Yopable objects
+	 * @param packagePrefixes the package prefixes to scan for Yopable objects
 	 * @throws ClassNotFoundException {@link org.postgresql.Driver} not found
 	 * @throws SQLException SQL error opening connection
 	 */
-	public static void preparePostgres(String packagePrefix) throws SQLException, ClassNotFoundException {
+	public static void preparePostgres(String... packagePrefixes) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getPostgresConnection()) {
-			prepare(packagePrefix, connection, Postgres.INSTANCE);
+			for (String prefix : packagePrefixes) {
+				prepare(prefix, connection, Postgres.INSTANCE);
+			}
 		}
 	}
 
@@ -170,13 +176,15 @@ public class Prepare {
 	 * <br><b>⚠⚠⚠  i.e. DROP AND RE-CREATE EVERY TABLE THAT MATCHES THE GIVEN PACKAGE PREFIX! ⚠⚠⚠ </b>
 	 * <br>
 	 * {@link oracle.jdbc.driver.OracleDriver} should be in the classpath.
-	 * @param packagePrefix the package prefix to scan for Yopable objects
+	 * @param packagePrefixes the package prefixes to scan for Yopable objects
 	 * @throws ClassNotFoundException {@link oracle.jdbc.driver.OracleDriver} not found
 	 * @throws SQLException SQL error opening connection
 	 */
-	public static void prepareOracle(String packagePrefix) throws SQLException, ClassNotFoundException {
+	public static void prepareOracle(String... packagePrefixes) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getOracleConnection()) {
-			prepare(packagePrefix, connection, Oracle.INSTANCE);
+			for (String prefix : packagePrefixes) {
+				prepare(prefix, connection, Oracle.INSTANCE);
+			}
 		}
 	}
 
@@ -199,13 +207,15 @@ public class Prepare {
 	 * <br><b>⚠⚠⚠  i.e. DROP AND RE-CREATE EVERY TABLE THAT MATCHES THE GIVEN PACKAGE PREFIX! ⚠⚠⚠ </b>
 	 * <br>
 	 * {@link com.microsoft.sqlserver.jdbc.SQLServerDriver} should be in the classpath.
-	 * @param packagePrefix the package prefix to scan for Yopable objects
+	 * @param packagePrefixes the package prefixes to scan for Yopable objects
 	 * @throws ClassNotFoundException {@link com.microsoft.sqlserver.jdbc.SQLServerDriver} not found
 	 * @throws SQLException SQL error opening connection
 	 */
-	public static void prepareMSSQL(String packagePrefix) throws SQLException, ClassNotFoundException {
+	public static void prepareMSSQL(String... packagePrefixes) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getMSSQLConnection()) {
-			prepare(packagePrefix, connection, MSSQL.INSTANCE);
+			for (String prefix : packagePrefixes) {
+				prepare(prefix, connection, MSSQL.INSTANCE);
+			}
 		}
 	}
 
