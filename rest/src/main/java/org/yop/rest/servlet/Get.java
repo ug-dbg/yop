@@ -46,6 +46,7 @@ class Get implements HttpMethod {
 		get.setParameters(new ArrayList<>());
 		get.getParameters().add(idParameter(resource));
 		get.getParameters().add(joinAllParameter(resource));
+		get.getParameters().add(joinIDsParameter(resource));
 
 		ApiResponse responseItem = new ApiResponse();
 		responseItem.setDescription("A set of [" + resource + "]");
@@ -71,5 +72,14 @@ class Get implements HttpMethod {
 			.required(false)
 			.schema(new Schema().type("boolean"))
 			.description("join all non transient relations to [" + forResource + "]");
+	}
+
+	private static Parameter joinIDsParameter(String forResource) {
+		return new Parameter()
+			.name("joinIDs")
+			.in("query")
+			.required(false)
+			.schema(new Schema().type("boolean"))
+			.description("join all IDs from non transient relations to [" + forResource + "]");
 	}
 }
