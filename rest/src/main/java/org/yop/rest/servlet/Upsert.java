@@ -5,6 +5,8 @@ import com.google.gson.JsonParser;
 import io.swagger.oas.models.Operation;
 import io.swagger.oas.models.media.Content;
 import io.swagger.oas.models.media.MediaType;
+import io.swagger.oas.models.media.Schema;
+import io.swagger.oas.models.parameters.Parameter;
 import io.swagger.oas.models.parameters.RequestBody;
 import io.swagger.oas.models.responses.ApiResponse;
 import io.swagger.oas.models.responses.ApiResponses;
@@ -76,6 +78,8 @@ public class Upsert implements HttpMethod {
 		);
 		upsert.setResponses(new ApiResponses());
 		upsert.setParameters(new ArrayList<>());
+		upsert.getParameters().add(joinAllParameter(resource));
+		upsert.getParameters().add(joinIDsParameter(resource));
 		upsert.requestBody(new RequestBody().content(new Content().addMediaType(
 			ContentType.APPLICATION_JSON.getMimeType(),
 			new MediaType()))
@@ -87,5 +91,23 @@ public class Upsert implements HttpMethod {
 		responseItem.getContent().addMediaType(ContentType.APPLICATION_JSON.getMimeType(), new MediaType());
 		upsert.getResponses().addApiResponse(String.valueOf(HttpServletResponse.SC_OK), responseItem);
 		return upsert;
+	}
+
+	private static Parameter joinAllParameter(String forResource) {
+		return new Parameter()
+			.name("joinAll")
+			.in("query")
+			.required(false)
+			.schema(new Schema().type("boolean"))
+			.description("join all non transient relations to [" + forResource + "]");
+	}
+
+	private static Parameter joinIDsParameter(String forResource) {
+		return new Parameter()
+			.name("joinIDs")
+			.in("query")
+			.required(false)
+			.schema(new Schema().type("boolean"))
+			.description("join all IDs from non transient relations to [" + forResource + "]");
 	}
 }
