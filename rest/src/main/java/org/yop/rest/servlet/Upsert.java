@@ -1,8 +1,7 @@
 package org.yop.rest.servlet;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import io.swagger.oas.models.Operation;
 import io.swagger.oas.models.media.Content;
 import io.swagger.oas.models.media.MediaType;
@@ -11,17 +10,16 @@ import io.swagger.oas.models.responses.ApiResponse;
 import io.swagger.oas.models.responses.ApiResponses;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.entity.ContentType;
-import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.json.JSON;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.exception.YopBadContentException;
 
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Specific 'UPSERT' HTTP method.
@@ -36,15 +34,6 @@ public class Upsert implements HttpMethod {
 	public static final String UPSERT = "UPSERT";
 
 	static final HttpMethod INSTANCE = new Upsert();
-
-	private final Gson gson;
-
-	Upsert() {
-		this.gson = new GsonBuilder().registerTypeAdapter(
-			LocalDate.class,
-			(JsonDeserializer) (json, typeOfT, context) -> LocalDate.parse(json.getAsJsonPrimitive().getAsString())
-		).create();
-	}
 
 	@Override
 	public Object executeDefault(RestRequest restRequest, IConnection connection) {
@@ -65,14 +54,10 @@ public class Upsert implements HttpMethod {
 		return "";
 	}
 
-	private List<Yopable> readInputJSON(RestRequest restRequest) {
+	private Collection<Yopable> readInputJSON(RestRequest restRequest) {
 		try {
-			JSONArray objects = new JSONArray(restRequest.getContent());
-			List<Yopable> out = new ArrayList<>();
-			for (Object object : objects) {
-				out.add(this.gson.fromJson(object.toString(), restRequest.getRestResource()));
-			}
-			return out;
+			JsonElement objects = new JsonParser().parse(restRequest.getContent());
+			return JSON.from(restRequest.getRestResource(), objects.getAsJsonArray());
 		} catch (RuntimeException e) {
 			throw new YopBadContentException(
 				"Unable to parse JSON array [" + StringUtils.abbreviate(restRequest.getContent(), 50) + "]",
