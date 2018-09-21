@@ -3,6 +3,7 @@ package org.yop.rest.servlet;
 import io.swagger.oas.models.Operation;
 import io.swagger.oas.models.media.Content;
 import io.swagger.oas.models.media.MediaType;
+import io.swagger.oas.models.media.Schema;
 import io.swagger.oas.models.parameters.Parameter;
 import io.swagger.oas.models.responses.ApiResponse;
 import io.swagger.oas.models.responses.ApiResponses;
@@ -43,7 +44,8 @@ class Get implements HttpMethod {
 		get.setSummary("Get all [" + resource + "] or by ID");
 		get.setResponses(new ApiResponses());
 		get.setParameters(new ArrayList<>());
-		get.getParameters().add(new Parameter().name("id").required(false).description("[" + resource + "] ID"));
+		get.getParameters().add(idParameter(resource));
+		get.getParameters().add(joinAllParameter(resource));
 
 		ApiResponse responseItem = new ApiResponse();
 		responseItem.setDescription("A set of [" + resource + "]");
@@ -51,5 +53,23 @@ class Get implements HttpMethod {
 		responseItem.getContent().addMediaType(ContentType.APPLICATION_JSON.getMimeType(), new MediaType());
 		get.getResponses().addApiResponse(String.valueOf(HttpServletResponse.SC_OK), responseItem);
 		return get;
+	}
+
+	private static Parameter idParameter(String forResource) {
+		return new Parameter()
+			.name("id")
+			.in("path")
+			.required(false)
+			.schema(new Schema().type("long"))
+			.description("[" + forResource + "] ID");
+	}
+
+	private static Parameter joinAllParameter(String forResource) {
+		return new Parameter()
+			.name("joinAll")
+			.in("query")
+			.required(false)
+			.schema(new Schema().type("boolean"))
+			.description("join all non transient relations to [" + forResource + "]");
 	}
 }
