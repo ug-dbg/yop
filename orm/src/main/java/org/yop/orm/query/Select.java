@@ -12,6 +12,7 @@ import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.json.JSON;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.Reflection;
@@ -206,6 +207,18 @@ public class Select<T extends Yopable> implements JsonAble {
 	 */
 	public Delete<T> toDelete() {
 		return new Delete<>(this.context.getTarget(), this.where, this.joins);
+	}
+
+	/**
+	 * Turn this SELECT query into a JSON query, with the same {@link #joins}.
+	 * <br>
+	 * <b>The joins clauses are not duplicated when creating the JSON query !</b>
+	 * @return a {@link JSON} query with this {@link Select} joins parameters
+	 */
+	public JSON<T> toJSONQuery() {
+		JSON<T> json = JSON.from(this.context.getTarget());
+		this.joins.forEach(json::join);
+		return json;
 	}
 
 	/**
