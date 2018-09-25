@@ -140,6 +140,14 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	}
 
 	/**
+	 * What is the target Yopable of this Upsert query ?
+	 * @return {@link #target}
+	 */
+	public Class<T> getTarget() {
+		return this.target;
+	}
+
+	/**
 	 * (Left) join to a new type.
 	 * @param join the join clause
 	 * @param <R> the target join type
