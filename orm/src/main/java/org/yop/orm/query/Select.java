@@ -145,6 +145,14 @@ public class Select<T extends Yopable> implements JsonAble {
 	}
 
 	/**
+	 * What is the target Yopable of this Select query ?
+	 * @return {@link Context#getTarget()} of {@link #context}
+	 */
+	public Class<T> getTarget() {
+		return this.context.getTarget();
+	}
+
+	/**
 	 * The where clause of this SELECT request
 	 * @return the Where clause
 	 */

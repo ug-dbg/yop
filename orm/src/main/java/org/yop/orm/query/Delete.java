@@ -129,6 +129,14 @@ public class Delete<T extends Yopable> implements JsonAble {
 	}
 
 	/**
+	 * What is the target Yopable of this Delete query ?
+	 * @return {@link #target}
+	 */
+	public Class<T> getTarget() {
+		return this.target;
+	}
+
+	/**
 	 * Add an evaluation to the where clause.
 	 * @param evaluation the evaluation
 	 * @return the current SELECT request, for chaining purposes
