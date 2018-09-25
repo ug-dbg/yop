@@ -124,11 +124,13 @@ class RestRequest {
 	}
 
 	boolean joinAll() {
-		return this.parameters.containsKey("joinAll");
+		return this.parameters.containsKey("joinAll")
+			&& (this.parameters.get("joinAll").length == 0 || Boolean.valueOf(this.parameters.get("joinAll")[0]));
 	}
 
 	boolean joinIDs() {
-		return this.parameters.containsKey("joinIDs");
+		return this.parameters.containsKey("joinIDs")
+			&& (this.parameters.get("joinIDs").length == 0 || Boolean.valueOf(this.parameters.get("joinIDs")[0]));
 	}
 
 	boolean checkNaturalID() {
