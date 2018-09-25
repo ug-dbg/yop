@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.yop.orm.query.Join;
 import org.yop.orm.query.JoinSet;
+import org.yop.orm.query.json.JSON;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
 import org.yop.orm.simple.model.Pojo;
@@ -85,6 +86,37 @@ public class SimpleJSONTest {
 			.toJSON();
 		String expected = IOUtils.toString(
 			this.getClass().getResourceAsStream("/simple/json/testJSON_2nd_level_ids_expected.json")
+		);
+		JSONAssert.assertEquals("", expected, json, false);
+	}
+
+	@Test
+	public void testSelect_to_JSON() throws IOException, JSONException {
+		Pojo pojo = new Pojo();
+		pojo.setId(1L);
+		pojo.setVersion(1337);
+		pojo.setActive(true);
+		pojo.setType(Pojo.Type.FOO);
+
+		Jopo jopo = new Jopo();
+		jopo.setId(11L);
+		jopo.setName("jopo From code !");
+		jopo.setPojo(pojo);
+		pojo.getJopos().add(jopo);
+
+		Other other = new Other();
+		other.setId(111L);
+		other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
+		other.setName("other name :)");
+		pojo.getOthers().add(other);
+
+		JSON<Pojo> jsonQuery = select(Pojo.class)
+			.joinAll()
+			.toJSONQuery()
+			.register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"));
+		String json = jsonQuery.toJSON(pojo);
+		String expected = IOUtils.toString(
+			this.getClass().getResourceAsStream("/simple/json/testSelect_to_JSON_expected.json")
 		);
 		JSONAssert.assertEquals("", expected, json, false);
 	}
