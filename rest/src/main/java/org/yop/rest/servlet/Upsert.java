@@ -3,10 +3,9 @@ package org.yop.rest.servlet;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import io.swagger.oas.models.Operation;
+import io.swagger.oas.models.media.ArraySchema;
 import io.swagger.oas.models.media.Content;
 import io.swagger.oas.models.media.MediaType;
-import io.swagger.oas.models.media.Schema;
-import io.swagger.oas.models.parameters.Parameter;
 import io.swagger.oas.models.parameters.RequestBody;
 import io.swagger.oas.models.responses.ApiResponse;
 import io.swagger.oas.models.responses.ApiResponses;
@@ -18,6 +17,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.json.JSON;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.exception.YopBadContentException;
+import org.yop.rest.openapi.OpenAPIUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -56,20 +56,9 @@ public class Upsert implements HttpMethod {
 		return "";
 	}
 
-	private Collection<Yopable> readInputJSON(RestRequest restRequest) {
-		try {
-			JsonElement objects = new JsonParser().parse(restRequest.getContent());
-			return JSON.from(restRequest.getRestResource(), objects.getAsJsonArray());
-		} catch (RuntimeException e) {
-			throw new YopBadContentException(
-				"Unable to parse JSON array [" + StringUtils.abbreviate(restRequest.getContent(), 50) + "]",
-				e
-			);
-		}
-	}
-
 	@Override
-	public Operation openAPIDefaultModel(String resource) {
+	public Operation openAPIDefaultModel(Class<? extends Yopable> yopable) {
+		String resource = yopable.getSimpleName();
 		Operation upsert = new Operation();
 		upsert.setSummary("Do upsert operation on [" + resource + "]");
 		upsert.setDescription(
@@ -78,11 +67,12 @@ public class Upsert implements HttpMethod {
 		);
 		upsert.setResponses(new ApiResponses());
 		upsert.setParameters(new ArrayList<>());
-		upsert.getParameters().add(joinAllParameter(resource));
-		upsert.getParameters().add(joinIDsParameter(resource));
+		upsert.getParameters().add(HttpMethod.joinAllParameter(resource));
+		upsert.getParameters().add(HttpMethod.joinIDsParameter(resource));
+		upsert.getParameters().add(HttpMethod.checkNaturalIDParameter(resource));
 		upsert.requestBody(new RequestBody().content(new Content().addMediaType(
 			ContentType.APPLICATION_JSON.getMimeType(),
-			new MediaType()))
+			new MediaType().schema(new ArraySchema().items(OpenAPIUtil.forResource(yopable)))))
 		);
 
 		ApiResponse responseItem = new ApiResponse();
@@ -93,21 +83,21 @@ public class Upsert implements HttpMethod {
 		return upsert;
 	}
 
-	private static Parameter joinAllParameter(String forResource) {
-		return new Parameter()
-			.name("joinAll")
-			.in("query")
-			.required(false)
-			.schema(new Schema().type("boolean"))
-			.description("join all non transient relations to [" + forResource + "]");
-	}
-
-	private static Parameter joinIDsParameter(String forResource) {
-		return new Parameter()
-			.name("joinIDs")
-			.in("query")
-			.required(false)
-			.schema(new Schema().type("boolean"))
-			.description("join all IDs from non transient relations to [" + forResource + "]");
+	/**
+	 * Read the input JSON from the request and deserialize it to a collection of {@link Yopable} using {@link JSON}.
+	 * @param restRequest the incoming REST request
+	 * @return a collection of Yopable from the incoming request
+	 * @throws YopBadContentException Could not parse the input content as JSON
+	 */
+	private static Collection<Yopable> readInputJSON(RestRequest restRequest) {
+		try {
+			JsonElement objects = new JsonParser().parse(restRequest.getContent());
+			return JSON.from(restRequest.getRestResource(), objects.getAsJsonArray());
+		} catch (RuntimeException e) {
+			throw new YopBadContentException(
+				"Unable to parse JSON array [" + StringUtils.abbreviate(restRequest.getContent(), 50) + "]",
+				e
+			);
+		}
 	}
 }

@@ -30,7 +30,8 @@ public class Head extends Get {
 	}
 
 	@Override
-	public Operation openAPIDefaultModel(String resource) {
+	public Operation openAPIDefaultModel(Class yopable) {
+		String resource = yopable.getSimpleName();
 		Operation head = new Operation();
 		head.setSummary("Do head operation on [" + resource + "]. Execute request. Set content-length. No response.");
 		head.setResponses(new ApiResponses());

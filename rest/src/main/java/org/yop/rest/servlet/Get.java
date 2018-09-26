@@ -1,10 +1,9 @@
 package org.yop.rest.servlet;
 
 import io.swagger.oas.models.Operation;
+import io.swagger.oas.models.media.ArraySchema;
 import io.swagger.oas.models.media.Content;
 import io.swagger.oas.models.media.MediaType;
-import io.swagger.oas.models.media.Schema;
-import io.swagger.oas.models.parameters.Parameter;
 import io.swagger.oas.models.responses.ApiResponse;
 import io.swagger.oas.models.responses.ApiResponses;
 import org.apache.http.entity.ContentType;
@@ -12,6 +11,7 @@ import org.yop.orm.evaluation.IdIn;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Select;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.rest.openapi.OpenAPIUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -39,47 +39,24 @@ class Get implements HttpMethod {
 	}
 
 	@Override
-	public Operation openAPIDefaultModel(String resource) {
+	public Operation openAPIDefaultModel(Class<? extends Yopable> yopable) {
+		String resource = yopable.getSimpleName();
 		Operation get = new Operation();
-		get.setSummary("Get all [" + resource + "] or by ID");
+		get.setSummary("Get all [" + resource + "] or one single object by ID");
 		get.setResponses(new ApiResponses());
 		get.setParameters(new ArrayList<>());
-		get.getParameters().add(idParameter(resource));
-		get.getParameters().add(joinAllParameter(resource));
-		get.getParameters().add(joinIDsParameter(resource));
+		get.getParameters().add(HttpMethod.idParameter(resource));
+		get.getParameters().add(HttpMethod.joinAllParameter(resource));
+		get.getParameters().add(HttpMethod.joinIDsParameter(resource));
 
 		ApiResponse responseItem = new ApiResponse();
 		responseItem.setDescription("A set of [" + resource + "]");
 		responseItem.setContent(new Content());
-		responseItem.getContent().addMediaType(ContentType.APPLICATION_JSON.getMimeType(), new MediaType());
+		responseItem.getContent().addMediaType(
+			ContentType.APPLICATION_JSON.getMimeType(),
+			new MediaType().schema(new ArraySchema().items(OpenAPIUtil.forResource(yopable)))
+		);
 		get.getResponses().addApiResponse(String.valueOf(HttpServletResponse.SC_OK), responseItem);
 		return get;
-	}
-
-	private static Parameter idParameter(String forResource) {
-		return new Parameter()
-			.name("id")
-			.in("path")
-			.required(false)
-			.schema(new Schema().type("long"))
-			.description("[" + forResource + "] ID");
-	}
-
-	private static Parameter joinAllParameter(String forResource) {
-		return new Parameter()
-			.name("joinAll")
-			.in("query")
-			.required(false)
-			.schema(new Schema().type("boolean"))
-			.description("join all non transient relations to [" + forResource + "]");
-	}
-
-	private static Parameter joinIDsParameter(String forResource) {
-		return new Parameter()
-			.name("joinIDs")
-			.in("query")
-			.required(false)
-			.schema(new Schema().type("boolean"))
-			.description("join all IDs from non transient relations to [" + forResource + "]");
 	}
 }

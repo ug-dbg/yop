@@ -14,6 +14,8 @@ import io.swagger.oas.models.Paths;
 import io.swagger.oas.models.info.Contact;
 import io.swagger.oas.models.info.Info;
 import io.swagger.oas.models.info.License;
+import io.swagger.oas.models.media.ArraySchema;
+import io.swagger.oas.models.media.Schema;
 import io.swagger.oas.models.responses.ApiResponses;
 import io.swagger.oas.models.tags.Tag;
 import org.apache.commons.lang.StringUtils;
@@ -21,13 +23,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 import org.yop.rest.annotations.Rest;
 import org.yop.rest.exception.YopOpenAPIException;
 import org.yop.rest.servlet.HttpMethod;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 /**
@@ -42,6 +52,26 @@ import java.util.*;
 public class OpenAPIUtil {
 
 	private static final Logger logger = LoggerFactory.getLogger(OpenAPIUtil.class);
+
+	private static final Map<Class, SchemaModel> JSON_SCHEMAS = new HashMap<Class, SchemaModel>() {{
+		this.put(Integer.class,            new SchemaModel("integer"));
+		this.put(Long.class,               new SchemaModel("integer"));
+		this.put(BigInteger.class,         new SchemaModel("integer"));
+		this.put(Float.class,              new SchemaModel("number", "float"));
+		this.put(Double.class,             new SchemaModel("number", "double"));
+		this.put(BigDecimal.class,         new SchemaModel("number", "double"));
+		this.put(Character.class,          new SchemaModel("string"));
+		this.put(String.class,             new SchemaModel("string"));
+		this.put(Date.class,               new SchemaModel("string", "date"));
+		this.put(java.sql.Date.class,      new SchemaModel("string", "date"));
+		this.put(java.sql.Time.class,      new SchemaModel("string", "time"));
+		this.put(java.sql.Timestamp.class, new SchemaModel("string", "date-time"));
+		this.put(LocalDateTime.class,      new SchemaModel("string", "date-time"));
+		this.put(LocalDate.class,          new SchemaModel("string", "date"));
+		this.put(ZonedDateTime.class,      new SchemaModel("string", "date-time"));
+		this.put(LocalTime.class,          new SchemaModel("string", "time"));
+		this.put(Void.class,               new SchemaModel("string"));
+	}};
 
 	/**
 	 * Generate an OpenAPI model from the given Yopables.
@@ -107,11 +137,11 @@ public class OpenAPIUtil {
 		PathItem item = new PathItem();
 		item.setSummary("YOP default REST operations for [" + resource + "]");
 		item.setDescription(rest.description());
-		item.get(HttpMethod.instance("GET").openAPIDefaultModel(resource)).getGet().setTags(tags);
-		item.post(HttpMethod.instance("POST").openAPIDefaultModel(resource)).getPost().setTags(tags);
-		item.put(HttpMethod.instance("PUT").openAPIDefaultModel(resource)).getPut().setTags(tags);
-		item.delete(HttpMethod.instance("DELETE").openAPIDefaultModel(resource)).getDelete().setTags(tags);
-		item.head(HttpMethod.instance("HEAD").openAPIDefaultModel(resource)).getHead().setTags(tags);
+		item.get(HttpMethod.instance("GET").openAPIDefaultModel(yopable)).getGet().setTags(tags);
+		item.post(HttpMethod.instance("POST").openAPIDefaultModel(yopable)).getPost().setTags(tags);
+		item.put(HttpMethod.instance("PUT").openAPIDefaultModel(yopable)).getPut().setTags(tags);
+		item.delete(HttpMethod.instance("DELETE").openAPIDefaultModel(yopable)).getDelete().setTags(tags);
+		item.head(HttpMethod.instance("HEAD").openAPIDefaultModel(yopable)).getHead().setTags(tags);
 
 		api.getPaths().addPathItem(path, item);
 		api.getTags().add(new Tag().name(resource).description("Resource : " + resource));
@@ -219,5 +249,60 @@ public class OpenAPIUtil {
 			}
 		}
 		return onto;
+	}
+
+	public static Schema<?> forResource(Class<? extends Yopable> clazz) {
+		if (Yopable.class.isAssignableFrom(clazz)) {
+			Schema<?> schema = new Schema<>().properties(new HashMap<>());
+			List<Field> fields = Reflection.getFields(clazz, true);
+			for (Field field : fields) {
+				Schema property;
+				if (Reflection.isCollection(field)) {
+					property = new ArraySchema().items(forResource(Reflection.getTarget(field)));
+				} else if (Reflection.isYopable(field)) {
+					property = forResource(Reflection.getTarget(field));
+				} else {
+					property = forColumnField(field);
+				}
+				schema.getProperties().put(field.getName(), property);
+			}
+			return schema;
+		}
+		return null;
+	}
+
+
+	private static Schema forColumnField(Field field) {
+		Class<?> fieldType = field.getType();
+		BigDecimal minValue = null;
+		if (ORMUtil.isIdField(field)) {
+			minValue = new BigDecimal(1);
+		}
+		boolean nullable = ! ORMUtil.isColumnNotNullable(field);
+		Integer maxLength = ORMUtil.getColumnLength(field);
+		return JSON_SCHEMAS
+			.getOrDefault(fieldType, JSON_SCHEMAS.get(Void.class))
+			.toSchema()
+			.nullable(nullable)
+			.minimum(minValue)
+			.maxLength(maxLength);
+	}
+
+	private static class SchemaModel {
+		private String type;
+		private String format;
+
+		private SchemaModel(String type) {
+			this.type = type;
+		}
+
+		private SchemaModel(String type, String format) {
+			this.type = type;
+			this.format = format;
+		}
+
+		private Schema toSchema() {
+			return new Schema().type(this.type).format(this.format);
+		}
 	}
 }

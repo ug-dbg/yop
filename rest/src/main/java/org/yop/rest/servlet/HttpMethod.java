@@ -1,6 +1,7 @@
 package org.yop.rest.servlet;
 
 import io.swagger.oas.models.Operation;
+import io.swagger.oas.models.media.Schema;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.NameValuePair;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Objects;
@@ -51,6 +53,15 @@ public interface HttpMethod {
 	String CONTENT = "content";
 	String PATH = "path";
 
+	/** HTTP 'joinAll' parameter : join all non transient relation on the resources. */
+	String PARAM_JOIN_ALL = "joinAll";
+
+	/** HTTP 'joinIDs' parameter : add extra properties (#ids suffix) for the non transient related objects. */
+	String PARAM_JOIN_IDS = "joinIDs";
+
+	/** HTTP 'checkNaturalID' parameter : when inserting, check if the Natural Key already exists. */
+	String PARAM_CHECK_NK = "checkNaturalID";
+
 	/**
 	 * Return the method implementation for the given method name
 	 * @param method the method name (GET, POST...)
@@ -67,6 +78,62 @@ public interface HttpMethod {
 			case "HEAD"    : return Head.INSTANCE;
 		}
 		throw new UnsupportedOperationException("HTTP method [" + method + "] is not supported ! Sorry about that.");
+	}
+
+	/**
+	 * Create an OpenAPI ID path parameter for a given resource.
+	 * @param forResource the resource name (for {@link io.swagger.oas.models.parameters.Parameter#description}.
+	 * @return the OpenAPI 'id' path parameter
+	 */
+	static io.swagger.oas.models.parameters.Parameter idParameter(String forResource) {
+		return new io.swagger.oas.models.parameters.Parameter()
+			.name("id")
+			.in("path")
+			.required(false)
+			.schema(new Schema().type("integer").minimum(new BigDecimal(1)))
+			.description("[" + forResource + "] ID");
+	}
+
+	/**
+	 * Create a {@link #PARAM_JOIN_ALL} OpenAPI parameter for a given resource.
+	 * @param forResource the resource name (for {@link io.swagger.oas.models.parameters.Parameter#description}.
+	 * @return the OpenAPI 'joinAll' parameter
+	 */
+	static io.swagger.oas.models.parameters.Parameter joinAllParameter(String forResource) {
+		return new io.swagger.oas.models.parameters.Parameter()
+			.name(PARAM_JOIN_ALL)
+			.in("query")
+			.required(false)
+			.schema(new Schema().type("boolean"))
+			.description("join all non transient relations to [" + forResource + "]");
+	}
+
+	/**
+	 * Create a {@link #PARAM_JOIN_IDS}' OpenAPI parameter for a given resource.
+	 * @param forResource the resource name (for {@link io.swagger.oas.models.parameters.Parameter#description}.
+	 * @return the OpenAPI 'joinIDs' parameter
+	 */
+	static io.swagger.oas.models.parameters.Parameter joinIDsParameter(String forResource) {
+		return new io.swagger.oas.models.parameters.Parameter()
+			.name(PARAM_JOIN_IDS)
+			.in("query")
+			.required(false)
+			.schema(new Schema().type("boolean"))
+			.description("join all IDs from non transient relations to [" + forResource + "]");
+	}
+
+	/**
+	 * Create a {@link #PARAM_JOIN_IDS}' OpenAPI parameter for a given resource.
+	 * @param forResource the resource name (for {@link io.swagger.oas.models.parameters.Parameter#description}.
+	 * @return the OpenAPI 'joinIDs' parameter
+	 */
+	static io.swagger.oas.models.parameters.Parameter checkNaturalIDParameter(String forResource) {
+		return new io.swagger.oas.models.parameters.Parameter()
+			.name(PARAM_CHECK_NK)
+			.in("query")
+			.required(false)
+			.schema(new Schema().type("boolean"))
+			.description("Check natural ID when inserting [" + forResource + "] elements. Do update if possible.");
 	}
 
 	/**
@@ -237,8 +304,8 @@ public interface HttpMethod {
 	 * Generate an OpenAPI operation model for the given resource.
 	 * <br>
 	 * This operation should contain the default Yop REST behavior.
-	 * @param resource the resource (Yopable) name
+	 * @param resource the resource (Yopable) class
 	 * @return the default Operation model for the resource name
 	 */
-	Operation openAPIDefaultModel(String resource);
+	Operation openAPIDefaultModel(Class<? extends Yopable> resource);
 }

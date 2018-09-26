@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface Rest {
-	String path();
+	String path() default "";
 	String[] methods() default "GET";
 	String description() default "";
 	String summary() default "";

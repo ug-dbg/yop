@@ -1,5 +1,7 @@
 package org.yop.rest.servlet;
 
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -11,6 +13,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.util.Reflection;
 import org.yop.rest.annotations.Rest;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,13 +38,13 @@ class RestRequest {
 	private String requestPath;
 
 	private Class<Yopable> restResource;
-	private String subResource;
+	private String subResource = "";
 	private String method;
 	private String accept;
 
 	private String content;
 
-	private Map<String, String[]> parameters = new HashMap<>();
+	private MultiValuedMap<String, String> parameters = new ArrayListValuedHashMap<>();
 	private List<Header> headers = new ArrayList<>();
 
 	RestRequest(HttpServletRequest req, HttpServletResponse resp, Map<String, Class<Yopable>> yopablePaths) {
@@ -59,8 +62,7 @@ class RestRequest {
 			logger.debug("No content for request", e);
 		}
 
-		this.parameters.putAll(req.getParameterMap());
-
+		req.getParameterMap().forEach((key, value) -> this.parameters.putAll(key, Arrays.asList(value)));
 
 		for(Enumeration<String> headerNames = req.getHeaderNames(); headerNames.hasMoreElements();) {
 			String header = headerNames.nextElement();
@@ -99,12 +101,13 @@ class RestRequest {
 
 	NameValuePair[] getParameters() {
 		List<NameValuePair> out = new ArrayList<>();
-		for (Map.Entry<String, String[]> parameter : this.parameters.entrySet()) {
-			Arrays
-				.stream(parameter.getValue())
-				.forEach(v -> out.add(new BasicNameValuePair(parameter.getKey(), v)));
-		}
+		this.parameters.entries().forEach(entry -> out.add(new BasicNameValuePair(entry.getKey(), entry.getValue())));
 		return out.toArray(new NameValuePair[0]);
+	}
+
+	String getParameterFirstValue(String name) {
+		Collection<String> values = this.parameters.get(name);
+		return values.isEmpty() ? null : values.iterator().next();
 	}
 
 	Header[] getHeaders() {
@@ -120,25 +123,27 @@ class RestRequest {
 	}
 
 	boolean isCustomResource() {
-		return StringUtils.isNotBlank(this.subResource);
+		return StringUtils.isNotBlank(this.subResource)
+			|| Reflection.getMethods(this.restResource).stream().anyMatch(this::matches);
 	}
 
 	boolean joinAll() {
-		return this.parameters.containsKey("joinAll")
-			&& (this.parameters.get("joinAll").length == 0 || Boolean.valueOf(this.parameters.get("joinAll")[0]));
+		return this.parameters.containsMapping(HttpMethod.PARAM_JOIN_ALL, "true")
+			|| this.parameters.containsMapping(HttpMethod.PARAM_JOIN_ALL, null);
 	}
 
 	boolean joinIDs() {
-		return this.parameters.containsKey("joinIDs")
-			&& (this.parameters.get("joinIDs").length == 0 || Boolean.valueOf(this.parameters.get("joinIDs")[0]));
+		return this.parameters.containsMapping(HttpMethod.PARAM_JOIN_IDS, "true")
+			|| this.parameters.containsMapping(HttpMethod.PARAM_JOIN_IDS, null);
 	}
 
 	boolean checkNaturalID() {
-		return this.parameters.containsKey("checkNaturalID");
+		return this.parameters.containsMapping(HttpMethod.PARAM_CHECK_NK, "true")
+			|| this.parameters.containsMapping(HttpMethod.PARAM_CHECK_NK, null);
 	}
 
 	String getContent() {
-		return content;
+		return StringUtils.isEmpty(this.content) ? "" : this.content;
 	}
 
 	HttpServletResponse getResponse() {
