@@ -154,7 +154,7 @@ public class YopRestServlet extends HttpServlet {
 			resp.getWriter().write(errorJSON(e).toString());
 		} catch (RuntimeException e) {
 			logger.error("YOP Rest resource invocation error!", e);
-			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			resp.getWriter().write(errorJSON(e).toString());
 		}
 	}
