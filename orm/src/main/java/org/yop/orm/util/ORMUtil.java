@@ -130,6 +130,17 @@ public class ORMUtil {
 	}
 
 	/**
+	 * Is this field the ID field of its declaring class ?
+	 * <br>
+	 * @param field the Yopable field to test
+	 * @return true if the given field is the ID field of its declaring class
+	 */
+	@SuppressWarnings("unchecked")
+	public static boolean isIdField(Field field) {
+		return getIdField((Class)field.getDeclaringClass()) == field;
+	}
+
+	/**
 	 * Get the ID column name for a Yopable
 	 * @param clazz the yopable class
 	 * @param <T> the yopable type
