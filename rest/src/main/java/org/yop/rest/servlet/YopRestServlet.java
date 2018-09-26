@@ -2,6 +2,7 @@ package org.yop.rest.servlet;
 
 
 import org.apache.commons.lang.StringUtils;
+import org.json.JSONObject;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,10 +150,12 @@ public class YopRestServlet extends HttpServlet {
 			super.service(req, resp);
 		} catch (YopBadContentException e) {
 			logger.error("YOP Rest resource invocation error, Bad request !", e);
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+			resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			resp.getWriter().write(errorJSON(e).toString());
 		} catch (RuntimeException e) {
 			logger.error("YOP Rest resource invocation error!", e);
-			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			resp.getWriter().write(errorJSON(e).toString());
 		}
 	}
 
@@ -170,5 +173,9 @@ public class YopRestServlet extends HttpServlet {
 		if (StringUtils.isNotBlank(serialized)) {
 			method.write(serialized, restRequest);
 		}
+	}
+
+	private static JSONObject errorJSON(Throwable cause) {
+		return new JSONObject().put("error", cause.getMessage());
 	}
 }
