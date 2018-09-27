@@ -12,6 +12,8 @@ import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
 import org.yop.rest.annotations.Rest;
 import org.yop.rest.exception.YopBadContentException;
+import org.yop.rest.exception.YopNoResourceException;
+import org.yop.rest.exception.YopNoResultException;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -152,7 +154,15 @@ public class YopRestServlet extends HttpServlet {
 			logger.error("YOP Rest resource invocation error, Bad request !", e);
 			resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			resp.getWriter().write(errorJSON(e).toString());
-		} catch (RuntimeException e) {
+		} catch (YopNoResultException e) {
+			logger.error("YOP No resource for given ID !", e);
+			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			resp.getWriter().write(errorJSON(e).toString());
+		} catch (YopNoResourceException e) {
+			logger.error("YOP No resource for given path !", e);
+			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			resp.getWriter().write(errorJSON(e).toString());
+		}catch (RuntimeException e) {
 			logger.error("YOP Rest resource invocation error!", e);
 			resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			resp.getWriter().write(errorJSON(e).toString());
