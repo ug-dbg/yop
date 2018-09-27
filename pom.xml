@@ -19,6 +19,7 @@
 	<modules>
 		<module>orm</module>
 		<module>rest</module>
+		<module>swaggerui</module>
 	</modules>
 
 	<developers>

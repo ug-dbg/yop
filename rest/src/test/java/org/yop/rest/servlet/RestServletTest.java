@@ -2,10 +2,7 @@ package org.yop.rest.servlet;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
-import org.apache.catalina.WebResource;
-import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.Tomcat;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.junit.After;
 import org.junit.Before;
@@ -14,13 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
 import org.yop.orm.sql.adapter.IConnection;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
 /**
@@ -43,7 +36,7 @@ public abstract class RestServletTest extends DBMSSwitch {
 		}
 	}
 
-	private Tomcat tomcat;
+	protected Tomcat tomcat;
 
 	@Before
 	@Override
@@ -54,7 +47,7 @@ public abstract class RestServletTest extends DBMSSwitch {
 		this.tomcat.enableNaming();
 
 		Context context = this.tomcat.addContext("/", new File(".").getAbsolutePath());
-		createDefaultServlet(context);
+		this.onContextCreation(context);
 
 		org.apache.catalina.Wrapper wrapper = Tomcat.addServlet(
 			context,
@@ -92,46 +85,12 @@ public abstract class RestServletTest extends DBMSSwitch {
 		}
 	}
 
-	private static void createDefaultServlet(Context rootContext) {
-		Wrapper defaultServlet = rootContext.createWrapper();
-		defaultServlet.setName("default");
-		defaultServlet.setServletClass("org.yop.rest.servlet.RestServletTest$DefaultServlet");
-		defaultServlet.addInitParameter("debug", "0");
-		defaultServlet.addInitParameter("listings", "true");
-		defaultServlet.setLoadOnStartup(1);
-		rootContext.addChild(defaultServlet);
-		rootContext.addServletMappingDecoded("/", "default");
-	}
-
-	public static class DefaultServlet extends org.apache.catalina.servlets.DefaultServlet {
-
-		public DefaultServlet() {}
-
-		@Override
-		protected void serveResource(
-			HttpServletRequest request,
-			HttpServletResponse response,
-			boolean content,
-			String inputEncoding)
-			throws IOException, ServletException {
-
-			String path = getRelativePath(request, true);
-			if (path.matches(".*/swagger-ui/.*/index.html")) {
-				WebResource resource = this.resources.getResource(path);
-				String html = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);
-				html = html.replaceAll("url: \"https://.*.json\"", "url: \"http://localhost:1234/yop/openapi\"");
-				response.getWriter().write(html);
-				return;
-			}
-
-			super.serveResource(request, response, content, inputEncoding);
-		}
-	}
+	protected void onContextCreation(Context context) {}
 
 	protected static class HttpUpsert extends HttpEntityEnclosingRequestBase {
 		public HttpUpsert(final String uri) {
 			super();
-			setURI(URI.create(uri));
+			this.setURI(URI.create(uri));
 		}
 
 		@Override
