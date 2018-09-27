@@ -39,9 +39,11 @@ public class Upsert implements HttpMethod {
 
 	@Override
 	public Object executeDefault(RestRequest restRequest, IConnection connection) {
+		// The yopables to insert (i.e id is null) will have their id set after Upsert#execute.
+		Collection<Yopable> yopables = readInputJSON(restRequest);
 		org.yop.orm.query.Upsert<Yopable> upsert = org.yop.orm.query.Upsert
 			.from(restRequest.getRestResource())
-			.onto(readInputJSON(restRequest));
+			.onto(yopables);
 
 		if (restRequest.joinAll()) {
 			upsert.joinAll();
@@ -53,7 +55,7 @@ public class Upsert implements HttpMethod {
 			logger.warn("Should check related IDs to join! Not implemented yet!");
 		}
 		upsert.execute(connection);
-		return "";
+		return yopables;
 	}
 
 	@Override
