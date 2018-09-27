@@ -137,13 +137,24 @@ public class OpenAPIUtil {
 		PathItem item = new PathItem();
 		item.setSummary("YOP default REST operations for [" + resource + "]");
 		item.setDescription(rest.description());
-		item.get(HttpMethod.instance("GET").openAPIDefaultModel(yopable)).getGet().setTags(tags);
 		item.post(HttpMethod.instance("POST").openAPIDefaultModel(yopable)).getPost().setTags(tags);
 		item.put(HttpMethod.instance("PUT").openAPIDefaultModel(yopable)).getPut().setTags(tags);
+		item.get(HttpMethod.instance("GET").openAPIDefaultModel(yopable)).getGet().setTags(tags);
 		item.delete(HttpMethod.instance("DELETE").openAPIDefaultModel(yopable)).getDelete().setTags(tags);
 		item.head(HttpMethod.instance("HEAD").openAPIDefaultModel(yopable)).getHead().setTags(tags);
-
 		api.getPaths().addPathItem(path, item);
+
+		path = path + "/{id}";
+		item = new PathItem();
+		item.setSummary("YOP default REST operations for [" + resource + "] for a target ID");
+		item.get(HttpMethod.instance("GET").openAPIDefaultModel(yopable)).getGet().setTags(tags);
+		item.delete(HttpMethod.instance("DELETE").openAPIDefaultModel(yopable)).getDelete().setTags(tags);
+		item.head(HttpMethod.instance("HEAD").openAPIDefaultModel(yopable)).getHead().setTags(tags);
+		item.getGet().getParameters().add(HttpMethod.idParameter(resource));
+		item.getDelete().getParameters().add(HttpMethod.idParameter(resource));
+		item.getHead().getParameters().add(HttpMethod.idParameter(resource));
+		api.getPaths().addPathItem(path, item);
+
 		api.getTags().add(new Tag().name(resource).description("Resource : " + resource));
 	}
 

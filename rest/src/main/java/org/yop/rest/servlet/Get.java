@@ -11,6 +11,7 @@ import org.yop.orm.evaluation.IdIn;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Select;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.rest.exception.YopNoResultException;
 import org.yop.rest.openapi.OpenAPIUtil;
 
 import javax.servlet.http.HttpServletResponse;
@@ -32,7 +33,13 @@ class Get implements HttpMethod {
 
 		if (restRequest.getId() > 0) {
 			select.where(new IdIn(Collections.singletonList(restRequest.getId())));
-			return select.uniqueResult(connection);
+			Yopable uniqueResult = select.uniqueResult(connection);
+			if (uniqueResult == null) {
+				throw new YopNoResultException(
+					"No element [" + restRequest.getRestResource().getName() + "] for ID [" + restRequest.getId() + "]"
+				);
+			}
+			return uniqueResult;
 		} else {
 			return select.execute(connection);
 		}
@@ -45,7 +52,6 @@ class Get implements HttpMethod {
 		get.setSummary("Get all [" + resource + "] or one single object by ID");
 		get.setResponses(new ApiResponses());
 		get.setParameters(new ArrayList<>());
-		get.getParameters().add(HttpMethod.idParameter(resource));
 		get.getParameters().add(HttpMethod.joinAllParameter(resource));
 		get.getParameters().add(HttpMethod.joinIDsParameter(resource));
 

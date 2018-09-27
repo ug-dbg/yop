@@ -89,7 +89,7 @@ public interface HttpMethod {
 		return new io.swagger.oas.models.parameters.Parameter()
 			.name("id")
 			.in("path")
-			.required(false)
+			.required(true)
 			.schema(new Schema().type("integer").minimum(new BigDecimal(1)))
 			.description("[" + forResource + "] ID");
 	}
