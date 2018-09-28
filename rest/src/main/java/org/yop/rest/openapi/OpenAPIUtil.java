@@ -53,6 +53,9 @@ public class OpenAPIUtil {
 
 	private static final Logger logger = LoggerFactory.getLogger(OpenAPIUtil.class);
 
+	/**
+	 * Rough java type → JSON schema type/format equivalents.
+	 */
 	private static final Map<Class, SchemaModel> JSON_SCHEMAS = new HashMap<Class, SchemaModel>() {{
 		this.put(Integer.class,            new SchemaModel("integer"));
 		this.put(Long.class,               new SchemaModel("integer"));
@@ -125,6 +128,79 @@ public class OpenAPIUtil {
 		}
 	}
 
+	/**
+	 * Create an OpenAPI {@link Schema} object from a {@link Yopable} type.
+	 * <br>
+	 * This is done by recursively iterating on the yopable fields.
+	 * <br>
+	 * See {@link #forColumnField(Field)} when the field is
+	 * neither a {@link Yopable} nor a collection of {@link Yopable}.
+	 * @param clazz the Yopable type
+	 * @return the generated schema for this type. Null if the type is not a yopable
+	 */
+	public static Schema<?> forResource(Class<? extends Yopable> clazz) {
+		if (Yopable.class.isAssignableFrom(clazz)) {
+			Schema<?> schema = new Schema<>().properties(new HashMap<>());
+			List<Field> fields = Reflection.getFields(clazz, true);
+			for (Field field : fields) {
+				Schema property;
+				if (Reflection.isCollection(field)) {
+					property = new ArraySchema().items(forResource(Reflection.getTarget(field)));
+				} else if (Reflection.isYopable(field)) {
+					property = forResource(Reflection.getTarget(field));
+				} else {
+					property = forColumnField(field);
+				}
+				schema.getProperties().put(field.getName(), property);
+			}
+			return schema;
+		}
+		return null;
+	}
+
+	/**
+	 * Create an OpenAPI {@link Schema} object from the given Field.
+	 * <br>
+	 * @param field the target field.
+	 *              Should be a @Column field.
+	 *              Neither a {@link Yopable} nor collection of {@link Yopable}
+	 * @return the generated schema for the type
+	 */
+	private static Schema forColumnField(Field field) {
+		Class<?> fieldType = field.getType();
+		BigDecimal minValue = null;
+		if (ORMUtil.isIdField(field)) {
+			minValue = new BigDecimal(1);
+		}
+		boolean nullable = ! ORMUtil.isColumnNotNullable(field);
+		Integer maxLength = ORMUtil.getColumnLength(field);
+		return JSON_SCHEMAS
+			.getOrDefault(fieldType, JSON_SCHEMAS.get(Void.class))
+			.toSchema()
+			.nullable(nullable)
+			.minimum(minValue)
+			.maxLength(maxLength);
+	}
+
+	/**
+	 * Add the YOP REST default behavior (GET/POST/PUT/DELETE/HEAD) into the target OpenAPI.
+	 * <br>
+	 * The REST resource path is read from {@link Rest#path()}.
+	 * <br><br>
+	 * Default behavior is :
+	 * <ul>
+	 *  <li> GET    /path : get all resource elements </li>
+	 *  <li> HEAD   /path : get all resource elements, no content returned, only set content length </li>
+	 *  <li> POST   /path : execute a custom YOP query for the resource type</li>
+	 *  <li> PUT    /path : upsert an array of resource elements</li>
+	 *  <li> DELETE /path : delete all resource elements</li>
+	 *  <li> GET    /path/{id} : get resource element by ID</li>
+	 *  <li> HEAD   /path/{id} : get resource element by ID, no content returned, only set content length</li>
+	 *  <li> DELETE /path/{id} : delete resource element by ID</li>
+	 * </ul>
+	 * @param yopable the yopable resource type
+	 * @param api the target OpenAPI object
+	 */
 	private static void addResourceDefaultBehavior(Class<? extends Yopable> yopable, OpenAPI api) {
 		Rest rest = yopable.getAnnotation(Rest.class);
 		if (rest == null) {
@@ -158,6 +234,17 @@ public class OpenAPIUtil {
 		api.getTags().add(new Tag().name(resource).description("Resource : " + resource));
 	}
 
+	/**
+	 * Add the YOP REST custom behavior into the target OpenAPI.
+	 * <br>
+	 * The REST resource path is read from {@link Rest#path()}.
+	 * <br>
+	 * The custom behavior is any specific @Rest method in the target resource.
+	 * <br>
+	 * If swagger annotations are present ({@link Operation}, {@link ApiResponse}...) we try to use them.
+	 * @param yopable the yopable resource type
+	 * @param api the target OpenAPI object
+	 */
 	private static void addResourceCustomBehavior(Class<? extends Yopable> yopable, OpenAPI api) {
 		String resource = yopable.getSimpleName();
 		List<String> tags = Collections.singletonList(resource);
@@ -226,7 +313,6 @@ public class OpenAPIUtil {
 	 * @param <A> the source OpenAPI annotation type
 	 * @return a new instance of the target model with the annotation data, null if annotation is null or bad target.
 	 */
-	@SuppressWarnings("unchecked")
 	private static <T, A extends Annotation> T fromAnnotation(A annotation, Class<T> target) {
 		if (annotation == null) {
 			return null;
@@ -262,43 +348,11 @@ public class OpenAPIUtil {
 		return onto;
 	}
 
-	public static Schema<?> forResource(Class<? extends Yopable> clazz) {
-		if (Yopable.class.isAssignableFrom(clazz)) {
-			Schema<?> schema = new Schema<>().properties(new HashMap<>());
-			List<Field> fields = Reflection.getFields(clazz, true);
-			for (Field field : fields) {
-				Schema property;
-				if (Reflection.isCollection(field)) {
-					property = new ArraySchema().items(forResource(Reflection.getTarget(field)));
-				} else if (Reflection.isYopable(field)) {
-					property = forResource(Reflection.getTarget(field));
-				} else {
-					property = forColumnField(field);
-				}
-				schema.getProperties().put(field.getName(), property);
-			}
-			return schema;
-		}
-		return null;
-	}
-
-
-	private static Schema forColumnField(Field field) {
-		Class<?> fieldType = field.getType();
-		BigDecimal minValue = null;
-		if (ORMUtil.isIdField(field)) {
-			minValue = new BigDecimal(1);
-		}
-		boolean nullable = ! ORMUtil.isColumnNotNullable(field);
-		Integer maxLength = ORMUtil.getColumnLength(field);
-		return JSON_SCHEMAS
-			.getOrDefault(fieldType, JSON_SCHEMAS.get(Void.class))
-			.toSchema()
-			.nullable(nullable)
-			.minimum(minValue)
-			.maxLength(maxLength);
-	}
-
+	/**
+	 * A very light schema model for a given type/format.
+	 * <br>
+	 * See {@link #toSchema()} to generate an OpenAPI schema instance from the model.
+	 */
 	private static class SchemaModel {
 		private String type;
 		private String format;
