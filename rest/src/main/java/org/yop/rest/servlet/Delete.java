@@ -41,7 +41,6 @@ public class Delete implements HttpMethod {
 		delete.setSummary("Do delete operation on [" + resource + "]. If not ID provided, delete all entries !");
 		delete.setResponses(new ApiResponses());
 		delete.setParameters(new ArrayList<>());
-		delete.getParameters().add(HttpMethod.idParameter(resource));
 		delete.getParameters().add(HttpMethod.joinAllParameter(resource));
 		delete.getParameters().add(HttpMethod.joinIDsParameter(resource));
 
