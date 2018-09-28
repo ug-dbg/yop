@@ -1,6 +1,7 @@
 package org.yop.swaggerui.servlet;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -9,6 +10,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 /**
  * A very basic file servlet to expose the SwaggerUI static content, configured for YOP REST OpenAPI.
@@ -40,9 +43,15 @@ public class YopSwaggerUIServlet extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		File target = new File(this.getServletContext().getRealPath(req.getServletPath()));
+		InputStream classPathStream = this.getClass().getResourceAsStream(req.getServletPath());
+		String html = null;
 		if (target.exists()) {
-			String html = FileUtils.readFileToString(target);
+			html = FileUtils.readFileToString(target);
+		} else if (classPathStream != null){
+			html = IOUtils.toString(classPathStream, StandardCharsets.UTF_8);
+		}
 
+		if (html != null) {
 			String path = req.getServletPath();
 			if (path.matches(".*/swagger-ui/index.html")) {
 				html = html.replaceAll("url: \"https://.*.json\"", "url: \"" + this.yopOpenAPIURL + "\"");
