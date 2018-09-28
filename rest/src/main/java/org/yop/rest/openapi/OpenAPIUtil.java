@@ -169,11 +169,15 @@ public class OpenAPIUtil {
 	private static Schema forColumnField(Field field) {
 		Class<?> fieldType = field.getType();
 		BigDecimal minValue = null;
+		boolean nullable = true;
+		Integer maxLength = null;
 		if (ORMUtil.isIdField(field)) {
 			minValue = new BigDecimal(1);
+		} else {
+			nullable = ! ORMUtil.isColumnNotNullable(field);
+			maxLength = ORMUtil.getColumnLength(field);
 		}
-		boolean nullable = ! ORMUtil.isColumnNotNullable(field);
-		Integer maxLength = ORMUtil.getColumnLength(field);
+
 		return JSON_SCHEMAS
 			.getOrDefault(fieldType, JSON_SCHEMAS.get(Void.class))
 			.toSchema()
