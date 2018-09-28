@@ -81,7 +81,10 @@ public class YopRestServlet extends HttpServlet {
 		for (Class<? extends Yopable> subtype : subtypes) {
 			if (StringUtils.startsWithAny(subtype.getPackage().getName(), packages)
 			&& subtype.isAnnotationPresent(Rest.class)) {
-				this.yopablePaths.put(subtype.getAnnotation(Rest.class).path(), (Class<Yopable>) subtype);
+				this.yopablePaths.put(
+					StringUtils.removeStart(subtype.getAnnotation(Rest.class).path(), "/"),
+					(Class<Yopable>) subtype
+				);
 			}
 		}
 
