@@ -1,15 +1,12 @@
 package org.yop.orm.query.batch;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.evaluation.NaturalKey;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
-import org.yop.orm.query.Select;
 import org.yop.orm.query.Upsert;
 import org.yop.orm.query.relation.Relation;
 import org.yop.orm.sql.Constants;
@@ -121,15 +118,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 
 		// If the user asked for natural key checking, do a preliminary SELECT request to find any existing ID
 		if (this.checkNaturalID) {
-			Select<T> naturalIDQuery = Select.from(this.target);
-			for (T element : this.elements.stream().filter(e -> e.getId() == null).collect(Collectors.toList())) {
-				naturalIDQuery.where().or(new NaturalKey<>(element));
-			}
-			Map<T, T> existing = Maps.uniqueIndex(naturalIDQuery.execute(connection, Select.Strategy.EXISTS), e -> e);
-
-			// Assign ID on an element if there is a saved element that matched its natural ID
-			// ⚠⚠⚠ The equals and hashcode method are quite important here ! ⚠⚠⚠
-			this.elements.forEach(e -> e.setId(existing.getOrDefault(e, e).getId()));
+			this.findNaturalIDs(connection);
 		}
 
 		// Upsert the current data table and, when required, set the generated ID
@@ -193,13 +182,13 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 		List<org.yop.orm.sql.Query> out = new ArrayList<>();
 		if(!elementsToInsert.isEmpty()) {
 			if (Constants.USE_BATCH_INSERTS) {
-				out.add(toSQLInserts(elementsToInsert));
+				out.add(this.toSQLInserts(elementsToInsert));
 			} else {
 				elementsToInsert.forEach(element -> out.add(super.toSQLInsert(element)));
 			}
 		}
 		if(!elementsToUpdate.isEmpty()) {
-			out.add(toSQLUpdates(elementsToUpdate));
+			out.add(this.toSQLUpdates(elementsToUpdate));
 		}
 
 		return out;

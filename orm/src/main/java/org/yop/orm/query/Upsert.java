@@ -15,6 +15,7 @@ import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.model.YopableEquals;
 import org.yop.orm.model.Yopables;
 import org.yop.orm.query.relation.Relation;
 import org.yop.orm.sql.Executor;
@@ -236,15 +237,7 @@ public class Upsert<T extends Yopable> implements JsonAble {
 
 		// If the user asked for natural key checking, do a preliminary SELECT request to find any existing ID
 		if (this.checkNaturalID) {
-			Select<T> naturalIDQuery = Select.from(this.target);
-			for (T element : this.elements.stream().filter(e -> e.getId() == null).collect(Collectors.toList())) {
-				naturalIDQuery.where().or(new NaturalKey<>(element));
-			}
-			Map<T, T> existing = Maps.uniqueIndex(naturalIDQuery.execute(connection, Select.Strategy.EXISTS), e -> e);
-
-			// Assign ID on an element if there is a saved element that matched its natural ID
-			// ⚠⚠⚠ The equals and hashcode method are quite important here ! ⚠⚠⚠
-			this.elements.forEach(e -> e.setId(existing.getOrDefault(e, e).getId()));
+			this.findNaturalIDs(connection);
 		}
 
 		// Upsert the current data table and, when required, set the generated ID
@@ -258,6 +251,31 @@ public class Upsert<T extends Yopable> implements JsonAble {
 		for (IJoin<T, ? extends Yopable> join : this.joins) {
 			updateRelation(connection, updated, join);
 		}
+	}
+
+	/**
+	 * For each element in {@link #elements} try to find its ID from database,
+	 * using its {@link org.yop.orm.annotations.NaturalId}.
+	 * <br>
+	 * A {@link Select} query is executed with {@link NaturalKey} restrictions.
+	 * @param connection the database connection to use
+	 */
+	protected void findNaturalIDs(IConnection connection) {
+		// Find existing elements
+		Select<T> naturalIDQuery = Select.from(this.target);
+		for (T element : this.elements.stream().filter(e -> e.getId() == null).collect(Collectors.toList())) {
+			naturalIDQuery.where().or(new NaturalKey<>(element));
+		}
+
+		// Map with YopableEquals as key (YopableEquals has built-in natural ID equals/hashcode methods).
+		Map<YopableEquals, T> existing = Maps.uniqueIndex(
+			naturalIDQuery.execute(connection, Select.Strategy.EXISTS),
+			YopableEquals::new
+		);
+
+		// Assign ID on an element if there is a saved element that matched its natural ID
+		// ⚠⚠⚠ The equals and hashcode methods from YopableEquals are quite important here ! ⚠⚠⚠
+		this.elements.forEach(e -> e.setId(existing.getOrDefault(new YopableEquals(e), e).getId()));
 	}
 
 	/**
