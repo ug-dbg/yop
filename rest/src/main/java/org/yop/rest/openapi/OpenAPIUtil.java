@@ -144,9 +144,9 @@ public class OpenAPIUtil {
 			List<Field> fields = Reflection.getFields(clazz, true);
 			for (Field field : fields) {
 				Schema property;
-				if (Reflection.isCollection(field)) {
+				if (ORMUtil.isCollection(field)) {
 					property = new ArraySchema().items(forResource(Reflection.getTarget(field)));
-				} else if (Reflection.isYopable(field)) {
+				} else if (ORMUtil.isYopable(field)) {
 					property = forResource(Reflection.getTarget(field));
 				} else {
 					property = forColumnField(field);
