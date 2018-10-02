@@ -182,13 +182,13 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 		List<org.yop.orm.sql.Query> out = new ArrayList<>();
 		if(!elementsToInsert.isEmpty()) {
 			if (Constants.USE_BATCH_INSERTS) {
-				out.add(toSQLInserts(elementsToInsert));
+				out.add(this.toSQLInserts(elementsToInsert));
 			} else {
 				elementsToInsert.forEach(element -> out.add(super.toSQLInsert(element)));
 			}
 		}
 		if(!elementsToUpdate.isEmpty()) {
-			out.add(toSQLUpdates(elementsToUpdate));
+			out.add(this.toSQLUpdates(elementsToUpdate));
 		}
 
 		return out;
