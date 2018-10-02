@@ -47,7 +47,9 @@ public class YopSwaggerUIServlet extends HttpServlet {
 	 */
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		String path = StringUtils.removeStart(req.getRequestURI(), req.getServletPath());
+		String path = StringUtils.removeStart(req.getRequestURI(), req.getContextPath());
+		path = StringUtils.removeStart(path, req.getServletPath());
+
 		if (StringUtils.equalsAny(path, "", "/")) {
 			logger.debug("Redirect to index.html");
 			resp.sendRedirect(Paths.get(req.getServletPath(), "index.html").toString());
