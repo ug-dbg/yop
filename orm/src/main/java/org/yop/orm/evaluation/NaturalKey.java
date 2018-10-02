@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class NaturalKey<T extends Yopable> implements Evaluation {
 
 	/** JSON query serialization : the reference object will be serialized as a JSON object for that key. */
-	private static final String REFERENCE = "reference";
+	public static final String REFERENCE = "reference";
 
 	/** The object from which is taken the Natural ID */
 	private T reference;

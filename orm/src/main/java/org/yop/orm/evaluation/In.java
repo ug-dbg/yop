@@ -30,7 +30,7 @@ public class In implements Evaluation {
 
 	private static final String IN = " {0} IN ({1}) ";
 
-	private static final String VALUES = "values";
+	public static final String VALUES = "values";
 
 	/** The field getter on which a restriction is set */
 	private Function<?, ?> getter;

@@ -7,10 +7,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.swagger.oas.annotations.Operation;
 import io.swagger.oas.annotations.Parameter;
 import io.swagger.oas.annotations.responses.ApiResponse;
-import io.swagger.oas.models.ExternalDocumentation;
-import io.swagger.oas.models.OpenAPI;
-import io.swagger.oas.models.PathItem;
-import io.swagger.oas.models.Paths;
+import io.swagger.oas.models.*;
 import io.swagger.oas.models.info.Contact;
 import io.swagger.oas.models.info.Info;
 import io.swagger.oas.models.info.License;
@@ -56,7 +53,7 @@ public class OpenAPIUtil {
 	/**
 	 * Rough java type → JSON schema type/format equivalents.
 	 */
-	private static final Map<Class, SchemaModel> JSON_SCHEMAS = new HashMap<Class, SchemaModel>() {{
+	static final Map<Class, SchemaModel> JSON_SCHEMAS = new HashMap<Class, SchemaModel>() {{
 		this.put(Integer.class,            new SchemaModel("integer"));
 		this.put(Long.class,               new SchemaModel("integer"));
 		this.put(BigInteger.class,         new SchemaModel("integer"));
@@ -73,6 +70,7 @@ public class OpenAPIUtil {
 		this.put(LocalDate.class,          new SchemaModel("string", "date"));
 		this.put(ZonedDateTime.class,      new SchemaModel("string", "date-time"));
 		this.put(LocalTime.class,          new SchemaModel("string", "time"));
+		this.put(Class.class,              new SchemaModel("string", "canonical-class-name"));
 		this.put(Void.class,               new SchemaModel("string"));
 	}};
 
@@ -102,6 +100,9 @@ public class OpenAPIUtil {
 		documentation.setUrl("http://maven.y-op.org/");
 		documentation.setDescription("YOP default documentation");
 		api.setExternalDocs(documentation);
+
+		api.components(new Components().schemas(new LinkedHashMap<>()));
+		YopSchemas.YOP_SCHEMAS.forEach((k,v) -> api.getComponents().addSchemas(k, v));
 
 		api.setTags(new ArrayList<>());
 		api.setPaths(new Paths());
@@ -357,7 +358,7 @@ public class OpenAPIUtil {
 	 * <br>
 	 * See {@link #toSchema()} to generate an OpenAPI schema instance from the model.
 	 */
-	private static class SchemaModel {
+	static class SchemaModel {
 		private String type;
 		private String format;
 
@@ -370,7 +371,7 @@ public class OpenAPIUtil {
 			this.format = format;
 		}
 
-		private Schema toSchema() {
+		Schema toSchema() {
 			return new Schema().type(this.type).format(this.format);
 		}
 	}

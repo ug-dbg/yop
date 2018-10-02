@@ -23,7 +23,7 @@ import java.util.function.Function;
  */
 public class Comparison implements Evaluation {
 
-	private static final String REF_TYPE = "refType";
+	public static final String REF_TYPE = "refType";
 
 	/** The field getter. */
 	private Function<?, ?> getter;

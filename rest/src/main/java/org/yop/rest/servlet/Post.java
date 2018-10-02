@@ -1,6 +1,7 @@
 package org.yop.rest.servlet;
 
 import io.swagger.oas.models.Operation;
+import io.swagger.oas.models.media.ComposedSchema;
 import io.swagger.oas.models.media.Content;
 import io.swagger.oas.models.media.MediaType;
 import io.swagger.oas.models.media.Schema;
@@ -15,6 +16,7 @@ import org.yop.orm.query.Delete;
 import org.yop.orm.query.Select;
 import org.yop.orm.query.Upsert;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.rest.openapi.YopSchemas;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -32,9 +34,9 @@ public class Post implements HttpMethod {
 	public Object executeDefault(RestRequest restRequest, IConnection connection) {
 		String queryType = restRequest.getParameterFirstValue(PARAM_TYPE);
 		switch (StringUtils.lowerCase(queryType)) {
-			case "select" : return doSelect(restRequest, connection);
-			case "upsert" : return doUpsert(restRequest, connection);
-			case "delete" : return doDelete(restRequest, connection);
+			case YopSchemas.SELECT : return doSelect(restRequest, connection);
+			case YopSchemas.UPSERT : return doUpsert(restRequest, connection);
+			case YopSchemas.DELETE : return doDelete(restRequest, connection);
 			default: throw new IllegalArgumentException("Unknown query type [" + queryType + "]");
 		}
 	}
@@ -49,16 +51,22 @@ public class Post implements HttpMethod {
 
 		Schema<String> typeParameterSchema = new Schema<>();
 		typeParameterSchema.setType("string");
-		typeParameterSchema.setEnum(Arrays.asList("select", "upsert", "delete"));
+		typeParameterSchema.setEnum(Arrays.asList(YopSchemas.SELECT, YopSchemas.UPSERT, YopSchemas.DELETE));
 		Parameter typeParameter = new Parameter()
 			.name(PARAM_TYPE).in("query")
 			.required(true)
 			.schema(typeParameterSchema)
 			.description("A custom Yop query for [" + resource + "] in JSON format");
 		post.getParameters().add(typeParameter);
+
+		Schema queries = new ComposedSchema().anyOf(Arrays.asList(
+			new Schema().$ref(YopSchemas.SELECT),
+			new Schema().$ref(YopSchemas.DELETE),
+			new Schema().$ref(YopSchemas.UPSERT)
+		));
 		post.requestBody(new RequestBody().description("YOP custom query").content(new Content().addMediaType(
 			ContentType.APPLICATION_JSON.getMimeType(),
-			new MediaType()))
+			new MediaType().schema(queries)))
 		);
 
 		ApiResponse responseItem = new ApiResponse();
