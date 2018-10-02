@@ -46,6 +46,6 @@ public class YopSwaggerUIServletTest extends RestServletTest {
 		defaultServlet.setServletClass(YopSwaggerUIServlet.class.getName());
 		defaultServlet.setLoadOnStartup(1);
 		rootContext.addChild(defaultServlet);
-		rootContext.addServletMappingDecoded("/", servletName);
+		rootContext.addServletMappingDecoded("/yop-swagger/*", servletName);
 	}
 }
