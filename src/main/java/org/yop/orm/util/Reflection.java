@@ -6,7 +6,6 @@ import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.model.Yopable;
 import sun.reflect.ReflectionFactory;
 
 import java.lang.annotation.Annotation;
@@ -35,23 +34,6 @@ public class Reflection {
 	private static final long    TEST_LONG   = 1337666;
 	private static final float   TEST_FLOAT  = 13.37f;
 	private static final double  TEST_DOUBLE = 1.337;
-
-	/**
-	 * It is useful to know if a {@link Yopable} field is a Collection or a Yopable. Or neither.
-	 */
-	enum FieldType {
-		COLLECTION, YOPABLE, OTHER;
-
-		public static FieldType fromField(Field field) {
-			if (Collection.class.isAssignableFrom(field.getType())) {
-				return COLLECTION;
-			}
-			if (Yopable.class.isAssignableFrom(field.getType())) {
-				return YOPABLE;
-			}
-			return OTHER;
-		}
-	}
 
 	/**
 	 * Find a class for a given class name. Do not throw checked exception.
@@ -645,38 +627,5 @@ public class Reflection {
 			logger.trace("Could not find constructor [{}]([{}])", on.getName(), withParameter.getName(), e);
 		}
 		return null;
-	}
-
-	/**
-	 * Is this field a {@link FieldType#COLLECTION} ?
-	 * <br>
-	 * This method uses a field type cache : {@link ReflectionCache#FIELD_TYPES}.
-	 * @param field the field to check
-	 * @return true if a {@link Collection} is assignable from the field type.
-	 */
-	public static boolean isCollection(Field field) {
-		return ReflectionCache.isCollection(field);
-	}
-
-	/**
-	 * Is this field a {@link FieldType#YOPABLE} ?
-	 * <br>
-	 * This method uses a field type cache : {@link ReflectionCache#FIELD_TYPES}.
-	 * @param field the field to check
-	 * @return true if a {@link Yopable} is assignable from the field type.
-	 */
-	public static boolean isYopable(Field field) {
-		return ReflectionCache.isYopable(field);
-	}
-
-	/**
-	 * Get the joined fields ({@link org.yop.orm.annotations.JoinColumn} and {@link org.yop.orm.annotations.JoinTable}).
-	 * <br>
-	 * This method uses a field type cache : {@link ReflectionCache#JOINED_FIELDS}.
-	 * @param clazz the given class
-	 * @return all the @JoinColumn/@JoinTable fields from the given class
-	 */
-	public static Collection<Field> getJoinedFields(Class clazz) {
-		return ReflectionCache.getJoinedFields(clazz);
 	}
 }

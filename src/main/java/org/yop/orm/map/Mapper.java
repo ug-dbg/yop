@@ -262,11 +262,11 @@ public class Mapper {
 		FirstLevelCache cache)
 		throws IllegalAccessException, InstantiationException {
 
-		Collection<Field> fields = Reflection.getJoinedFields(element.getClass());
+		Collection<Field> fields = ORMUtil.getJoinedFields(element.getClass());
 		for (Field field : fields) {
 			String newContext = context + SEPARATOR + field.getName() + SEPARATOR;
 			Yopable target;
-			if(Reflection.isCollection(field)) {
+			if(ORMUtil.isCollection(field)) {
 				Class<? extends Yopable> targetClass = ORMUtil.getRelationFieldType(field);
 
 				newContext += ORMUtil.getTargetName(targetClass);
@@ -276,7 +276,7 @@ public class Mapper {
 				target = mapSimpleFields(results, target, newContext, cache);
 				target = cache.getOrDefault(field, element, target);
 				mapRelationFields(results, target, newContext, cache);
-			} else if (Reflection.isYopable(field)){
+			} else if (ORMUtil.isYopable(field)){
 				Class<? extends Yopable> targetClass = (Class<? extends Yopable>) field.getType();
 				newContext += ORMUtil.getTargetName(targetClass);
 				if(results.noContext(newContext, targetClass)) continue;

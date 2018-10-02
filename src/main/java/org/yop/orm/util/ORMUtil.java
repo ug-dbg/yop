@@ -15,10 +15,7 @@ import org.yop.orm.transform.ITransformer;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.yop.orm.util.Reflection.isNotTransient;
@@ -35,6 +32,23 @@ public class ORMUtil {
 
 	/** [Field → parametrized type] cache map : {@link Field#getGenericType()} can be a bit slow */
 	private static final Map<Field, Class> FIELD_PARAMETRIZED_TYPES = new HashMap<>();
+
+	/**
+	 * It is useful to know if a {@link Yopable} field is a Collection or a Yopable. Or neither.
+	 */
+	enum FieldType {
+		COLLECTION, YOPABLE, OTHER;
+
+		public static FieldType fromField(Field field) {
+			if (Collection.class.isAssignableFrom(field.getType())) {
+				return COLLECTION;
+			}
+			if (Yopable.class.isAssignableFrom(field.getType())) {
+				return YOPABLE;
+			}
+			return OTHER;
+		}
+	}
 
 	/**
 	 * Get the table name for the given yopable target
@@ -315,6 +329,39 @@ public class ORMUtil {
 			return seq;
 		}
 		return "";
+	}
+
+	/**
+	 * Is this field a {@link FieldType#COLLECTION} ?
+	 * <br>
+	 * This method uses a field type cache : {@link ORMUtilCache#FIELD_TYPES}.
+	 * @param field the field to check
+	 * @return true if a {@link Collection} is assignable from the field type.
+	 */
+	public static boolean isCollection(Field field) {
+		return ORMUtilCache.isOfType(field, FieldType.COLLECTION);
+	}
+
+	/**
+	 * Is this field a {@link FieldType#YOPABLE} ?
+	 * <br>
+	 * This method uses a field type cache : {@link ORMUtilCache#FIELD_TYPES}.
+	 * @param field the field to check
+	 * @return true if a {@link Yopable} is assignable from the field type.
+	 */
+	public static boolean isYopable(Field field) {
+		return ORMUtilCache.isOfType(field, FieldType.YOPABLE);
+	}
+
+	/**
+	 * Get the joined fields ({@link org.yop.orm.annotations.JoinColumn} and {@link org.yop.orm.annotations.JoinTable}).
+	 * <br>
+	 * This method uses a field type cache : {@link ORMUtilCache#JOINED_FIELDS}.
+	 * @param clazz the given class
+	 * @return all the @JoinColumn/@JoinTable fields from the given class
+	 */
+	public static Collection<Field> getJoinedFields(Class clazz) {
+		return ORMUtilCache.getJoinedFields(clazz);
 	}
 
 	/**

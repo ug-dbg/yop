@@ -107,13 +107,13 @@ public class IdMap {
 		List<Field> fields = ORMUtil.joinedFields(yopable);
 		for (Field field : fields) {
 			String newContext = context + SEPARATOR + field.getName() + SEPARATOR;
-			if(Reflection.isCollection(field)) {
+			if(ORMUtil.isCollection(field)) {
 				Class<? extends Yopable> targetClass = ORMUtil.getRelationFieldType(field);
 				newContext += ORMUtil.getTargetName(targetClass);
 
 				if(results.noContext(newContext, targetClass)) continue;
 				map(results, targetClass, newContext, map);
-			} else if (Reflection.isYopable(field)){
+			} else if (ORMUtil.isYopable(field)){
 				@SuppressWarnings("unchecked")
 				Class<? extends Yopable> targetClass = (Class<? extends Yopable>) field.getType();
 				newContext += ORMUtil.getTargetName(targetClass);
