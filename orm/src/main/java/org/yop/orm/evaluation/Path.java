@@ -129,7 +129,7 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 	 * @return the target class if the field.
 	 */
 	private static <T> Class<T> getTarget(Field field) {
-		if(Reflection.isCollection(field)) {
+		if(ORMUtil.isCollection(field)) {
 			return Reflection.getCollectionTarget(field);
 		}
 		return (Class<T>) field.getType();
@@ -148,7 +148,7 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 		for (Function step : this.steps) {
 			Field field = Reflection.findField(from, step);
 			items.add(toPath(field));
-			if (Reflection.isCollection(field)) {
+			if (ORMUtil.isCollection(field)) {
 				from = Reflection.getCollectionTarget(field);
 			} else {
 				from = field.getType();

@@ -165,7 +165,7 @@ public class Table implements Comparable<Table> {
 		table.columns.add(source);
 
 		Class<? extends Yopable> targetClass;
-		if(Reflection.isCollection(relationField)) {
+		if(ORMUtil.isCollection(relationField)) {
 			targetClass = Reflection.getCollectionTarget(relationField);
 		} else {
 			targetClass = (Class<? extends Yopable>)relationField.getType();

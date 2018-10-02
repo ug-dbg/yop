@@ -1,7 +1,8 @@
 package org.yop.orm.util;
 
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.reflections.Reflections;
-import org.yop.orm.model.Yopable;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -14,13 +15,7 @@ import java.util.*;
 class ReflectionCache {
 
 	/** Declared fields for a given class */
-	private static final Map<Class, Collection<Field>> DECLARED_FIELDS = new HashMap<>();
-
-	/** {@link ORMUtil#joinedFields(Class)} fields for a given class */
-	private static final Map<Class, Collection<Field>> JOINED_FIELDS   = new HashMap<>();
-
-	/** Is this field a collection field, a Yopable field or something else ? */
-	private static final Map<Field, Reflection.FieldType> FIELD_TYPES  = new HashMap<>();
+	private static final MultiValuedMap<Class, Field> DECLARED_FIELDS = new ArrayListValuedHashMap<>();
 
 	/**
 	 * Reference implementations for common interfaces
@@ -37,45 +32,9 @@ class ReflectionCache {
 
 	static Collection<Field> getDeclaredFields(Class clazz) {
 		if (! DECLARED_FIELDS.containsKey(clazz)) {
-			DECLARED_FIELDS.put(clazz, Arrays.asList(clazz.getDeclaredFields()));
+			DECLARED_FIELDS.putAll(clazz, Arrays.asList(clazz.getDeclaredFields()));
 		}
 		return DECLARED_FIELDS.get(clazz);
-	}
-
-	/**
-	 * Is this field a {@link Reflection.FieldType#COLLECTION} ?
-	 * @param field the field to check
-	 * @return true if a {@link Collection} is assignable from the field type.
-	 */
-	static boolean isCollection(Field field) {
-		if (! FIELD_TYPES.containsKey(field)) {
-			FIELD_TYPES.put(field, Reflection.FieldType.fromField(field));
-		}
-		return FIELD_TYPES.get(field) == Reflection.FieldType.COLLECTION;
-	}
-
-	/**
-	 * Is this field a {@link Reflection.FieldType#YOPABLE} ?
-	 * @param field the field to check
-	 * @return true if a {@link Yopable} is assignable from the field type.
-	 */
-	static boolean isYopable(Field field) {
-		if (! FIELD_TYPES.containsKey(field)) {
-			FIELD_TYPES.put(field, Reflection.FieldType.fromField(field));
-		}
-		return FIELD_TYPES.get(field) == Reflection.FieldType.YOPABLE;
-	}
-
-	/**
-	 * Get the joined fields ({@link org.yop.orm.annotations.JoinColumn} and {@link org.yop.orm.annotations.JoinTable}).
-	 * @param clazz the given class
-	 * @return all the @JoinColumn/@JoinTable fields from the given class
-	 */
-	static Collection<Field> getJoinedFields(Class clazz) {
-		if (! JOINED_FIELDS.containsKey(clazz)) {
-			JOINED_FIELDS.put(clazz, ORMUtil.joinedFields(clazz));
-		}
-		return JOINED_FIELDS.get(clazz);
 	}
 
 	/**

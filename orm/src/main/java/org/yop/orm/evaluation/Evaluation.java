@@ -46,7 +46,7 @@ public interface Evaluation extends JsonAble {
 	@SuppressWarnings("unchecked")
 	static String columnName(Field field, Context<? extends Yopable> context) {
 		if (field.isAnnotationPresent(JoinTable.class)) {
-			if(Reflection.isCollection(field)) {
+			if(ORMUtil.isCollection(field)) {
 				Class<? extends Yopable> target = Reflection.getCollectionTarget(field);
 				Context<? extends Yopable> targetContext = context.to(target, field);
 				return ORMUtil.getIdColumn(targetContext);

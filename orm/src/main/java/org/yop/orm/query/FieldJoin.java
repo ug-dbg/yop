@@ -49,7 +49,7 @@ class FieldJoin<From extends Yopable, To extends Yopable> extends AbstractJoin<F
 	@Override
 	@SuppressWarnings("unchecked")
 	public Class<To> getTarget(Field field) {
-		if(Reflection.isCollection(field)) {
+		if(ORMUtil.isCollection(field)) {
 			return Reflection.getCollectionTarget(field);
 		}
 		return (Class<To>) field.getType();
