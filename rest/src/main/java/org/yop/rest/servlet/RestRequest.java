@@ -54,7 +54,7 @@ class RestRequest {
 
 		this.requestPath  = req.getRequestURI();
 		String servletPath  = req.getServletPath();
-		String resourcePath = StringUtils.removeStart(requestPath, servletPath);
+		String resourcePath = StringUtils.removeStart(this.requestPath, servletPath);
 
 		try {
 			this.content = IOUtils.toString(req.getInputStream());
@@ -114,7 +114,7 @@ class RestRequest {
 		return this.headers.toArray(new Header[0]);
 	}
 
-	public Long getId() {
+	Long getId() {
 		return this.id;
 	}
 
