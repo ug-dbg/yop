@@ -17,7 +17,7 @@ import java.util.Collections;
  * @param <From> the source type
  * @param <To>   the target type
  */
-public class FieldJoin<From extends Yopable, To extends Yopable> extends AbstractJoin<From, To> {
+class FieldJoin<From extends Yopable, To extends Yopable> extends AbstractJoin<From, To> {
 
 	private Field field;
 
@@ -27,7 +27,7 @@ public class FieldJoin<From extends Yopable, To extends Yopable> extends Abstrac
 	 * Create a Join clause when the field is known.
 	 * @param field  the field to use for the join
 	 */
-	public FieldJoin(Field field) {
+	FieldJoin(Field field) {
 		this.field = field;
 	}
 

@@ -5,6 +5,7 @@ import io.swagger.oas.models.headers.Header;
 import io.swagger.oas.models.responses.ApiResponse;
 import io.swagger.oas.models.responses.ApiResponses;
 import org.apache.http.entity.ContentType;
+import org.yop.rest.openapi.OpenAPIUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
@@ -31,7 +32,7 @@ public class Head extends Get {
 
 	@Override
 	public Operation openAPIDefaultModel(Class yopable) {
-		String resource = yopable.getSimpleName();
+		String resource = OpenAPIUtil.getResourceName(yopable);
 		Operation head = new Operation();
 		head.setSummary("Do head operation on [" + resource + "]. Execute request. Set content-length. No response.");
 		head.setResponses(new ApiResponses());

@@ -60,7 +60,7 @@ public class Upsert implements HttpMethod {
 
 	@Override
 	public Operation openAPIDefaultModel(Class<? extends Yopable> yopable) {
-		String resource = yopable.getSimpleName();
+		String resource = OpenAPIUtil.getResourceName(yopable);
 		Operation upsert = new Operation();
 		upsert.setSummary("Do upsert operation on [" + resource + "]");
 		upsert.setDescription(
@@ -74,7 +74,7 @@ public class Upsert implements HttpMethod {
 		upsert.getParameters().add(HttpMethod.checkNaturalIDParameter(resource));
 		upsert.requestBody(new RequestBody().content(new Content().addMediaType(
 			ContentType.APPLICATION_JSON.getMimeType(),
-			new MediaType().schema(new ArraySchema().items(OpenAPIUtil.forResource(yopable)))))
+			new MediaType().schema(new ArraySchema().items(OpenAPIUtil.refSchema(yopable)))))
 		);
 
 		ApiResponse responseItem = new ApiResponse();

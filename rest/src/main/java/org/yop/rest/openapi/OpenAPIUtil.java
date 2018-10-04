@@ -75,6 +75,26 @@ public class OpenAPIUtil {
 	}};
 
 	/**
+	 * Return the name associated to a model (mostly : a {@link Yopable}.
+	 * @param clazz the model class
+	 * @return the name associated to the resource
+	 */
+	public static String getResourceName(Class clazz) {
+		return clazz.getSimpleName();
+	}
+
+	/**
+	 * Return a new Schema whose $ref targets a the model (mostly : a {@link Yopable}).
+	 * <br>
+	 * Uses {@link #getResourceName(Class)} for the $ref target name.
+	 * @param clazz the model class
+	 * @return a Schema instance referencing the model
+	 */
+	public static Schema refSchema(Class clazz) {
+		return new Schema<>().$ref(clazz.getSimpleName());
+	}
+
+	/**
 	 * Generate an OpenAPI model from the given Yopables.
 	 * <br>
 	 * Both default behavior (GET/POST/PUT/HEAD/DELETE) and custom (custom @Rest methods) are inserted in the model.
@@ -102,6 +122,7 @@ public class OpenAPIUtil {
 		api.setExternalDocs(documentation);
 
 		api.components(new Components().schemas(new LinkedHashMap<>()));
+		yopables.forEach(y -> api.getComponents().addSchemas(getResourceName(y), forResource(y)));
 		YopSchemas.YOP_SCHEMAS.forEach((k,v) -> api.getComponents().addSchemas(k, v));
 
 		api.setTags(new ArrayList<>());
@@ -139,7 +160,7 @@ public class OpenAPIUtil {
 	 * @param clazz the Yopable type
 	 * @return the generated schema for this type. Null if the type is not a yopable
 	 */
-	public static Schema<?> forResource(Class<? extends Yopable> clazz) {
+	private static Schema<?> forResource(Class<? extends Yopable> clazz) {
 		if (Yopable.class.isAssignableFrom(clazz)) {
 			Schema<?> schema = new Schema<>().properties(new HashMap<>());
 			List<Field> fields = Reflection.getFields(clazz, true);
@@ -212,7 +233,7 @@ public class OpenAPIUtil {
 			return;
 		}
 
-		String resource = yopable.getSimpleName();
+		String resource = getResourceName(yopable);
 		List<String> tags = Collections.singletonList(resource);
 		String path = java.nio.file.Paths.get("/", rest.path()).toString();
 		PathItem item = new PathItem();
@@ -251,7 +272,7 @@ public class OpenAPIUtil {
 	 * @param api the target OpenAPI object
 	 */
 	private static void addResourceCustomBehavior(Class<? extends Yopable> yopable, OpenAPI api) {
-		String resource = yopable.getSimpleName();
+		String resource = getResourceName(yopable);
 		List<String> tags = Collections.singletonList(resource);
 		Rest classAnnotation = yopable.getAnnotation(Rest.class);
 		Set<Method> methods = Reflection.getMethods(yopable);

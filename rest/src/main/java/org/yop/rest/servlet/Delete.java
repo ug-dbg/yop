@@ -9,6 +9,7 @@ import org.apache.http.entity.ContentType;
 import org.yop.orm.evaluation.IdIn;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.rest.openapi.OpenAPIUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ public class Delete implements HttpMethod {
 
 	@Override
 	public Operation openAPIDefaultModel(Class yopable) {
-		String resource = yopable.getSimpleName();
+		String resource = OpenAPIUtil.getResourceName(yopable);
 		Operation delete = new Operation();
 		delete.setSummary("Do delete operation on [" + resource + "]. If not ID provided, delete all entries !");
 		delete.setResponses(new ApiResponses());

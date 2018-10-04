@@ -47,7 +47,7 @@ class Get implements HttpMethod {
 
 	@Override
 	public Operation openAPIDefaultModel(Class<? extends Yopable> yopable) {
-		String resource = yopable.getSimpleName();
+		String resource = OpenAPIUtil.getResourceName(yopable);
 		Operation get = new Operation();
 		get.setSummary("Get all [" + resource + "] or one single object by ID");
 		get.setResponses(new ApiResponses());
@@ -60,7 +60,7 @@ class Get implements HttpMethod {
 		responseItem.setContent(new Content());
 		responseItem.getContent().addMediaType(
 			ContentType.APPLICATION_JSON.getMimeType(),
-			new MediaType().schema(new ArraySchema().items(OpenAPIUtil.forResource(yopable)))
+				new MediaType().schema(new ArraySchema().items(OpenAPIUtil.refSchema(yopable)))
 		);
 		get.getResponses().addApiResponse(String.valueOf(HttpServletResponse.SC_OK), responseItem);
 		return get;

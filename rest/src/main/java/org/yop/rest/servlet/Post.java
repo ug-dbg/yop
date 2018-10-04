@@ -13,17 +13,16 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.http.entity.ContentType;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Delete;
-import org.yop.orm.query.*;
+import org.yop.orm.query.Select;
 import org.yop.orm.query.Upsert;
+import org.yop.orm.query.Where;
 import org.yop.orm.sql.adapter.IConnection;
-import org.yop.orm.util.ORMUtil;
+import org.yop.rest.openapi.OpenAPIUtil;
 import org.yop.rest.openapi.YopSchemas;
 
 import javax.servlet.http.HttpServletResponse;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 public class Post implements HttpMethod {
@@ -46,7 +45,7 @@ public class Post implements HttpMethod {
 
 	@Override
 	public Operation openAPIDefaultModel(Class<? extends Yopable> yopable) {
-		String resource = yopable.getSimpleName();
+		String resource = OpenAPIUtil.getResourceName(yopable);
 		Operation post = new Operation();
 		post.setSummary("Execute custom YOP operation on [" + resource + "]");
 		post.setResponses(new ApiResponses());
@@ -121,10 +120,9 @@ public class Post implements HttpMethod {
 	}
 
 	private static <T extends Yopable> Select<T> example(Class<T> yopable) {
-		List<Field> fields = ORMUtil.joinedFields(yopable);
 		Select<T> select = Select.from(yopable);
 		select.where(Where.id(1L, 2L, 3L));
-		fields.forEach(f -> select.join(new FieldJoin<>(f)));
+		select.joinAll();
 		return select;
 	}
 }
