@@ -14,6 +14,7 @@ import org.yop.rest.annotations.Rest;
 import org.yop.rest.exception.YopBadContentException;
 import org.yop.rest.exception.YopNoResourceException;
 import org.yop.rest.exception.YopNoResultException;
+import org.yop.rest.exception.YopResourceInvocationException;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -180,7 +181,26 @@ public class YopRestServlet extends HttpServlet {
 	private void doExecute(HttpServletRequest req, HttpServletResponse resp, HttpMethod method) {
 		RestRequest restRequest = new RestRequest(req, resp, this.yopablePaths);
 		method.checkResource(restRequest);
-		Object out = method.execute(restRequest, this.getConnection());
+
+		Object out;
+		try (IConnection connection = this.getConnection()) {
+			boolean autocommit = connection.getAutoCommit();
+			connection.setAutoCommit(false);
+			try {
+				out = method.execute(restRequest, this.getConnection());
+			} catch (RuntimeException e) {
+				connection.rollback();
+				connection.setAutoCommit(autocommit);
+				throw e;
+			}
+			connection.commit();
+		} catch (SQLException e) {
+			throw new YopResourceInvocationException(
+				"SQL Error invoking REST resource [" + restRequest.toString() + "]",
+				e
+			);
+		}
+
 		String serialized = method.serialize(out, restRequest);
 
 		if (StringUtils.isNotBlank(serialized)) {
