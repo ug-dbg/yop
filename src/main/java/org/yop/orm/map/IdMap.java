@@ -36,7 +36,7 @@ public class IdMap {
 	 * @return the IDs this map has for the given class
 	 */
 	public Collection<Long> getIdsForClass(Class<? extends Yopable> clazz) {
-		return ids.getOrDefault(clazz, new HashSet<>());
+		return this.ids.getOrDefault(clazz, new HashSet<>());
 	}
 
 	/**

@@ -47,7 +47,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 		return Where.toSQL(
 			naturalKeys
 				.stream()
-				.map(field -> getFieldRestriction(context, field, parameters))
+				.map(field -> this.getFieldRestriction(context, field, parameters))
 				.collect(Collectors.toList()
 		));
 	}

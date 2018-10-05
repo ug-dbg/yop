@@ -305,7 +305,7 @@ public class Select<T extends Yopable> implements JsonAble {
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occurred
 	 */
 	public Set<T> execute(IConnection connection) {
-		return execute(connection, Strategy.EXISTS);
+		return this.execute(connection, Strategy.EXISTS);
 	}
 
 	/**
@@ -318,7 +318,7 @@ public class Select<T extends Yopable> implements JsonAble {
 	 * @return the SELECT result, as an unique T
 	 */
 	public T uniqueResult(IConnection connection) {
-		Set<T> results = execute(connection, Strategy.EXISTS);
+		Set<T> results = this.execute(connection, Strategy.EXISTS);
 		return results.isEmpty() ? null : results.iterator().next();
 	}
 
@@ -453,7 +453,7 @@ public class Select<T extends Yopable> implements JsonAble {
 	 */
 	private String toSQLAnswerRequest(Parameters parameters) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true);
-		return select(
+		return this.select(
 			this.toSQLColumnsClause(false),
 			this.getTableName(),
 			this.context.getPath(),
@@ -471,7 +471,7 @@ public class Select<T extends Yopable> implements JsonAble {
 	 */
 	private String toSQLDataRequest(Set<Long> ids, Parameters parameters) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false);
-		return select(
+		return this.select(
 			this.toSQLColumnsClause(true),
 			this.getTableName(),
 			this.context.getPath(),
@@ -498,7 +498,7 @@ public class Select<T extends Yopable> implements JsonAble {
 		);
 
 		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true);
-		String existsSubSelect = selectDistinct(
+		String existsSubSelect = this.selectDistinct(
 			copyForAlias.idAlias(),
 			copyForAlias.getTableName(),
 			copyForAlias.context.getPath(),
@@ -508,7 +508,7 @@ public class Select<T extends Yopable> implements JsonAble {
 
 		// Now we can build the global query that fetches the data when the EXISTS clause matches
 		joinClauses = this.toSQLJoin(false);
-		return select(
+		return this.select(
 			this.toSQLColumnsClause(true),
 			this.getTableName(),
 			this.context.getPath(),
@@ -535,7 +535,7 @@ public class Select<T extends Yopable> implements JsonAble {
 		);
 
 		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true);
-		String existsSubSelect = selectDistinct(
+		String existsSubSelect = this.selectDistinct(
 			copyForAlias.idAlias(),
 			copyForAlias.getTableName(),
 			copyForAlias.context.getPath(),
@@ -545,7 +545,7 @@ public class Select<T extends Yopable> implements JsonAble {
 
 		// Now we can build the global query that fetches the IDs for every type when the EXISTS clause matches
 		joinClauses = this.toSQLJoin(false);
-		return select(
+		return this.select(
 			this.toSQLIdColumnsClause(),
 			this.getTableName(),
 			this.context.getPath(),
@@ -562,7 +562,7 @@ public class Select<T extends Yopable> implements JsonAble {
 	private String toSQLDataRequestWithIN(Parameters parameters) {
 		String path = this.context.getPath();
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true);
-		String inSubQuery = select(
+		String inSubQuery = this.select(
 			this.idAlias(),
 			this.getTableName(),
 			path,
@@ -572,7 +572,7 @@ public class Select<T extends Yopable> implements JsonAble {
 		);
 
 		joinClauses = this.toSQLJoin(false);
-		return select(
+		return this.select(
 			this.toSQLColumnsClause(true),
 			this.getTableName(),
 			path,

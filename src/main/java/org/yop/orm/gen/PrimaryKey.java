@@ -13,13 +13,13 @@ public class PrimaryKey {
 	}
 
 	public boolean isAutoincrement() {
-		return autoincrement;
+		return this.autoincrement;
 	}
 
 	@Override
 	public String toString() {
 		return "PrimaryKey{" +
-			"autoincrement=" + autoincrement +
+			"autoincrement=" + this.autoincrement +
 		'}';
 	}
 }

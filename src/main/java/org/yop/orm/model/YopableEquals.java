@@ -22,7 +22,9 @@ public class YopableEquals {
 
 	@Override
 	public boolean equals(Object o) {
-		return this == o || o != null && getClass() == o.getClass() && this.yopable.equals(((YopableEquals) o).yopable);
+		return this == o || o != null
+			&& this.getClass() == o.getClass()
+			&& this.yopable.equals(((YopableEquals) o).yopable);
 	}
 
 	@Override

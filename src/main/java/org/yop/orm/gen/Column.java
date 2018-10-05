@@ -48,31 +48,31 @@ public class Column implements Comparable<Column> {
 	}
 
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	public String getType() {
-		return type;
+		return this.type;
 	}
 
 	public boolean isNaturalKey() {
-		return naturalKey;
+		return this.naturalKey;
 	}
 
 	public int getLength() {
-		return length;
+		return this.length;
 	}
 
 	public PrimaryKey getPk() {
-		return pk;
+		return this.pk;
 	}
 
 	public ForeignKey getFk() {
-		return fk;
+		return this.fk;
 	}
 
 	public boolean isNotNull() {
-		return notNull;
+		return this.notNull;
 	}
 
 	public String toSQL() {
@@ -84,21 +84,21 @@ public class Column implements Comparable<Column> {
 	}
 
 	public List<String> getSequences() {
-		return sequences;
+		return this.sequences;
 	}
 
 	@Override
 	public String toString() {
 		return "Column{" +
-			"name='" + name + '\'' +
-			", type='" + type + '\'' +
-			", naturalKey=" + naturalKey +
-			", notNull=" + notNull +
-			", length=" + length +
-			", sequences=" + sequences +
-			", pk=" + pk +
-			", fk=" + fk +
-			", types=" + types +
+			"name='" + this.name + '\'' +
+			", type='" + this.type + '\'' +
+			", naturalKey=" + this.naturalKey +
+			", notNull=" + this.notNull +
+			", length=" + this.length +
+			", sequences=" + this.sequences +
+			", pk=" + this.pk +
+			", fk=" + this.fk +
+			", types=" + this.types +
 		'}';
 	}
 

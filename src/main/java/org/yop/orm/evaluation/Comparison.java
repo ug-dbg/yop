@@ -1,7 +1,6 @@
 package org.yop.orm.evaluation;
 
 import com.google.gson.JsonElement;
-import org.yop.orm.annotations.Column;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
@@ -83,7 +82,7 @@ public class Comparison implements Evaluation {
 				this.ref = Path.explicit(ref.getAsJsonObject().get(Path.PATH_TYPE).getAsString());
 			}
 		} else {
-			this.ref = (Comparable) JsonAble.fieldValue(context, field, ref);
+			this.ref = (Comparable) JsonAble.fieldValue(context, this.field, ref);
 		}
 	}
 
