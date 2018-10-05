@@ -97,6 +97,16 @@ public class JDBCConnection implements IConnection {
 	/**
 	 * {@inheritDoc}
 	 * <br>
+	 * See {@link Connection#getAutoCommit()}
+	 */
+	@Override
+	public boolean getAutoCommit() throws SQLException {
+		return this.connection.getAutoCommit();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <br>
 	 * See {@link Connection#setAutoCommit(boolean)} ()}
 	 */
 	@Override
@@ -107,10 +117,20 @@ public class JDBCConnection implements IConnection {
 	/**
 	 * {@inheritDoc}
 	 * <br>
-	 * See {@link Connection#commit()} ()}
+	 * See {@link Connection#commit()}
 	 */
 	@Override
 	public void commit() throws SQLException {
 		this.connection.commit();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <br>
+	 * See {@link Connection#rollback()}
+	 */
+	@Override
+	public void rollback() throws SQLException {
+		this.connection.rollback();
 	}
 }
