@@ -32,6 +32,13 @@ public interface IConnection extends AutoCloseable {
 	void close() throws SQLException;
 
 	/**
+	 * Get this connection's auto-commit mode.
+	 * @return the current auto-commit state
+	 * @throws SQLException an error occurred getting the auto-commit mode
+	 */
+	boolean getAutoCommit() throws SQLException;
+
+	/**
 	 * Sets this connection's auto-commit mode to the given state.
 	 * @param autocommit the auto-commit state
 	 * @throws SQLException an error occurred setting the auto-commit mode
@@ -45,4 +52,16 @@ public interface IConnection extends AutoCloseable {
 	 * @throws SQLException an error occurred committing the current state
 	 */
 	void commit() throws SQLException;
+
+	/**
+	 * Undoes all changes made in the current transaction and releases any database locks currently held
+	 * by this Connection object.
+	 * <br>
+	 * This method should be used only when auto-commit mode has been disabled.
+	 *
+	 * @throws SQLException if a database access error occurs,
+	 * this method is called while participating in a distributed transaction,
+	 * this method is called on a closed connection or this Connection object is in auto-commit mode
+	 */
+	void rollback() throws SQLException;
 }
