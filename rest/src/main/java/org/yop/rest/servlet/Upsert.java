@@ -7,7 +7,6 @@ import io.swagger.oas.models.media.ArraySchema;
 import io.swagger.oas.models.media.Content;
 import io.swagger.oas.models.media.MediaType;
 import io.swagger.oas.models.parameters.RequestBody;
-import io.swagger.oas.models.responses.ApiResponse;
 import io.swagger.oas.models.responses.ApiResponses;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.entity.ContentType;
@@ -19,9 +18,10 @@ import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.exception.YopBadContentException;
 import org.yop.rest.openapi.OpenAPIUtil;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collection;
+
+import static javax.servlet.http.HttpServletResponse.*;
 
 /**
  * Specific 'UPSERT' HTTP method.
@@ -77,11 +77,10 @@ public class Upsert implements HttpMethod {
 			new MediaType().schema(new ArraySchema().items(OpenAPIUtil.refSchema(yopable)))))
 		);
 
-		ApiResponse responseItem = new ApiResponse();
-		responseItem.setDescription("A set of [" + resource + "] with generated IDs");
-		responseItem.setContent(new Content());
-		responseItem.getContent().addMediaType(ContentType.APPLICATION_JSON.getMimeType(), new MediaType());
-		upsert.getResponses().addApiResponse(String.valueOf(HttpServletResponse.SC_OK), responseItem);
+		upsert.getResponses().addApiResponse(String.valueOf(SC_OK),                    HttpMethod.http200(yopable));
+		upsert.getResponses().addApiResponse(String.valueOf(SC_BAD_REQUEST),           HttpMethod.http400());
+		upsert.getResponses().addApiResponse(String.valueOf(SC_NOT_FOUND),             HttpMethod.http404());
+		upsert.getResponses().addApiResponse(String.valueOf(SC_INTERNAL_SERVER_ERROR), HttpMethod.http500());
 		return upsert;
 	}
 

@@ -7,7 +7,6 @@ import io.swagger.oas.models.media.MediaType;
 import io.swagger.oas.models.media.Schema;
 import io.swagger.oas.models.parameters.Parameter;
 import io.swagger.oas.models.parameters.RequestBody;
-import io.swagger.oas.models.responses.ApiResponse;
 import io.swagger.oas.models.responses.ApiResponses;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.entity.ContentType;
@@ -20,10 +19,11 @@ import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.openapi.OpenAPIUtil;
 import org.yop.rest.openapi.YopSchemas;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
+
+import static javax.servlet.http.HttpServletResponse.*;
 
 public class Post implements HttpMethod {
 
@@ -72,11 +72,10 @@ public class Post implements HttpMethod {
 			new MediaType().schema(queries).example(example(yopable).toJSON().toString())))
 		);
 
-		ApiResponse responseItem = new ApiResponse();
-		responseItem.setDescription("A set of [" + resource + "]");
-		responseItem.setContent(new Content());
-		responseItem.getContent().addMediaType(ContentType.APPLICATION_JSON.getMimeType(), new MediaType());
-		post.getResponses().addApiResponse(String.valueOf(HttpServletResponse.SC_OK), responseItem);
+		post.getResponses().addApiResponse(String.valueOf(SC_OK),                    HttpMethod.http200(yopable));
+		post.getResponses().addApiResponse(String.valueOf(SC_BAD_REQUEST),           HttpMethod.http400());
+		post.getResponses().addApiResponse(String.valueOf(SC_NOT_FOUND),             HttpMethod.http404());
+		post.getResponses().addApiResponse(String.valueOf(SC_INTERNAL_SERVER_ERROR), HttpMethod.http500());
 		return post;
 	}
 

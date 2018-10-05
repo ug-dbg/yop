@@ -157,19 +157,19 @@ public class YopRestServlet extends HttpServlet {
 		} catch (YopBadContentException e) {
 			logger.error("YOP Rest resource invocation error, Bad request !", e);
 			resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			resp.getWriter().write(errorJSON(e).toString());
+			resp.getWriter().write(HttpMethod.errorJSON(e).toString());
 		} catch (YopNoResultException e) {
 			logger.error("YOP No resource for given ID !", e);
 			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-			resp.getWriter().write(errorJSON(e).toString());
+			resp.getWriter().write(HttpMethod.errorJSON(e).toString());
 		} catch (YopNoResourceException e) {
 			logger.error("YOP No resource for given path !", e);
 			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-			resp.getWriter().write(errorJSON(e).toString());
+			resp.getWriter().write(HttpMethod.errorJSON(e).toString());
 		}catch (RuntimeException e) {
 			logger.error("YOP Rest resource invocation error!", e);
 			resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			resp.getWriter().write(errorJSON(e).toString());
+			resp.getWriter().write(HttpMethod.errorJSON(e).toString());
 		}
 	}
 
@@ -206,9 +206,5 @@ public class YopRestServlet extends HttpServlet {
 		if (StringUtils.isNotBlank(serialized)) {
 			method.write(serialized, restRequest);
 		}
-	}
-
-	private static JSONObject errorJSON(Throwable cause) {
-		return new JSONObject().put("error", cause.getMessage());
 	}
 }

@@ -13,6 +13,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 
+import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+
 public class Head extends Get {
 
 	static final HttpMethod INSTANCE = new Head();
@@ -44,7 +49,10 @@ public class Head extends Get {
 			"Content-Length",
 			new Header().description("Equivalent GET request content-length")
 		);
-		head.getResponses().addApiResponse(String.valueOf(HttpServletResponse.SC_OK), responseItem);
+		head.getResponses().addApiResponse(String.valueOf(SC_OK),                    responseItem);
+		head.getResponses().addApiResponse(String.valueOf(SC_BAD_REQUEST),           HttpMethod.http400());
+		head.getResponses().addApiResponse(String.valueOf(SC_NOT_FOUND),             HttpMethod.http404());
+		head.getResponses().addApiResponse(String.valueOf(SC_INTERNAL_SERVER_ERROR), HttpMethod.http500());
 		return head;
 	}
 }

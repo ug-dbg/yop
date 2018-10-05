@@ -15,6 +15,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import static javax.servlet.http.HttpServletResponse.*;
+
 public class Delete implements HttpMethod {
 
 	static final HttpMethod INSTANCE = new Delete();
@@ -50,6 +52,9 @@ public class Delete implements HttpMethod {
 		responseItem.setContent(new Content());
 		responseItem.getContent().addMediaType(ContentType.APPLICATION_JSON.getMimeType(), new MediaType());
 		delete.getResponses().addApiResponse(String.valueOf(HttpServletResponse.SC_OK), responseItem);
+		delete.getResponses().addApiResponse(String.valueOf(SC_BAD_REQUEST),           HttpMethod.http400());
+		delete.getResponses().addApiResponse(String.valueOf(SC_NOT_FOUND),             HttpMethod.http404());
+		delete.getResponses().addApiResponse(String.valueOf(SC_INTERNAL_SERVER_ERROR), HttpMethod.http500());
 		return delete;
 	}
 }

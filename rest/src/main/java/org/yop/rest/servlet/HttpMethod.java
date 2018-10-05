@@ -1,11 +1,16 @@
 package org.yop.rest.servlet;
 
 import io.swagger.oas.models.Operation;
+import io.swagger.oas.models.media.ArraySchema;
+import io.swagger.oas.models.media.Content;
+import io.swagger.oas.models.media.MediaType;
 import io.swagger.oas.models.media.Schema;
+import io.swagger.oas.models.responses.ApiResponse;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.NameValuePair;
 import org.apache.http.entity.ContentType;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
@@ -16,6 +21,7 @@ import org.yop.rest.annotations.ContentParam;
 import org.yop.rest.annotations.PathParam;
 import org.yop.rest.exception.YopNoResourceException;
 import org.yop.rest.exception.YopResourceInvocationException;
+import org.yop.rest.openapi.OpenAPIUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -61,6 +67,12 @@ public interface HttpMethod {
 
 	/** HTTP 'checkNaturalID' parameter : when inserting, check if the Natural Key already exists. */
 	String PARAM_CHECK_NK = "checkNaturalID";
+
+	/** JSON error message key */
+	String ERROR = "error";
+
+	/** JSON error Schema for OpenAPI */
+	Schema ERROR_SCHEMA = new Schema().addProperties(ERROR, new Schema().type("string"));
 
 	/**
 	 * Return the method implementation for the given method name
@@ -137,6 +149,80 @@ public interface HttpMethod {
 	}
 
 	/**
+	 * Create a JSON with the error message as cause.
+	 * @param cause the error cause
+	 * @return a new JSON object with the {@link #ERROR} property set to the {@link Throwable#getMessage()}.
+	 */
+	static JSONObject errorJSON(Throwable cause) {
+		return new JSONObject().put(ERROR, cause.getMessage());
+	}
+
+	/**
+	 * The error message OpenAPI schema. One string property : {@link #ERROR}.
+	 * @return the JSON error schema.
+	 */
+	static Schema errorJSONSchema() {
+		return ERROR_SCHEMA;
+	}
+
+	/**
+	 * Create an OpenAPI error response description. Content is set to JSON and schema is {@link #errorJSONSchema()}.
+	 * @param description the error description
+	 * @return a new {@link ApiResponse} with the given description.
+	 */
+	static ApiResponse httpError(String description) {
+		ApiResponse responseItem = new ApiResponse();
+		responseItem.setDescription(description);
+		responseItem.setContent(new Content());
+		responseItem.getContent().addMediaType(
+			ContentType.APPLICATION_JSON.getMimeType(),
+			new MediaType().schema(errorJSONSchema())
+		);
+		return responseItem;
+	}
+
+	/**
+	 * Create an OpenAPI success response for the given Yopable resource.
+	 * Content is set to JSON and schema is set to the Yopable resource schema reference.
+	 * @param yopable the Yopable resource
+	 * @return a new {@link ApiResponse} with a resource description and referenced Schema.
+	 */
+	static ApiResponse http200(Class yopable) {
+		ApiResponse responseItem = new ApiResponse();
+		responseItem.setDescription("A set of [" + OpenAPIUtil.getResourceName(yopable) + "]");
+		responseItem.setContent(new Content());
+		responseItem.getContent().addMediaType(
+			ContentType.APPLICATION_JSON.getMimeType(),
+			new MediaType().schema(new ArraySchema().items(OpenAPIUtil.refSchema(yopable)))
+		);
+		return responseItem;
+	}
+
+	/**
+	 * HTTP 400 Bad Request OpenAPI response description
+	 * @return a new {@link ApiResponse} description for HTTP 400
+	 */
+	static ApiResponse http400() {
+		return httpError("Bad request");
+	}
+
+	/**
+	 * HTTP 404 Not found OpenAPI response description
+	 * @return a new {@link ApiResponse} description for HTTP 404
+	 */
+	static ApiResponse http404() {
+		return httpError("Resource not found");
+	}
+
+	/**
+	 * HTTP 500 Internal server error OpenAPI response description
+	 * @return a new {@link ApiResponse} description for HTTP 500
+	 */
+	static ApiResponse http500() {
+		return httpError("Internal server error");
+	}
+
+	/**
 	 * Is the rest request associated to a valid resource ?
 	 * <br>
 	 * If so, please throw a Runtime exception with context.
@@ -176,7 +262,7 @@ public interface HttpMethod {
 	 * @param connection the JDBC (or other) underlying connection
 	 * @return the execution result
 	 * @throws YopNoResourceException no custom resource found for the request
-	 * @throws YopResourceInvocationException an error occured executing the custom method
+	 * @throws YopResourceInvocationException an error occurred executing the custom method
 	 */
 	default Object executeCustom(RestRequest restRequest, IConnection connection) {
 		Optional<Method> candidate = Reflection

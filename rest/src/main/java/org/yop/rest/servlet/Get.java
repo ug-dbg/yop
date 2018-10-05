@@ -1,12 +1,7 @@
 package org.yop.rest.servlet;
 
 import io.swagger.oas.models.Operation;
-import io.swagger.oas.models.media.ArraySchema;
-import io.swagger.oas.models.media.Content;
-import io.swagger.oas.models.media.MediaType;
-import io.swagger.oas.models.responses.ApiResponse;
 import io.swagger.oas.models.responses.ApiResponses;
-import org.apache.http.entity.ContentType;
 import org.yop.orm.evaluation.IdIn;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Select;
@@ -14,9 +9,10 @@ import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.exception.YopNoResultException;
 import org.yop.rest.openapi.OpenAPIUtil;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collections;
+
+import static javax.servlet.http.HttpServletResponse.*;
 
 class Get implements HttpMethod {
 
@@ -55,14 +51,10 @@ class Get implements HttpMethod {
 		get.getParameters().add(HttpMethod.joinAllParameter(resource));
 		get.getParameters().add(HttpMethod.joinIDsParameter(resource));
 
-		ApiResponse responseItem = new ApiResponse();
-		responseItem.setDescription("A set of [" + resource + "]");
-		responseItem.setContent(new Content());
-		responseItem.getContent().addMediaType(
-			ContentType.APPLICATION_JSON.getMimeType(),
-				new MediaType().schema(new ArraySchema().items(OpenAPIUtil.refSchema(yopable)))
-		);
-		get.getResponses().addApiResponse(String.valueOf(HttpServletResponse.SC_OK), responseItem);
+		get.getResponses().addApiResponse(String.valueOf(SC_OK),                    HttpMethod.http200(yopable));
+		get.getResponses().addApiResponse(String.valueOf(SC_BAD_REQUEST),           HttpMethod.http400());
+		get.getResponses().addApiResponse(String.valueOf(SC_NOT_FOUND),             HttpMethod.http404());
+		get.getResponses().addApiResponse(String.valueOf(SC_INTERNAL_SERVER_ERROR), HttpMethod.http500());
 		return get;
 	}
 }
