@@ -22,68 +22,13 @@
 	</description>
 
 	<properties>
-		<swaggerui.version>3.18.2</swaggerui.version>
-		<swaggerui.webjars.path>swagger-ui/META-INF/resources/webjars/swagger-ui</swaggerui.webjars.path>
-	</properties>
-
-	<build>
 		<!--
-			The Swagger UI from webjars.
-			The static content is unpacked and copied to target/classes/swagger-ui.
-			So it can easily be served as static resources, e.g. in the Embedded Tomcat.
+			YopSwaggerUIServlet is swagger-ui version dependent.
+			If you want to change Swagger-UI version, please change YopSwaggerUIServlet.SWAGGER_UI_PATH
+			or use a servlet init param to set the new path : YopSwaggerUIServlet.YOP_SWAGGER_UI_PATH_PARAM
 		-->
-		<plugins>
-			<plugin>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.10</version>
-				<executions>
-					<execution>
-						<id>unpack-swaggerui</id>
-						<phase>generate-resources</phase>
-						<goals>
-							<goal>unpack</goal>
-						</goals>
-						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>org.webjars</groupId>
-									<artifactId>swagger-ui</artifactId>
-									<version>3.18.2</version>
-									<type>jar</type>
-									<overWrite>false</overWrite>
-									<outputDirectory>${project.build.directory}/classes/swagger-ui</outputDirectory>
-									<includes>META-INF/resources/**/*.*</includes>
-								</artifactItem>
-							</artifactItems>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-resources-plugin</artifactId>
-				<version>3.0.1</version>
-				<executions>
-					<execution>
-						<id>copy-swaggerui</id>
-						<phase>generate-resources</phase>
-						<goals>
-							<goal>copy-resources</goal>
-						</goals>
-						<configuration>
-							<outputDirectory>${project.build.directory}/classes/swagger-ui</outputDirectory>
-							<resources>
-								<resource>
-									<directory>
-										${project.build.directory}/classes/${swaggerui.webjars.path}/${swaggerui.version}/
-									</directory>
-								</resource>
-							</resources>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
+		<swaggerui.version>3.18.2</swaggerui.version>
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -111,6 +56,13 @@
 			<artifactId>rest</artifactId>
 			<version>${project.version}</version>
 			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Logging -->
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
 			<scope>test</scope>
 		</dependency>
 

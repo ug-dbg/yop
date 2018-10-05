@@ -26,7 +26,13 @@ public class YopSwaggerUIServlet extends HttpServlet {
 
 	public static final String YOP_OPENAPI_URL_INIT_PARAM = "yop_openapi_url";
 
+	private static final String YOP_SWAGGER_UI_PATH_PARAM = "swaggerui_path";
+
+	/** Default value is Swagger-ui version dependent. Use {@link #YOP_SWAGGER_UI_PATH_PARAM} to override. */
+	private static final String SWAGGER_UI_PATH = "/META-INF/resources/webjars/swagger-ui/3.18.2";
+
 	private String yopOpenAPIURL;
+	private String swaggerUIPath = SWAGGER_UI_PATH;
 
 	public YopSwaggerUIServlet() {}
 
@@ -35,6 +41,11 @@ public class YopSwaggerUIServlet extends HttpServlet {
 		super.init(config);
 		this.yopOpenAPIURL = this.getInitParameter(YOP_OPENAPI_URL_INIT_PARAM);
 		logger.debug("Init YopSwaggerUIServlet for Open API URL [{}]", this.yopOpenAPIURL);
+
+		if (this.getInitParameter(YOP_SWAGGER_UI_PATH_PARAM) != null) {
+			this.swaggerUIPath = this.getInitParameter(YOP_SWAGGER_UI_PATH_PARAM);
+		}
+		logger.debug("Init YopSwaggerUIServlet for SwaggerUI path [{}]", this.swaggerUIPath);
 	}
 
 	/**
@@ -56,8 +67,9 @@ public class YopSwaggerUIServlet extends HttpServlet {
 			return;
 		}
 
-		path = Paths.get("/", "swagger-ui", path).toString();
-		InputStream classPathStream = this.getClass().getResourceAsStream(path);
+		InputStream classPathStream = this.getClass().getResourceAsStream(
+			Paths.get(this.swaggerUIPath, path).toString()
+		);
 
 		if (classPathStream == null) {
 			logger.info("No YOP swagger-ui resource for [{}]", path);
@@ -67,7 +79,7 @@ public class YopSwaggerUIServlet extends HttpServlet {
 
 		String html = IOUtils.toString(classPathStream, StandardCharsets.UTF_8);
 		if (html != null) {
-			if (path.matches(".*/swagger-ui/index.html")) {
+			if (StringUtils.equals(path, "/index.html")) {
 				html = html.replaceAll("url: \"https://.*.json\"", "url: \"" + this.yopOpenAPIURL + "\"");
 				logger.debug("YOP swagger-ui Open API config set into swagger-ui index.html");
 			}
