@@ -144,7 +144,7 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 	 */
 	public String toPath(Class<From> root) {
 		Class<?> from = root;
-		List<String> items = new ArrayList<>(steps.size());
+		List<String> items = new ArrayList<>(this.steps.size());
 		for (Function step : this.steps) {
 			Field field = Reflection.findField(from, step);
 			items.add(toPath(field));

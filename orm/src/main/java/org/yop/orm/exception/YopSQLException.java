@@ -28,6 +28,6 @@ public class YopSQLException extends RuntimeException {
 	}
 
 	public Query getQuery() {
-		return query;
+		return this.query;
 	}
 }

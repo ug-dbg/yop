@@ -58,7 +58,7 @@ public class JDBCRequest implements IRequest {
 	@Override
 	public IResultCursor execute() {
 		try {
-			return new JDBCCursor(this.statement.executeQuery(), this.statement, query);
+			return new JDBCCursor(this.statement.executeQuery(), this.statement, this.query);
 		} catch (SQLException e) {
 			throw new YopSQLException(this.query, e);
 		}

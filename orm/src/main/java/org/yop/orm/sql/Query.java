@@ -104,7 +104,7 @@ public abstract class Query {
 	}
 
 	public Class<? extends Yopable> getTarget() {
-		return target;
+		return this.target;
 	}
 
 	/**
@@ -216,7 +216,7 @@ public abstract class Query {
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (o == null || this.getClass() != o.getClass()) return false;
 		Query that = (Query) o;
 
 		return Objects.equals(this.elements, that.elements)

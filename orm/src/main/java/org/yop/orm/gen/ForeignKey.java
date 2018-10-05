@@ -18,23 +18,23 @@ public class ForeignKey {
 	}
 
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	public String getReferencedTable() {
-		return referencedTable;
+		return this.referencedTable;
 	}
 
 	public String getReferencedColumn() {
-		return referencedColumn;
+		return this.referencedColumn;
 	}
 
 	@Override
 	public String toString() {
 		return "ForeignKey{" +
-			"name='" + name + '\'' +
-			", referencedTable='" + referencedTable + '\'' +
-			", referencedColumn='" + referencedColumn + '\'' +
+			"name='" + this.name + '\'' +
+			", referencedTable='" + this.referencedTable + '\'' +
+			", referencedColumn='" + this.referencedColumn + '\'' +
 		'}';
 	}
 }

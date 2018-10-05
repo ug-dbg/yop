@@ -38,7 +38,7 @@ public class JoinClause implements Comparable<JoinClause> {
 	}
 
 	public String getJoinClause() {
-		return joinClause;
+		return this.joinClause;
 	}
 
 	public Context<?> getContext() {

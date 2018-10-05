@@ -117,7 +117,7 @@ public class Context<T extends Yopable> {
 	 * @return {@link #target}
 	 */
 	public Class<T> getTarget() {
-		return target;
+		return this.target;
 	}
 
 	/**
@@ -271,27 +271,28 @@ public class Context<T extends Yopable> {
 		}
 
 		public String getQualifiedId() {
-			return qualifiedId;
+			return this.qualifiedId;
 		}
 
 		/**
 		 * @return {@link #id}
 		 */
 		public boolean isId() {
-			return id;
+			return this.id;
 		}
 
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
+			if (o == null || this.getClass() != o.getClass()) return false;
 			SQLColumn sqlColumn = (SQLColumn) o;
-			return Objects.equals(qualifiedId, sqlColumn.qualifiedId) && Objects.equals(alias, sqlColumn.alias);
+			return Objects.equals(this.qualifiedId, sqlColumn.qualifiedId)
+				&& Objects.equals(this.alias, sqlColumn.alias);
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(qualifiedId, alias);
+			return Objects.hash(this.qualifiedId, this.alias);
 		}
 
 		@Override

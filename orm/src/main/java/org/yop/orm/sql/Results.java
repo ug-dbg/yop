@@ -60,14 +60,14 @@ public class Results {
 	 * @return the resultset from the query execution
 	 */
 	public IResultCursor getCursor() {
-		return cursor;
+		return this.cursor;
 	}
 
 	/**
 	 * @return the executed query
 	 */
 	public Query getQuery() {
-		return query;
+		return this.query;
 	}
 
 	/**

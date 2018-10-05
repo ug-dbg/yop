@@ -105,7 +105,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 
 	@Override
 	public Context<To> to(Context<From> from) {
-		return this.to(from, getField(from.getTarget()));
+		return this.to(from, this.getField(from.getTarget()));
 	}
 
 	protected Context<To> to(Context<From> from, Field field) {

@@ -40,11 +40,11 @@ public class Table implements Comparable<Table> {
 	}
 
 	public boolean isRelation() {
-		return relation;
+		return this.relation;
 	}
 
 	public String qualifiedName() {
-		return MessageUtil.join(".", schema, name);
+		return MessageUtil.join(".", this.schema, this.name);
 	}
 
 	public Collection<Column> getColumns() {
@@ -66,25 +66,25 @@ public class Table implements Comparable<Table> {
 	@Override
 	public String toString() {
 		return "Table{" +
-			"name='" + name + '\'' +
-			", schema='" + schema + '\'' +
-			", types=" + types +
-			", relation=" + relation +
-			", columns=" + columns +
+			"name='" + this.name + '\'' +
+			", schema='" + this.schema + '\'' +
+			", types=" + this.types +
+			", relation=" + this.relation +
+			", columns=" + this.columns +
 		'}';
 	}
 
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (o == null || this.getClass() != o.getClass()) return false;
 		Table table = (Table) o;
-		return Objects.equals(name, table.name) && Objects.equals(schema, table.schema);
+		return Objects.equals(this.name, table.name) && Objects.equals(this.schema, table.schema);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(name, schema);
+		return Objects.hash(this.name, this.schema);
 	}
 
 	@Override

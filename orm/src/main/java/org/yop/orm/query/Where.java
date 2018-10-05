@@ -112,7 +112,7 @@ public class Where<T extends Yopable> implements JsonAble {
 	public String toSQL(Context<T> context, Parameters parameters) {
 		String sql = "";
 		sql += Joiner.on(" AND ").join(
-			evaluations.stream().map(e -> e.toSQL(context, parameters)).collect(Collectors.toList())
+				this.evaluations.stream().map(e -> e.toSQL(context, parameters)).collect(Collectors.toList())
 		);
 		return sql;
 	}

@@ -97,7 +97,7 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 		}
 
 		public String getName() {
-			return name;
+			return this.name;
 		}
 
 		public Object getValue() {
@@ -105,7 +105,7 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 		}
 
 		public boolean isSequence() {
-			return sequence;
+			return this.sequence;
 		}
 
 		/**
@@ -117,7 +117,7 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 		 * @return the parameter SQL value
 		 */
 		public String toSQLValue() {
-			return sequence ? String.valueOf(this.value) : "?";
+			return this.sequence ? String.valueOf(this.value) : "?";
 		}
 
 		@Override

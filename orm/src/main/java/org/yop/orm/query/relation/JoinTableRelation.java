@@ -83,7 +83,7 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 			this.relationTable,
 			this.sourceColumn,
 			this.relations.keySet().stream().map(y -> {
-				parameters.addParameter(this.relationTable + "#" + sourceColumn, y::getId);
+				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, y::getId);
 				return "?";
 			}).collect(Collectors.toList())
 		);
