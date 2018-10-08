@@ -8,6 +8,7 @@ import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
 import org.yop.orm.sql.SimpleQuery;
 import org.yop.orm.util.MessageUtil;
+import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
@@ -60,7 +61,7 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 			Field field = join.getField((Class<From>) source.getClass());
 			JoinTable joinTable = field.getAnnotation(JoinTable.class);
 
-			this.relationTable = joinTable.table();
+			this.relationTable = ORMUtil.getJoinTableQualifiedName(joinTable);
 			this.sourceColumn = joinTable.sourceColumn();
 			this.targetColumn = joinTable.targetColumn();
 		}

@@ -79,6 +79,29 @@ public class ORMUtil {
 	}
 
 	/**
+	 * Get the qualified name for the given yopable target
+	 * (read {@link Table} annotation or return empty string).
+	 * @param target the target Yopable implementation
+	 * @return the table name for the current context
+	 */
+	public static String getTableQualifiedName(Class<? extends Yopable> target) {
+		Table table = Reflection.getAnnotation(target, Table.class);
+		if(table != null) {
+			return MessageUtil.join(".", table.schema(), table.name());
+		}
+		return "";
+	}
+
+	/**
+	 * Get the qualified name for the given join table annotation (table name prefixed with schema name if applicable)
+	 * @param joinTable the join table annotation
+	 * @return the fully qualified table name for the given annotation
+	 */
+	public static String getJoinTableQualifiedName(JoinTable joinTable) {
+		return MessageUtil.join(".", joinTable.schema(), joinTable.table());
+	}
+
+	/**
 	 * Return a name for a given target class that will be used in a query to create a context.
 	 * <br>
 	 * This is different from {@link #getTableName(Class)} which determine the Table associated to a class.

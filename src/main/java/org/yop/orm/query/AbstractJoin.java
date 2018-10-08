@@ -10,6 +10,7 @@ import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.JoinClause;
 import org.yop.orm.sql.Parameters;
+import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
@@ -194,7 +195,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		JoinTable joinTableAnnotation,
 		String relationName) {
 
-		String joinTable = joinTableAnnotation.table();
+		String joinTable = ORMUtil.getJoinTableQualifiedName(joinTableAnnotation);
 		String joinTableSourceColumn = joinTableAnnotation.sourceColumn();
 		String joinTableTargetColumn = joinTableAnnotation.targetColumn();
 		String relationAlias = parent.getPath() + Context.SQL_SEPARATOR + relationName;

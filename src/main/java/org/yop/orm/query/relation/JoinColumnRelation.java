@@ -67,12 +67,12 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 			JoinColumn joinColumn = field.getAnnotation(JoinColumn.class);
 
 			if (StringUtils.isNotBlank(joinColumn.local())) {
-				this.sourceTable  = ORMUtil.getTableName(source.getClass());
+				this.sourceTable  = ORMUtil.getTableQualifiedName(source.getClass());
 				this.sourceColumn = joinColumn.local();
 			}
 
 			if (StringUtils.isNotBlank(joinColumn.remote())) {
-				this.targetTable  = ORMUtil.getTableName(join.getTarget(field));
+				this.targetTable  = ORMUtil.getTableQualifiedName(join.getTarget(field));
 				this.targetColumn = joinColumn.remote();
 			}
 		}

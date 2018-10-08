@@ -125,7 +125,7 @@ public class Context<T extends Yopable> {
 	 * @return the table name for the current context
 	 */
 	public String getTableName() {
-		return ORMUtil.getTableName(this.target);
+		return ORMUtil.getTableQualifiedName(this.target);
 	}
 
 	/**
