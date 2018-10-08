@@ -170,7 +170,7 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 		if(column.getPk() == null) {
 			return "";
 		}
-		return MessageFormat.format(PK, table.qualifiedName() + "_PK", column.getName());
+		return MessageFormat.format(PK, table.name() + "_PK", column.getName());
 	}
 
 	/**
@@ -208,7 +208,7 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 			return new ArrayList<>(0);
 		}
 
-		String constraintName = table.qualifiedName() + "_NK";
+		String constraintName = table.name() + "_NK";
 		String constraint = MessageFormat.format(NK, constraintName, MessageUtil.join(",", nkColumnNames));
 		return Collections.singletonList(constraint);
 	}

@@ -60,7 +60,7 @@ public abstract class DBMSSwitch {
 	 * Check if the current test class should be run.
 	 * @return true if the test is not a {@link LongTest} or {@link LongTest#RUN_LONG_TESTS} is set to true.
 	 */
-	private boolean check() {
+	protected boolean check() {
 		return !this.getClass().isAnnotationPresent(LongTest.class)
 			|| "true".equals(System.getProperties().getProperty(LongTest.RUN_LONG_TESTS));
 	}

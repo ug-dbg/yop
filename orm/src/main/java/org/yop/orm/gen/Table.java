@@ -43,6 +43,14 @@ public class Table implements Comparable<Table> {
 		return this.relation;
 	}
 
+	public String name() {
+		return this.name;
+	}
+
+	public String schema() {
+		return this.schema;
+	}
+
 	public String qualifiedName() {
 		return MessageUtil.join(".", this.schema, this.name);
 	}

@@ -1,4 +1,4 @@
-package org.yop.orm.simple.model;
+package org.yop.orm.simple.model.withschema;
 
 import org.yop.orm.annotations.*;
 import org.yop.orm.model.Yopable;
@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 
-@Table(name = "simple_pojo")
+@Table(name = "simple_pojo", schema = "yop")
 public class Pojo implements Yopable {
 
 	public enum Type {FOO, BAR}
@@ -30,24 +30,23 @@ public class Pojo implements Yopable {
 	@Column(name = "VERY_LONG_FLOAT")
 	private BigDecimal aVeryLongFloat;
 
-	@JoinTable(table = "POJO_JOPO_relation", sourceColumn = "idPOJO", targetColumn = "idJOPO")
+	@JoinTable(table = "POJO_JOPO_relation", schema = "yop", sourceColumn = "idPOJO", targetColumn = "idJOPO")
 	private Set<Jopo> jopos = new HashSet<>();
 
-	@JoinTable(table = "POJO_OTHER_relation", sourceColumn = "idPojo", targetColumn = "idOther")
+	@JoinTable(table = "POJO_OTHER_relation", schema = "yop", sourceColumn = "idPojo", targetColumn = "idOther")
 	private List<Other> others = new ArrayList<>();
 
-	@YopTransient
-	@JoinTable(table = "POJO_POJO_relation", sourceColumn = "idPOJO_a", targetColumn = "idPOJO_b")
-	private List<Pojo> children = new ArrayList<>();
+	@JoinTable(table = "POJO_POJO_relation", schema = "yop", sourceColumn = "idPOJO_a", targetColumn = "idPOJO_b")
+	private transient List<Pojo> children = new ArrayList<>();
 
-	@JoinTable(table = "POJO_POJO_relation", sourceColumn = "idPOJO_b", targetColumn = "idPOJO_a")
+	@JoinTable(table = "POJO_POJO_relation", schema = "yop", sourceColumn = "idPOJO_b", targetColumn = "idPOJO_a")
 	private transient Pojo parent;
 
 	@Column(name = "TYPE", enum_strategy = Column.EnumStrategy.ORDINAL)
 	private Type type;
 
 	public Integer getVersion() {
-		return version;
+		return this.version;
 	}
 
 	public void setVersion(Integer version) {
@@ -55,7 +54,7 @@ public class Pojo implements Yopable {
 	}
 
 	public boolean isActive() {
-		return active;
+		return this.active;
 	}
 
 	public void setActive(boolean active) {
@@ -63,7 +62,7 @@ public class Pojo implements Yopable {
 	}
 
 	public Type getType() {
-		return type;
+		return this.type;
 	}
 
 	public void setType(Type type) {
@@ -71,7 +70,7 @@ public class Pojo implements Yopable {
 	}
 
 	public BigInteger getaVeryLongInteger() {
-		return aVeryLongInteger;
+		return this.aVeryLongInteger;
 	}
 
 	public void setaVeryLongInteger(BigInteger aVeryLongInteger) {
@@ -79,7 +78,7 @@ public class Pojo implements Yopable {
 	}
 
 	public BigDecimal getaVeryLongFloat() {
-		return aVeryLongFloat;
+		return this.aVeryLongFloat;
 	}
 
 	public void setaVeryLongFloat(BigDecimal aVeryLongFloat) {
@@ -87,7 +86,7 @@ public class Pojo implements Yopable {
 	}
 
 	public Set<Jopo> getJopos() {
-		return jopos;
+		return this.jopos;
 	}
 
 	public void setJopos(Set<Jopo> jopos) {
@@ -95,11 +94,11 @@ public class Pojo implements Yopable {
 	}
 
 	public List<Other> getOthers() {
-		return others;
+		return this.others;
 	}
 
 	public Pojo getParent() {
-		return parent;
+		return this.parent;
 	}
 
 	public void setParent(Pojo parent) {
@@ -107,26 +106,26 @@ public class Pojo implements Yopable {
 	}
 
 	public List<Pojo> getChildren() {
-		return children;
+		return this.children;
 	}
 
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (o == null || this.getClass() != o.getClass()) return false;
 		Pojo pojo = (Pojo) o;
-		return Objects.equals(version, pojo.version);
+		return Objects.equals(this.version, pojo.version);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(version);
+		return Objects.hash(this.version);
 	}
 
 	@Override
 	public String toString() {
 		return "Pojo{"
-			+ "id=" + id
+			+ "id=" + this.id
 			+ ", version=" + this.version
 			+ ", jopos="   + this.jopos
 			+ ", others="  + this.others

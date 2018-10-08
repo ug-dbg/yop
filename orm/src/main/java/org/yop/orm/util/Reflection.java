@@ -5,6 +5,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yop.orm.annotations.YopTransient;
 import org.yop.orm.exception.YopRuntimeException;
 import sun.reflect.ReflectionFactory;
 
@@ -297,12 +298,12 @@ public class Reflection {
 	}
 
 	/**
-	 * Check if a field has the transient keyword. <br>
+	 * Check if a field has the transient keyword or a {@link YopTransient} annotation. <br>
 	 * @param field the field to check
-	 * @return false if the transient keyword
+	 * @return false if either the transient keyword or the YopTransient annotation is set
 	 */
 	public static boolean isNotTransient(Field field){
-		return !Modifier.isTransient(field.getModifiers());
+		return !Modifier.isTransient(field.getModifiers()) && !field.isAnnotationPresent(YopTransient.class);
 	}
 
 	/**

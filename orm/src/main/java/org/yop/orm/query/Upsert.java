@@ -383,7 +383,7 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	 * @return the table name for the current context
 	 */
 	protected String getTableName() {
-		return ORMUtil.getTableName(this.target);
+		return ORMUtil.getTableQualifiedName(this.target);
 	}
 
 	/**
