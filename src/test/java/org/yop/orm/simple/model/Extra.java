@@ -1,9 +1,6 @@
 package org.yop.orm.simple.model;
 
-import org.yop.orm.annotations.Column;
-import org.yop.orm.annotations.Id;
-import org.yop.orm.annotations.JoinColumn;
-import org.yop.orm.annotations.Table;
+import org.yop.orm.annotations.*;
 import org.yop.orm.model.Yopable;
 
 import java.util.Objects;
@@ -24,8 +21,9 @@ public class Extra implements Yopable {
 	@JoinColumn(local = "id_other")
 	private transient Other other;
 
+	@YopTransient
 	@JoinColumn(local = "id_super_extra")
-	private transient SuperExtra superExtra;
+	private SuperExtra superExtra;
 
 	public String getUserName() {
 		return this.userName;

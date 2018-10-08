@@ -3,6 +3,7 @@ package org.yop.orm.chinook.model;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.Table;
+import org.yop.orm.annotations.YopTransient;
 import org.yop.orm.model.Persistent;
 import org.yop.orm.transform.AbbreviateTransformer;
 
@@ -45,12 +46,13 @@ public class Track extends Persistent {
 	)
 	private Genre genre;
 
+	@YopTransient
 	@JoinTable(
 		table = "rel_track_album",
 		sourceColumn = "id_track",
 		targetColumn = "id_album"
 	)
-	private transient Album album;
+	private Album album;
 
 	@JoinTable(
 		table = "rel_playlist_track",
