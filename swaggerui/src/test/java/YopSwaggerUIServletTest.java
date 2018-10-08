@@ -1,9 +1,11 @@
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.yop.rest.servlet.RestServletTest;
 import org.yop.swaggerui.servlet.YopSwaggerUIServlet;
 
+@Ignore
 public class YopSwaggerUIServletTest extends RestServletTest {
 
 	private static final String KEEP_RUNNING_FLAG = "yop.swaggerui.rest.test.keep_running";
