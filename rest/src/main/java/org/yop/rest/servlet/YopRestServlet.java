@@ -2,7 +2,6 @@ package org.yop.rest.servlet;
 
 
 import org.apache.commons.lang.StringUtils;
-import org.json.JSONObject;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
