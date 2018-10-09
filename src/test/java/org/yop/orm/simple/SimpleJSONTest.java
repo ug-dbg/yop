@@ -24,11 +24,14 @@ public class SimpleJSONTest {
 
 	@Test
 	public void testJSON_1st_level_ids() throws IOException, JSONException {
+		String password = "ThisIsMyPasswordYouFool";
+
 		Pojo pojo = new Pojo();
 		pojo.setId(1L);
 		pojo.setVersion(1337);
 		pojo.setActive(true);
 		pojo.setType(Pojo.Type.FOO);
+		pojo.setPassword(password);
 
 		Jopo jopo = new Jopo();
 		jopo.setId(11L);
@@ -49,7 +52,7 @@ public class SimpleJSONTest {
 		String expected = IOUtils.toString(
 			this.getClass().getResourceAsStream("/simple/json/testJSON_1st_level_ids_expected.json")
 		);
-		JSONAssert.assertEquals("", expected, json, false);
+		JSONAssert.assertEquals("", expected, json, true);
 	}
 
 	@Test
@@ -87,7 +90,7 @@ public class SimpleJSONTest {
 		String expected = IOUtils.toString(
 			this.getClass().getResourceAsStream("/simple/json/testJSON_2nd_level_ids_expected.json")
 		);
-		JSONAssert.assertEquals("", expected, json, false);
+		JSONAssert.assertEquals("", expected, json, true);
 	}
 
 	@Test
@@ -118,6 +121,6 @@ public class SimpleJSONTest {
 		String expected = IOUtils.toString(
 			this.getClass().getResourceAsStream("/simple/json/testSelect_to_JSON_expected.json")
 		);
-		JSONAssert.assertEquals("", expected, json, false);
+		JSONAssert.assertEquals("", expected, json, true);
 	}
 }
