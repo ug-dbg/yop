@@ -2,11 +2,9 @@ package org.yop.rest.users.model;
 
 import org.apache.http.Header;
 import org.apache.http.NameValuePair;
-import org.yop.orm.annotations.Column;
-import org.yop.orm.annotations.Id;
-import org.yop.orm.annotations.JoinTable;
-import org.yop.orm.annotations.Table;
+import org.yop.orm.annotations.*;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.json.annotations.YopJSONTransient;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.annotations.ContentParam;
 import org.yop.rest.annotations.PathParam;
@@ -18,6 +16,11 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * A user whose natural key is the email.
+ * <br>
+ * An user can have several {@link Profile}, which contains the {@link Action} it is allowed to do.
+ */
 @Rest(path = "user", description = "Users REST resource ")
 @Table(name = "user")
 public class User implements Yopable {
@@ -29,6 +32,11 @@ public class User implements Yopable {
 	@Column(name = "name")
 	private String name;
 
+	@YopJSONTransient
+	@Column(name = "password_hash")
+	private String passwordHash;
+
+	@NaturalId
 	@Column(name = "email")
 	private String email;
 
@@ -66,6 +74,22 @@ public class User implements Yopable {
 		return this.name;
 	}
 
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public void setBirthDate(LocalDate birthDate) {
+		this.birthDate = birthDate;
+	}
+
+	public void setAnotherDate(Date anotherDate) {
+		this.anotherDate = anotherDate;
+	}
+
 	public String getEmail() {
 		return this.email;
 	}
@@ -76,6 +100,14 @@ public class User implements Yopable {
 
 	public Date getAnotherDate() {
 		return this.anotherDate;
+	}
+
+	public String getPasswordHash() {
+		return this.passwordHash;
+	}
+
+	public void setPasswordHash(String passwordHash) {
+		this.passwordHash = passwordHash;
 	}
 
 	public List<Profile> getProfiles() {

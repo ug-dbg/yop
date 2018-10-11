@@ -31,6 +31,7 @@ class RestRequest {
 
 	private static final Logger logger = LoggerFactory.getLogger(RestRequest.class);
 
+	private HttpServletRequest request;
 	private HttpServletResponse response;
 
 	private Long id = 0L;
@@ -50,6 +51,7 @@ class RestRequest {
 	RestRequest(HttpServletRequest req, HttpServletResponse resp, Map<String, Class<Yopable>> yopablePaths) {
 		this.method = req.getMethod();
 		this.accept = req.getHeader("Accept");
+		this.request = req;
 		this.response = resp;
 
 		this.requestPath  = req.getRequestURI();
@@ -144,6 +146,10 @@ class RestRequest {
 
 	String getContent() {
 		return StringUtils.isEmpty(this.content) ? "" : this.content;
+	}
+
+	public HttpServletRequest getRequest() {
+		return this.request;
 	}
 
 	HttpServletResponse getResponse() {

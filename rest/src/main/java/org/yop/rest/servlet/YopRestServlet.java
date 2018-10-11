@@ -9,14 +9,13 @@ import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
+import org.yop.orm.util.Reflection;
 import org.yop.rest.annotations.Rest;
-import org.yop.rest.exception.YopBadContentException;
-import org.yop.rest.exception.YopNoResourceException;
-import org.yop.rest.exception.YopNoResultException;
-import org.yop.rest.exception.YopResourceInvocationException;
+import org.yop.rest.exception.*;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -38,6 +37,7 @@ import java.util.Set;
  *         {@link #DATASOURCE_JNDI_INIT_PARAM} the JNDI name of the datasource to use.
  *         Feel free to override {@link #getConnection()} if you directly have a JDBC connection with no JNDI.
  *     </li>
+ *     <li>{@link #REQUEST_CHECKER_INIT_PARAM} if you want to add some security logic</li>
  * </ul>
  * Supported HTTP methods :
  * <ul>
@@ -53,14 +53,28 @@ public class YopRestServlet extends HttpServlet {
 
 	private static final Logger logger = LoggerFactory.getLogger(YopRestServlet.class);
 
+	/** Servlet init param : the packages to scan for {@link Rest} {@link Yopable} to expose */
 	static final String PACKAGE_INIT_PARAM = "packages";
 
+	/** Servlet init param : a custom implementation for {@link RequestChecker}. Optional. */
+	static final String REQUEST_CHECKER_INIT_PARAM = "request_checker_class";
+
+	/** Servlet init param : the datasource JNDI name. Optional if you override {@link #getConnection()} */
 	private static final String DATASOURCE_JNDI_INIT_PARAM = "datasource_jndi";
 
 	private final Map<String, Class<Yopable>> yopablePaths = new HashMap<>();
 	private String dataSourceJNDIName;
 	private DataSource dataSource;
+	private RequestChecker requestChecker = new RequestChecker() {};
 
+	/**
+	 * Get the connection to the database.
+	 * <br>
+	 * This asks the {@link #dataSource} for a new connection.
+	 * <br>
+	 * Override this method if you need an other way to get a JDBC connection
+	 * @return the underlying connection
+	 */
 	protected IConnection getConnection() {
 		try {
 			return new JDBCConnection(this.dataSource.getConnection());
@@ -76,6 +90,8 @@ public class YopRestServlet extends HttpServlet {
 	@SuppressWarnings("unchecked")
 	public void init() throws ServletException {
 		super.init();
+
+		// Packages init param → the Yopables to expose as REST resources
 		Set<Class<? extends Yopable>> subtypes = new Reflections("").getSubTypesOf(Yopable.class);
 		String[] packages = this.getInitParameter(PACKAGE_INIT_PARAM).split(",");
 		for (Class<? extends Yopable> subtype : subtypes) {
@@ -88,6 +104,8 @@ public class YopRestServlet extends HttpServlet {
 			}
 		}
 
+		// The JNDI data source init param → the underlying connection
+		// It can be null if the getConnection is overridden
 		this.dataSourceJNDIName = this.getInitParameter(DATASOURCE_JNDI_INIT_PARAM);
 		if (StringUtils.isNotBlank(this.dataSourceJNDIName)) {
 			try {
@@ -97,6 +115,13 @@ public class YopRestServlet extends HttpServlet {
 			}
 		} else {
 			logger.warn("No JNDI datasource set.");
+		}
+
+		// A custom request checker class can be set using an init param
+		String requestCheckerClass = this.getInitParameter(REQUEST_CHECKER_INIT_PARAM);
+		if (StringUtils.isNotBlank(requestCheckerClass)) {
+			this.requestChecker = Reflection.newInstanceNoArgs(Reflection.forName(requestCheckerClass));
+			this.requestChecker.init(this.getServletConfig());
 		}
 	}
 
@@ -157,6 +182,14 @@ public class YopRestServlet extends HttpServlet {
 			logger.error("YOP Rest resource invocation error, Bad request !", e);
 			resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			resp.getWriter().write(HttpMethod.errorJSON(e).toString());
+		} catch (YopNoAuthException e) {
+			logger.error("YOP Rest resource invocation error, Not authenticated !", e);
+			resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			resp.getWriter().write(HttpMethod.errorJSON(e).toString());
+		} catch (YopForbiddenException e) {
+			logger.error("YOP Rest resource invocation error, Forbidden !", e);
+			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			resp.getWriter().write(HttpMethod.errorJSON(e).toString());
 		} catch (YopNoResultException e) {
 			logger.error("YOP No resource for given ID !", e);
 			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -177,16 +210,33 @@ public class YopRestServlet extends HttpServlet {
 		resp.setStatus(HttpServletResponse.SC_OK);
 	}
 
+	/**
+	 * Execute the request using the {@link HttpMethod} implementation.
+	 * <br>
+	 * <ol>
+	 *     <li>{@link HttpMethod#checkResource(RestRequest)}</li>
+	 *     <li>{@link RequestChecker#checkResource(RestRequest, IConnection)} </li>
+	 *     <li>Create transaction</li>
+	 *     <li>Execute {@link HttpMethod#execute(RestRequest, IConnection)}</li>
+	 *     <li>Commit or Rollback on exception</li>
+	 *     <li>Serialize output to the response using {@link HttpMethod#serialize(Object, RestRequest)}</li>
+	 * </ol>
+	 * @param req    the servlet request
+	 * @param resp   the servlet response
+	 * @param method the method implementation (e.g. {@link Get}, {@link Post}...)
+	 */
 	private void doExecute(HttpServletRequest req, HttpServletResponse resp, HttpMethod method) {
 		RestRequest restRequest = new RestRequest(req, resp, this.yopablePaths);
 		method.checkResource(restRequest);
 
 		Object out;
 		try (IConnection connection = this.getConnection()) {
+			this.requestChecker.checkResource(restRequest, connection);
+
 			boolean autocommit = connection.getAutoCommit();
 			connection.setAutoCommit(false);
 			try {
-				out = method.execute(restRequest, this.getConnection());
+				out = method.execute(restRequest, connection);
 			} catch (RuntimeException e) {
 				connection.rollback();
 				connection.setAutoCommit(autocommit);
@@ -205,5 +255,34 @@ public class YopRestServlet extends HttpServlet {
 		if (StringUtils.isNotBlank(serialized)) {
 			method.write(serialized, restRequest);
 		}
+	}
+
+	/**
+	 * An interface to add extra checking logic on a REST request.
+	 * <br>
+	 * Implement this interface and set the class name as {@link #REQUEST_CHECKER_INIT_PARAM} into the servlet.
+	 */
+	public interface RequestChecker {
+		/**
+		 * Init method. Read the servlet config if you need it.
+		 * @param config the REST servlet config
+		 */
+		default void init(ServletConfig config){}
+
+		/**
+		 * Check the incoming REST request.
+		 * <br>
+		 * Throw a runtime exception if you need to stop REST request execution :
+		 * <ul>
+		 *     <li>{@link YopBadContentException} → HTTP 400</li>
+		 *     <li>{@link YopNoAuthException} → HTTP 401</li>
+		 *     <li>{@link YopForbiddenException} → HTTP 403</li>
+		 *     <li>{@link YopNoResourceException} / {@link YopNoResultException} → HTTP 404</li>
+		 *     <li>any other {@link RuntimeException} → HTTP 500</li>
+		 * </ul>
+		 * @param request    the incoming request
+		 * @param connection the underlying connection (e.g. do some security check on user credentials)
+		 */
+		default void checkResource(RestRequest request, IConnection connection){}
 	}
 }

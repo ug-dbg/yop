@@ -2,6 +2,7 @@ package org.yop.rest.servlet;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
+import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.junit.After;
@@ -20,11 +21,22 @@ import java.sql.SQLException;
  * Testing the {@link YopRestServlet} into an embedded Tomcat : {@link #tomcat}.
  * <br>
  * Using Apache http components to send requests to the embedded tomcat.
+ * <br>
+ * 3 servlets are exposed in the embedded tomcat :
+ * <ul>
+ *     <li>{@link LoginServlet}   → /yop/login</li>
+ *     <li>{@link YopRestServlet} → /yop/rest/*</li>
+ *     <li>{@link OpenAPIServlet} → /yop/openapi</li>
+ * </ul>
  */
 public abstract class RestServletTest extends DBMSSwitch {
 
 	private static final Logger logger = LoggerFactory.getLogger(RestServletTest.class);
 
+	/**
+	 * Override the {@link #getConnection()} method in the YOP servlet :
+	 * it is quite tedious to add a JNDI datasource programmatically in the embedded Tomcat.
+	 */
 	private class YopRestServletWithConnection extends YopRestServlet {
 		@Override
 		protected IConnection getConnection() {
@@ -48,23 +60,9 @@ public abstract class RestServletTest extends DBMSSwitch {
 
 		Context context = this.tomcat.addContext("/", new File(".").getAbsolutePath());
 		this.onContextCreation(context);
-
-		org.apache.catalina.Wrapper wrapper = Tomcat.addServlet(
-			context,
-			YopRestServletWithConnection.class.getSimpleName(),
-			new YopRestServletWithConnection()
-		);
-		wrapper.addInitParameter(YopRestServlet.PACKAGE_INIT_PARAM, "org.yop");
-		context.addServletMappingDecoded("/yop/rest/*", YopRestServletWithConnection.class.getSimpleName());
-
-		wrapper = Tomcat.addServlet(
-			context,
-			OpenAPIServlet.class.getSimpleName(),
-			new OpenAPIServlet()
-		);
-		wrapper.addInitParameter(OpenAPIServlet.PACKAGE_INIT_PARAM, "org.yop");
-		wrapper.addInitParameter(OpenAPIServlet.EXPOSITION_PATH, "/yop/rest");
-		context.addServletMappingDecoded("/yop/openapi", OpenAPIServlet.class.getSimpleName());
+		this.addLoginServlet(context);
+		this.addYopServlet(context);
+		this.addOpenAPIServlet(context);
 
 		try {
 			logger.info("Starting embedded Tomcat on port [{}]", this.tomcat.getServer().getPort());
@@ -83,6 +81,37 @@ public abstract class RestServletTest extends DBMSSwitch {
 		} catch (LifecycleException e) {
 			throw new RuntimeException("Embedded Tomcat Lifecycle exception when stopping !", e);
 		}
+	}
+
+	private void addLoginServlet(Context context) {
+		Tomcat.addServlet(
+		context,
+		LoginServlet.class.getSimpleName(),
+		new LoginServlet(){
+			@Override
+			protected IConnection getConnection() throws ClassNotFoundException, SQLException {
+				return RestServletTest.this.getConnection();
+			}
+		});
+		context.addServletMappingDecoded("/yop/login", LoginServlet.class.getSimpleName());
+	}
+
+	private void addYopServlet(Context context) {
+		Wrapper wrapper = Tomcat.addServlet(
+			context,
+			YopRestServletWithConnection.class.getSimpleName(),
+			new YopRestServletWithConnection()
+		);
+		wrapper.addInitParameter(YopRestServlet.PACKAGE_INIT_PARAM, "org.yop");
+		wrapper.addInitParameter(YopRestServlet.REQUEST_CHECKER_INIT_PARAM, CredentialsChecker.class.getName());
+		context.addServletMappingDecoded("/yop/rest/*", YopRestServletWithConnection.class.getSimpleName());
+	}
+
+	private void addOpenAPIServlet(Context context) {
+		Wrapper wrapper = Tomcat.addServlet(context, OpenAPIServlet.class.getSimpleName(), new OpenAPIServlet());
+		wrapper.addInitParameter(OpenAPIServlet.PACKAGE_INIT_PARAM, "org.yop");
+		wrapper.addInitParameter(OpenAPIServlet.EXPOSITION_PATH, "/yop/rest");
+		context.addServletMappingDecoded("/yop/openapi", OpenAPIServlet.class.getSimpleName());
 	}
 
 	protected void onContextCreation(Context context) {}

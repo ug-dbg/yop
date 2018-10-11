@@ -7,8 +7,10 @@ import org.yop.rest.annotations.Rest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
+/**
+ * A profile is a set of {@link Action} a user is allowed to do.
+ */
 @Rest(path = "profile", description = "Profiles REST resource ")
 @Table(name = "profile")
 public class Profile implements Yopable {
@@ -35,5 +37,29 @@ public class Profile implements Yopable {
 	@Override
 	public int hashCode() {
 		return Yopable.hashCode(this);
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public List<User> getUsersWithProfile() {
+		return this.usersWithProfile;
+	}
+
+	public void setUsersWithProfile(List<User> usersWithProfile) {
+		this.usersWithProfile = usersWithProfile;
+	}
+
+	public Collection<Action> getActionsForProfile() {
+		return this.actionsForProfile;
+	}
+
+	public void setActionsForProfile(Collection<Action> actionsForProfile) {
+		this.actionsForProfile = actionsForProfile;
 	}
 }
