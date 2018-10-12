@@ -53,6 +53,8 @@ class Get implements HttpMethod {
 
 		get.getResponses().addApiResponse(String.valueOf(SC_OK),                    HttpMethod.http200(yopable));
 		get.getResponses().addApiResponse(String.valueOf(SC_BAD_REQUEST),           HttpMethod.http400());
+		get.getResponses().addApiResponse(String.valueOf(SC_UNAUTHORIZED),          HttpMethod.http401());
+		get.getResponses().addApiResponse(String.valueOf(SC_FORBIDDEN),             HttpMethod.http403());
 		get.getResponses().addApiResponse(String.valueOf(SC_NOT_FOUND),             HttpMethod.http404());
 		get.getResponses().addApiResponse(String.valueOf(SC_INTERNAL_SERVER_ERROR), HttpMethod.http500());
 		return get;

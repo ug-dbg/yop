@@ -200,6 +200,22 @@ public interface HttpMethod {
 	}
 
 	/**
+	 * HTTP 401 Not authenticated OpenAPI response description
+	 * @return a new {@link ApiResponse} description for HTTP 401
+	 */
+	static ApiResponse http401() {
+		return httpError("Unauthorized");
+	}
+
+	/**
+	 * HTTP 403 Forbidden OpenAPI response description
+	 * @return a new {@link ApiResponse} description for HTTP 403
+	 */
+	static ApiResponse http403() {
+		return httpError("Forbidden");
+	}
+
+	/**
 	 * HTTP 404 Not found OpenAPI response description
 	 * @return a new {@link ApiResponse} description for HTTP 404
 	 */

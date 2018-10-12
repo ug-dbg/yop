@@ -53,6 +53,8 @@ public class Delete implements HttpMethod {
 		responseItem.getContent().addMediaType(ContentType.APPLICATION_JSON.getMimeType(), new MediaType());
 		delete.getResponses().addApiResponse(String.valueOf(HttpServletResponse.SC_OK), responseItem);
 		delete.getResponses().addApiResponse(String.valueOf(SC_BAD_REQUEST),           HttpMethod.http400());
+		delete.getResponses().addApiResponse(String.valueOf(SC_UNAUTHORIZED),          HttpMethod.http401());
+		delete.getResponses().addApiResponse(String.valueOf(SC_FORBIDDEN),             HttpMethod.http403());
 		delete.getResponses().addApiResponse(String.valueOf(SC_NOT_FOUND),             HttpMethod.http404());
 		delete.getResponses().addApiResponse(String.valueOf(SC_INTERNAL_SERVER_ERROR), HttpMethod.http500());
 		return delete;

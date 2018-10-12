@@ -74,6 +74,8 @@ public class Post implements HttpMethod {
 
 		post.getResponses().addApiResponse(String.valueOf(SC_OK),                    HttpMethod.http200(yopable));
 		post.getResponses().addApiResponse(String.valueOf(SC_BAD_REQUEST),           HttpMethod.http400());
+		post.getResponses().addApiResponse(String.valueOf(SC_UNAUTHORIZED),          HttpMethod.http401());
+		post.getResponses().addApiResponse(String.valueOf(SC_FORBIDDEN),             HttpMethod.http403());
 		post.getResponses().addApiResponse(String.valueOf(SC_NOT_FOUND),             HttpMethod.http404());
 		post.getResponses().addApiResponse(String.valueOf(SC_INTERNAL_SERVER_ERROR), HttpMethod.http500());
 		return post;
