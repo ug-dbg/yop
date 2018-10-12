@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
+import org.yop.orm.evaluation.Comparison;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.evaluation.Path;
 import org.yop.orm.exception.YopSQLException;
@@ -146,7 +147,7 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertTrue(superExtra.acceptable(foundOther.getExtra().getSuperExtra()));
 
 			Set<Pojo> foundWith2Queries = select(Pojo.class)
-				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
+				.where(new Comparison(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
 				.joinAll()
 				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
 				.executeWithTwoQueries(connection);

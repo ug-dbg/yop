@@ -48,7 +48,7 @@ public class Comparison implements Evaluation {
 	 * @param op     the comparison operator
 	 * @param ref    the comparison reference value. Will be set as a JDBC query parameter if applicable.
 	 */
-	public Comparison(Function<? extends Yopable, ?> getter, Operator op, Comparable ref) {
+	public <T extends Yopable> Comparison(Function<T, ?> getter, Operator op, Comparable ref) {
 		this();
 		this.getter = getter;
 		this.op = op;
