@@ -23,8 +23,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -62,7 +60,7 @@ public class YopRestServlet extends HttpServlet {
 	/** Servlet init param : the datasource JNDI name. Optional if you override {@link #getConnection()} */
 	private static final String DATASOURCE_JNDI_INIT_PARAM = "datasource_jndi";
 
-	private final Map<String, Class<Yopable>> yopablePaths = new HashMap<>();
+	private final Yopables yopablePaths = new Yopables();
 	private String dataSourceJNDIName;
 	private DataSource dataSource;
 	private RequestChecker requestChecker = new RequestChecker() {};
@@ -97,10 +95,7 @@ public class YopRestServlet extends HttpServlet {
 		for (Class<? extends Yopable> subtype : subtypes) {
 			if (StringUtils.startsWithAny(subtype.getPackage().getName(), packages)
 			&& subtype.isAnnotationPresent(Rest.class)) {
-				this.yopablePaths.put(
-					StringUtils.removeStart(subtype.getAnnotation(Rest.class).path(), "/"),
-					(Class<Yopable>) subtype
-				);
+				this.yopablePaths.put(StringUtils.removeStart(subtype.getAnnotation(Rest.class).path(), "/"), subtype);
 			}
 		}
 

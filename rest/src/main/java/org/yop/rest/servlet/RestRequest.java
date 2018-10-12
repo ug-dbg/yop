@@ -70,7 +70,7 @@ class RestRequest {
 	 * @param resp         the HTTP response
 	 * @param yopablePaths a map of applicable @Rest Yopable whose keys are the {@link Rest#path()}.
 	 */
-	RestRequest(HttpServletRequest req, HttpServletResponse resp, Map<String, Class<Yopable>> yopablePaths) {
+	RestRequest(HttpServletRequest req, HttpServletResponse resp, Yopables yopablePaths) {
 		this.method = req.getMethod();
 		this.accept = req.getHeader("Accept");
 		this.request = req;
@@ -332,11 +332,12 @@ class RestRequest {
 	 * @return the closest match
 	 * @throws YopNoResourceException No match for the request path. This should trigger an HTTP 404
 	 */
-	private static Class<Yopable> findResource(String requestPath, Map<String, Class<Yopable>> yopablePaths) {
+	@SuppressWarnings("unchecked")
+	private static Class<Yopable> findResource(String requestPath, Yopables yopablePaths) {
 		TreeSet<String> paths = new TreeSet<>(Comparator.comparing(String::length));
 		paths.addAll(yopablePaths.keySet().stream().filter(requestPath::startsWith).collect(Collectors.toSet()));
 		if (! paths.isEmpty()) {
-			return yopablePaths.get(paths.last());
+			return (Class) yopablePaths.get(paths.last());
 		}
 		throw new YopNoResourceException("No REST Yopable for request path [" + requestPath + "]");
 	}
