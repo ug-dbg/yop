@@ -8,18 +8,19 @@ YOP is a lightweight ORM wannabe. Hit and run, no session, no bytecode generatio
 Actually, YOP is a tool to manage tree relation propagation at runtime when serializing/unserializing.  
 Relation propagation management is mostly achieved using Java method references.  
 
-The main idea is **not using literals** to indicate relations between objects but **getters** 
-(→ 'Find usages'/'Refactor' can be safely used your IDE).
+The main idea is **not using literals** to indicate relations between objects but **getters** : 
+- 'Find usages' and 'Refactor' tools can be safely used  
+- Auto-completion for method references should be available  
 
 Here are some API examples :
 
 **Create/Update** :
 <pre>  
 ```Upsert   
-.from(Pojo.class)  
-.onto(newPojo)  
-.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))    
-.join(JoinSet.to(Pojo::getOthers))  
+.from(Library.class)  
+.onto(library)  
+.join(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))    
+.join(JoinSet.to(Library::getEmployees))  
 .checkNaturalID()  
 .execute(connection);```
 </pre>
@@ -27,40 +28,43 @@ Here are some API examples :
 **Read** :
 <pre>  
 ```Select
-.from(Pojo.class)
-.join(JoinSet.to(Pojo::getJopos))
-.join(JoinSet.to(Pojo::getOthers).where(
-    Where.compare(Other::getName, Operator.EQ, Path.pathSet(Pojo::getJopos).to(Jopo::getName))
-))
+.from(Library.class)
+.join(JoinSet.to(Library::getBooks))
+.join(JoinSet.to(Library::getEmployees).where(
+    Where.compare(
+        Employee::getName, 
+        Operator.EQ, 
+        Path.pathSet(Library::getBooks).to(Book::getAuthor).to(Author::getName)
+)))
 .execute(connection);```
 </pre>
 
 
 **Delete** :   
 <pre>  
-```Delete.from(Pojo.class)
-.join(JoinSet.to(Pojo::getOthers).join(Join.to(Other::getExtra)))
+```Delete.from(Library.class)
+.join(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))
 .executeQueries(connection);```
 </pre>
 
 **Hydrate (fetch relation dynamically)** :  
 <pre>
-```Hydrate.from(Pojo.class).onto(objectsWithID).fetchSet(Pojo::getJopos).execute(connection);```
+```Hydrate.from(Book.class).onto(booksWithID).fetchSet(Book::getChapters).execute(connection);```
 </pre>
 
 **Recurse (hydrate relations, recursively)** :   
 <pre>  
-```Recurse.from(Pojo.class).onto(objectsWithID).joinAll().execute(connection);```
+```Recurse.from(Employee.class).onto(employeesWithID).join(Join.to(Employee::getManager)).execute(connection);```
 </pre>
 
 **JSON serialization** :  
 <pre>  
-```JSON.from(Pojo.class)
+```JSON.from(Library.class)
 .joinAll()
-.joinIDs(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
-.joinIDs(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
+.joinIDs(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))
+.joinIDs(JoinSet.to(Library::getEmployees).join(JoinSet.to(Employee::getProfiles)))
 .register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"))
-.onto(pojos)
+.onto(library)
 .toJSON();```
 </pre>
 

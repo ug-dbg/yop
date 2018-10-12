@@ -14,21 +14,22 @@ And using YOP complementary to another ORM does not sound completely absurd.
 
 ## What are the promises ?
 Do some light/easy 'Hit & Run' CRUD in Java, using an SQL-like syntax and method references to manage propagation.  
+Refactoring, finding usages and auto-completion from the IDE can be used to write/update requests.    
 Examples : 
 ```
 Upsert   
-.from(Pojo.class)  
-.onto(newPojo)  
-.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))    
-.join(JoinSet.to(Pojo::getOthers))  
+.from(Library.class)  
+.onto(library)  
+.join(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))    
+.join(JoinSet.to(Library::getEmployees))  
 .checkNaturalID()  
 .execute(connection);  
 ```
   
 ```
 Select
-.from(Pojo.class)
-.where(Where.naturalId(newPojo))
+.from(Book.class)
+.where(Where.naturalId(book))
 .joinAll()
 .execute(connection
 ```
