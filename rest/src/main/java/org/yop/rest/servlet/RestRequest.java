@@ -109,6 +109,27 @@ class RestRequest {
 	}
 
 	/**
+	 * Get the reference to the incoming HTTP request.
+	 * @return {@link #request}
+	 */
+	public HttpServletRequest getRequest() {
+		return this.request;
+	}
+
+	/**
+	 * Get the reference to the outgoing HTTP response.
+	 * @return {@link #response}
+	 */
+	public HttpServletResponse getResponse() {
+		return this.response;
+	}
+
+	@Override
+	public String toString() {
+		return "RestRequest{" + "requestPath='" + this.requestPath + '\'' + ", method='" + this.method + '\'' + '}';
+	}
+
+	/**
 	 * Get the HTTP method of this REST request.
 	 * @return {@link #method} that was read from the HTTP request.
 	 */
@@ -229,22 +250,6 @@ class RestRequest {
 	}
 
 	/**
-	 * Get the reference to the incoming HTTP request.
-	 * @return {@link #request}
-	 */
-	public HttpServletRequest getRequest() {
-		return this.request;
-	}
-
-	/**
-	 * Get the reference to the outgoing HTTP response.
-	 * @return {@link #response}
-	 */
-	HttpServletResponse getResponse() {
-		return this.response;
-	}
-
-	/**
 	 * Get the first custom method from {@link #restResource} that matches the REST request.
 	 * @return an optional for the first matching method.
 	 */
@@ -340,10 +345,5 @@ class RestRequest {
 			return (Class) yopablePaths.get(paths.last());
 		}
 		throw new YopNoResourceException("No REST Yopable for request path [" + requestPath + "]");
-	}
-
-	@Override
-	public String toString() {
-		return "RestRequest{" + "requestPath='" + this.requestPath + '\'' + ", method='" + this.method + '\'' + '}';
 	}
 }
