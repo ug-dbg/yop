@@ -6,8 +6,8 @@ import org.yop.orm.annotations.*;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.json.annotations.YopJSONTransient;
 import org.yop.orm.sql.adapter.IConnection;
-import org.yop.rest.annotations.ContentParam;
-import org.yop.rest.annotations.PathParam;
+import org.yop.rest.annotations.Content;
+import org.yop.rest.annotations.RequestPath;
 import org.yop.rest.annotations.Rest;
 
 import java.time.LocalDate;
@@ -58,8 +58,8 @@ public class User implements Yopable {
 	public static Collection<User> delete(
 		IConnection connection,
 		Header[] headers,
-		@ContentParam String content,
-		@PathParam String path,
+		@Content String content,
+		@RequestPath String path,
 		NameValuePair[] parameters) {
 
 		throw new UnsupportedOperationException("Not implemented yet !");

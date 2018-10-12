@@ -7,8 +7,10 @@ import java.lang.annotation.Target;
 
 /**
  * In a custom {@link org.yop.orm.model.Yopable} {@link Rest} method,
- * mark a String parameter to receive the HTTP request entity.
+ * mark a String parameter to receive a header from the HTTP request.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER})
-public @interface ContentParam {}
+public @interface Header {
+	String name();
+}

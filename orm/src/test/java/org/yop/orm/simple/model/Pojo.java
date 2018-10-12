@@ -31,6 +31,9 @@ public class Pojo implements Yopable {
 	@Column(name = "VERY_LONG_FLOAT")
 	private BigDecimal aVeryLongFloat;
 
+	@Column(name = "STRING_COLUMN")
+	private String stringColumn;
+
 	@YopJSONTransient
 	@Column(name = "PASSWORD")
 	private String password;
@@ -89,6 +92,14 @@ public class Pojo implements Yopable {
 
 	public void setaVeryLongFloat(BigDecimal aVeryLongFloat) {
 		this.aVeryLongFloat = aVeryLongFloat;
+	}
+
+	public String getStringColumn() {
+		return this.stringColumn;
+	}
+
+	public void setStringColumn(String stringColumn) {
+		this.stringColumn = stringColumn;
 	}
 
 	public String getPassword() {

@@ -7,10 +7,8 @@ import java.lang.annotation.Target;
 
 /**
  * In a custom {@link org.yop.orm.model.Yopable} {@link Rest} method,
- * mark a String parameter to receive a parameter from the request path.
+ * mark a String parameter to receive the HTTP request body, parsed as an instance of the yopable.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER})
-public @interface PathParam {
-	String name();
-}
+public @interface BodyInstance {}

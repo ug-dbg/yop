@@ -68,6 +68,7 @@ public class SimpleModelRestTest extends RestServletTest {
 			newPojo.setVersion(1);
 			newPojo.setType(Pojo.Type.FOO);
 			newPojo.setActive(true);
+			newPojo.setStringColumn("This is a string that will be set in the string column");
 			Jopo jopo = new Jopo();
 			jopo.setName("test path ref");
 			jopo.setPojo(newPojo);
@@ -120,6 +121,17 @@ public class SimpleModelRestTest extends RestServletTest {
 				rogerCanWrite(connection);
 			}
 			sessionCookie = login();
+
+			// POST, /search/{search_string}  user logged in, user can read and write → 200
+			HttpPost httpPost = new HttpPost("http://localhost:1234/yop/rest/pojo/search/will%20be%20set");
+			httpPost.setHeader("Cookie", sessionCookie);
+			response = doRequest(httpclient, httpPost);
+			Assert.assertEquals(200, response.statusCode);
+			Assert.assertEquals(
+				"[{\"id\":1,\"version\":1,\"active\":false,"
+				+ "\"stringColumn\":\"This is a string that will be set in the string column\",\"type\":\"FOO\"}]",
+				response.content
+			);
 
 			// UPSERT,  user logged in, user can read and write, invalid JSON content → 400
 			httpUpsert = new HttpUpsert("http://localhost:1234/yop/rest/pojo");

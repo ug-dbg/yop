@@ -2,7 +2,6 @@ package org.yop.rest.servlet;
 
 import io.swagger.oas.models.Operation;
 import io.swagger.oas.models.media.ArraySchema;
-import io.swagger.oas.models.media.Content;
 import io.swagger.oas.models.media.MediaType;
 import io.swagger.oas.models.media.Schema;
 import io.swagger.oas.models.responses.ApiResponse;
@@ -16,9 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.json.JSON;
 import org.yop.orm.sql.adapter.IConnection;
-import org.yop.orm.util.Reflection;
-import org.yop.rest.annotations.ContentParam;
-import org.yop.rest.annotations.PathParam;
 import org.yop.rest.exception.YopNoResourceException;
 import org.yop.rest.exception.YopResourceInvocationException;
 import org.yop.rest.openapi.OpenAPIUtil;
@@ -55,9 +51,6 @@ import java.util.Optional;
 public interface HttpMethod {
 
 	Logger logger = LoggerFactory.getLogger(HttpMethod.class);
-
-	String CONTENT = "content";
-	String PATH = "path";
 
 	/** HTTP 'joinAll' parameter : join all non transient relation on the resources. */
 	String PARAM_JOIN_ALL = "joinAll";
@@ -173,7 +166,7 @@ public interface HttpMethod {
 	static ApiResponse httpError(String description) {
 		ApiResponse responseItem = new ApiResponse();
 		responseItem.setDescription(description);
-		responseItem.setContent(new Content());
+		responseItem.setContent(new io.swagger.oas.models.media.Content());
 		responseItem.getContent().addMediaType(
 			ContentType.APPLICATION_JSON.getMimeType(),
 			new MediaType().schema(errorJSONSchema())
@@ -190,7 +183,7 @@ public interface HttpMethod {
 	static ApiResponse http200(Class yopable) {
 		ApiResponse responseItem = new ApiResponse();
 		responseItem.setDescription("A set of [" + OpenAPIUtil.getResourceName(yopable) + "]");
-		responseItem.setContent(new Content());
+		responseItem.setContent(new io.swagger.oas.models.media.Content());
 		responseItem.getContent().addMediaType(
 			ContentType.APPLICATION_JSON.getMimeType(),
 			new MediaType().schema(new ArraySchema().items(OpenAPIUtil.refSchema(yopable)))
@@ -265,11 +258,7 @@ public interface HttpMethod {
 	 * @throws YopResourceInvocationException an error occurred executing the custom method
 	 */
 	default Object executeCustom(RestRequest restRequest, IConnection connection) {
-		Optional<Method> candidate = Reflection
-			.getMethods(restRequest.getRestResource())
-			.stream()
-			.filter(restRequest::matches)
-			.findFirst();
+		Optional<Method> candidate = restRequest.getCandidate();
 
 		if (! candidate.isPresent()) {
 			logger.warn("No sub-resource method for [{}]", restRequest);
@@ -288,13 +277,8 @@ public interface HttpMethod {
 					parameters[i] = restRequest.getHeaders();
 				} else if(NameValuePair[].class.isAssignableFrom(parameter.getType())) {
 					parameters[i] = restRequest.getParameters();
-				} else if (String.class.isAssignableFrom(parameter.getType())) {
-					if (CONTENT.equals(parameter.getName()) || parameter.isAnnotationPresent(ContentParam.class)) {
-						parameters[i] = restRequest.getContent();
-					}
-					if (PATH.equals(parameter.getName()) || parameter.isAnnotationPresent(PathParam.class)) {
-						parameters[i] = restRequest.getPath();
-					}
+				} else {
+					parameters[i] = AnnotationToParameter.get(restRequest, parameter);
 				}
 			}
 
