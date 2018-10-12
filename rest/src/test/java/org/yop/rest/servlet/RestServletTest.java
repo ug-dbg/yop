@@ -37,7 +37,7 @@ public abstract class RestServletTest extends DBMSSwitch {
 	 * Override the {@link #getConnection()} method in the YOP servlet :
 	 * it is quite tedious to add a JNDI datasource programmatically in the embedded Tomcat.
 	 */
-	private class YopRestServletWithConnection extends YopRestServlet {
+	public class YopRestServletWithConnection extends YopRestServlet {
 		@Override
 		protected IConnection getConnection() {
 			try {
@@ -83,7 +83,7 @@ public abstract class RestServletTest extends DBMSSwitch {
 		}
 	}
 
-	private void addLoginServlet(Context context) {
+	protected void addLoginServlet(Context context) {
 		Tomcat.addServlet(
 		context,
 		LoginServlet.class.getSimpleName(),
@@ -96,7 +96,7 @@ public abstract class RestServletTest extends DBMSSwitch {
 		context.addServletMappingDecoded("/yop/login", LoginServlet.class.getSimpleName());
 	}
 
-	private void addYopServlet(Context context) {
+	protected void addYopServlet(Context context) {
 		Wrapper wrapper = Tomcat.addServlet(
 			context,
 			YopRestServletWithConnection.class.getSimpleName(),
@@ -104,6 +104,7 @@ public abstract class RestServletTest extends DBMSSwitch {
 		);
 		wrapper.addInitParameter(YopRestServlet.PACKAGE_INIT_PARAM, "org.yop");
 		wrapper.addInitParameter(YopRestServlet.REQUEST_CHECKER_INIT_PARAM, CredentialsChecker.class.getName());
+		wrapper.addInitParameter(YopRestServlet.DATASOURCE_JNDI_INIT_PARAM, null);
 		context.addServletMappingDecoded("/yop/rest/*", YopRestServletWithConnection.class.getSimpleName());
 	}
 

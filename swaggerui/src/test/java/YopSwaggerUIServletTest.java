@@ -1,8 +1,10 @@
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
+import org.apache.catalina.startup.Tomcat;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.yop.rest.servlet.RestServletTest;
+import org.yop.rest.servlet.YopRestServlet;
 import org.yop.swaggerui.servlet.YopSwaggerUIServlet;
 
 @Ignore
@@ -25,6 +27,20 @@ public class YopSwaggerUIServletTest extends RestServletTest {
 			+ "/yop/openapi";
 		createYopSwaggerUIServlet(context, openAPIURL);
 		super.onContextCreation(context);
+	}
+
+	@Override
+	protected void addLoginServlet(Context context) {}
+
+	@Override
+	protected void addYopServlet(Context context) {
+		Wrapper wrapper = Tomcat.addServlet(
+			context,
+			YopRestServletWithConnection.class.getSimpleName(),
+			new YopRestServletWithConnection()
+		);
+		wrapper.addInitParameter(YopRestServlet.PACKAGE_INIT_PARAM, "org.yop");
+		context.addServletMappingDecoded("/yop/rest/*", YopRestServletWithConnection.class.getSimpleName());
 	}
 
 	@Test

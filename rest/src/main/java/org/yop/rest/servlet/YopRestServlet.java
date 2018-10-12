@@ -52,13 +52,13 @@ public class YopRestServlet extends HttpServlet {
 	private static final Logger logger = LoggerFactory.getLogger(YopRestServlet.class);
 
 	/** Servlet init param : the packages to scan for {@link Rest} {@link Yopable} to expose */
-	static final String PACKAGE_INIT_PARAM = "packages";
+	public static final String PACKAGE_INIT_PARAM = "packages";
 
 	/** Servlet init param : a custom implementation for {@link RequestChecker}. Optional. */
-	static final String REQUEST_CHECKER_INIT_PARAM = "request_checker_class";
+	public static final String REQUEST_CHECKER_INIT_PARAM = "request_checker_class";
 
 	/** Servlet init param : the datasource JNDI name. Optional if you override {@link #getConnection()} */
-	private static final String DATASOURCE_JNDI_INIT_PARAM = "datasource_jndi";
+	public static final String DATASOURCE_JNDI_INIT_PARAM = "datasource_jndi";
 
 	private final Yopables yopablePaths = new Yopables();
 	private String dataSourceJNDIName;
