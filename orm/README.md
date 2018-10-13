@@ -1,4 +1,4 @@
-# YOP - ORM ! 
+# YOP ! 
 [![Build Status](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/badge/icon)](http://jenkins.y-op.org/job/yop-test-MySQL/)
 [![Coverage](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/ws/target/jacoco.svg)](http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco)
   
@@ -14,23 +14,31 @@ And using YOP complementary to another ORM does not sound completely absurd.
 
 ## What are the promises ?
 Do some light/easy 'Hit & Run' CRUD in Java, using an SQL-like syntax and method references to manage propagation.  
+Refactoring, finding usages and auto-completion from the IDE can be used to write/update requests.    
 Examples : 
 ```
 Upsert   
-.from(Pojo.class)  
-.onto(newPojo)  
-.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))    
-.join(JoinSet.to(Pojo::getOthers))  
+.from(Library.class)  
+.onto(library)  
+.join(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))    
+.join(JoinSet.to(Library::getEmployees))  
 .checkNaturalID()  
 .execute(connection);  
 ```
   
 ```
-Select
-.from(Pojo.class)
-.where(Where.naturalId(newPojo))
+Collection<Book> booksFromDB = Select
+.from(Book.class)
+.join(Join.to(Book::getAuthor).where(Where.compare(Author::getName, Operator.LIKE, "%Roger%")))
+.execute(connection)
+```  
+  
+```
+Book bookFromDB = Select
+.from(Book.class)
+.where(Where.naturalId(book))
 .joinAll()
-.execute(connection
+.uniqueResult(connection)
 ```
 YOP *could* be able to run on **Android**.  
 See the [yop-android-poc](https://github.com/ug-dbg/yop-android-poc) for an infamous POC.
@@ -51,7 +59,7 @@ Yop is available on Maven central :
 <dependency>
     <groupId>org.y-op</groupId>
     <artifactId>yop</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 
