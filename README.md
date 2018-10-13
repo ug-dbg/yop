@@ -27,11 +27,18 @@ Upsert
 ```
   
 ```
-Select
+Collection<Book> booksFromDB = Select
+.from(Book.class)
+.join(Join.to(Book::getAuthor).where(Where.compare(Author::getName, Operator.LIKE, "%Roger%")))
+.execute(connection)
+```  
+  
+```
+Book bookFromDB = Select
 .from(Book.class)
 .where(Where.naturalId(book))
 .joinAll()
-.execute(connection
+.uniqueResult(connection)
 ```
 YOP *could* be able to run on **Android**.  
 See the [yop-android-poc](https://github.com/ug-dbg/yop-android-poc) for an infamous POC.
