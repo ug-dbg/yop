@@ -69,6 +69,7 @@ Here are some API examples :
 </pre>
 
 Yop can serialize from/to a database (**ORM**) or to **JSON**.  
+Yop queries are serializable to/from JSON.
 Yop tries to generate very standard SQL queries that works on most databases.  
 Yop has some requirements on the Database schema (See Yop principles).  
 Yop requires at least **Java 8**.  
