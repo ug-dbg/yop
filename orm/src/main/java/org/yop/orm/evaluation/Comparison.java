@@ -24,6 +24,8 @@ public class Comparison implements Evaluation {
 
 	public static final String REF_TYPE = "refType";
 
+	private static final String REF = "ref";
+
 	/** The field getter. */
 	private Function<?, ?> getter;
 
@@ -66,6 +68,7 @@ public class Comparison implements Evaluation {
 		if (this.ref instanceof Path) {
 			element.getAsJsonObject().addProperty(REF_TYPE, "path");
 		}
+		element.getAsJsonObject().add(REF, JsonAble.jsonValue(context, this.ref));
 		return element;
 	}
 
@@ -74,7 +77,7 @@ public class Comparison implements Evaluation {
 		Evaluation.super.fromJSON(context, element);
 		this.field = Reflection.get(context.getTarget(), element.getAsJsonObject().get(FIELD).getAsString());
 		this.getter = o -> Reflection.readField(this.field, o);
-		JsonElement ref = element.getAsJsonObject().get("ref");
+		JsonElement ref = element.getAsJsonObject().get(REF);
 
 		if (element.getAsJsonObject().has(REF_TYPE)) {
 			String refType = element.getAsJsonObject().get(REF_TYPE).getAsString();

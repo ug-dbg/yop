@@ -3,6 +3,7 @@ package org.yop.orm.model;
 import com.google.common.primitives.Primitives;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import org.yop.orm.query.Context;
 import org.yop.orm.util.Reflection;
 
@@ -10,6 +11,7 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This is the YOP interface to mark JSON query elements (Select, Join, Evaluation...) as JSON serializable.
@@ -149,5 +151,22 @@ public interface JsonAble {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Very rough method that turns a field value into JSON.
+	 * <ul>
+	 *     <li>object is {@link JsonAble} → {@link #toJSON(Context)} (very unlikely)</li>
+	 *     <li>else → new {@link JsonPrimitive} from {@link Objects#toString(Object)}</li>
+	 * </ul>
+	 * @param context the current context
+	 * @param o       the object to serialize
+	 * @return a GSON JSON element from the given value
+	 */
+	static JsonElement jsonValue(Context<? extends Yopable> context, Object o) {
+		if (o instanceof JsonAble) {
+			return ((JsonAble) o).toJSON(context);
+		}
+		return new JsonPrimitive(Objects.toString(o));
 	}
 }
