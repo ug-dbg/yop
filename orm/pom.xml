@@ -22,6 +22,25 @@
 		Ω≡{Ⓐ}
 	</description>
 
+	<!-- Code Coverage report generation with profile 'coverage' -->
+	<profiles>
+		<profile>
+			<id>coverage_orm</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+					</plugin>
+					<plugin>
+						<groupId>com.sigpwned</groupId>
+						<artifactId>jacoco-badge-maven-plugin</artifactId>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 	<!-- Small is beautiful :-) -->
 	<dependencies>
 		<!--
