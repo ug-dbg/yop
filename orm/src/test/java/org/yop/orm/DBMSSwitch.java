@@ -1,9 +1,12 @@
 package org.yop.orm;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.LongTest;
 import org.yop.orm.gen.Prepare;
 import org.yop.orm.simple.SimpleTest;
@@ -30,6 +33,8 @@ import java.util.Arrays;
  */
 public abstract class DBMSSwitch {
 
+	private static final Logger logger = LoggerFactory.getLogger(DBMSSwitch.class);
+
 	private static final String DBMS_SWITCH = "yop.test.dbms";
 	private File db;
 
@@ -47,6 +52,20 @@ public abstract class DBMSSwitch {
 	 * @return the Yopable data objects package prefix
 	 */
 	protected abstract String getPackagePrefixes();
+
+	/**
+	 * Read a classpath resource and returns its content as a String.
+	 * @param path the resource path (in the classpath)
+	 * @return the content of the resource
+	 */
+	public static String classpathResource(String path) {
+		try {
+			return IOUtils.toString(DBMSSwitch.class.getResourceAsStream(path));
+		} catch (IOException e) {
+			logger.error("Could not read classpath resource [{}]", path, e);
+			throw new RuntimeException("Could not read classpath resource [" + path + "]", e);
+		}
+	}
 
 	/**
 	 * Get the current DBMS code.

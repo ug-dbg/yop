@@ -1,10 +1,10 @@
 package org.yop.rest.simple.model;
 
 import org.apache.commons.codec.digest.Crypt;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.*;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -61,7 +61,24 @@ public class SimpleModelRestTest extends RestServletTest {
 	}
 
 	@Test
-	public void test() throws SQLException, ClassNotFoundException, IOException {
+	public void test_openAPI() throws IOException, SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			rogerCanRead(connection);
+		}
+
+		String sessionCookie = login();
+
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			HttpGet httpGet = new HttpGet("http://localhost:1234/yop/openapi");
+			httpGet.setHeader("Cookie", sessionCookie);
+			Response response = doRequest(httpclient, httpGet);
+			Assert.assertEquals(200, response.statusCode);
+			Assert.assertEquals(classpathResource("/openapi/expected_openapi.yaml"), response.content);
+		}
+	}
+
+	@Test
+	public void test_CRUD() throws SQLException, ClassNotFoundException, IOException {
 		Pojo newPojo;
 		try (IConnection connection = this.getConnection()) {
 			newPojo = new Pojo();
@@ -151,21 +168,6 @@ public class SimpleModelRestTest extends RestServletTest {
 		}
 	}
 
-	private static Response doRequest(HttpClient client, HttpRequestBase request) throws IOException {
-		try (CloseableHttpResponse response = (CloseableHttpResponse) client.execute(request)) {
-			logger.info(
-				"[{}]#[{}] Status → [{}]",
-				request.getMethod(),
-				request.getURI().toString(),
-				response.getStatusLine().getStatusCode()
-			);
-			return new Response(
-				response.getStatusLine().getStatusCode(),
-				IOUtils.toString(response.getEntity().getContent())
-			);
-		}
-	}
-
 	private static void rogerCanRead(IConnection connection) {
 		User user = new User();
 		user.setName(USER_NAME);
@@ -225,16 +227,6 @@ public class SimpleModelRestTest extends RestServletTest {
 				Assert.assertEquals(200, statusCode);
 				return sessionCookie;
 			}
-		}
-	}
-
-	private static class Response {
-		private int statusCode;
-		private String content;
-
-		private Response(int statusCode, String content) {
-			this.statusCode = statusCode;
-			this.content = content;
 		}
 	}
 }

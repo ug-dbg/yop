@@ -1,0 +1,2450 @@
+---
+openapi: "3.0.0"
+info:
+  title: "Yop unrestful REST API"
+  description: "Yop unrestful REST API - default behavior. See http://maven.y-op.org"
+  contact:
+    name: "Dev Null"
+    email: "dev@null.me"
+  license:
+    name: "Postcard Public License"
+  version: "1"
+externalDocs:
+  description: "YOP default documentation"
+  url: "http://maven.y-op.org/"
+servers:
+- url: "http://localhost:1234/yop/rest"
+  description: "Current server"
+tags:
+- name: "Pojo"
+  description: "Resource : Pojo"
+- name: "Profile"
+  description: "Resource : Profile"
+- name: "Action"
+  description: "Resource : Action"
+- name: "User"
+  description: "Resource : User"
+paths:
+  /pojo:
+    summary: "YOP default REST operations for [Pojo]"
+    description: "This a POJO :-)"
+    get:
+      tags:
+      - "Pojo"
+      summary: "Get all [Pojo] or one single object by ID"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Pojo]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Pojo]"
+        required: false
+        schema:
+          type: "boolean"
+      responses:
+        200:
+          description: "A set of [Pojo]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Pojo"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    put:
+      tags:
+      - "Pojo"
+      summary: "Do upsert operation on [Pojo]"
+      description: "The UPSERT operation does a YOP UPSERT request. If an object to\
+        \ upsert has an ID ? UPDATE"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Pojo]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Pojo]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "checkNaturalID"
+        in: "query"
+        description: "Check natural ID when inserting [Pojo] elements. Do update if\
+          \ possible."
+        required: false
+        schema:
+          type: "boolean"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/Pojo"
+      responses:
+        200:
+          description: "A set of [Pojo]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Pojo"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    post:
+      tags:
+      - "Pojo"
+      summary: "Execute custom YOP operation on [Pojo]"
+      parameters:
+      - name: "queryType"
+        in: "query"
+        description: "A custom Yop query for [Pojo] in JSON format"
+        required: true
+        schema:
+          type: "string"
+          enum:
+          - "select"
+          - "upsert"
+          - "delete"
+      requestBody:
+        description: "YOP custom query"
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: "#/components/schemas/select"
+              - $ref: "#/components/schemas/delete"
+              - $ref: "#/components/schemas/upsert"
+            example: "{\"where\":{\"evaluations\":[{\"type\":\"IdIn\",\"values\":[1,2,3]}]},\"\
+              joins\":[{\"where\":{\"evaluations\":[]},\"joins\":[],\"field\":\"jopos\"\
+              },{\"where\":{\"evaluations\":[]},\"joins\":[{\"where\":{\"evaluations\"\
+              :[]},\"joins\":[],\"field\":\"extra\"}],\"field\":\"others\"}],\"target\"\
+              :\"org.yop.rest.simple.model.Pojo\"}"
+      responses:
+        200:
+          description: "A set of [Pojo]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Pojo"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    delete:
+      tags:
+      - "Pojo"
+      summary: "Do delete operation on [Pojo]. If not ID provided, delete all entries\
+        \ !"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Pojo]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Pojo]"
+        required: false
+        schema:
+          type: "boolean"
+      responses:
+        200:
+          description: "Empty json array. To return the deleted objects, please override\
+            \ me."
+          content:
+            application/json: {}
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    head:
+      tags:
+      - "Pojo"
+      summary: "Do head operation on [Pojo]. Execute request. Set content-length.\
+        \ No response."
+      parameters: []
+      responses:
+        200:
+          description: "Empty response. See content-length for equivalent GET."
+          headers:
+            Content-Length:
+              description: "Equivalent GET request content-length"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+  /pojo/{id}:
+    summary: "YOP default REST operations for [Pojo] for a target ID"
+    get:
+      tags:
+      - "Pojo"
+      summary: "Get all [Pojo] or one single object by ID"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Pojo]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Pojo]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "id"
+        in: "path"
+        description: "[Pojo] ID"
+        required: true
+        schema:
+          minimum: 1
+          type: "integer"
+      responses:
+        200:
+          description: "A set of [Pojo]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Pojo"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    delete:
+      tags:
+      - "Pojo"
+      summary: "Do delete operation on [Pojo]. If not ID provided, delete all entries\
+        \ !"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Pojo]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Pojo]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "id"
+        in: "path"
+        description: "[Pojo] ID"
+        required: true
+        schema:
+          minimum: 1
+          type: "integer"
+      responses:
+        200:
+          description: "Empty json array. To return the deleted objects, please override\
+            \ me."
+          content:
+            application/json: {}
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    head:
+      tags:
+      - "Pojo"
+      summary: "Do head operation on [Pojo]. Execute request. Set content-length.\
+        \ No response."
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "[Pojo] ID"
+        required: true
+        schema:
+          minimum: 1
+          type: "integer"
+      responses:
+        200:
+          description: "Empty response. See content-length for equivalent GET."
+          headers:
+            Content-Length:
+              description: "Equivalent GET request content-length"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+  /profile:
+    summary: "YOP default REST operations for [Profile]"
+    description: "Profiles REST resource "
+    get:
+      tags:
+      - "Profile"
+      summary: "Get all [Profile] or one single object by ID"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Profile]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Profile]"
+        required: false
+        schema:
+          type: "boolean"
+      responses:
+        200:
+          description: "A set of [Profile]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Profile"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    put:
+      tags:
+      - "Profile"
+      summary: "Do upsert operation on [Profile]"
+      description: "The UPSERT operation does a YOP UPSERT request. If an object to\
+        \ upsert has an ID ? UPDATE"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Profile]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Profile]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "checkNaturalID"
+        in: "query"
+        description: "Check natural ID when inserting [Profile] elements. Do update\
+          \ if possible."
+        required: false
+        schema:
+          type: "boolean"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/Profile"
+      responses:
+        200:
+          description: "A set of [Profile]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Profile"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    post:
+      tags:
+      - "Profile"
+      summary: "Execute custom YOP operation on [Profile]"
+      parameters:
+      - name: "queryType"
+        in: "query"
+        description: "A custom Yop query for [Profile] in JSON format"
+        required: true
+        schema:
+          type: "string"
+          enum:
+          - "select"
+          - "upsert"
+          - "delete"
+      requestBody:
+        description: "YOP custom query"
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: "#/components/schemas/select"
+              - $ref: "#/components/schemas/delete"
+              - $ref: "#/components/schemas/upsert"
+            example: "{\"where\":{\"evaluations\":[{\"type\":\"IdIn\",\"values\":[1,2,3]}]},\"\
+              joins\":[{\"where\":{\"evaluations\":[]},\"joins\":[],\"field\":\"actionsForProfile\"\
+              }],\"target\":\"org.yop.rest.users.model.Profile\"}"
+      responses:
+        200:
+          description: "A set of [Profile]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Profile"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    delete:
+      tags:
+      - "Profile"
+      summary: "Do delete operation on [Profile]. If not ID provided, delete all entries\
+        \ !"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Profile]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Profile]"
+        required: false
+        schema:
+          type: "boolean"
+      responses:
+        200:
+          description: "Empty json array. To return the deleted objects, please override\
+            \ me."
+          content:
+            application/json: {}
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    head:
+      tags:
+      - "Profile"
+      summary: "Do head operation on [Profile]. Execute request. Set content-length.\
+        \ No response."
+      parameters: []
+      responses:
+        200:
+          description: "Empty response. See content-length for equivalent GET."
+          headers:
+            Content-Length:
+              description: "Equivalent GET request content-length"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+  /profile/{id}:
+    summary: "YOP default REST operations for [Profile] for a target ID"
+    get:
+      tags:
+      - "Profile"
+      summary: "Get all [Profile] or one single object by ID"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Profile]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Profile]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "id"
+        in: "path"
+        description: "[Profile] ID"
+        required: true
+        schema:
+          minimum: 1
+          type: "integer"
+      responses:
+        200:
+          description: "A set of [Profile]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Profile"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    delete:
+      tags:
+      - "Profile"
+      summary: "Do delete operation on [Profile]. If not ID provided, delete all entries\
+        \ !"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Profile]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Profile]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "id"
+        in: "path"
+        description: "[Profile] ID"
+        required: true
+        schema:
+          minimum: 1
+          type: "integer"
+      responses:
+        200:
+          description: "Empty json array. To return the deleted objects, please override\
+            \ me."
+          content:
+            application/json: {}
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    head:
+      tags:
+      - "Profile"
+      summary: "Do head operation on [Profile]. Execute request. Set content-length.\
+        \ No response."
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "[Profile] ID"
+        required: true
+        schema:
+          minimum: 1
+          type: "integer"
+      responses:
+        200:
+          description: "Empty response. See content-length for equivalent GET."
+          headers:
+            Content-Length:
+              description: "Equivalent GET request content-length"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+  /action:
+    summary: "YOP default REST operations for [Action]"
+    description: "Actions REST resource "
+    get:
+      tags:
+      - "Action"
+      summary: "Get all [Action] or one single object by ID"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Action]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Action]"
+        required: false
+        schema:
+          type: "boolean"
+      responses:
+        200:
+          description: "A set of [Action]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Action"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    put:
+      tags:
+      - "Action"
+      summary: "Do upsert operation on [Action]"
+      description: "The UPSERT operation does a YOP UPSERT request. If an object to\
+        \ upsert has an ID ? UPDATE"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Action]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Action]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "checkNaturalID"
+        in: "query"
+        description: "Check natural ID when inserting [Action] elements. Do update\
+          \ if possible."
+        required: false
+        schema:
+          type: "boolean"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/Action"
+      responses:
+        200:
+          description: "A set of [Action]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Action"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    post:
+      tags:
+      - "Action"
+      summary: "Execute custom YOP operation on [Action]"
+      parameters:
+      - name: "queryType"
+        in: "query"
+        description: "A custom Yop query for [Action] in JSON format"
+        required: true
+        schema:
+          type: "string"
+          enum:
+          - "select"
+          - "upsert"
+          - "delete"
+      requestBody:
+        description: "YOP custom query"
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: "#/components/schemas/select"
+              - $ref: "#/components/schemas/delete"
+              - $ref: "#/components/schemas/upsert"
+            example: "{\"where\":{\"evaluations\":[{\"type\":\"IdIn\",\"values\":[1,2,3]}]},\"\
+              joins\":[],\"target\":\"org.yop.rest.users.model.Action\"}"
+      responses:
+        200:
+          description: "A set of [Action]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Action"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    delete:
+      tags:
+      - "Action"
+      summary: "Do delete operation on [Action]. If not ID provided, delete all entries\
+        \ !"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Action]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Action]"
+        required: false
+        schema:
+          type: "boolean"
+      responses:
+        200:
+          description: "Empty json array. To return the deleted objects, please override\
+            \ me."
+          content:
+            application/json: {}
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    head:
+      tags:
+      - "Action"
+      summary: "Do head operation on [Action]. Execute request. Set content-length.\
+        \ No response."
+      parameters: []
+      responses:
+        200:
+          description: "Empty response. See content-length for equivalent GET."
+          headers:
+            Content-Length:
+              description: "Equivalent GET request content-length"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+  /action/{id}:
+    summary: "YOP default REST operations for [Action] for a target ID"
+    get:
+      tags:
+      - "Action"
+      summary: "Get all [Action] or one single object by ID"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Action]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Action]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "id"
+        in: "path"
+        description: "[Action] ID"
+        required: true
+        schema:
+          minimum: 1
+          type: "integer"
+      responses:
+        200:
+          description: "A set of [Action]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Action"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    delete:
+      tags:
+      - "Action"
+      summary: "Do delete operation on [Action]. If not ID provided, delete all entries\
+        \ !"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [Action]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [Action]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "id"
+        in: "path"
+        description: "[Action] ID"
+        required: true
+        schema:
+          minimum: 1
+          type: "integer"
+      responses:
+        200:
+          description: "Empty json array. To return the deleted objects, please override\
+            \ me."
+          content:
+            application/json: {}
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    head:
+      tags:
+      - "Action"
+      summary: "Do head operation on [Action]. Execute request. Set content-length.\
+        \ No response."
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "[Action] ID"
+        required: true
+        schema:
+          minimum: 1
+          type: "integer"
+      responses:
+        200:
+          description: "Empty response. See content-length for equivalent GET."
+          headers:
+            Content-Length:
+              description: "Equivalent GET request content-length"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+  /user:
+    summary: "YOP default REST operations for [User]"
+    description: "Users REST resource "
+    get:
+      tags:
+      - "User"
+      summary: "Get all [User] or one single object by ID"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [User]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [User]"
+        required: false
+        schema:
+          type: "boolean"
+      responses:
+        200:
+          description: "A set of [User]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/User"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    put:
+      tags:
+      - "User"
+      summary: "Do upsert operation on [User]"
+      description: "The UPSERT operation does a YOP UPSERT request. If an object to\
+        \ upsert has an ID ? UPDATE"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [User]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [User]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "checkNaturalID"
+        in: "query"
+        description: "Check natural ID when inserting [User] elements. Do update if\
+          \ possible."
+        required: false
+        schema:
+          type: "boolean"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/User"
+      responses:
+        200:
+          description: "A set of [User]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/User"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    post:
+      tags:
+      - "User"
+      summary: "Execute custom YOP operation on [User]"
+      parameters:
+      - name: "queryType"
+        in: "query"
+        description: "A custom Yop query for [User] in JSON format"
+        required: true
+        schema:
+          type: "string"
+          enum:
+          - "select"
+          - "upsert"
+          - "delete"
+      requestBody:
+        description: "YOP custom query"
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: "#/components/schemas/select"
+              - $ref: "#/components/schemas/delete"
+              - $ref: "#/components/schemas/upsert"
+            example: "{\"where\":{\"evaluations\":[{\"type\":\"IdIn\",\"values\":[1,2,3]}]},\"\
+              joins\":[{\"where\":{\"evaluations\":[]},\"joins\":[{\"where\":{\"evaluations\"\
+              :[]},\"joins\":[],\"field\":\"actionsForProfile\"}],\"field\":\"profiles\"\
+              }],\"target\":\"org.yop.rest.users.model.User\"}"
+      responses:
+        200:
+          description: "A set of [User]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/User"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    delete:
+      tags:
+      - "User"
+      summary: "Delete and return users."
+      description: "Delete users and returned deleted entries. Not implemented yet\
+        \ !"
+      responses: {}
+    head:
+      tags:
+      - "User"
+      summary: "Do head operation on [User]. Execute request. Set content-length.\
+        \ No response."
+      parameters: []
+      responses:
+        200:
+          description: "Empty response. See content-length for equivalent GET."
+          headers:
+            Content-Length:
+              description: "Equivalent GET request content-length"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+  /user/{id}:
+    summary: "YOP default REST operations for [User] for a target ID"
+    get:
+      tags:
+      - "User"
+      summary: "Get all [User] or one single object by ID"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [User]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [User]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "id"
+        in: "path"
+        description: "[User] ID"
+        required: true
+        schema:
+          minimum: 1
+          type: "integer"
+      responses:
+        200:
+          description: "A set of [User]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/User"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    delete:
+      tags:
+      - "User"
+      summary: "Do delete operation on [User]. If not ID provided, delete all entries\
+        \ !"
+      parameters:
+      - name: "joinAll"
+        in: "query"
+        description: "join all non transient relations to [User]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "joinIDs"
+        in: "query"
+        description: "join all IDs from non transient relations to [User]"
+        required: false
+        schema:
+          type: "boolean"
+      - name: "id"
+        in: "path"
+        description: "[User] ID"
+        required: true
+        schema:
+          minimum: 1
+          type: "integer"
+      responses:
+        200:
+          description: "Empty json array. To return the deleted objects, please override\
+            \ me."
+          content:
+            application/json: {}
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+    head:
+      tags:
+      - "User"
+      summary: "Do head operation on [User]. Execute request. Set content-length.\
+        \ No response."
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "[User] ID"
+        required: true
+        schema:
+          minimum: 1
+          type: "integer"
+      responses:
+        200:
+          description: "Empty response. See content-length for equivalent GET."
+          headers:
+            Content-Length:
+              description: "Equivalent GET request content-length"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+  /pojo/search/{search_string}:
+    post:
+      tags:
+      - "Pojo"
+      summary: ""
+      description: ""
+      parameters:
+      - name: "test"
+        in: ""
+        description: "This is a test"
+      responses: {}
+components:
+  schemas:
+    Pojo:
+      properties:
+        password:
+          maxLength: 50
+          type: "string"
+          nullable: true
+        jopos:
+          type: "array"
+          items:
+            properties:
+              name:
+                maxLength: 50
+                type: "string"
+                nullable: false
+              id:
+                minimum: 1
+                type: "integer"
+                nullable: true
+        active:
+          maxLength: 50
+          type: "string"
+          nullable: true
+        aVeryLongFloat:
+          maxLength: 50
+          type: "number"
+          format: "double"
+          nullable: true
+        id:
+          minimum: 1
+          type: "integer"
+          nullable: true
+        aVeryLongInteger:
+          maxLength: 50
+          type: "integer"
+          nullable: true
+        stringColumn:
+          maxLength: 50
+          type: "string"
+          nullable: true
+        type:
+          maxLength: 50
+          type: "string"
+          nullable: true
+        version:
+          maxLength: 50
+          type: "integer"
+          nullable: true
+        others:
+          type: "array"
+          items:
+            properties:
+              extra:
+                properties:
+                  style:
+                    maxLength: 50
+                    type: "string"
+                    nullable: true
+                  id:
+                    minimum: 1
+                    type: "integer"
+                    nullable: true
+                  userName:
+                    maxLength: 50
+                    type: "string"
+                    nullable: true
+              name:
+                maxLength: 50
+                type: "string"
+                nullable: true
+              id:
+                minimum: 1
+                type: "integer"
+                nullable: true
+              timestamp:
+                maxLength: 50
+                type: "string"
+                format: "date-time"
+                nullable: true
+    Profile:
+      properties:
+        actionsForProfile:
+          type: "array"
+          items:
+            properties:
+              name:
+                maxLength: 50
+                type: "string"
+                nullable: true
+              description:
+                maxLength: 255
+                type: "string"
+                nullable: true
+              id:
+                minimum: 1
+                type: "integer"
+                nullable: true
+        name:
+          maxLength: 50
+          type: "string"
+          nullable: true
+        id:
+          minimum: 1
+          type: "integer"
+          nullable: true
+    Action:
+      properties:
+        name:
+          maxLength: 50
+          type: "string"
+          nullable: true
+        description:
+          maxLength: 255
+          type: "string"
+          nullable: true
+        id:
+          minimum: 1
+          type: "integer"
+          nullable: true
+    User:
+      properties:
+        anotherDate:
+          maxLength: 50
+          type: "string"
+          format: "date"
+          nullable: true
+        name:
+          maxLength: 50
+          type: "string"
+          nullable: true
+        profiles:
+          type: "array"
+          items:
+            properties:
+              actionsForProfile:
+                type: "array"
+                items:
+                  properties:
+                    name:
+                      maxLength: 50
+                      type: "string"
+                      nullable: true
+                    description:
+                      maxLength: 255
+                      type: "string"
+                      nullable: true
+                    id:
+                      minimum: 1
+                      type: "integer"
+                      nullable: true
+              name:
+                maxLength: 50
+                type: "string"
+                nullable: true
+              id:
+                minimum: 1
+                type: "integer"
+                nullable: true
+        id:
+          minimum: 1
+          type: "integer"
+          nullable: true
+        birthDate:
+          maxLength: 50
+          type: "string"
+          format: "date"
+          nullable: true
+        passwordHash:
+          maxLength: 50
+          type: "string"
+          nullable: true
+        email:
+          maxLength: 50
+          type: "string"
+          nullable: true
+    select:
+      properties:
+        target:
+          type: "string"
+          format: "canonical-class-name"
+        joins:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/join"
+        where:
+          $ref: "#/components/schemas/where"
+    upsert:
+      properties:
+        target:
+          type: "string"
+          format: "canonical-class-name"
+        joins:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/join"
+    delete:
+      properties:
+        target:
+          type: "string"
+          format: "canonical-class-name"
+        joins:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/join"
+        where:
+          $ref: "#/components/schemas/where"
+    join:
+      properties:
+        field:
+          type: "string"
+        joins:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/join"
+        where:
+          $ref: "#/components/schemas/where"
+    where:
+      properties:
+        evaluations:
+          anyOf:
+          - $ref: "#/components/schemas/comparison"
+          - $ref: "#/components/schemas/idIn"
+          - $ref: "#/components/schemas/in"
+          - $ref: "#/components/schemas/naturalKey"
+          - $ref: "#/components/schemas/or"
+    comparison:
+      properties:
+        field:
+          type: "string"
+        operator:
+          $ref: "#/components/schemas/operator"
+        ref:
+          type: "string"
+        refType:
+          type: "string"
+          enum:
+          - "path"
+    idIn:
+      properties:
+        values:
+          type: "array"
+          items:
+            type: "string"
+    in:
+      properties:
+        values:
+          type: "array"
+          items: {}
+        field:
+          type: "string"
+    naturalKey:
+      properties:
+        reference: {}
+    or:
+      type: "array"
+      items:
+        anyOf:
+        - $ref: "#/components/schemas/comparison"
+        - $ref: "#/components/schemas/idIn"
+        - $ref: "#/components/schemas/in"
+        - $ref: "#/components/schemas/naturalKey"
+        - $ref: "#/components/schemas/or"
+    operator:
+      type: "string"
+      enum:
+      - "LIKE"
+      - "EQ"
+      - "NE"
+      - "GT"
+      - "GE"
+      - "LT"
+      - "LE"
+      - "IS_NULL"
+      - "IS_NOT_NULL"

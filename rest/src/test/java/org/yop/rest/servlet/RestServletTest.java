@@ -4,13 +4,18 @@ import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.junit.After;
 import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.rest.simple.model.SimpleModelRestTest;
 
 import java.io.File;
 import java.io.IOException;
@@ -76,8 +81,9 @@ public abstract class RestServletTest extends DBMSSwitch {
 	@After
 	public void finish() {
 		try {
-			logger.info("Stopping embedded Tomcat.");
+			logger.info("Stopping and destroying embedded Tomcat instance.");
 			this.tomcat.stop();
+			this.tomcat.destroy();
 		} catch (LifecycleException e) {
 			throw new RuntimeException("Embedded Tomcat Lifecycle exception when stopping !", e);
 		}
@@ -115,7 +121,32 @@ public abstract class RestServletTest extends DBMSSwitch {
 		context.addServletMappingDecoded("/yop/openapi", OpenAPIServlet.class.getSimpleName());
 	}
 
+	protected static Response doRequest(HttpClient client, HttpRequestBase request) throws IOException {
+		try (CloseableHttpResponse response = (CloseableHttpResponse) client.execute(request)) {
+			logger.info(
+				"[{}]#[{}] Status → [{}]",
+				request.getMethod(),
+				request.getURI().toString(),
+				response.getStatusLine().getStatusCode()
+			);
+			return new SimpleModelRestTest.Response(
+				response.getStatusLine().getStatusCode(),
+				IOUtils.toString(response.getEntity().getContent())
+			);
+		}
+	}
+
 	protected void onContextCreation(Context context) {}
+
+	protected static class Response {
+		public int statusCode;
+		public String content;
+
+		private Response(int statusCode, String content) {
+			this.statusCode = statusCode;
+			this.content = content;
+		}
+	}
 
 	protected static class HttpUpsert extends HttpEntityEnclosingRequestBase {
 		public HttpUpsert(final String uri) {
