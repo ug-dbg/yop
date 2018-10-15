@@ -1,5 +1,6 @@
 package org.yop.rest.simple.model;
 
+import com.google.gson.JsonParser;
 import org.apache.commons.codec.digest.Crypt;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -14,8 +15,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.query.Delete;
-import org.yop.orm.query.Where;
+import org.yop.orm.evaluation.Operator;
+import org.yop.orm.query.*;
 import org.yop.orm.query.json.JSON;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
@@ -33,6 +34,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.Collection;
 
 import static org.yop.orm.Yop.toSet;
 import static org.yop.orm.Yop.upsert;
@@ -87,13 +89,13 @@ public class SimpleModelRestTest extends RestServletTest {
 			newPojo.setActive(true);
 			newPojo.setStringColumn("This is a string that will be set in the string column");
 			Jopo jopo = new Jopo();
-			jopo.setName("test path ref");
+			jopo.setName("JOPO test CRUD with REST");
 			jopo.setPojo(newPojo);
 			newPojo.getJopos().add(jopo);
 
 			Other other = new Other();
 			other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
-			other.setName("test path ref");
+			other.setName("OTHER test CRUD with REST");
 			newPojo.getOthers().add(other);
 
 			upsert(Pojo.class)
@@ -165,6 +167,116 @@ public class SimpleModelRestTest extends RestServletTest {
 			response = doRequest(httpclient, httpUpsert);
 			Assert.assertEquals(200, response.statusCode);
 			Assert.assertEquals(1, new JSONArray(response.content).length());
+		}
+	}
+
+	@Test
+	public void test_custom_query_POST() throws SQLException, ClassNotFoundException, IOException {
+		Pojo newPojo;
+		try (IConnection connection = this.getConnection()) {
+			newPojo = new org.yop.rest.simple.model.Pojo();
+			newPojo.setVersion(18);
+			newPojo.setType(Pojo.Type.FOO);
+			newPojo.setActive(true);
+			newPojo.setStringColumn("This is a string that will be set in the string column");
+			Jopo jopo = new Jopo();
+			jopo.setName("JOPO test REST custom query");
+			jopo.setPojo(newPojo);
+			newPojo.getJopos().add(jopo);
+
+			Other other = new Other();
+			other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
+			other.setName("OTHER test REST custom query");
+			newPojo.getOthers().add(other);
+
+			upsert(Pojo.class)
+				.onto(newPojo)
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers))
+				.checkNaturalID()
+				.execute(connection);
+
+			rogerCanWrite(connection);
+		}
+
+		String sessionCookie = login();
+		String jsonQuery = Select
+			.from(org.yop.rest.simple.model.Pojo.class)
+			.where(Where.compare(Pojo::getType, Operator.EQ, Pojo.Type.FOO))
+			.join(JoinSet.to(Pojo::getJopos))
+			.join(JoinSet.to(Pojo::getOthers))
+			.toJSON()
+			.toString();
+
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			// POST with custom json query, user logged in, user can read and write, wrong Yopable endpoint → 500
+			HttpPost httpPost = new HttpPost("http://localhost:1234/yop/rest/action?queryType=select");
+			httpPost.setEntity(new StringEntity(jsonQuery));
+			httpPost.setHeader("Cookie", sessionCookie);
+			Response response = doRequest(httpclient, httpPost);
+			Assert.assertEquals(500, response.statusCode);
+			Assert.assertEquals(
+				"{\"error\":\"The Select request for [org.yop.rest.simple.model.Pojo] "
+				+ "should be invoked on the appropriate REST resource "
+				+ "instead of [org.yop.rest.users.model.Action]\"}",
+				response.content
+			);
+		}
+
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			// POST with custom json query, user logged in, user can read and write → 200 with content
+			HttpPost httpPost = new HttpPost("http://localhost:1234/yop/rest/pojo?queryType=select");
+			httpPost.setEntity(new StringEntity(jsonQuery));
+			httpPost.setHeader("Cookie", sessionCookie);
+			Response response = doRequest(httpclient, httpPost);
+			Assert.assertEquals(200, response.statusCode);
+			Assert.assertEquals(1, new JSONArray(response.content).length());
+			Collection<Pojo> out = JSON.from(Pojo.class, new JsonParser().parse(response.content).getAsJsonArray());
+			Pojo fromREST = out.iterator().next();
+			Assert.assertEquals(newPojo.getVersion(), fromREST.getVersion());
+			Assert.assertEquals(1, fromREST.getJopos().size());
+			Assert.assertEquals(1, fromREST.getOthers().size());
+		}
+
+		newPojo.setType(Pojo.Type.BAR);
+		jsonQuery = Upsert
+			.from(org.yop.rest.simple.model.Pojo.class)
+			.onto((org.yop.rest.simple.model.Pojo) newPojo)
+			.toJSON()
+			.toString();
+
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			// POST with custom json query, user logged in, user can read and write → 200 with content
+			HttpPost httpPost = new HttpPost("http://localhost:1234/yop/rest/pojo?queryType=upsert");
+			httpPost.setEntity(new StringEntity(jsonQuery));
+			httpPost.setHeader("Cookie", sessionCookie);
+			Response response = doRequest(httpclient, httpPost);
+			Assert.assertEquals(200, response.statusCode);
+
+			try (IConnection connection = this.getConnection()) {
+				Pojo fromDB = Select.from(Pojo.class).uniqueResult(connection);
+				Assert.assertEquals(Pojo.Type.BAR, fromDB.getType());
+			}
+		}
+
+		jsonQuery = Delete
+			.from(org.yop.rest.simple.model.Pojo.class)
+			.where(Where.naturalId(newPojo))
+			.toJSON()
+			.toString();
+
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			// POST with custom json query, user logged in, user can read and write → 200 with content
+			HttpPost httpPost = new HttpPost("http://localhost:1234/yop/rest/pojo?queryType=delete");
+			httpPost.setEntity(new StringEntity(jsonQuery));
+			httpPost.setHeader("Cookie", sessionCookie);
+			Response response = doRequest(httpclient, httpPost);
+			Assert.assertEquals(200, response.statusCode);
+
+			try (IConnection connection = this.getConnection()) {
+				Pojo fromDB = Select.from(Pojo.class).uniqueResult(connection);
+				Assert.assertNull(fromDB);
+			}
 		}
 	}
 
