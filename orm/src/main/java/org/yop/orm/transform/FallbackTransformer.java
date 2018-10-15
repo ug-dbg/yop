@@ -76,7 +76,7 @@ public class FallbackTransformer implements ITransformer<Object> {
 
 		if(what instanceof String) {
 			if (Boolean.class.isAssignableFrom(Primitives.wrap(into))) {
-				return Boolean.valueOf((String) what);
+				return Boolean.valueOf((String) what) || "1".equals(what);
 			}
 			if (LocalTime.class.isAssignableFrom(into)) {
 				return LocalTime.parse((CharSequence) what);
