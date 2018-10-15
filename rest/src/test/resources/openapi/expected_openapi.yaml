@@ -2211,7 +2211,7 @@ components:
           type: "integer"
           nullable: true
         stringColumn:
-          maxLength: 50
+          maxLength: 55
           type: "string"
           nullable: true
         type:

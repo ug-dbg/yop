@@ -145,7 +145,7 @@ public class SimpleModelRestTest extends RestServletTest {
 			response = doRequest(httpclient, httpPost);
 			Assert.assertEquals(200, response.statusCode);
 			Assert.assertEquals(
-				"[{\"id\":1,\"version\":1,\"active\":false,"
+				"[{\"id\":1,\"version\":1,\"active\":true,"
 				+ "\"stringColumn\":\"This is a string that will be set in the string column\",\"type\":\"FOO\"}]",
 				response.content
 			);

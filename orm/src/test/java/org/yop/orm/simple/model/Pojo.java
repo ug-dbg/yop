@@ -31,7 +31,7 @@ public class Pojo implements Yopable {
 	@Column(name = "VERY_LONG_FLOAT")
 	private BigDecimal aVeryLongFloat;
 
-	@Column(name = "STRING_COLUMN")
+	@Column(name = "STRING_COLUMN", length = 55)
 	private String stringColumn;
 
 	@YopJSONTransient
