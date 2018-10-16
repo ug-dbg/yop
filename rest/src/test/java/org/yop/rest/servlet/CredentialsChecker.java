@@ -43,6 +43,7 @@ public class CredentialsChecker implements YopRestServlet.RequestChecker {
 		}
 
 		switch (request.getMethod()) {
+			case "HEAD"   : canRead((User) user); break;
 			case "GET"    : canRead((User) user); break;
 			case "PUT"    : canWrite((User) user); break;
 			case "UPSERT" : canWrite((User) user); break;

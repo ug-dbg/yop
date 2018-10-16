@@ -2,15 +2,15 @@ package org.yop.rest.simple.model;
 
 import com.google.gson.JsonParser;
 import org.apache.commons.codec.digest.Crypt;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -117,6 +117,29 @@ public class SimpleModelRestTest extends RestServletTest {
 			Response response = doRequest(httpclient, httpGet);
 			Assert.assertEquals(200, response.statusCode);
 			Assert.assertEquals(1, new JSONArray(response.content).length());
+			int contentLength = response.content.getBytes().length;
+			Long id = ((JSONObject) new JSONArray(response.content).get(0)).getLong("id");
+
+			// HEAD with joinAll, user logged in, user can read, not write → 200 with no content
+			HttpHead httpHead = new HttpHead("http://localhost:1234/yop/rest/pojo?joinAll");
+			httpHead.setHeader("Cookie", sessionCookie);
+			response = doRequest(httpclient, httpHead);
+			Assert.assertEquals(200, response.statusCode);
+			Assert.assertEquals(0, StringUtils.length(response.content));
+			Assert.assertEquals(contentLength, response.contentLength);
+
+			// GET by ID, user logged in, user can read → 200 with content
+			httpGet = new HttpGet("http://localhost:1234/yop/rest/pojo/" + id);
+			httpGet.setHeader("Cookie", sessionCookie);
+			response = doRequest(httpclient, httpGet);
+			Assert.assertEquals(200, response.statusCode);
+			Assert.assertEquals((long) id, ((JSONObject) (new JSONArray(response.content).get(0))).getLong("id"));
+
+			// GET by unknown ID, user logged in, user can read → 404
+			httpGet = new HttpGet("http://localhost:1234/yop/rest/pojo/1337");
+			httpGet.setHeader("Cookie", sessionCookie);
+			response = doRequest(httpclient, httpGet);
+			Assert.assertEquals(404, response.statusCode);
 
 			// GET with joinAll, user not logged in → 401
 			httpGet = new HttpGet("http://localhost:1234/yop/rest/pojo?joinAll");
@@ -167,6 +190,26 @@ public class SimpleModelRestTest extends RestServletTest {
 			response = doRequest(httpclient, httpUpsert);
 			Assert.assertEquals(200, response.statusCode);
 			Assert.assertEquals(1, new JSONArray(response.content).length());
+
+			// PUT (same as UPSERT),  user logged in, user can read and write → 200
+			HttpPut httpPut = new HttpPut("http://localhost:1234/yop/rest/pojo");
+			httpPut.setEntity(new StringEntity(JSON.from(Pojo.class).onto(newPojo).toJSON()));
+			httpPut.setHeader("Cookie", sessionCookie);
+			response = doRequest(httpclient, httpPut);
+			Assert.assertEquals(200, response.statusCode);
+			Assert.assertEquals(1, new JSONArray(response.content).length());
+
+			// DELETE by ID,  user logged in, user can read and write → 200
+			HttpDelete httpDelete = new HttpDelete("http://localhost:1234/yop/rest/pojo/" + id);
+			httpDelete.setHeader("Cookie", sessionCookie);
+			response = doRequest(httpclient, httpDelete);
+			Assert.assertEquals(200, response.statusCode);
+
+			// DELETE all,  user logged in, user can read and write → 200
+			httpDelete = new HttpDelete("http://localhost:1234/yop/rest/pojo");
+			httpDelete.setHeader("Cookie", sessionCookie);
+			response = doRequest(httpclient, httpDelete);
+			Assert.assertEquals(200, response.statusCode);
 		}
 	}
 

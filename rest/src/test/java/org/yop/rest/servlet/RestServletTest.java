@@ -5,6 +5,8 @@ import org.apache.catalina.LifecycleException;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
@@ -129,9 +131,12 @@ public abstract class RestServletTest extends DBMSSwitch {
 				request.getURI().toString(),
 				response.getStatusLine().getStatusCode()
 			);
+			Header contentLength = response.getFirstHeader("Content-Length");
+			HttpEntity entity = response.getEntity();
 			return new SimpleModelRestTest.Response(
 				response.getStatusLine().getStatusCode(),
-				IOUtils.toString(response.getEntity().getContent())
+				contentLength == null ? -1 :Integer.valueOf(contentLength.getValue()),
+				entity == null ? null : IOUtils.toString(entity.getContent())
 			);
 		}
 	}
@@ -140,10 +145,12 @@ public abstract class RestServletTest extends DBMSSwitch {
 
 	protected static class Response {
 		public int statusCode;
+		public int contentLength;
 		public String content;
 
-		private Response(int statusCode, String content) {
+		private Response(int statusCode, int contentLength, String content) {
 			this.statusCode = statusCode;
+			this.contentLength = contentLength;
 			this.content = content;
 		}
 	}
