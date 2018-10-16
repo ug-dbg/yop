@@ -61,7 +61,7 @@ public abstract class DBMSSwitch {
 	public static String classpathResource(String path) {
 		try {
 			return IOUtils.toString(DBMSSwitch.class.getResourceAsStream(path));
-		} catch (IOException e) {
+		} catch (IOException | RuntimeException e) {
 			logger.error("Could not read classpath resource [{}]", path, e);
 			throw new RuntimeException("Could not read classpath resource [" + path + "]", e);
 		}
