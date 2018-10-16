@@ -56,6 +56,11 @@
 	</properties>
 
 	<distributionManagement>
+		<site>
+			<id>Rpi</id>
+			<url>http://maven.y-op.org</url>
+			<name>maven site on Rpi3</name>
+		</site>
 		<snapshotRepository>
 			<id>ossrh</id>
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
