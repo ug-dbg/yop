@@ -111,7 +111,7 @@ public class Table implements Comparable<Table> {
 		Set<Table> tables = new TreeSet<>();
 		subtypes
 			.stream()
-			.filter(c -> c.getPackage().getName().startsWith(packagePrefix))
+			.filter(c -> Reflection.packageName(c).startsWith(packagePrefix))
 			.filter(c -> ! c.isInterface() &&  ! Modifier.isAbstract(c.getModifiers() ))
 			.forEach(clazz -> tables.addAll(Table.findTablesFor(clazz, types)));
 
