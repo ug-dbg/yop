@@ -53,6 +53,16 @@ public class Reflection {
 	}
 
 	/**
+	 * Read the package name of a class. Never return null.
+	 * @param clazz the class whose package is to read
+	 * @return the package name or an empty string if either clazz or its package is null
+	 */
+	public static String packageName(Class<?> clazz) {
+		return (clazz == null || clazz.getPackage() == null) ? "" : clazz.getPackage().getName();
+	}
+
+
+	/**
 	 * Get an existing method on a given class, with the given parameters.
 	 * <br>
 	 * This is a call to {@link Class#getDeclaredMethod(String, Class...)}.
@@ -118,7 +128,8 @@ public class Reflection {
 			return field.get(onto);
 		} catch (IllegalAccessException | RuntimeException e) {
 			throw new YopRuntimeException(
-				"Could not read [" + Reflection.fieldToString(field) + "] on [" + onto + "]"
+				"Could not read [" + Reflection.fieldToString(field) + "] on [" + onto + "]",
+				e
 			);
 		}
 	}

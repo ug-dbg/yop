@@ -79,7 +79,7 @@ public class Mapper {
 
 		Map<Long, T> out = new LinkedHashMap<>();
 		while (results.getCursor().next()) {
-			T element = clazz.newInstance();
+			T element = Reflection.newInstanceNoArgs(clazz);
 			element = mapSimpleFields(results, element, context, cache);
 			element = searchForSelf(element, out, cache);
 			mapRelationFields(results, element, context, cache);
@@ -272,7 +272,7 @@ public class Mapper {
 				newContext += ORMUtil.getTargetName(targetClass);
 				if(results.noContext(newContext, targetClass)) continue;
 
-				target = targetClass.newInstance();
+				target = Reflection.newInstanceNoArgs(targetClass);
 				target = mapSimpleFields(results, target, newContext, cache);
 				target = cache.getOrDefault(field, element, target);
 				mapRelationFields(results, target, newContext, cache);
@@ -283,7 +283,7 @@ public class Mapper {
 
 				target = (Yopable) ORMUtil.readField(field, element);
 				if(target == null) {
-					target = (Yopable) field.getType().newInstance();
+					target = (Yopable) Reflection.newInstanceNoArgs(field.getType());
 				}
 
 				target = mapSimpleFields(results, target, newContext, cache);
