@@ -96,11 +96,16 @@ class RestRequest {
 		}
 
 		this.restResource = findResource(resourcePath, yopablePaths);
-		Path path = Paths.get(StringUtils.removeStart(resourcePath, this.restResource.getAnnotation(Rest.class).path()));
+		Path path = Paths.get(this.restResource.getAnnotation(Rest.class).path());
+		if (yopablePaths.containsKey(resourcePath)) {
+			// Exact match → use yopable paths key instead of @Rest#path() : better context management
+			path = Paths.get(resourcePath);
+		}
+		path = Paths.get(StringUtils.removeStart(resourcePath, path.toString()));
 
 		if (path.getNameCount() >= 1) {
-			String subPath = path.getName(0).toString();
-			if (path.getNameCount() == 1 && NumberUtils.isCreatable(subPath)) {
+			String subPath = path.getName(path.getNameCount() - 1).toString();
+			if (NumberUtils.isCreatable(subPath)) {
 				this.id = Long.valueOf(subPath);
 			} else {
 				this.subResource = StringUtils.removeStart(path.toString(), "/");
