@@ -63,6 +63,7 @@ public class YopRestServlet extends HttpServlet {
 	private final Yopables yopablePaths = new Yopables();
 	private String dataSourceJNDIName;
 	private DataSource dataSource;
+	private Connector connector = this::getConnection;
 	private RequestChecker requestChecker = new RequestChecker() {};
 
 	/**
@@ -82,6 +83,16 @@ public class YopRestServlet extends HttpServlet {
 				e
 			);
 		}
+	}
+
+	/**
+	 * Set the connection to use for the servlet. The Connector is simply a lambda that returns a connection.
+	 * @param connector the connector that can be a method reference to a JDBC connection
+	 * @return the current REST servlet, for chaining purposes
+	 */
+	public YopRestServlet withConnector(Connector connector) {
+		this.connector = connector;
+		return this;
 	}
 
 	@Override
@@ -225,7 +236,7 @@ public class YopRestServlet extends HttpServlet {
 		method.checkResource(restRequest);
 
 		Object out;
-		try (IConnection connection = this.getConnection()) {
+		try (IConnection connection = this.connector.getConnection()) {
 			this.requestChecker.checkResource(restRequest, connection);
 
 			boolean autocommit = connection.getAutoCommit();
@@ -250,6 +261,18 @@ public class YopRestServlet extends HttpServlet {
 		if (StringUtils.isNotBlank(serialized)) {
 			method.write(serialized, restRequest);
 		}
+	}
+
+	/**
+	 * A functionnal interface to a connection.
+	 */
+	public interface Connector {
+
+		/**
+		 * Get a connection to the underlying database
+		 * @return a connection (e.g. {@link JDBCConnection})
+		 */
+		IConnection getConnection();
 	}
 
 	/**
