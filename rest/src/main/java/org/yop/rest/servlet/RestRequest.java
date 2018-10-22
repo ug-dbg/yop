@@ -78,7 +78,9 @@ class RestRequest {
 
 		this.requestPath  = req.getRequestURI();
 		String servletPath  = req.getServletPath();
-		String resourcePath = StringUtils.removeStart(this.requestPath, servletPath);
+		String contextPath = req.getContextPath();
+		String resourcePath = StringUtils.removeStart(this.requestPath, contextPath);
+		resourcePath = StringUtils.removeStart(resourcePath, servletPath);
 		resourcePath = StringUtils.removeStart(resourcePath, "/");
 		resourcePath = StringUtils.removeEnd(resourcePath, "/");
 
