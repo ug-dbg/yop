@@ -13,4 +13,5 @@ import java.lang.annotation.Target;
 @Target({ElementType.PARAMETER})
 public @interface Header {
 	String name();
+	String description() default "";
 }
