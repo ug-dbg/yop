@@ -20,6 +20,9 @@ public class Yopables extends HashMap<String, Class<? extends Yopable>> {
 	 * @param packageNames a comma separated list of packages
 	 */
 	public void fromPackage(String packageNames) {
+		if (packageNames == null) {
+			return;
+		}
 		Set<Class<? extends Yopable>> subtypes = new Reflections("").getSubTypesOf(Yopable.class);
 		String[] packages = packageNames.split(",");
 		for (Class<? extends Yopable> subtype : subtypes) {
