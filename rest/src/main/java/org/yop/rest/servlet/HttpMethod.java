@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.json.JSON;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.transform.ITransformer;
 import org.yop.rest.exception.YopNoResourceException;
 import org.yop.rest.exception.YopResourceInvocationException;
 import org.yop.rest.openapi.OpenAPIUtil;
@@ -24,6 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -294,12 +296,18 @@ public interface HttpMethod {
 				} else if(NameValuePair[].class.isAssignableFrom(parameter.getType())) {
 					parameters[i] = restRequest.getParameters();
 				} else {
-					parameters[i] = AnnotationToParameter.get(restRequest, parameter);
+					parameters[i] = ITransformer.fallbackTransformer().fromSQL(
+						AnnotationToParameter.get(restRequest, parameter),
+						parameter.getType()
+					);
 				}
 			}
 
+			if (Modifier.isStatic(method.getModifiers())) {
+				return method.invoke(null, parameters);
+			}
 			return method.invoke(restRequest.getRestResource(), parameters);
-		} catch (IllegalAccessException | InvocationTargetException e) {
+		} catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
 			throw new YopResourceInvocationException(
 				"Error invoking YOP resource [" + Objects.toString(candidate.get()) + "]",
 				e
