@@ -54,7 +54,7 @@ public class SimpleModelRestTest extends RestServletTest {
 
 	@Override
 	protected String getPackagePrefixes() {
-		return "org.yop.orm.simple.model, org.yop.rest.users.model";
+		return "org.yop.rest.simple.model, org.yop.rest.users.model";
 	}
 
 	@Override
