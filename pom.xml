@@ -20,6 +20,7 @@
 		<module>orm</module>
 		<module>rest</module>
 		<module>swaggerui</module>
+		<module>demo</module>
 	</modules>
 
 	<developers>
