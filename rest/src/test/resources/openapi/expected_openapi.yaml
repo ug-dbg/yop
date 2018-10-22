@@ -1904,6 +1904,7 @@ paths:
       summary: "Delete and return users."
       description: "Delete users and returned deleted entries. Not implemented yet\
         \ !"
+      parameters: []
       responses: {}
     head:
       tags:
@@ -2169,9 +2170,12 @@ paths:
       summary: ""
       description: ""
       parameters:
-      - name: "test"
-        in: ""
-        description: "This is a test"
+      - name: "search_string"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
       responses: {}
 components:
   schemas:
