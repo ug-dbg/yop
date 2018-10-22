@@ -22,6 +22,9 @@ import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
+import org.yop.rest.annotations.Header;
+import org.yop.rest.annotations.PathParam;
+import org.yop.rest.annotations.RequestParam;
 import org.yop.rest.annotations.Rest;
 import org.yop.rest.exception.YopOpenAPIException;
 import org.yop.rest.servlet.HttpMethod;
@@ -314,14 +317,44 @@ public class OpenAPIUtil {
 				operation.setResponses(responses);
 				operation.setTags(tags);
 
-				if (method.isAnnotationPresent(Parameter.class)) {
-					operation
-						.parameters(new ArrayList<>())
-						.getParameters()
-						.add(fromAnnotation(
-							method.getAnnotation(Parameter.class),
-							io.swagger.oas.models.parameters.Parameter.class)
+				operation.setParameters(new ArrayList<>());
+				for (java.lang.reflect.Parameter parameter : method.getParameters()) {
+					String parameterDescription = "";
+					String in = "";
+					String name = "";
+
+					if (parameter.isAnnotationPresent(PathParam.class)) {
+						PathParam pathParam = parameter.getAnnotation(PathParam.class);
+						name = pathParam.name();
+						in = "path";
+						parameterDescription = pathParam.description();
+					}
+					if (parameter.isAnnotationPresent(RequestParam.class)) {
+						RequestParam requestParam = parameter.getAnnotation(RequestParam.class);
+						name = requestParam.name();
+						in = "query";
+						parameterDescription = requestParam.description();
+					}
+					if (parameter.isAnnotationPresent(Header.class)) {
+						Header headerParam = parameter.getAnnotation(Header.class);
+						name = headerParam.name();
+						in = "header";
+						parameterDescription = headerParam.description();
+					}
+
+					if (StringUtils.isNotBlank(name)) {
+						operation.getParameters().add(
+								new io.swagger.oas.models.parameters.Parameter()
+									.name(name)
+									.required(false)
+									.schema(JSON_SCHEMAS.get(parameter.getType()).toSchema())
+									.in(in)
+									.description(parameterDescription)
 						);
+					}
+				}
+				if (method.isAnnotationPresent(Parameter.class)) {
+					// TODO : OpenAPI annotation over Yop annotation ?
 				}
 
 				item.operation(PathItem.HttpMethod.valueOf(StringUtils.upperCase(httpMethod)), operation);
