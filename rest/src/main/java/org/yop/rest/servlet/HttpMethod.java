@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.json.JSON;
 import org.yop.orm.sql.adapter.IConnection;
-import org.yop.orm.transform.ITransformer;
+import org.yop.orm.util.TransformUtil;
 import org.yop.rest.exception.YopNoResourceException;
 import org.yop.rest.exception.YopResourceInvocationException;
 import org.yop.rest.openapi.OpenAPIUtil;
@@ -296,7 +296,7 @@ public interface HttpMethod {
 				} else if(NameValuePair[].class.isAssignableFrom(parameter.getType())) {
 					parameters[i] = restRequest.getParameters();
 				} else {
-					parameters[i] = ITransformer.fallbackTransformer().fromSQL(
+					parameters[i] = TransformUtil.transform(
 						AnnotationToParameter.get(restRequest, parameter),
 						parameter.getType()
 					);
