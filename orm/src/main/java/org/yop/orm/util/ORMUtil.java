@@ -4,6 +4,7 @@ import com.google.common.primitives.Primitives;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
+import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.*;
@@ -48,6 +49,17 @@ public class ORMUtil {
 			}
 			return OTHER;
 		}
+	}
+
+	/**
+	 * Find all the Yopable implementations visible from a given class loader.
+	 * <br>
+	 * Uses {@link Reflections}
+	 * @param classLoader the class loader to use
+	 * @return a set of Yopable implementations
+	 */
+	public static Set<Class<? extends Yopable>> yopables(ClassLoader classLoader) {
+		return new Reflections("", classLoader).getSubTypesOf(Yopable.class);
 	}
 
 	/**

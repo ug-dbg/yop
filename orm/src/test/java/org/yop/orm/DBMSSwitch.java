@@ -119,6 +119,8 @@ public abstract class DBMSSwitch {
 		// And it is not very expensive to ensure it runs with no exception thrown.
 		Arrays.stream(prefixes).forEach(Prepare::generateScripts);
 
+		ClassLoader classLoader = DBMSSwitch.class.getClassLoader();
+
 		// Generate and execute the preparation scripts for the package and the target database.
 		switch (dbms()) {
 			case "mysql" :     Prepare.prepareMySQL(prefixes);    break;
@@ -126,7 +128,7 @@ public abstract class DBMSSwitch {
 			case "oracle" :    Prepare.prepareOracle(prefixes);   break;
 			case "mssql" :     Prepare.prepareMSSQL(prefixes);    break;
 			case "sqlite" :
-			default: this.db = Prepare.createSQLiteDatabase(SimpleTest.class.getName(), prefixes);
+			default: this.db = Prepare.createSQLiteDatabase(SimpleTest.class.getName(), classLoader, prefixes);
 		}
 	}
 }

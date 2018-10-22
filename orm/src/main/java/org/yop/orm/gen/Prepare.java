@@ -55,6 +55,7 @@ public class Prepare {
 	 */
 	public static File createSQLiteDatabase(
 		String name,
+		ClassLoader classLoader,
 		String... packagePrefixes)
 		throws IOException, SQLException, ClassNotFoundException {
 
@@ -63,7 +64,7 @@ public class Prepare {
 
 		try (IConnection connection = getConnection(dbPath.toFile())) {
 			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection, SQLite.INSTANCE);
+				prepare(prefix, connection, SQLite.INSTANCE, classLoader);
 			}
 		}
 		return dbPath.toFile();
@@ -121,7 +122,7 @@ public class Prepare {
 	public static void prepareMySQL(String... packagePrefixes) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getMySQLConnection(false)) {
 			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection, MySQL.INSTANCE);
+				prepare(prefix, connection, MySQL.INSTANCE, Prepare.class.getClassLoader());
 			}
 		}
 	}
@@ -152,7 +153,7 @@ public class Prepare {
 	public static void preparePostgres(String... packagePrefixes) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getPostgresConnection()) {
 			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection, Postgres.INSTANCE);
+				prepare(prefix, connection, Postgres.INSTANCE, Prepare.class.getClassLoader());
 			}
 		}
 	}
@@ -183,7 +184,7 @@ public class Prepare {
 	public static void prepareOracle(String... packagePrefixes) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getOracleConnection()) {
 			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection, Oracle.INSTANCE);
+				prepare(prefix, connection, Oracle.INSTANCE, Prepare.class.getClassLoader());
 			}
 		}
 	}
@@ -214,7 +215,7 @@ public class Prepare {
 	public static void prepareMSSQL(String... packagePrefixes) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getMSSQLConnection()) {
 			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection, MSSQL.INSTANCE);
+				prepare(prefix, connection, MSSQL.INSTANCE, Prepare.class.getClassLoader());
 			}
 		}
 	}
@@ -233,11 +234,11 @@ public class Prepare {
 			MSSQL.INSTANCE,
 			Oracle.INSTANCE
 		);
-		ormTypes.forEach(dialect -> dialect.generateScript(packagePrefix));
+		ormTypes.forEach(dialect -> dialect.generateScript(packagePrefix, Prepare.class.getClassLoader()));
 	}
 
 	/**
-	 * Prepare the target DB using the script from {@link ORMTypes#generateScript(String)}.
+	 * Prepare the target DB using the script from {@link ORMTypes#generateScript(String, ClassLoader)}.
 	 * <br>
 	 * Please use the correct {@link ORMTypes} instance for the given connection ;-)
 	 * @param packagePrefix the package prefix (find all Yopables)
@@ -245,9 +246,9 @@ public class Prepare {
 	 * @param dialect       the dialect (one of the singleton from the {@link org.yop.orm.util.dialect} package)
 	 * @throws SQLException an error occurred running and committing the generation script
 	 */
-	private static void prepare(String packagePrefix, IConnection connection, ORMTypes dialect) throws SQLException {
+	private static void prepare(String packagePrefix, IConnection connection, ORMTypes dialect, ClassLoader classLoader) throws SQLException {
 		connection.setAutoCommit(true);
-		for (String line : dialect.generateScript(packagePrefix)) {
+		for (String line : dialect.generateScript(packagePrefix, classLoader)) {
 			try {
 				Executor.executeQuery(connection, new SimpleQuery(line, Query.Type.UNKNOWN, new Parameters()));
 			} catch (RuntimeException e) {

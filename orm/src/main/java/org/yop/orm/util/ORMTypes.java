@@ -220,8 +220,8 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 	 * @param packagePrefix the Yopable package prefix
 	 * @return the SQL script, as an ordered list of SQL queries to run.
 	 */
-	public List<String> generateScript(String packagePrefix) {
-		Set<Table> tables = Table.findAllInClassPath(packagePrefix, this);
+	public List<String> generateScript(String packagePrefix, ClassLoader classLoader) {
+		Set<Table> tables = Table.findAllInClassPath(packagePrefix, this, classLoader);
 		List<String> script = new ArrayList<>();
 
 		// Relation tables must be deleted first

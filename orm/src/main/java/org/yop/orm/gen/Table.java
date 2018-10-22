@@ -1,7 +1,6 @@
 package org.yop.orm.gen;
 
 import org.apache.commons.lang.StringUtils;
-import org.reflections.Reflections;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Constants;
@@ -103,10 +102,11 @@ public class Table implements Comparable<Table> {
 	/**
 	 * Find all the tables required to map the Yopable classes with the given package prefix
 	 * @param packagePrefix the package prefix. Can be fickle.
+	 * @param classLoader   the class loader to use
 	 * @return the table objects that can be used to get INSERT queries
 	 */
-	public static Set<Table> findAllInClassPath(String packagePrefix, ORMTypes types) {
-		Set<Class<? extends Yopable>> subtypes = new Reflections("").getSubTypesOf(Yopable.class);
+	public static Set<Table> findAllInClassPath(String packagePrefix, ORMTypes types, ClassLoader classLoader) {
+		Set<Class<? extends Yopable>> subtypes = ORMUtil.yopables(classLoader);
 
 		Set<Table> tables = new TreeSet<>();
 		subtypes
