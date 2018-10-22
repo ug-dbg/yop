@@ -36,6 +36,14 @@ public class OpenAPIServlet extends HttpServlet {
 	private final Yopables yopablePaths = new Yopables();
 	private String expositionPath;
 
+	/**
+	 * Set the REST resources exposition path. This will be used to generate the server info.
+	 * @param expositionPath the REST exposition path
+	 */
+	public void setExpositionPath(String expositionPath) {
+		this.expositionPath = expositionPath;
+	}
+
 	@Override
 	public void init() throws ServletException {
 		super.init();
