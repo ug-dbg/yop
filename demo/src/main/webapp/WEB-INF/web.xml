@@ -25,6 +25,11 @@
      </servlet-mapping>
 
     <servlet-mapping>
+         <servlet-name>default</servlet-name>
+         <url-pattern>/templates/*</url-pattern>
+     </servlet-mapping>
+
+    <servlet-mapping>
         <servlet-name>YopDemo</servlet-name>
         <url-pattern>/yop-demo/*</url-pattern>
     </servlet-mapping>

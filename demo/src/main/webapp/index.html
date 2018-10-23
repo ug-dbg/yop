@@ -112,7 +112,7 @@
     <!-- Reset code editor to default code using a Rest resource → /default_code -->
     <script>
         function reset_code() {
-            $.get("yop-demo/default_code", function(data){
+            $.get("templates/Book.java", function(data){
                 editor.setValue(data);
             });
         }

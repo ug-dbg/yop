@@ -82,8 +82,8 @@ class Author implements Yopable {
 	}
 }
 
-@Rest(path="author")
-@Table(name="author")
+@Rest(path="chapter")
+@Table(name="chapter")
 class Chapter implements Yopable {
 
 	@Id
