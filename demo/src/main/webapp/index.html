@@ -15,11 +15,24 @@
             vertical-align:top;
             text-align:left;
         }
+        .yop-template-label {
+        }
+        .yop-template-select {
+            height: 28px;
+        }
+        .yop-submit-button {
+            float: right;
+        }
         .ace_editor {
             border: 1px solid lightgray;
             margin: auto;
             height: 100%;
             width: 100%;
+        }
+        pre {
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
     </style>
 </head>
@@ -33,9 +46,20 @@
 
         <thead>
             <tr style="height:20px">
-                <th data-resizable-column-id="about">About this demo</th>
+                <th data-resizable-column-id="about">
+                    About this demo
+                </th>
                 <th data-resizable-column-id="code">
-                    Code your Yopable : <button type="button" onclick="sendCode(editor.getValue());">Submit code</button>
+                    Code your Yopable !
+
+                    <label class="yop-template-label" for="template">From template : </label>
+                    <select class="yop-template-select" id="template" onchange="reset_code(this.value);">
+                      <option value="Book.java">Book</option>
+                      <option value="Person.java">Person</option>
+                    </select>
+                    <button class="yop-submit-button" type="button" onclick="sendCode(editor.getValue());">
+                        Submit code
+                    </button>
                 </th>
                 <th data-resizable-column-id="output">Compilation output</th>
             </tr>
@@ -44,7 +68,30 @@
         <tbody>
             <tr>
                 <td class="yop-column">
-                    <div style="">Lorem Ipsum Blah blah</div>
+                    <div style="">
+                        <p>
+                            Welcome to Yop demo !
+                        </p>
+                        <p>
+                            Here you can write your own Yopables using the code editor from scratch or from a template.
+                            <br>
+                            Submit it : it will be compiled and a Swagger UI should open below
+                            so you can test your code.
+                            <br>
+                            Your code will be written to a file named after your public class that implements Yopable.
+                            <br>
+                            But you can have as many non public class as you need.
+                            <br>
+                        </p>
+                        <p>
+                            This demo is self hosted on a RaspberryPi. Please don't expect much.
+                            <br>
+                            Your code and the data you push will be approximately sand-boxed. Please don't expect much.
+                        </p>
+                        <p>
+                            Have fun !
+                        </p>
+                    </div>
                 </td>
                 <td class="yop-column" style="height:100%;">
                     <div class="code-window" style="height:100%;">
@@ -53,7 +100,7 @@
                       </div>
                     </div>
                 </td>
-                <td class="yop-column" style="height:100%;">
+                <td class="yop-column">
                     <div id="compilation-output">
                         <pre id="compilation-output-raw"></pre>
                     </div>
@@ -78,8 +125,8 @@
             editor.setOptions({
                 enableBasicAutocompletion: true
             });
-            reset_code();
-            editor.resize();
+            reset_code("Book.java");
+            resize_columns();
         };
     </script>
 
@@ -93,6 +140,7 @@
             .done(function() {console_output.html("No error :-)"); swagger();})
             .fail(function(xhr) {
                 console_output.html(xhr.responseText);
+                resize_columns();
             });
         };
     </script>
@@ -109,10 +157,10 @@
         }
     </script>
 
-    <!-- Reset code editor to default code using a Rest resource → /default_code -->
+    <!-- Reset code editor to a template using the default servlet -->
     <script>
-        function reset_code() {
-            $.get("templates/Book.java", function(data){
+        function reset_code(template) {
+            $.get("templates/" + template, function(data){
                 editor.setValue(data);
             });
         }
@@ -135,12 +183,12 @@
 
     <!-- Resizable columns (and ace code editor) -->
     <script>
-        $(function(){
+        function resize_columns(){
           $("#yop_code_table").resizableColumns({
             store: window.store
           });
           editor.resize();
-        });
+        }
     </script>
 </body>
 </html>
