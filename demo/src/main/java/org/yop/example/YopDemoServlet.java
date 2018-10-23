@@ -27,9 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +35,7 @@ import java.util.regex.Pattern;
  * YOP demo servlet. This answers all the HTTP requests from the demo (see index.html).
  * <br>
  * It holds a context for every session where the custom code is compiled and made available for runtime.
- * See {@link #proxiesForUIDs}.
+ * See {@link Session}.
  * <br>
  * Then it can dispatch to the {@link RestServletProxy} associated to the session.
  */
@@ -46,7 +44,6 @@ public class YopDemoServlet extends HttpServlet {
 	private static final Logger logger = LoggerFactory.getLogger(YopDemoServlet.class);
 
 	private static final String UID = "UID";
-	private static final Integer SESSION_TIMEOUT = 10;
 
 	/** Regex pattern to match package name ('package org.yop.test;') */
 	private static final Pattern PACKAGE_NAME_PATTERN = Pattern.compile(
@@ -66,17 +63,9 @@ public class YopDemoServlet extends HttpServlet {
 		+ Pattern.quote("{")
 	);
 
-	/** UID → proxy */
-	private final Map<String, RestServletProxy> proxiesForUIDs = new HashMap<>();
-
-	/** UID → compile/DB path */
-	private final Map<String, Path> pathsForUIDs = new HashMap<>();
-
-	/** UID → last request timestamp */
-	private final Map<String, LocalDateTime> pingTimeForUIDs = new HashMap<>();
-
 	@Override
 	public void init(ServletConfig config) throws ServletException {
+		System.setSecurityManager(new Sandbox());
 		super.init(config);
 	}
 
@@ -90,10 +79,12 @@ public class YopDemoServlet extends HttpServlet {
 	@Override
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String uid = updateCookie(req, resp);
+		ThreadLocalSession.setUID(uid);
+		ThreadLocalSession.setPackageName(Session.get(uid).getUserCodePackageName());
 		this.updatePings(uid);
 
 		if (StringUtils.equals("/rest", req.getServletPath())) {
-			RestServletProxy restProxy = this.proxiesForUIDs.get(uid);
+			RestServletProxy restProxy = Session.get(uid).getProxy();
 			if (restProxy == null) {
 				resp.getWriter().write("Session expired. Please re-submit your code.");
 				resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -132,7 +123,7 @@ public class YopDemoServlet extends HttpServlet {
 		}
 
 		String uid = (String) req.getSession().getAttribute(UID);
-		RestServletProxy proxy = this.proxiesForUIDs.get(uid);
+		RestServletProxy proxy = Session.get(uid).getProxy();
 		if (StringUtils.endsWith(req.getPathInfo(), "/openapi")) {
 			doOpenAPI(proxy, req, resp);
 			return;
@@ -163,10 +154,10 @@ public class YopDemoServlet extends HttpServlet {
 			logger.info("POST UID [{}]@[{}] → [{}]", uid, req.getRequestURI(), StringUtils.abbreviate(content, 30));
 
 			// Create/Clean compilation directory and write source code
-			if (!this.pathsForUIDs.containsKey(uid)) {
-				this.pathsForUIDs.put(uid, Files.createTempDirectory("yop_demo_" + uid));
-			}
-			Path fakeRootPath = this.pathsForUIDs.get(uid);
+			Session session = Session.get(uid);
+			session.setRoot(Files.createTempDirectory("yop_demo_" + uid));
+
+			Path fakeRootPath = session.getFakeRoot();
 			File fakeRootFolder = fakeRootPath.toFile();
 			FileUtils.cleanDirectory(fakeRootFolder);
 			fakeRootFolder.deleteOnExit();
@@ -202,12 +193,13 @@ public class YopDemoServlet extends HttpServlet {
 
 			// Initialize a REST proxy for every session.
 			try {
-				this.proxiesForUIDs.put(uid, this.initProxy(fakeRootPath, packageName));
+				session.setProxy(this.initProxy(fakeRootPath, packageName));
 			} catch (RuntimeException e) {
 				logger.error("Could not instantiate REST servlet proxy !", e);
 				resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 				return;
 			}
+			session.setPackageName(packageName);
 		} catch (IOException | RuntimeException e) {
 			logger.error("Error initializing user code context !", e);
 			resp.getWriter().write(
@@ -225,24 +217,12 @@ public class YopDemoServlet extends HttpServlet {
 	/**
 	 * Update the last request timestamp for this UID with now.
 	 * <br>
-	 * Wipe all the expired sessions data from {@link #pingTimeForUIDs} {@link #pathsForUIDs}, {@link #proxiesForUIDs}.
+	 * Wipe all the expired sessions.
 	 * @param uid the current session UID
 	 */
 	private void updatePings(String uid) {
-		LocalDateTime now = LocalDateTime.now();
-		this.pingTimeForUIDs.put(uid, now);
-		Set<String> expiredUIDs = new HashSet<>();
-		for (Map.Entry<String, LocalDateTime> lastPing : this.pingTimeForUIDs.entrySet()) {
-			if (lastPing.getValue().until(now, ChronoUnit.MINUTES) > SESSION_TIMEOUT) {
-				expiredUIDs.add(lastPing.getKey());
-			}
-		}
-		for (String expiredUID : expiredUIDs) {
-			logger.info("Removing session proxies for expired session UID [{}]", uid);
-			this.pingTimeForUIDs.remove(expiredUID);
-			this.pathsForUIDs.remove(expiredUID);
-			this.proxiesForUIDs.remove(expiredUID);
-		}
+		Session.get(uid).ping();
+		Session.clean();
 	}
 
 	/**
@@ -260,7 +240,7 @@ public class YopDemoServlet extends HttpServlet {
 			req.getSession().setAttribute(UID, uid);
 		}
 		Cookie loginCookie = new Cookie(UID, (String) uid);
-		loginCookie.setMaxAge(SESSION_TIMEOUT * 60);
+		loginCookie.setMaxAge(Session.SESSION_TIMEOUT * 60);
 		resp.addCookie(loginCookie);
 		return (String) uid;
 	}
