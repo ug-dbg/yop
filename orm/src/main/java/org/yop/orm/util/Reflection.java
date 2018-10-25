@@ -36,14 +36,22 @@ public class Reflection {
 
 	/**
 	 * Find a class for a given class name. Do not throw checked exception.
-	 * @param name the class name
+	 * @param name         the class name
+	 * @param classLoaders the class loaders to use. First match returns. Use {@link Class#forName(String)} if no match.
 	 * @param <T> the target type
 	 * @return the class name
 	 * @throws YopRuntimeException instead of {@link ClassNotFoundException}
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> Class<T> forName(String name) {
+	public static <T> Class<T> forName(String name, ClassLoader... classLoaders) {
 		try {
+			for (ClassLoader classLoader : classLoaders) {
+				try {
+					return (Class<T>) classLoader.loadClass(name);
+				} catch (ClassNotFoundException e) {
+					logger.debug("Class [{}] not found in class loader [{}]", name, classLoader, e);
+				}
+			}
 			return (Class<T>) Class.forName(name);
 		} catch (ClassNotFoundException e) {
 			throw new YopRuntimeException("Could not find class for name [" + name + "]", e);

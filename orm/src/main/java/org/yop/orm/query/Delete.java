@@ -98,16 +98,17 @@ public class Delete<T extends Yopable> implements JsonAble {
 
 	/**
 	 * Create a Delete query from the given json String representation.
+	 * @param json         the Delete query JSON representation
+	 * @param classLoaders the class loaders to use to try to load the target resource
 	 * @param <T> the target context type. This should match the one set in the JSON representation of the query !
-	 * @param json the Delete query JSON representation
 	 * @return a new Delete query whose state is set from its JSON representation
 	 */
-	public static <T extends Yopable> Delete<T> fromJSON(String json) {
+	public static <T extends Yopable> Delete<T> fromJSON(String json, ClassLoader... classLoaders) {
 		try {
 			JsonParser parser = new JsonParser();
 			JsonObject selectJSON = (JsonObject) parser.parse(json);
 			String targetClassName = selectJSON.getAsJsonPrimitive("target").getAsString();
-			Class<T> target = Reflection.forName(targetClassName);
+			Class<T> target = Reflection.forName(targetClassName, classLoaders);
 			Delete<T> delete = Delete.from(target);
 			delete.fromJSON(Context.root(delete.target), selectJSON);
 			return delete;
