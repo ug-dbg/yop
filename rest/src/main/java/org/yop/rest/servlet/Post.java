@@ -82,7 +82,10 @@ public class Post implements HttpMethod {
 	}
 
 	private static Object doSelect(RestRequest restRequest, IConnection connection) {
-		Select<Yopable> select = Select.fromJSON(restRequest.getContent());
+		Select<Yopable> select = Select.fromJSON(
+			restRequest.getContent(),
+			restRequest.getRestResource().getClassLoader()
+		);
 		if (select.getTarget() != restRequest.getRestResource()) {
 			throw new IllegalArgumentException(
 				"The Select request for [" + select.getTarget().getName() + "] "
@@ -95,7 +98,10 @@ public class Post implements HttpMethod {
 	}
 
 	private static Object doDelete(RestRequest restRequest, IConnection connection) {
-		Delete<Yopable> delete = Delete.fromJSON(restRequest.getContent());
+		Delete<Yopable> delete = Delete.fromJSON(
+			restRequest.getContent(),
+			restRequest.getRestResource().getClassLoader()
+		);
 		if (delete.getTarget() != restRequest.getRestResource()) {
 			throw new IllegalArgumentException(
 				"The Delete request for [" + delete.getTarget().getName() + "] "
@@ -108,7 +114,10 @@ public class Post implements HttpMethod {
 	}
 
 	private static Object doUpsert(RestRequest restRequest, IConnection connection) {
-		Upsert<Yopable> upsert = Upsert.fromJSON(restRequest.getContent());
+		Upsert<Yopable> upsert = Upsert.fromJSON(
+			restRequest.getContent(),
+			restRequest.getRestResource().getClassLoader()
+		);
 		if (upsert.getTarget() != restRequest.getRestResource()) {
 			throw new IllegalArgumentException(
 				"The Upsert request for [" + upsert.getTarget().getName() + "] "
