@@ -124,12 +124,19 @@ public class Upsert<T extends Yopable> implements JsonAble {
 		return out;
 	}
 
-	public static <T extends Yopable> Upsert<T> fromJSON(String json) {
+	/**
+	 * Create an Upsert query from the given json String representation.
+	 * @param json         the Upsert query JSON representation
+	 * @param classLoaders the class loaders to use to try to load the target resource
+	 * @param <T> the target context type. This should match the one set in the JSON representation of the query !
+	 * @return a new Upsert query whose state is set from its JSON representation
+	 */
+	public static <T extends Yopable> Upsert<T> fromJSON(String json, ClassLoader... classLoaders) {
 		try {
 			JsonParser parser = new JsonParser();
 			JsonObject selectJSON = (JsonObject) parser.parse(json);
 			String targetClassName = selectJSON.getAsJsonPrimitive("target").getAsString();
-			Class<T> target = Reflection.forName(targetClassName);
+			Class<T> target = Reflection.forName(targetClassName, classLoaders);
 			Upsert<T> upsert = Upsert.from(target);
 			upsert.fromJSON(Context.root(upsert.target), selectJSON);
 			return upsert;
