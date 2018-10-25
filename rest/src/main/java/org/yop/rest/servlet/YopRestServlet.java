@@ -2,6 +2,7 @@ package org.yop.rest.servlet;
 
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.entity.ContentType;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -187,26 +188,32 @@ public class YopRestServlet extends HttpServlet {
 		} catch (YopBadContentException e) {
 			logger.error("YOP Rest resource invocation error, Bad request !", e);
 			resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			resp.setContentType(ContentType.APPLICATION_JSON.getMimeType());
 			resp.getWriter().write(HttpMethod.errorJSON(e).toString());
 		} catch (YopNoAuthException e) {
 			logger.error("YOP Rest resource invocation error, Not authenticated !", e);
 			resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			resp.setContentType(ContentType.APPLICATION_JSON.getMimeType());
 			resp.getWriter().write(HttpMethod.errorJSON(e).toString());
 		} catch (YopForbiddenException e) {
 			logger.error("YOP Rest resource invocation error, Forbidden !", e);
 			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			resp.setContentType(ContentType.APPLICATION_JSON.getMimeType());
 			resp.getWriter().write(HttpMethod.errorJSON(e).toString());
 		} catch (YopNoResultException e) {
 			logger.error("YOP No resource for given ID !", e);
 			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			resp.setContentType(ContentType.APPLICATION_JSON.getMimeType());
 			resp.getWriter().write(HttpMethod.errorJSON(e).toString());
 		} catch (YopNoResourceException e) {
 			logger.error("YOP No resource for given path !", e);
 			resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			resp.setContentType(ContentType.APPLICATION_JSON.getMimeType());
 			resp.getWriter().write(HttpMethod.errorJSON(e).toString());
 		}catch (RuntimeException e) {
 			logger.error("YOP Rest resource invocation error!", e);
 			resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			resp.setContentType(ContentType.APPLICATION_JSON.getMimeType());
 			resp.getWriter().write(HttpMethod.errorJSON(e).toString());
 		}
 	}
