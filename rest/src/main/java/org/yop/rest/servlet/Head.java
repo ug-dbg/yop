@@ -16,6 +16,13 @@ import java.util.Objects;
 import static javax.servlet.http.HttpServletResponse.*;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 
+/**
+ * HTTP HEAD method implementation.
+ * <br>
+ * It does a {@link Get} execution but does not serialize content.
+ * <br>
+ * See {@link #write(String, RestRequest)}, which simply sets {@link HttpServletResponse#setContentLength(int)}.
+ */
 public class Head extends Get {
 
 	static final HttpMethod INSTANCE = new Head();
@@ -24,6 +31,15 @@ public class Head extends Get {
 		super();
 	}
 
+	/**
+	 * Set the content length as the number of bytes of 'what'.
+	 * <br>
+	 * Set the Charset to UTF-8.
+	 * <br>
+	 * Set the content type to JSON.
+	 * @param what    the serialized execution result
+	 * @param request the incoming request
+	 */
 	@Override
 	public void write(String what, RestRequest request) {
 		String content = Objects.toString(what);

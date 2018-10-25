@@ -25,6 +25,31 @@ import java.util.Set;
 
 import static javax.servlet.http.HttpServletResponse.*;
 
+/**
+ * HTTP POST method implementation.
+ * <br>
+ * This is probably the trickiest part of Yop unrestful REST.
+ * <br><br>
+ * POST method is dedicated to custom queries :
+ * {@link Select}, {@link Delete} and {@link Upsert} can be serialized to and from JSON.
+ * <br>
+ * So given the query parameter {@link #PARAM_TYPE}, we execute the query requested from the user.
+ * <br>
+ * <br>
+ * <b>
+ *     ⚠⚠⚠
+ *     The target {@link Yopable} is both set in :
+ *     <ul>
+ *         <li>the request path context ({@link RestRequest#getRestResource()}</li>
+ *         <li>the serialized query (e.g. {@link Upsert#getTarget()})</li>
+ *     </ul>
+ *     For security coherence, if they do not match when executing a custom query,
+ *     an {@link IllegalArgumentException} is thrown.
+ *     <br>
+ *     Basically, custom queries MUST be executed on the appropriate REST resource.
+ *     ⚠⚠⚠
+ * </b>
+ */
 public class Post implements HttpMethod {
 
 	static final HttpMethod INSTANCE = new Post();
@@ -32,6 +57,13 @@ public class Post implements HttpMethod {
 
 	private Post(){}
 
+	/**
+	 * Read the {@link #PARAM_TYPE} query parameter and execute the appropriate Yop query.
+	 * @param restRequest the incoming request
+	 * @param connection the JDBC (or other) underlying connection
+	 * @return the result of the custom Yop query execution
+	 * @throws IllegalArgumentException for an unknown query type.
+	 */
 	@Override
 	public Object executeDefault(RestRequest restRequest, IConnection connection) {
 		String queryType = restRequest.getParameterFirstValue(PARAM_TYPE);
@@ -81,6 +113,13 @@ public class Post implements HttpMethod {
 		return post;
 	}
 
+	/**
+	 * Execute a {@link Select} query from the REST request.
+	 * @param restRequest the incoming custom query REST request
+	 * @param connection  the underlying connection to use to execute the request
+	 * @return a Set of Yopable, serialized to JSON using {@link Select#toJSONQuery()}
+	 * @throws IllegalArgumentException {@link RestRequest#getRestResource()} does not match {@link Select#getTarget()}
+	 */
 	private static Object doSelect(RestRequest restRequest, IConnection connection) {
 		Select<Yopable> select = Select.fromJSON(
 			restRequest.getContent(),
@@ -97,6 +136,13 @@ public class Post implements HttpMethod {
 		return select.toJSONQuery().onto(results).toJSON();
 	}
 
+	/**
+	 * Execute a {@link Delete} query from the REST request.
+	 * @param restRequest the incoming custom query REST request
+	 * @param connection  the underlying connection to use to execute the request
+	 * @return an empty array list
+	 * @throws IllegalArgumentException {@link RestRequest#getRestResource()} does not match {@link Select#getTarget()}
+	 */
 	private static Object doDelete(RestRequest restRequest, IConnection connection) {
 		Delete<Yopable> delete = Delete.fromJSON(
 			restRequest.getContent(),
@@ -113,6 +159,13 @@ public class Post implements HttpMethod {
 		return new ArrayList<>(0);
 	}
 
+	/**
+	 * Execute a {@link Upsert} query from the REST request.
+	 * @param restRequest the incoming custom query REST request
+	 * @param connection  the underlying connection to use to execute the request
+	 * @return an empty array list
+	 * @throws IllegalArgumentException {@link RestRequest#getRestResource()} does not match {@link Select#getTarget()}
+	 */
 	private static Object doUpsert(RestRequest restRequest, IConnection connection) {
 		Upsert<Yopable> upsert = Upsert.fromJSON(
 			restRequest.getContent(),
@@ -129,6 +182,14 @@ public class Post implements HttpMethod {
 		return new ArrayList<>(0);
 	}
 
+	/**
+	 * Generate a dummy custom query example : a Select, with joinAll and an IdIn restriction.
+	 * <br>
+	 * This example is intended for OpenAPI documentation.
+	 * @param yopable the target yopable
+	 * @param <T> the target type
+	 * @return a Select query
+	 */
 	private static <T extends Yopable> Select<T> example(Class<T> yopable) {
 		Select<T> select = Select.from(yopable);
 		select.where(Where.id(1L, 2L, 3L));

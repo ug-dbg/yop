@@ -14,12 +14,26 @@ import java.util.Collections;
 
 import static javax.servlet.http.HttpServletResponse.*;
 
+/**
+ * HTTP GET method implementation.
+ * <br>
+ * It simply executes a {@link org.yop.orm.query.Select} operation.
+ */
 class Get implements HttpMethod {
 
 	static final HttpMethod INSTANCE = new Get();
 
 	Get(){}
 
+	/**
+	 * Execute the "get" operation using a {@link org.yop.orm.query.Select} query.
+	 * <br>
+	 * Read the joinAll & joinIDs parameters.
+	 * @param restRequest the incoming request
+	 * @param connection the JDBC (or other) underlying connection
+	 * @return a set of {@link Yopable} or an unique {@link Yopable} if {@link RestRequest#getId()} is set.
+	 * @throws YopNoResultException if asked for a single element by ID and no result.
+	 */
 	@Override
 	public Object executeDefault(RestRequest restRequest, IConnection connection) {
 		Select<Yopable> select = Select.from(restRequest.getRestResource());

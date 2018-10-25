@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.rest.exception.YopNoResultException;
 import org.yop.rest.openapi.OpenAPIUtil;
 
 import java.util.ArrayList;
@@ -32,6 +33,14 @@ public class Upsert implements HttpMethod {
 
 	static final HttpMethod INSTANCE = new Upsert();
 
+	/**
+	 * Execute the "upsert" operation using a {@link org.yop.orm.query.Upsert} query.
+	 * <br>
+	 * Read the joinAll & joinIDs parameters.
+	 * @param restRequest the incoming request
+	 * @param connection the JDBC (or other) underlying connection
+	 * @return the incoming yopables (see {@link RestRequest#contentAsJSONArray()}) with their IDs set.
+	 */
 	@Override
 	public Object executeDefault(RestRequest restRequest, IConnection connection) {
 		// The yopables to insert (i.e id is null) will have their id set after Upsert#execute.
