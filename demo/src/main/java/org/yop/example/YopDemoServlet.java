@@ -99,41 +99,26 @@ public class YopDemoServlet extends HttpServlet {
 
 	/**
 	 * Dispatch the GET request.
+	 * It is either a request to /openapi or to a swaggerUI resource :
+	 * "/rest" requests have been resolved in {@link #service(HttpServletRequest, HttpServletResponse)}.
+	 * <br>
 	 * <ul>
-	 *     <li>/default_code → write the default code in the response and return</li>
-	 *     <li>/ → redirects to index.html</li>
 	 *     <li>/openapi → use {@link #doOpenAPI(RestServletProxy, HttpServletRequest, HttpServletResponse)}</li>
 	 *     <li>anything else → use {@link #doSwagger(RestServletProxy, HttpServletRequest, HttpServletResponse)} </li>
 	 * </ul>
 	 */
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
 		String requestURI = req.getRequestURI();
 		logger.info("GET [{}]", requestURI);
-
-		if (StringUtils.equals("/default_code", req.getPathInfo())) {
-			resp.getWriter().write(IOUtils.toString(this.getClass().getResourceAsStream("/Book.java")));
-			resp.setStatus(HttpServletResponse.SC_OK);
-			return;
-		}
-
-		if (req.getPathInfo() == null && StringUtils.isEmpty(req.getServletPath())) {
-			resp.sendRedirect(Paths.get(req.getContextPath(), "index.html").toString());
-			return;
-		}
 
 		String uid = (String) req.getSession().getAttribute(UID);
 		RestServletProxy proxy = Session.get(uid).getProxy();
 		if (StringUtils.endsWith(req.getPathInfo(), "/openapi")) {
 			doOpenAPI(proxy, req, resp);
-			return;
-		}
-		if (req.getPathInfo() != null) {
+		} else {
 			doSwagger(proxy, req, resp);
-			return;
 		}
-
-		resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
 	}
 
 	/**

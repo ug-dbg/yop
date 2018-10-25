@@ -129,12 +129,13 @@ public class RestServletProxy {
 	 * @throws IOException an I/O exception occurred reading/writing the resource
 	 */
 	public void swagger(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		String servletPath = req.getServletPath();
 		String path = StringUtils.removeStart(req.getRequestURI(), req.getContextPath());
-		path = StringUtils.removeStart(path, req.getServletPath());
+		path = StringUtils.removeStart(path, servletPath);
 
 		if (StringUtils.equalsAny(path, "", "/swagger")) {
 			logger.debug("Redirect to index.html");
-			resp.sendRedirect(Paths.get(req.getContextPath(), req.getServletPath(), path, "index.html").toString());
+			resp.sendRedirect(Paths.get(req.getContextPath(), servletPath, path, "index.html").toString());
 			return;
 		}
 
@@ -155,6 +156,15 @@ public class RestServletProxy {
 			if (StringUtils.equalsAny(path, "/index.html", "index.html")) {
 				html = html.replaceAll("url: \"https://.*.json\"", "url: \"" + openAPIURL + "\"");
 				logger.debug("YOP swagger-ui Open API config set into swagger-ui index.html");
+
+				html = this.prefixServletPathInHTML(
+					html,
+					servletPath,
+					"swagger-ui.css",
+					"swagger-ui-bundle.js",
+					"swagger-ui-standalone-preset.js"
+				);
+				logger.debug("YOP swagger-ui css/js has been redirected to [{}] in index.html", servletPath);
 			}
 			resp.getWriter().write(html);
 			resp.setStatus(HttpServletResponse.SC_OK);
@@ -162,6 +172,21 @@ public class RestServletProxy {
 			logger.info("No YOP swagger-ui resource content for [{}]", path);
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 		}
+	}
+
+	/**
+	 * Prefix any resource reference (i.e. elements) in html with a servlet path
+	 * @param html        the html
+	 * @param servletPath the servlet path
+	 * @param elements    the elements to prefix
+	 * @return an html content where the given elements are prefixed with the servlet path
+	 */
+	private String prefixServletPathInHTML(String html, String servletPath, String... elements) {
+		String out = html;
+		for (String element : elements) {
+			out = out.replace(element, Paths.get("/").relativize(Paths.get(servletPath, element)).toString());
+		}
+		return out;
 	}
 
 	/**
