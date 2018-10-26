@@ -50,12 +50,13 @@
                     About this demo
                 </th>
                 <th data-resizable-column-id="code">
-                    Code your Yopable !
+                    Code !
 
                     <label class="yop-template-label" for="template">From template : </label>
                     <select class="yop-template-select" id="template" onchange="reset_code(this.value);">
-                      <option value="Book.java">Book</option>
-                      <option value="Person.java">Person</option>
+                        <option value="basic/Book.java">1. Insert data and use the default REST behavior.</option>
+                        <option value="override_default_methods/Book.java">2. Overriding default methods</option>
+                        <option value="path_ref/Book.java">3. Using Path in comparisons</option>
                     </select>
                     <button class="yop-submit-button" type="button" onclick="sendCode(editor.getValue());">
                         Submit code
@@ -73,10 +74,10 @@
                             Welcome to Yop demo !
                         </p>
                         <p>
-                            Here you can write your own Yopables using the code editor from scratch or from a template.
-                            <br>
-                            Submit it : it will be compiled and a Swagger UI should open below
-                            so you can test your code.
+                            Here you can write your own Yopables using the code editor, from scratch or from a template.
+                            <br><br>
+                            When submitted, it will be compiled and a Swagger UI should open below
+                            so you can test it.
                             <br>
                             Your code will be written to a file named after your public class that implements Yopable.
                             <br>
@@ -84,12 +85,14 @@
                             <br>
                         </p>
                         <p>
+                            Yop is not mature at all yet. Please don't expect much.
+                            <br>
                             This demo is self hosted on a RaspberryPi. Please don't expect much.
                             <br>
                             Your code and the data you push will be approximately sand-boxed. Please don't expect much.
                         </p>
                         <p>
-                            Have fun !
+                            Have fun and feel free to file bugs !
                         </p>
                     </div>
                 </td>
@@ -125,7 +128,7 @@
             editor.setOptions({
                 enableBasicAutocompletion: true
             });
-            reset_code("Book.java");
+            reset_code("basic/Book.java");
             resize_columns();
         };
     </script>
