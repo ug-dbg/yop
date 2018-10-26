@@ -244,7 +244,7 @@ public interface HttpMethod {
 	 */
 	default void checkResource(RestRequest restRequest) {
 		if (restRequest.getRestResource() == null) {
-			throw new YopNoResourceException("No resource for path [" + restRequest.getPath() + "]");
+			throw new YopNoResourceException("No resource for path [" + restRequest.getRequestPath() + "]");
 		}
 	}
 
@@ -280,7 +280,7 @@ public interface HttpMethod {
 
 		if (! candidate.isPresent()) {
 			logger.warn("No sub-resource method for [{}]", restRequest);
-			throw new YopNoResourceException("No sub-resource found for [" + restRequest.getPath() + "]");
+			throw new YopNoResourceException("No sub-resource found for [" + restRequest.getRequestPath() + "]");
 		}
 
 		try {

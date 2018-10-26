@@ -30,6 +30,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -148,8 +149,27 @@ class RestRequest {
 	 * Get the full request path.
 	 * @return {@link #requestPath} that was read from {@link HttpServletRequest#getRequestURI()}.
 	 */
-	String getPath() {
+	String getRequestPath() {
 		return this.requestPath;
+	}
+
+	/**
+	 * Build the request path that matched.
+	 * (context path, servlet path, rest resource path, method path) → /yop/rest/book/{id}
+	 * @return the request path, i.e /yop/rest/book/{id}
+	 */
+	private String buildRequestPath() {
+		String methodPath = "";
+		Optional<Method> candidate = this.getCandidate();
+		if (candidate.isPresent()) {
+			methodPath = candidate.get().getAnnotation(Rest.class).path();
+		}
+		return Paths.get(
+			this.request.getContextPath(),
+			this.request.getServletPath(),
+			this.getRestResource().getAnnotation(Rest.class).path(),
+			methodPath
+		).toString();
 	}
 
 	/**
@@ -267,13 +287,12 @@ class RestRequest {
 	/**
 	 * Get a parameter from the effective request path ({@link #requestPath}), knowing the path pattern.
 	 * @param name     the name of the parameter
-	 * @param restPath the rest path pattern, configured in {@link Rest#path()}
 	 * @return the parameter value or an empty string if no match
 	 */
-	String getPathParam(String name, String restPath) {
-		String regex = StringUtils.replace(restPath, "{" + name + "}", "(.*)");
+	String getPathParam(String name) {
+		String regex = StringUtils.replace(this.buildRequestPath(), "{" + name + "}", "(.*)");
 		Pattern pattern = Pattern.compile(regex);
-		Matcher matcher = pattern.matcher(this.getPath());
+		Matcher matcher = pattern.matcher(this.getRequestPath());
 		if (matcher.find()) {
 			String encodedParameter = matcher.group(1);
 			String encoding = this.request.getCharacterEncoding();
@@ -332,9 +351,11 @@ class RestRequest {
 		}
 		String methodPath = method.getAnnotation(Rest.class).path();
 		String methodPathRegex = methodPath.replaceAll(Pattern.quote("{") + ".*" + Pattern.quote("}"), "*");
+		String id = this.getId() > 0 ? this.getId().toString() : "";
+		PathMatcher global = FileSystems.getDefault().getPathMatcher("glob:" + methodPathRegex);
 		return method.isAnnotationPresent(Rest.class)
 			&& Arrays.stream(method.getAnnotation(Rest.class).methods()).anyMatch(s -> this.method.equals(s))
-			&& FileSystems.getDefault().getPathMatcher("glob:" + methodPathRegex).matches(Paths.get(this.subResource));
+			&& global.matches(Paths.get(this.subResource, id));
 	}
 
 	/**

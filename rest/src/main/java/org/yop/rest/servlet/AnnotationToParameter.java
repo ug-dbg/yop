@@ -26,16 +26,12 @@ public interface AnnotationToParameter {
 	/** For every applicable Yop REST parameter annotation, add a lambda that can compute the actual parameter value. */
 	Map<Class, AnnotationToParameter> ACTIONS = new HashMap<Class, AnnotationToParameter>() {{
 		this.put(Content.class,       (r, p) -> r.getContent());
-		this.put(RequestPath.class,   (r, p) -> r.getPath());
+		this.put(RequestPath.class,   (r, p) -> r.getRequestPath());
 		this.put(RequestParam.class,  (r, p) -> r.getParameterFirstValue(p.getAnnotation(RequestParam.class).name()));
+		this.put(PathParam.class,     (r, p) -> r.getPathParam(p.getAnnotation(PathParam.class).name()));
 		this.put(Header.class,        (r, p) -> r.getRequest().getHeader(p.getAnnotation(Header.class).name()));
 		this.put(BodyInstance.class,  (r, p) -> r.contentAsJSONObject());
 		this.put(BodyInstances.class, (r, p) -> r.contentAsJSONArray());
-		this.put(PathParam.class,     (r, p) -> {
-			PathParam pathParam = p.getAnnotation(PathParam.class);
-			Rest rest = p.getDeclaringExecutable().getAnnotation(Rest.class);
-			return r.getPathParam(pathParam.name(), rest.path());
-		});
 	}};
 
 	/**
