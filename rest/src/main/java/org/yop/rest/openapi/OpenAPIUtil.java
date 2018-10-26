@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.common.primitives.Primitives;
 import io.swagger.oas.annotations.Operation;
 import io.swagger.oas.annotations.Parameter;
 import io.swagger.oas.annotations.responses.ApiResponse;
@@ -57,6 +58,7 @@ public class OpenAPIUtil {
 	 * Rough java type → JSON schema type/format equivalents.
 	 */
 	static final Map<Class, SchemaModel> JSON_SCHEMAS = new HashMap<Class, SchemaModel>() {{
+		this.put(Boolean.class,            new SchemaModel("boolean"));
 		this.put(Integer.class,            new SchemaModel("integer"));
 		this.put(Long.class,               new SchemaModel("integer"));
 		this.put(BigInteger.class,         new SchemaModel("integer"));
@@ -322,18 +324,21 @@ public class OpenAPIUtil {
 					String parameterDescription = "";
 					String in = "";
 					String name = "";
+					boolean required = false;
 
 					if (parameter.isAnnotationPresent(PathParam.class)) {
 						PathParam pathParam = parameter.getAnnotation(PathParam.class);
 						name = pathParam.name();
 						in = "path";
 						parameterDescription = pathParam.description();
+						required = true;
 					}
 					if (parameter.isAnnotationPresent(RequestParam.class)) {
 						RequestParam requestParam = parameter.getAnnotation(RequestParam.class);
 						name = requestParam.name();
 						in = "query";
 						parameterDescription = requestParam.description();
+						required = requestParam.required();
 					}
 					if (parameter.isAnnotationPresent(Header.class)) {
 						Header headerParam = parameter.getAnnotation(Header.class);
@@ -347,7 +352,8 @@ public class OpenAPIUtil {
 								new io.swagger.oas.models.parameters.Parameter()
 									.name(name)
 									.required(false)
-									.schema(JSON_SCHEMAS.get(parameter.getType()).toSchema())
+									.schema(JSON_SCHEMAS.get(Primitives.wrap(parameter.getType())).toSchema())
+									.required(required)
 									.in(in)
 									.description(parameterDescription)
 						);
