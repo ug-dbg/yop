@@ -1,5 +1,7 @@
 package org.yop.rest.servlet;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.swagger.oas.models.Operation;
 import io.swagger.oas.models.media.ComposedSchema;
 import io.swagger.oas.models.media.Content;
@@ -101,7 +103,7 @@ public class Post implements HttpMethod {
 
 		post.requestBody(new RequestBody().description("YOP custom query").content(new Content().addMediaType(
 			ContentType.APPLICATION_JSON.getMimeType(),
-			new MediaType().schema(queries).example(example(yopable).toJSON().toString())))
+			new MediaType().schema(queries).example(example(yopable))))
 		);
 
 		post.getResponses().addApiResponse(String.valueOf(SC_OK),                    HttpMethod.http200(yopable));
@@ -190,10 +192,11 @@ public class Post implements HttpMethod {
 	 * @param <T> the target type
 	 * @return a Select query
 	 */
-	private static <T extends Yopable> Select<T> example(Class<T> yopable) {
+	private static <T extends Yopable> String example(Class<T> yopable) {
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		Select<T> select = Select.from(yopable);
 		select.where(Where.id(1L, 2L, 3L));
 		select.joinAll();
-		return select;
+		return gson.toJson(select.toJSON());
 	}
 }
