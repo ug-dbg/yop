@@ -35,6 +35,7 @@ public class Sandbox extends SecurityManager {
 		this.allowedPaths.add(
 			Paths.get(ThreadLocalSession.class.getResource("ThreadLocalSession.class").toString())
 		);
+		this.allowedPaths.add(Paths.get(System.getProperty("java.home")));
 		this.allowClassloader((URLClassLoader) this.getClass().getClassLoader());
 	}
 
