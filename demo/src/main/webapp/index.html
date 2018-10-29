@@ -132,6 +132,9 @@
             reset_code("basic/Book.java");
             resize_columns();
         };
+        $(document).on("column:resize:stop", "#yop_code_table", function() {
+          resize_columns();
+        });
     </script>
 
     <!-- Send the user code for compilation -->
