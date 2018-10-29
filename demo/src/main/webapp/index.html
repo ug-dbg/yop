@@ -3,6 +3,7 @@
     <title>YOP demo</title>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script src="http://dobtco.github.io/jquery-resizable-columns/dist/jquery.resizableColumns.min.js"></script>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/store.js/1.3.14/store.min.js"></script>
 
@@ -10,7 +11,8 @@
     <script src="js/mode-java.js"          type="text/javascript" charset="utf-8"></script>
     <script src="js/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
 
-    <link rel="stylesheet" href="http://dobtco.github.io/jquery-resizable-columns/dist/jquery.resizableColumns.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+    <link rel="stylesheet" href="http://dobtco.github.io/jquery-resizable-columns/dist/jquery.resizableColumns.css" />
     <link rel="stylesheet" href="css/bootstrap.kinda.su.css" />
     <style>
         .yop-column {
@@ -156,7 +158,7 @@
 
     <!--
         Load the Swagger UI for the user code from the /swagger REST resource.
-        Every REST request from the swagger-ui will be mapped to a Yop REST resource proxy for the user session
+        Every REST request from the swagger-ui will be mapped to a Yop REST resource proxy for the user session.
     -->
     <script>
         function swagger() {
@@ -198,6 +200,18 @@
           });
           editor.resize();
         }
+    </script>
+
+    <!-- Resizable row : jqueryui to set the table resizable from south -->
+    <script>
+        $(document).ready(function(){
+            $('#yop_code_table').resizable({
+                handles: "s",
+                stop: function( event, ui ) {
+                    resize_columns();
+                }
+            });
+        });
     </script>
 </body>
 </html>
