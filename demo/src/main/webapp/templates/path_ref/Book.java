@@ -9,7 +9,7 @@ import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.annotations.*;
 
 /**
- * In this class, authors have a birth date and books a purchase date.
+ * In this example, authors have a birth date and books a purchase date.
  * <br>
  * The init method inserts some books, authors and chapters.
  * <br><br>
