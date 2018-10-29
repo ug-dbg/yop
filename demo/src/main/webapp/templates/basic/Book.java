@@ -9,7 +9,7 @@ import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.annotations.*;
 
 /**
- * This is not-very-inventive first example for YOP.
+ * This is a not-very-inventive first example for YOP.
  * <br>
  * A book has authors  (N-N) relationship → JoinTable. <br>
  * A book has chapters (1-N) relationship → JoinColumn. <br>
