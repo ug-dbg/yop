@@ -43,7 +43,7 @@ public class UnameServlet extends HttpServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		String infoLabel = MessageUtil.join("on", this.buildLabel, this.platformLabel);
+		String infoLabel = MessageUtil.join(" on ", this.buildLabel, this.platformLabel);
 		resp.getWriter().write(infoLabel);
 		resp.setContentType(ContentType.TEXT_PLAIN.getMimeType());
 		resp.setStatus(HttpServletResponse.SC_OK);
