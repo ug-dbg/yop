@@ -38,6 +38,17 @@
             white-space: pre-wrap;
             word-break: break-all;
         }
+        .footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 25px;
+            line-height: 25px;
+            text-align: right;
+            font-size: 12px;
+            border-top: 1px solid #ddd;
+        }
     </style>
 </head>
 
@@ -122,6 +133,7 @@
     <div>
         <div id="swagger_ui_panel"></div>
     </div>
+    <div class="footer"></div>
 
     <!-- Code editor uses Ace with java language configuration. -->
     <script>
@@ -136,9 +148,12 @@
             reset_code("basic/Book.java");
             resize_columns();
         };
+
         $(document).on("column:resize:stop", "#yop_code_table", function() {
           resize_columns();
         });
+
+        $('.footer').load('uname');
     </script>
 
     <!-- Send the user code for compilation -->
@@ -202,7 +217,7 @@
         }
     </script>
 
-    <!-- Resizable row : jqueryui to set the table resizable from south -->
+    <!-- Resizable row : jquery-ui to set the table resizable from south -->
     <script>
         $(document).ready(function(){
             $('#yop_code_table').resizable({

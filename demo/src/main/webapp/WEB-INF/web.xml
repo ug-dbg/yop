@@ -14,6 +14,11 @@
         <servlet-class>org.yop.example.YopDemoServlet</servlet-class>
     </servlet>
 
+    <servlet>
+        <servlet-name>Uname</servlet-name>
+        <servlet-class>org.yop.example.UnameServlet</servlet-class>
+    </servlet>
+
     <servlet-mapping>
         <servlet-name>default</servlet-name>
         <url-pattern>/</url-pattern>
@@ -47,5 +52,10 @@
     <servlet-mapping>
         <servlet-name>YopDemo</servlet-name>
         <url-pattern>/openapi</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>Uname</servlet-name>
+        <url-pattern>/uname</url-pattern>
     </servlet-mapping>
 </web-app>

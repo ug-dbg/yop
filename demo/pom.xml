@@ -30,6 +30,11 @@
 				<version>3.2.2</version>
 				<configuration>
 					<warName>yop-demo</warName>
+					<archive>
+						<manifestEntries>
+							<Build-Label>${project.name}-${project.version}</Build-Label>
+						</manifestEntries>
+					</archive>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -87,6 +92,10 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-exec</artifactId>
 		</dependency>
 
 		<!-- JDBC sqlite driver -->
