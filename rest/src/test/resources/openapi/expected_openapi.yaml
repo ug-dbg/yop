@@ -200,11 +200,16 @@ paths:
               - $ref: "#/components/schemas/select"
               - $ref: "#/components/schemas/delete"
               - $ref: "#/components/schemas/upsert"
-            example: "{\"where\":{\"evaluations\":[{\"type\":\"IdIn\",\"values\":[1,2,3]}]},\"\
-              joins\":[{\"where\":{\"evaluations\":[]},\"joins\":[],\"field\":\"jopos\"\
-              },{\"where\":{\"evaluations\":[]},\"joins\":[{\"where\":{\"evaluations\"\
-              :[]},\"joins\":[],\"field\":\"extra\"}],\"field\":\"others\"}],\"target\"\
-              :\"org.yop.rest.simple.model.Pojo\"}"
+            example: "{\n  \"where\": {\n    \"evaluations\": [\n      {\n       \
+              \ \"type\": \"IdIn\",\n        \"values\": [\n          1,\n       \
+              \   2,\n          3\n        ]\n      }\n    ]\n  },\n  \"joins\": [\n\
+              \    {\n      \"where\": {\n        \"evaluations\": []\n      },\n\
+              \      \"joins\": [],\n      \"field\": \"jopos\"\n    },\n    {\n \
+              \     \"where\": {\n        \"evaluations\": []\n      },\n      \"\
+              joins\": [\n        {\n          \"where\": {\n            \"evaluations\"\
+              : []\n          },\n          \"joins\": [],\n          \"field\": \"\
+              extra\"\n        }\n      ],\n      \"field\": \"others\"\n    }\n \
+              \ ],\n  \"target\": \"org.yop.rest.simple.model.Pojo\"\n}"
       responses:
         200:
           description: "A set of [Pojo]"
@@ -750,9 +755,12 @@ paths:
               - $ref: "#/components/schemas/select"
               - $ref: "#/components/schemas/delete"
               - $ref: "#/components/schemas/upsert"
-            example: "{\"where\":{\"evaluations\":[{\"type\":\"IdIn\",\"values\":[1,2,3]}]},\"\
-              joins\":[{\"where\":{\"evaluations\":[]},\"joins\":[],\"field\":\"actionsForProfile\"\
-              }],\"target\":\"org.yop.rest.users.model.Profile\"}"
+            example: "{\n  \"where\": {\n    \"evaluations\": [\n      {\n       \
+              \ \"type\": \"IdIn\",\n        \"values\": [\n          1,\n       \
+              \   2,\n          3\n        ]\n      }\n    ]\n  },\n  \"joins\": [\n\
+              \    {\n      \"where\": {\n        \"evaluations\": []\n      },\n\
+              \      \"joins\": [],\n      \"field\": \"actionsForProfile\"\n    }\n\
+              \  ],\n  \"target\": \"org.yop.rest.users.model.Profile\"\n}"
       responses:
         200:
           description: "A set of [Profile]"
@@ -1298,8 +1306,10 @@ paths:
               - $ref: "#/components/schemas/select"
               - $ref: "#/components/schemas/delete"
               - $ref: "#/components/schemas/upsert"
-            example: "{\"where\":{\"evaluations\":[{\"type\":\"IdIn\",\"values\":[1,2,3]}]},\"\
-              joins\":[],\"target\":\"org.yop.rest.users.model.Action\"}"
+            example: "{\n  \"where\": {\n    \"evaluations\": [\n      {\n       \
+              \ \"type\": \"IdIn\",\n        \"values\": [\n          1,\n       \
+              \   2,\n          3\n        ]\n      }\n    ]\n  },\n  \"joins\": [],\n\
+              \  \"target\": \"org.yop.rest.users.model.Action\"\n}"
       responses:
         200:
           description: "A set of [Action]"
@@ -1845,10 +1855,15 @@ paths:
               - $ref: "#/components/schemas/select"
               - $ref: "#/components/schemas/delete"
               - $ref: "#/components/schemas/upsert"
-            example: "{\"where\":{\"evaluations\":[{\"type\":\"IdIn\",\"values\":[1,2,3]}]},\"\
-              joins\":[{\"where\":{\"evaluations\":[]},\"joins\":[{\"where\":{\"evaluations\"\
-              :[]},\"joins\":[],\"field\":\"actionsForProfile\"}],\"field\":\"profiles\"\
-              }],\"target\":\"org.yop.rest.users.model.User\"}"
+            example: "{\n  \"where\": {\n    \"evaluations\": [\n      {\n       \
+              \ \"type\": \"IdIn\",\n        \"values\": [\n          1,\n       \
+              \   2,\n          3\n        ]\n      }\n    ]\n  },\n  \"joins\": [\n\
+              \    {\n      \"where\": {\n        \"evaluations\": []\n      },\n\
+              \      \"joins\": [\n        {\n          \"where\": {\n           \
+              \ \"evaluations\": []\n          },\n          \"joins\": [],\n    \
+              \      \"field\": \"actionsForProfile\"\n        }\n      ],\n     \
+              \ \"field\": \"profiles\"\n    }\n  ],\n  \"target\": \"org.yop.rest.users.model.User\"\
+              \n}"
       responses:
         200:
           description: "A set of [User]"
