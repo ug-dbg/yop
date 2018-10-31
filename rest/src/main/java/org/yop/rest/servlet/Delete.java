@@ -43,7 +43,7 @@ public class Delete implements HttpMethod {
 			delete.joinAll();
 		}
 
-		if (restRequest.getId() > 0) {
+		if (restRequest.getId() != null) {
 			delete.where(new IdIn(Collections.singletonList(restRequest.getId())));
 		}
 		delete.executeQueries(connection);

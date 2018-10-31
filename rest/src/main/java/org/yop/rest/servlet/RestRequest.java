@@ -47,12 +47,10 @@ class RestRequest {
 	private HttpServletRequest request;
 	private HttpServletResponse response;
 
-	private Long id = 0L;
-
 	private String requestPath;
 
 	private Class<Yopable> restResource;
-	private String subResource = "";
+	private Path subResource = Paths.get("");
 	private String method;
 	private String accept;
 
@@ -107,12 +105,7 @@ class RestRequest {
 		path = Paths.get(StringUtils.removeStart(resourcePath, path.toString()));
 
 		if (path.getNameCount() >= 1) {
-			String subPath = path.getName(path.getNameCount() - 1).toString();
-			if (NumberUtils.isCreatable(subPath)) {
-				this.id = Long.valueOf(subPath);
-			} else {
-				this.subResource = StringUtils.removeStart(path.toString(), "/");
-			}
+			this.subResource = path.isAbsolute() ? Paths.get("/").relativize(path) : path;
 		}
 	}
 
@@ -215,11 +208,19 @@ class RestRequest {
 	/**
 	 * Get the ID associated to this request, if applicable. Might be null.
 	 * <br>
+	 * This method actually returns the last path element of the request, as Long, if applicable.
+	 * <br>
 	 * e.g. /yop/user/1 → 1
 	 * @return the id associated to the REST request
 	 */
 	Long getId() {
-		return this.id;
+		if (this.subResource.getNameCount() >= 0) {
+			Path last = this.subResource.getName(this.subResource.getNameCount() - 1);
+			if (NumberUtils.isCreatable(last.toString())) {
+				return Long.valueOf(last.toString());
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -236,8 +237,7 @@ class RestRequest {
 	 * @return true if this request targets a custom resource.
 	 */
 	boolean isCustomResource() {
-		return StringUtils.isNotBlank(this.subResource)
-			|| Reflection.getMethods(this.restResource).stream().anyMatch(this::matches);
+		return Reflection.getMethods(this.restResource).stream().anyMatch(this::matches);
 	}
 
 	/**
@@ -351,11 +351,10 @@ class RestRequest {
 		}
 		String methodPath = method.getAnnotation(Rest.class).path();
 		String methodPathRegex = methodPath.replaceAll(Pattern.quote("{") + ".*" + Pattern.quote("}"), ".+");
-		String id = this.getId() > 0 ? this.getId().toString() : "";
 		PathMatcher global = FileSystems.getDefault().getPathMatcher("regex:" + methodPathRegex);
 		return method.isAnnotationPresent(Rest.class)
 			&& Arrays.stream(method.getAnnotation(Rest.class).methods()).anyMatch(s -> this.method.equals(s))
-			&& global.matches(Paths.get(this.subResource, id));
+			&& global.matches(this.subResource);
 	}
 
 	/**

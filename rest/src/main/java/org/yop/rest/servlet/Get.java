@@ -41,7 +41,7 @@ class Get implements HttpMethod {
 			select.joinAll();
 		}
 
-		if (restRequest.getId() > 0) {
+		if (restRequest.getId() != null) {
 			select.where(new IdIn(Collections.singletonList(restRequest.getId())));
 			Yopable uniqueResult = select.uniqueResult(connection);
 			if (uniqueResult == null) {
