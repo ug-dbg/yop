@@ -18,7 +18,7 @@ import java.io.OutputStream;
 import java.util.Properties;
 
 /**
- * A servlet to display server info : demo version + platform info.
+ * A servlet to display server info : demo version + build timestamp + platform info.
  * <br>
  * This should be used for instance in the footer. Or not.
  * <br>
@@ -50,14 +50,14 @@ public class UnameServlet extends HttpServlet {
 	}
 
 	/**
-	 * Read the 'Build-Label' entry from the mantifest.
-	 * @return the build label entry value, or an empty string if no/incorrect manifest.
+	 * Read the 'Build-Label' and 'Build-Timestamp' entries from the manifest.
+	 * @return the build label + timestamp entry values, or an empty string if no/incorrect manifest.
 	 */
 	private String buildLabel() {
 		Properties prop = new java.util.Properties();
 		try {
 			prop.load(this.getServletContext().getResourceAsStream("/META-INF/MANIFEST.MF"));
-			return prop.getProperty("Build-Label");
+			return MessageUtil.join("-", prop.getProperty("Build-Label"), prop.getProperty("Build-Timestamp"));
 		} catch (IOException | RuntimeException e) {
 			logger.warn("Could not read build label from MANIFEST", e);
 		}

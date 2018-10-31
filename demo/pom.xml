@@ -33,6 +33,7 @@
 					<archive>
 						<manifestEntries>
 							<Build-Label>${project.name}-${project.version}</Build-Label>
+							<Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
 						</manifestEntries>
 					</archive>
 				</configuration>
