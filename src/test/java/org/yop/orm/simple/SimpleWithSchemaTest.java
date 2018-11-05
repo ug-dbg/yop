@@ -152,7 +152,7 @@ public class SimpleWithSchemaTest extends DBMSSwitch {
 		Assert.assertEquals(0, superExtras.size());
 
 		// Assertion that the relation was cleaned in the association table.
-		Executor.Action action = results -> {
+		Executor.Action<String> action = results -> {
 			results.getCursor().next();
 			Assert.assertEquals(0, results.getCursor().getLong(1).longValue());
 			return "";
