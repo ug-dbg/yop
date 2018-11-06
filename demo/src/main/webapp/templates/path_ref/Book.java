@@ -22,9 +22,7 @@ import org.yop.rest.annotations.*;
 @Rest(
 	path="book",
 	summary = "Rest resource for books !",
-	description = "is both a usually portable physical object "
-		+ "and the body of immaterial representations "
-		+ "or intellectual object whose material signs"
+	description = "A collection of sheets of paper bound together to hinge at one edge."
 )
 @Table(name="book")
 public class Book implements Yopable {
