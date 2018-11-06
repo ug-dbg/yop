@@ -61,6 +61,9 @@ public class Select<T extends Yopable> implements JsonAble {
 	/** Default where clause is always added. So I don't have to check if the 'WHERE' keyword is required ;-) */
 	private static final String DEFAULT_WHERE = " 1=1 ";
 
+	/** COUNT(DISTINCT :idColumn) column selection */
+	private static final String COUNT_DISTINCT = " COUNT(DISTINCT {0}) ";
+
 	/** Select root context : target class and SQL path **/
 	private final Context<T> context;
 
@@ -324,6 +327,24 @@ public class Select<T extends Yopable> implements JsonAble {
 	}
 
 	/**
+	 * Count the elements that match the query.
+	 * <br>
+	 * We actually use {@link #toSQLIDsRequest(Parameters, boolean)} to get distinct IDs and count the number of rows.
+	 * @param connection the connection to use for the request
+	 * @return the SELECT result, as an unique T
+	 */
+	public Long count(IConnection connection) {
+		Parameters parameters = new Parameters();
+		String request = this.toSQLIDsRequest(parameters, true);
+
+		return Executor.executeQuery(
+			connection,
+			new SimpleQuery(request, Query.Type.SELECT, parameters),
+			results -> {results.getCursor().next(); return results.getCursor().getLong(1);}
+		);
+	}
+
+	/**
 	 * Execute the SELECT request using the {@link Strategy#EXISTS} strategy to fetch the IDs of every target class.
 	 * @param connection the connection to use for the request
 	 * @return an {@link IdMap} instance, with a set of Ids for every class.
@@ -332,10 +353,10 @@ public class Select<T extends Yopable> implements JsonAble {
 	 */
 	public IdMap executeForIds(IConnection connection) {
 		Parameters parameters = new Parameters();
-		String request = this.toSQLIDsRequest(parameters);
+		String request = this.toSQLIDsRequest(parameters, false);
 		Query query = new SimpleQuery(request, Query.Type.SELECT, parameters);
 
-		return (IdMap) Executor.executeQuery(connection, query, IdMap.populateAction(this.context.getTarget()));
+		return Executor.executeQuery(connection, query, IdMap.populateAction(this.context.getTarget()));
 	}
 
 	/**
@@ -484,6 +505,7 @@ public class Select<T extends Yopable> implements JsonAble {
 
 	/**
 	 * Single query strategy with EXISTS : create the SQL 'data' request.
+	 * @param parameters the query parameters - will be populated with the actual request parameters
 	 * @return the SQL 'data' request.
 	 */
 	private String toSQLDataRequest(Parameters parameters) {
@@ -521,9 +543,11 @@ public class Select<T extends Yopable> implements JsonAble {
 
 	/**
 	 * Single query strategy with EXISTS : create the SQL 'data' request that only returns ID columns.
+	 * @param parameters the query parameters - will be populated with the actual request parameters
+	 * @param count      if true, the request will be on 'COUNT(DISTINCT id_column)' instead of the actual columns
 	 * @return the SQL 'data' request.
 	 */
-	private String toSQLIDsRequest(Parameters parameters) {
+	private String toSQLIDsRequest(Parameters parameters, boolean count) {
 		// First we have to build a 'select ids' query for the EXISTS subquery
 		// We copy the current 'Select' object to add a suffix to the context
 		// We link the EXISTS subquery to the global one (id = subquery.id)
@@ -547,7 +571,7 @@ public class Select<T extends Yopable> implements JsonAble {
 		// Now we can build the global query that fetches the IDs for every type when the EXISTS clause matches
 		joinClauses = this.toSQLJoin(false);
 		return this.select(
-			this.toSQLIdColumnsClause(),
+			count ? MessageFormat.format(COUNT_DISTINCT, this.idAlias())  : this.toSQLIdColumnsClause(),
 			this.getTableName(),
 			this.context.getPath(),
 			joinClauses.toSQL(parameters),
