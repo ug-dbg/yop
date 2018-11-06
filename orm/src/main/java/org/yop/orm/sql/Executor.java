@@ -61,7 +61,7 @@ public class Executor {
 		Query query,
 		Class<T> target,
 		FirstLevelCache cache) {
-		return (Set<T>) executeQuery(connection, query, results -> Mapper.map(results, target, cache));
+		return executeQuery(connection, query, results -> Mapper.map(results, target, cache));
 	}
 
 	/**
@@ -95,10 +95,10 @@ public class Executor {
 	 * @return the return of {@link Action#perform(Results)}, or null if action is null.
 	 * @throws YopSQLException an SQL error occurred.
 	 */
-	public static Object executeQuery(
+	public static <T> T executeQuery(
 		IConnection connection,
 		Query query,
-		Action action) {
+		Action<T> action) {
 
 		if(showSQL()) {
 			logger.info("Executing SQL query [{}]", query);
@@ -128,7 +128,7 @@ public class Executor {
 	/**
 	 * What to do on query {@link Results} ?
 	 */
-	public interface Action {
-		Object perform(Results results);
+	public interface Action<T> {
+		T perform(Results results);
 	}
 }

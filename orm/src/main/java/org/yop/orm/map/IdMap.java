@@ -75,7 +75,7 @@ public class IdMap {
 	 * @param target the root target class (Context will be built from it)
 	 * @return the Action that can be given to the {@link Executor}
 	 */
-	public static Executor.Action populateAction(Class<? extends Yopable> target) {
+	public static Executor.Action<IdMap> populateAction(Class<? extends Yopable> target) {
 		return results -> {
 			IdMap map = new IdMap();
 			while (results.getCursor().next()) {
