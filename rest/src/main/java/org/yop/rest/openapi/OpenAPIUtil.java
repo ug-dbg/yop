@@ -40,6 +40,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * An utility class to map @Rest Yopables resources to an OpenAPI description.
@@ -280,11 +281,15 @@ public class OpenAPIUtil {
 		String resource = getResourceName(yopable);
 		List<String> tags = Collections.singletonList(resource);
 		Rest classAnnotation = yopable.getAnnotation(Rest.class);
-		Set<Method> methods = Reflection.getMethods(yopable);
+
+		Collection<Method> methods = Reflection
+			.getMethods(yopable)
+			.stream()
+			.filter(m -> m.isAnnotationPresent(Rest.class))
+			.sorted(Comparator.comparing(m -> m.getAnnotation(Rest.class).path()))
+			.collect(Collectors.toList());
+
 		for (Method method : methods) {
-			if (!method.isAnnotationPresent(Rest.class)) {
-				continue;
-			}
 			Rest methodAnnotation = method.getAnnotation(Rest.class);
 			String path = java.nio.file.Paths.get("/", classAnnotation.path(), methodAnnotation.path()).toString();
 			String description = methodAnnotation.description();
