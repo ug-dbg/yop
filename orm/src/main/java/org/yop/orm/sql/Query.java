@@ -23,8 +23,8 @@ import java.util.*;
  * In this class we try to take care of the SQL query so it can be safely executed. Here is what we do :
  * <ul>
  *     <li>Split the query into words</li>
- *     <li>Identify aliases whose length is {@literal >} {@link Constants#SQL_ALIAS_MAX_LENGTH}</li>
- *     <li>Shorten these aliases using {@link ORMUtil#uniqueShortened(String)}</li>
+ *     <li>Identify aliases whose length is {@literal >} {@link Config#aliasMaxLength()}</li>
+ *     <li>Shorten these aliases using {@link ORMUtil#uniqueShortened(String, Config)}</li>
  *     <li>Keep track of the alias → shorten alias conversions</li>
  *     <li>Keep track of the original query so it can be logged when required</li>
  * </ul>
@@ -48,6 +48,9 @@ public abstract class Query {
 
 	/** The SQL to execute */
 	protected final String sql;
+
+	/** SQL execution config */
+	protected final Config config;
 
 	/** The SQL with too long aliases replaced with generated UUIDs */
 	private String safeAliasSQL;
@@ -73,22 +76,24 @@ public abstract class Query {
 	/**
 	 * Default constructor : SQL query.
 	 * <br>
-	 * In the SQL query, aliases whose length is {@literal >} {@link Constants#SQL_ALIAS_MAX_LENGTH} will be
-	 * replaced with {@link ORMUtil#uniqueShortened(String)}.
-	 * @param sql  the SQL query to execute
-	 * @param type the query type
+	 * In the SQL query, aliases whose length is {@literal >} {@link Config#aliasMaxLength()} will be
+	 * replaced with {@link ORMUtil#uniqueShortened(String, Config)}.
+	 * @param sql    the SQL query to execute
+	 * @param type   the query type
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 */
-	public Query(String sql, Type type) {
+	public Query(String sql, Type type, Config config) {
 		this.sql = sql;
 		this.safeAliasSQL = sql;
 		this.type = type;
+		this.config = config;
 
 		// Search table/column aliases that are too long for SQL : longest alias first !
 		Set<String> tooLongAliases = new TreeSet<>(ALIAS_COMPARATOR);
 		for (String word : StringUtils.split(sql, SQL_WORD_SPLIT_PATTERN)) {
 			// if the word is not too long, that's OK
 			// if the word contains a "." this is not an alias
-			if(word.length() <= Constants.SQL_ALIAS_MAX_LENGTH || word.contains(Constants.DOT)) {
+			if(word.length() <= this.config.aliasMaxLength() || word.contains(Config.DOT)) {
 				continue;
 			}
 			tooLongAliases.add(
@@ -97,7 +102,7 @@ public abstract class Query {
 		}
 
 		for (String tooLongAlias : tooLongAliases) {
-			String shortened = ORMUtil.uniqueShortened(tooLongAlias);
+			String shortened = ORMUtil.uniqueShortened(tooLongAlias, config);
 			this.tooLongAliases.put(tooLongAlias, shortened);
 			this.safeAliasSQL = StringUtils.replace(this.safeAliasSQL, tooLongAlias, shortened);
 		}
@@ -137,6 +142,14 @@ public abstract class Query {
 	 */
 	public Type getType() {
 		return this.type;
+	}
+
+	/**
+	 * Get the SQL config for this query
+	 * @return the SQL {@link #config}
+	 */
+	public Config getConfig() {
+		return this.config;
 	}
 
 	/**

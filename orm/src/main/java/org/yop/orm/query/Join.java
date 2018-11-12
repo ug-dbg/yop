@@ -1,6 +1,5 @@
 package org.yop.orm.query;
 
-import com.google.gson.JsonElement;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.util.Reflection;
 

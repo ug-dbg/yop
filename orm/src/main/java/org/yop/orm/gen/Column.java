@@ -5,6 +5,7 @@ import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMTypes;
 import org.yop.orm.util.ORMUtil;
 
@@ -108,7 +109,7 @@ public class Column implements Comparable<Column> {
 	}
 
 	@SuppressWarnings("unchecked")
-	static Column fromField(Field field, ORMTypes types) {
+	static Column fromField(Field field, ORMTypes types, Config config) {
 		Column column = new Column(
 			ORMUtil.getColumnName(field),
 			ORMUtil.getColumnType(field, types),
@@ -121,7 +122,7 @@ public class Column implements Comparable<Column> {
 			column.pk = new PrimaryKey(
 				!field.isAnnotationPresent(Id.class) || field.getAnnotation(Id.class).autoincrement()
 			);
-			String seq = ORMUtil.readSequence(field);
+			String seq = ORMUtil.readSequence(field, config);
 			if(StringUtils.isNotBlank(seq)) {
 				column.sequences.add(seq);
 			}

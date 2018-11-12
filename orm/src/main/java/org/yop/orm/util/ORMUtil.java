@@ -11,7 +11,7 @@ import org.yop.orm.annotations.*;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
-import org.yop.orm.sql.Constants;
+import org.yop.orm.sql.Config;
 import org.yop.orm.transform.ITransformer;
 
 import java.lang.reflect.Field;
@@ -140,12 +140,13 @@ public class ORMUtil {
 	 * Get the schema name for the given yopable target
 	 * (read {@link Table} annotation or return empty string).
 	 * @param target the target Yopable implementation
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the table name for the current context
 	 */
-	public static String getQualifiedTableName(Class<? extends Yopable> target) {
+	public static String getQualifiedTableName(Class<? extends Yopable> target, Config config) {
 		String schemaName = getSchemaName(target);
 		String tableName = getTableName(target);
-		return StringUtils.isBlank(schemaName) ? tableName : schemaName + Constants.DOT + tableName;
+		return StringUtils.isBlank(schemaName) ? tableName : schemaName + config.dot() + tableName;
 	}
 
 	/**
@@ -286,8 +287,8 @@ public class ORMUtil {
 	 * @param alias the alias that is too long
 	 * @return an unique alphabetic alias
 	 */
-	public static String uniqueShortened(String alias) {
-		return RandomStringUtils.randomAlphabetic(Math.min(Constants.SQL_ALIAS_MAX_LENGTH, 10));
+	public static String uniqueShortened(String alias, Config config) {
+		return RandomStringUtils.randomAlphabetic(Math.min(config.aliasMaxLength(), 10));
 	}
 
 	/**
@@ -295,8 +296,8 @@ public class ORMUtil {
 	 * @param context the target context
 	 * @return the qualified ID column
 	 */
-	public static String getIdColumn(Context<? extends Yopable> context) {
-		return context.getPath(getIdField(context.getTarget()));
+	public static String getIdColumn(Context<? extends Yopable> context, Config config) {
+		return context.getPath(getIdField(context.getTarget()), config);
 	}
 
 	/**
@@ -346,30 +347,22 @@ public class ORMUtil {
 	}
 
 	/**
-	 * See {@link Constants#USE_SEQUENCES}.
-	 * @return true if the system variable 'yop.sql.sequences' is set.
-	 */
-	public static boolean useSequence() {
-		return Constants.USE_SEQUENCES;
-	}
-
-	/**
 	 * Read the sequence of an {@link Id} field.
 	 * <br>
 	 * What does it do ?
 	 * <ul>
 	 *   <li>not @Id or no sequence set → "" </li>
-	 *   <li>Id field and sequence is not set to {@link Constants#DEFAULT_SEQ} → the sequence set on @Id </li>
-	 *   <li>Id field and sequence is set to {@link Constants#DEFAULT_SEQ} → "seq_" + class simple name </li>
+	 *   <li>Id field and sequence is not set to {@link Config#defaultSequence()} → the sequence set on @Id </li>
+	 *   <li>Id field and sequence is set to {@link Config#defaultSequence()} → "seq_" + class simple name </li>
 	 * </ul>
 	 * @param field the field to read
 	 * @return the sequence for this field, or an empty String
 	 *
 	 */
-	public static String readSequence(Field field) {
+	public static String readSequence(Field field, Config config) {
 		if(field.isAnnotationPresent(Id.class) && !StringUtils.isBlank(field.getAnnotation(Id.class).sequence())) {
 			String seq = field.getAnnotation(Id.class).sequence();
-			if (Constants.DEFAULT_SEQ.equals(seq)) {
+			if (config.defaultSequence().equals(seq)) {
 				return "seq_" + field.getDeclaringClass().getSimpleName();
 			}
 			return seq;

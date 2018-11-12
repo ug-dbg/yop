@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.sql.Constants;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.Reflection;
 
@@ -157,7 +156,7 @@ public class Recurse<T extends Yopable> {
 	 * @param connection the connection to use.
 	 */
 	public void execute(IConnection connection) {
-		this.recurse(connection, new FirstLevelCache(), new ArrayList<>(), Select.Strategy.EXISTS);
+		this.recurse(connection, new FirstLevelCache(connection.config()), new ArrayList<>(), Select.Strategy.EXISTS);
 	}
 
 	/**
@@ -173,7 +172,7 @@ public class Recurse<T extends Yopable> {
 	 * @param strategy   the select strategy to use for the sub-selects. This can have a huge impact on performance.
 	 */
 	public void execute(IConnection connection, Select.Strategy strategy) {
-		this.recurse(connection, new FirstLevelCache(), new ArrayList<>(), strategy);
+		this.recurse(connection, new FirstLevelCache(connection.config()), new ArrayList<>(), strategy);
 	}
 
 	/**
@@ -205,11 +204,11 @@ public class Recurse<T extends Yopable> {
 		// Get the data using a SELECT query on the target elements and the join clauses.
 		Map<Long, T> byID = this.elements.stream().collect(Collectors.toMap(Yopable::getId, Function.identity()));
 
-		if (byID.size() > Constants.MAX_PARAMS) {
+		if (byID.size() > connection.config().maxParams()) {
 			logger.warn(
 				"Recursing over [{}] elements. This is more than the max params [{}]. Yop should do batches here :-(",
 				byID.size(),
-				Constants.MAX_PARAMS
+				connection.config().maxParams()
 			);
 		}
 

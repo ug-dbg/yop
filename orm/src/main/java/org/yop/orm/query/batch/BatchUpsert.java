@@ -9,7 +9,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
 import org.yop.orm.query.Upsert;
 import org.yop.orm.query.relation.Relation;
-import org.yop.orm.sql.Constants;
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
@@ -32,7 +32,7 @@ import static org.yop.orm.sql.Parameters.Parameter;
  * <br>
  * Batches are very implementation sensitive. Some drivers does not seem to play well with this.
  * <br>
- * For instance {@link Statement#getGeneratedKeys()} might not be working. See {@link Constants#USE_BATCH_INSERTS}.
+ * For instance {@link Statement#getGeneratedKeys()} might not be working. See {@link Config#useBatchInserts()}.
  * <br><br>
  * When delaying an insert, the generated ID might be required in further queries.
  * We use a {@link org.yop.orm.sql.Parameters.DelayedValue} to create a query parameter whose value is not yet known.
@@ -122,7 +122,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 		}
 
 		// Upsert the current data table and, when required, set the generated ID
-		Collection<T> updated = delay(this.toSQL(), delayed);
+		Collection<T> updated = delay(this.toSQL(connection.config()), delayed);
 
 		// Upsert the relation tables of the specified joins (DELETE then INSERT, actually)
 		for (IJoin<T, ? extends Yopable> join : this.joins) {
@@ -165,9 +165,10 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 
 	/**
 	 * Generate a couple of SQL batch Queries that will effectively do the upsert request.
+	 * @param config the SQL config. Needed for the sql separator to use or if batch inserts are allowed.
 	 * @return the Upsert queries for the current Upsert : 1 for inserts, one for updates.
 	 */
-	private List<Query> toSQL() {
+	private List<Query> toSQL(Config config) {
 		List<T> elementsToInsert = new ArrayList<>();
 		List<T> elementsToUpdate = new ArrayList<>();
 
@@ -181,14 +182,14 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 
 		List<org.yop.orm.sql.Query> out = new ArrayList<>();
 		if(!elementsToInsert.isEmpty()) {
-			if (Constants.USE_BATCH_INSERTS) {
-				out.add(this.toSQLInserts(elementsToInsert));
+			if (config.useBatchInserts()) {
+				out.add(this.toSQLInserts(elementsToInsert, config));
 			} else {
-				elementsToInsert.forEach(element -> out.add(super.toSQLInsert(element)));
+				elementsToInsert.forEach(element -> out.add(super.toSQLInsert(element, config)));
 			}
 		}
 		if(!elementsToUpdate.isEmpty()) {
-			out.add(this.toSQLUpdates(elementsToUpdate));
+			out.add(this.toSQLUpdates(elementsToUpdate, config));
 		}
 
 		return out;
@@ -197,16 +198,17 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	/**
 	 * Create a batch query for all the given elements to insert.
 	 * @param elementsToInsert the elements to insert.
+	 * @param config  the SQL config (sql separator, use batch inserts...)
 	 * @return an INSERT batch query for the elements
 	 */
-	private BatchQuery<T> toSQLInserts(List<T> elementsToInsert) {
+	private BatchQuery<T> toSQLInserts(List<T> elementsToInsert, Config config) {
 		if(elementsToInsert.isEmpty()) {
 			throw new YopRuntimeException("Trying to create batch query on no target element !");
 		}
 
 		BatchQuery<T> query = null;
 		for (T element : elementsToInsert) {
-			Parameters parameters = this.values(element);
+			Parameters parameters = this.values(element, config);
 
 			// First element : create the SQL query.
 			// Every next element will simply be added as a new batch for the same query :)
@@ -220,7 +222,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 					Joiner.on(", ").join(columns),
 					Joiner.on(", ").join(values)
 				);
-				query = new BatchQuery<>(sql, Query.Type.INSERT, elementsToInsert, this.target);
+				query = new BatchQuery<>(sql, Query.Type.INSERT, config, elementsToInsert, this.target);
 				query.askGeneratedKeys(true, this.target);
 			}
 
@@ -233,17 +235,18 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	/**
 	 * Create a batch query for all the given elements to update.
 	 * @param elementsToUpdate the elements to update.
+	 * @param config           the SQL config (sql separator, use batch inserts...)
 	 * @return an UPDATE batch query for the elements
 	 */
 	@SuppressWarnings("unchecked")
-	private BatchQuery<T> toSQLUpdates(List<T> elementsToUpdate) {
+	private BatchQuery<T> toSQLUpdates(List<T> elementsToUpdate, Config config) {
 		if(elementsToUpdate.isEmpty()) {
 			throw new YopRuntimeException("Trying to create batch query on no target element !");
 		}
 
 		BatchQuery<T> query = null;
 		for (T element : elementsToUpdate) {
-			Parameters parameters = this.values(element);
+			Parameters parameters = this.values(element, config);
 
 			// UPDATE query : ID column must be set last (WHERE clause, not VALUES)
 			Parameters.Parameter idParameter = null;
@@ -267,7 +270,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 					whereClause
 				);
 
-				query = new BatchQuery<>(sql, Query.Type.UPDATE, elementsToUpdate, this.target);
+				query = new BatchQuery<>(sql, Query.Type.UPDATE, config, elementsToUpdate, this.target);
 			}
 
 			// Set the ID parameter back, at last position.
@@ -318,16 +321,16 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 		DelayedQueries delayed) {
 
 		Relation relation = Relation.relation(elements, join);
-		for (Query query : relation.toSQLDelete()) {
+		for (Query query : relation.toSQLDelete(connection.config())) {
 			Executor.executeQuery(connection, query);
 		}
 
-		for (Query insert : relation.toSQLBatchInsert()) {
+		for (Query insert : relation.toSQLBatchInsert(connection.config())) {
 			delayed.putIfAbsent(insert.getSql(), new ArrayList<>());
 			delayed.get(insert.getSql()).add(insert);
 		}
 
-		for (Query update : relation.toSQLBatchUpdate()) {
+		for (Query update : relation.toSQLBatchUpdate(connection.config())) {
 			delayed.putIfAbsent(update.getSql(), new ArrayList<>());
 			delayed.get(update.getSql()).add(update);
 		}
@@ -337,8 +340,8 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 * SQL batch query with a typed element list constructor.
 	 */
 	private static class BatchQuery<T extends Yopable> extends org.yop.orm.sql.BatchQuery {
-		private BatchQuery(String sql, Type type, List<T> elements, Class<T> target) {
-			super(sql, type);
+		private BatchQuery(String sql, Type type, Config config, List<T> elements, Class<T> target) {
+			super(sql, type, config);
 			this.elements.addAll(elements);
 			this.target = target;
 		}

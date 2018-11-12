@@ -7,6 +7,7 @@ import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.Where;
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
@@ -42,12 +43,12 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 	}
 
 	@Override
-	public <U extends Yopable> String toSQL(Context<U> context, Parameters parameters) {
+	public <U extends Yopable> String toSQL(Context<U> context, Parameters parameters, Config config) {
 		List<Field> naturalKeys = ORMUtil.getNaturalKeyFields(this.reference.getClass());
 		return Where.toSQL(
 			naturalKeys
 				.stream()
-				.map(field -> this.getFieldRestriction(context, field, parameters))
+				.map(field -> this.getFieldRestriction(context, field, parameters, config))
 				.collect(Collectors.toList()
 		));
 	}
@@ -68,7 +69,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <U extends Yopable> void fromJSON(Context<U> context, JsonElement element) {
+	public <U extends Yopable> void fromJSON(Context<U> context, JsonElement element, Config config) {
 		Class target = context.getTarget();
 		this.reference = (T) Reflection.newInstanceNoArgs(target);
 		JsonObject ref = element.getAsJsonObject().get(REFERENCE).getAsJsonObject();
@@ -87,13 +88,13 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 	 * @param parameters the SQL query parameters (will be populated with the field value)
 	 * @return the SQL portion for the given context→field restriction
 	 */
-	private String getFieldRestriction(Context<?> context, Field field, Parameters parameters) {
+	private String getFieldRestriction(Context<?> context, Field field, Parameters parameters, Config config) {
 		Object ref = ORMUtil.readField(field, this.reference);
 		if(ref != null) {
-			String name = context.getPath() + "#" + field.getName() + " = " + "?";
+			String name = context.getPath(config) + "#" + field.getName() + " = " + "?";
 			parameters.addParameter(name, ref, field);
 		}
-		return Evaluation.columnName(field, context) + "=" + (ref == null ? "" : "?");
+		return Evaluation.columnName(field, context, config) + "=" + (ref == null ? "" : "?");
 	}
 
 }

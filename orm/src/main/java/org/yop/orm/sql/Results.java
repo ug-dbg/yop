@@ -84,7 +84,7 @@ public class Results {
 			for (int x = 1; x <= columns; x++) {
 				this.contexts.add(StringUtils.substringBeforeLast(
 					this.getQuery().getAlias(this.getCursor().getColumnName(x)),
-					Constants.SQL_SEPARATOR
+					this.query.config.sqlSeparator()
 				));
 			}
 		}
@@ -95,7 +95,7 @@ public class Results {
 
 		if (!this.contextsIDColumns.containsKey(context)) {
 			String idColumn = this.getQuery().getShortened(
-				context + Constants.SQL_SEPARATOR + ORMUtil.getIdColumn(targetClass)
+				context + this.query.getConfig().sqlSeparator() + ORMUtil.getIdColumn(targetClass)
 			);
 			this.contextsIDColumns.put(context, idColumn);
 		}

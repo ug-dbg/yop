@@ -4,10 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteException;
-import org.yop.orm.sql.Executor;
-import org.yop.orm.sql.Parameters;
-import org.yop.orm.sql.Query;
-import org.yop.orm.sql.SimpleQuery;
+import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
 import org.yop.orm.util.ORMTypes;
@@ -225,8 +222,9 @@ public class Prepare {
 	 * <br>
 	 * Let's face it : this is just to improve code coverage.
 	 * @param packagePrefix the package prefix (find all Yopables)
+	 * @param config        the SQL config (sql separator, use batch inserts...)
 	 */
-	public static void generateScripts(String packagePrefix) {
+	public static void generateScripts(String packagePrefix, Config config) {
 		List<ORMTypes> ormTypes = Arrays.asList(
 			SQLite.INSTANCE,
 			MySQL.INSTANCE,
@@ -234,11 +232,11 @@ public class Prepare {
 			MSSQL.INSTANCE,
 			Oracle.INSTANCE
 		);
-		ormTypes.forEach(dialect -> dialect.generateScript(packagePrefix, Prepare.class.getClassLoader()));
+		ormTypes.forEach(dialect -> dialect.generateScript(packagePrefix, Prepare.class.getClassLoader(), config));
 	}
 
 	/**
-	 * Prepare the target DB using the script from {@link ORMTypes#generateScript(String, ClassLoader)}.
+	 * Prepare the target DB using the script from {@link ORMTypes#generateScript(String, ClassLoader, Config)}.
 	 * <br>
 	 * Please use the correct {@link ORMTypes} instance for the given connection ;-)
 	 * @param packagePrefix the package prefix (find all Yopables)
@@ -248,9 +246,12 @@ public class Prepare {
 	 */
 	private static void prepare(String packagePrefix, IConnection connection, ORMTypes dialect, ClassLoader classLoader) throws SQLException {
 		connection.setAutoCommit(true);
-		for (String line : dialect.generateScript(packagePrefix, classLoader)) {
+		for (String line : dialect.generateScript(packagePrefix, classLoader, connection.config())) {
 			try {
-				Executor.executeQuery(connection, new SimpleQuery(line, Query.Type.UNKNOWN, new Parameters()));
+				Executor.executeQuery(
+					connection,
+					new SimpleQuery(line, Query.Type.UNKNOWN, new Parameters(), connection.config())
+				);
 			} catch (RuntimeException e) {
 				if (e.getCause() instanceof SQLiteException) {
 					// When testing using SQLite, all the 'DROP' requests throws exception. That's quite normal.

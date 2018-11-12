@@ -3,10 +3,7 @@ package org.yop.orm.query.relation;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
-import org.yop.orm.sql.BatchQuery;
-import org.yop.orm.sql.Parameters;
-import org.yop.orm.sql.Query;
-import org.yop.orm.sql.SimpleQuery;
+import org.yop.orm.sql.*;
 import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.ORMUtil;
 
@@ -71,10 +68,11 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 	 * Build the DELETE queries for this relation.
 	 * <br>
 	 * It is actually one single query that deletes every row for the given source objects IDs.
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the delete query, as a singleton list
 	 */
 	@Override
-	public Collection<Query> toSQLDelete() {
+	public Collection<Query> toSQLDelete(Config config) {
 		if (this.relations.isEmpty()) {
 			return new ArrayList<>(0);
 		}
@@ -88,17 +86,18 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 				return "?";
 			}).collect(Collectors.toList())
 		);
-		return Collections.singletonList(new SimpleQuery(sql, Query.Type.DELETE, parameters));
+		return Collections.singletonList(new SimpleQuery(sql, Query.Type.DELETE, parameters, config));
 	}
 
 	/**
 	 * Build the <b>INSERT</b> queries for this relation.
 	 * <br>
-	 * You should have used {@link #toSQLDelete()} before :)
+	 * You should have used {@link #toSQLDelete(Config)} before :)
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the insert queries
 	 */
 	@Override
-	public Collection<Query> toSQLInsert() {
+	public Collection<Query> toSQLInsert(Config config) {
 		Collection<Query> inserts = new ArrayList<>();
 
 		for (Map.Entry<From, Collection<To>> relation : this.relations.entrySet()) {
@@ -109,7 +108,7 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 				Parameters parameters = new Parameters();
 				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, from::getId);
 				parameters.addParameter(this.relationTable + "#" + this.targetColumn, to::getId);
-				inserts.add(new SimpleQuery(insert, Query.Type.INSERT, parameters));
+				inserts.add(new SimpleQuery(insert, Query.Type.INSERT, parameters, config));
 			}
 		}
 
@@ -119,16 +118,17 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 	/**
 	 * Build the <b>INSERT</b> queries for this relation.
 	 * <br>
-	 * You should have used {@link #toSQLDelete()} before :)
+	 * You should have used {@link #toSQLDelete(Config)} before :)
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the insert queries
 	 */
 	@Override
-	public Collection<Query> toSQLBatchInsert() {
+	public Collection<Query> toSQLBatchInsert(Config config) {
 		Collection<Query> inserts = new ArrayList<>();
 
 		for (Map.Entry<From, Collection<To>> relation : this.relations.entrySet()) {
 			String insert = insert(this.relationTable, this.sourceColumn, this.targetColumn);
-			BatchQuery batchQuery = new BatchQuery(insert, Query.Type.INSERT);
+			BatchQuery batchQuery = new BatchQuery(insert, Query.Type.INSERT, config);
 			From from = relation.getKey();
 
 			for (To to : relation.getValue()) {

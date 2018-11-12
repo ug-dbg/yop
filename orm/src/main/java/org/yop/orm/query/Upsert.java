@@ -18,6 +18,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.model.YopableEquals;
 import org.yop.orm.model.Yopables;
 import org.yop.orm.query.relation.Relation;
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
@@ -127,18 +128,19 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	/**
 	 * Create an Upsert query from the given json String representation.
 	 * @param json         the Upsert query JSON representation
+	 * @param config       the SQL config (sql separator, use batch inserts...)
 	 * @param classLoaders the class loaders to use to try to load the target resource
 	 * @param <T> the target context type. This should match the one set in the JSON representation of the query !
 	 * @return a new Upsert query whose state is set from its JSON representation
 	 */
-	public static <T extends Yopable> Upsert<T> fromJSON(String json, ClassLoader... classLoaders) {
+	public static <T extends Yopable> Upsert<T> fromJSON(String json, Config config, ClassLoader... classLoaders) {
 		try {
 			JsonParser parser = new JsonParser();
 			JsonObject selectJSON = (JsonObject) parser.parse(json);
 			String targetClassName = selectJSON.getAsJsonPrimitive("target").getAsString();
 			Class<T> target = Reflection.forName(targetClassName, classLoaders);
 			Upsert<T> upsert = Upsert.from(target);
-			upsert.fromJSON(Context.root(upsert.target), selectJSON);
+			upsert.fromJSON(Context.root(upsert.target), selectJSON, config);
 			return upsert;
 		} catch (RuntimeException e) {
 			throw new YopSerializableQueryException(
@@ -249,7 +251,7 @@ public class Upsert<T extends Yopable> implements JsonAble {
 
 		// Upsert the current data table and, when required, set the generated ID
 		Set<T> updated = new HashSet<>();
-		for (SimpleQuery<T> query : this.toSQL()) {
+		for (SimpleQuery<T> query : this.toSQL(connection.config())) {
 			Executor.executeQuery(connection, query);
 			updated.add(query.getElement());
 		}
@@ -305,9 +307,9 @@ public class Upsert<T extends Yopable> implements JsonAble {
 
 		Relation relation = Relation.relation(elements, join);
 		Collection<org.yop.orm.sql.Query> relationsQueries = new ArrayList<>();
-		relationsQueries.addAll(relation.toSQLDelete());
-		relationsQueries.addAll(relation.toSQLInsert());
-		relationsQueries.addAll(relation.toSQLUpdate());
+		relationsQueries.addAll(relation.toSQLDelete(connection.config()));
+		relationsQueries.addAll(relation.toSQLInsert(connection.config()));
+		relationsQueries.addAll(relation.toSQLUpdate(connection.config()));
 		for (org.yop.orm.sql.Query query : relationsQueries) {
 			Executor.executeQuery(connection, query);
 		}
@@ -315,14 +317,15 @@ public class Upsert<T extends Yopable> implements JsonAble {
 
 	/**
 	 * Generate a list of SQL Queries that will effectively do the upsert request.
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the Upsert queries for the current Upsert
 	 */
-	private List<SimpleQuery<T>> toSQL() {
+	private List<SimpleQuery<T>> toSQL(Config config) {
 		List<SimpleQuery<T>> queries = new ArrayList<>();
 
 		for (T element : this.elements) {
 			queries.add(
-				element.getId() == null ? this.toSQLInsert(element) : this.toSQLUpdate(element)
+				element.getId() == null ? this.toSQLInsert(element, config) : this.toSQLUpdate(element, config)
 			);
 		}
 
@@ -332,10 +335,11 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	/**
 	 * Generate a SQL INSERT query for the given element
 	 * @param element the element whose data to use
+	 * @param config  the SQL config (sql separator, use batch inserts...)
 	 * @return the generated Query
 	 */
-	protected SimpleQuery toSQLInsert(T element) {
-		Parameters parameters = this.values(element);
+	protected SimpleQuery toSQLInsert(T element, Config config) {
+		Parameters parameters = this.values(element, config);
 		List<String> columns = parameters.stream().map(Parameters.Parameter::getName).collect(Collectors.toList());
 		List<String> values = parameters.stream().map(Parameters.Parameter::toSQLValue).collect(Collectors.toList());
 
@@ -347,7 +351,7 @@ public class Upsert<T extends Yopable> implements JsonAble {
 		);
 
 		parameters.removeIf(Parameters.Parameter::isSequence);
-		SimpleQuery<T> query = new SimpleQuery<>(sql, Query.Type.INSERT, parameters, element);
+		SimpleQuery<T> query = new SimpleQuery<>(sql, Query.Type.INSERT, parameters, element, config);
 		query.askGeneratedKeys(true, element.getClass());
 		return query;
 	}
@@ -355,10 +359,11 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	/**
 	 * Generate a SQL UPDATE query for the given element
 	 * @param element the element whose data to use
+	 * @param config  the SQL config (sql separator, use batch inserts...)
 	 * @return the generated Query
 	 */
-	private SimpleQuery<T> toSQLUpdate(T element) {
-		Parameters parameters = this.values(element);
+	private SimpleQuery<T> toSQLUpdate(T element, Config config) {
+		Parameters parameters = this.values(element, config);
 
 		// UPDATE query : ID column must be set last (WHERE clause, not VALUES)
 		Parameters.Parameter idParameter = null;
@@ -382,7 +387,7 @@ public class Upsert<T extends Yopable> implements JsonAble {
 
 		// Set the ID parameter back, at last position.
 		parameters.add(idParameter);
-		return new SimpleQuery<>(sql, Query.Type.UPDATE, parameters, element);
+		return new SimpleQuery<>(sql, Query.Type.UPDATE, parameters, element, config);
 	}
 
 	/**
@@ -398,15 +403,16 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	 * <br>
 	 * A sequence parameter might be set if specified !
 	 * @param element the element to read for its values
+	 * @param config  the SQL config (sql separator, use batch inserts...)
 	 * @return the columns to select
 	 */
-	protected Parameters values(T element) {
+	protected Parameters values(T element, Config config) {
 		List<Field> fields = Reflection.getFields(this.target, Column.class);
 		Field idField = ORMUtil.getIdField(this.target);
 		Parameters parameters = new Parameters();
 		for (Field field : fields) {
 			if(field.equals(idField)) {
-				setIdField(field, element, parameters);
+				setIdField(field, element, parameters, config);
 				continue;
 			}
 			parameters.addParameter(
@@ -425,13 +431,14 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	 * @param idField    the id field
 	 * @param element    the element where to read the field
 	 * @param parameters the query parameters.
+	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 */
-	private static void setIdField(Field idField, Yopable element, Parameters parameters) {
-		Object value = getUpsertIdValue(element);
+	private static void setIdField(Field idField, Yopable element, Parameters parameters, Config config) {
+		Object value = getUpsertIdValue(element, config);
 
 		if(value != null) {
-			boolean isSequence = ORMUtil.useSequence()
-			&& !ORMUtil.readSequence(idField).isEmpty();
+			boolean isSequence = config.useSequences()
+			&& !ORMUtil.readSequence(idField, config).isEmpty();
 
 			if (isSequence) {
 				parameters.addSequenceParameter(element.getIdColumn(), value);
@@ -450,11 +457,12 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	 *     <li>null (→ i.e. do not put me in the insert query)</li>
 	 * </ol>
 	 * @param element the element to check
+	 * @param config  the SQL config (sql separator, use batch inserts...)
 	 * @param <T> the element type
 	 * @return the id value to set in the query
 	 * @throws YopMappingException invalid @Id mapping ←→ ID value
 	 */
-	private static <T extends Yopable> Object getUpsertIdValue(T element) {
+	private static <T extends Yopable> Object getUpsertIdValue(T element, Config config) {
 		if(element.getId() != null) {
 			return element.getId();
 		}
@@ -463,9 +471,9 @@ public class Upsert<T extends Yopable> implements JsonAble {
 			throw new YopMappingException("Element [" + element + "] has no ID and autoincrement is set to false !");
 		}
 
-		if(ORMUtil.useSequence()
-		&& !ORMUtil.readSequence(idField).isEmpty()) {
-			return ORMUtil.readSequence(idField) + ".nextval";
+		if(config.useSequences()
+		&& !ORMUtil.readSequence(idField, config).isEmpty()) {
+			return ORMUtil.readSequence(idField, config) + ".nextval";
 		}
 		return null;
 	}
@@ -474,8 +482,8 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	 * SQL query + parameters aggregation.
 	 */
 	protected static class SimpleQuery<T extends Yopable> extends org.yop.orm.sql.SimpleQuery {
-		private SimpleQuery(String sql, Type type, Parameters parameters, T element) {
-			super(sql, type, parameters);
+		private SimpleQuery(String sql, Type type, Parameters parameters, T element, Config config) {
+			super(sql, type, parameters, config);
 			this.elements.add(element);
 			this.target = element == null ? null : element.getClass();
 		}

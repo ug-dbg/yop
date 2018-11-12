@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.model.JsonAble;
+import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
@@ -14,9 +15,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
-
-import static org.yop.orm.sql.Constants.DOT;
-import static org.yop.orm.sql.Constants.SQL_SEPARATOR;
 
 /**
  * A comparison path.
@@ -44,9 +42,11 @@ import static org.yop.orm.sql.Constants.SQL_SEPARATOR;
 public class Path<From extends Yopable, To> implements Comparable<Path<From, To>>, JsonAble {
 
 	static final String PATH_TYPE = "path";
+	static final String SEPARATOR = "separator";
 
 	/** All the getters to use to get from "From" to "To" */
 	private List<Function<?, ?>> steps = new ArrayList<>();
+
 
 	private Path() {}
 
@@ -84,11 +84,12 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 
 	/**
 	 * A new path for when it is explicitly needed.
-	 * @param path the path value (e.g. Pojo.jopos.Jopo.name)
+	 * @param path      the path value (e.g. Pojo.jopos.Jopo.name)
+	 * @param separator the sql separator set in the path.
 	 * @return an {@link ExplicitPath} instance for the given path
 	 */
-	static Path explicit(String path) {
-		return new ExplicitPath(path);
+	static Path explicit(String path, String separator) {
+		return new ExplicitPath(path, separator);
 	}
 
 	/**
@@ -139,15 +140,16 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 	 * Build the path, so it can be inserted into an SQL Query.
 	 * <br>
 	 * It looks like 'Pojo→relationToJopo→Jopo.attributeName', where Pojo is the root class.
-	 * @param root the class from which the path is built.
+	 * @param root    the class from which the path is built.
+	 * @param config  the SQL config. Needed for the sql separator to use.
 	 * @return the built path.
 	 */
-	public String toPath(Class<From> root) {
+	public String toPath(Class<From> root, Config config) {
 		Class<?> from = root;
 		List<String> items = new ArrayList<>(this.steps.size());
 		for (Function step : this.steps) {
 			Field field = Reflection.findField(from, step);
-			items.add(toPath(field));
+			items.add(this.toPath(field, config));
 			if (ORMUtil.isCollection(field)) {
 				from = Reflection.getCollectionTarget(field);
 			} else {
@@ -170,7 +172,10 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 
 	@Override
 	public <T extends Yopable> JsonElement toJSON(Context<T> context) {
-		return new ExplicitPath(this.toPath((Class<From>) context.root().getTarget())).toJSON(context);
+		return new ExplicitPath(
+			this.toPath((Class<From>) context.root().getTarget(), Config.DEFAULT),
+			Config.DEFAULT.sqlSeparator()
+		).toJSON(context);
 	}
 
 	/**
@@ -180,17 +185,18 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 	 *   <li>if target class is {@link Yopable} : →fieldName→targetClassName </li>
 	 *   <li>if target class is not {@link Yopable} : .column_name(field) </li>
 	 * </ul>
-	 * @param field the considered field
+	 * @param field   the considered field
+	 * @param config  the SQL config. Needed for the sql separator to use.
 	 * @return the field path portion.
 	 */
-	private static String toPath(Field field) {
+	private String toPath(Field field, Config config) {
 		Class<?> target = getTarget(field);
 		if (Yopable.class.isAssignableFrom(target)) {
-			String out = SQL_SEPARATOR + field.getName();
-			out += SQL_SEPARATOR + ORMUtil.getTargetName((Class<? extends Yopable>) target);
+			String out = config.sqlSeparator() + field.getName();
+			out += config.sqlSeparator() + ORMUtil.getTargetName((Class<? extends Yopable>) target);
 			return out;
 		} else {
-			return DOT + ORMUtil.getColumnName(field);
+			return config.dot() + ORMUtil.getColumnName(field);
 		}
 	}
 
@@ -205,9 +211,11 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 	 */
 	static class ExplicitPath extends Path {
 		private String path;
+		private String separator;
 
-		private ExplicitPath(String path) {
+		private ExplicitPath(String path, String separator) {
 			this.path = path;
+			this.separator = separator;
 		}
 
 		@Override
@@ -216,14 +224,15 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 		}
 
 		@Override
-		public String toPath(Class root) {
+		public String toPath(Class root, Config config) {
 			return this.path;
 		}
 
 		@Override
 		public JsonElement toJSON(Context context) {
 			JsonObject out = new JsonObject();
-			out.addProperty("path", this.path);
+			out.addProperty(PATH_TYPE, this.path);
+			out.addProperty(SEPARATOR, this.separator);
 			return out;
 		}
 

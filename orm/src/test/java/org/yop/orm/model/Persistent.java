@@ -2,20 +2,20 @@ package org.yop.orm.model;
 
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
-import org.yop.orm.sql.Constants;
+import org.yop.orm.sql.Config;
 
 /**
  * Aggregate some common stuff for the model tests classes.
  */
 public abstract class Persistent implements Yopable {
 
-	@Id(sequence = Constants.DEFAULT_SEQ)
+	@Id(sequence = Config.SQL_DEFAULT_SEQ_DEFAULT)
 	@Column(name = "id")
 	private Long id;
 
 	@Override
 	public Long getId() {
-		return id;
+		return this.id;
 	}
 
 	@Override

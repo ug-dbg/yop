@@ -4,10 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
-import org.yop.orm.sql.BatchQuery;
-import org.yop.orm.sql.Parameters;
-import org.yop.orm.sql.Query;
-import org.yop.orm.sql.SimpleQuery;
+import org.yop.orm.sql.*;
 import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
@@ -82,10 +79,11 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 	 * Generate SQL update queries, for the given source objects, using the join directive.
 	 * <br>
 	 * The queries use {@link org.yop.orm.sql.Parameters.DelayedValue} to reference the objects IDs.
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return a collection of {@link Query.Type#UPDATE} queries
 	 */
 	@Override
-	public Collection<Query> toSQLUpdate() {
+	public Collection<Query> toSQLUpdate(Config config) {
 		Collection<Query> updates = new ArrayList<>(0);
 		for (Map.Entry<From, Collection<To>> entry : this.relations.entrySet()) {
 			From from = entry.getKey();
@@ -96,7 +94,7 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 					Parameters parameters = new Parameters()
 						.addParameter(this.sourceTable + "#" + this.sourceColumn, to::getId)
 						.addParameter(this.sourceTable + "#id", from::getId);
-					updates.add(new SimpleQuery(sql, Query.Type.UPDATE, parameters));
+					updates.add(new SimpleQuery(sql, Query.Type.UPDATE, parameters, config));
 				}
 			}
 
@@ -106,7 +104,7 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 					Parameters parameters = new Parameters()
 						.addParameter(this.targetTable + "#" + this.targetColumn, from::getId)
 						.addParameter(this.targetTable + "#id", to::getId);
-					updates.add(new SimpleQuery(sql, Query.Type.UPDATE, parameters));
+					updates.add(new SimpleQuery(sql, Query.Type.UPDATE, parameters, config));
 				}
 			}
 		}
@@ -118,12 +116,13 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 	 * <br>
 	 * The queries use {@link org.yop.orm.sql.Parameters.DelayedValue} to reference the objects IDs.
 	 * <br>
-	 * This method simply uses {@link BatchQuery#merge(List)} on {@link Relation#toSQLUpdate()}.
+	 * This method simply uses {@link BatchQuery#merge(List)} on {@link Relation#toSQLUpdate(Config)}.
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return a collection of {@link Query.Type#UPDATE} queries
 	 */
 	@Override
-	public Collection<Query> toSQLBatchUpdate() {
-		Collection<Query> queries = this.toSQLUpdate();
+	public Collection<Query> toSQLBatchUpdate(Config config) {
+		Collection<Query> queries = this.toSQLUpdate(config);
 		return BatchQuery.merge((List<Query>) queries);
 	}
 

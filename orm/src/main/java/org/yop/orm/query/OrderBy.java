@@ -1,7 +1,7 @@
 package org.yop.orm.query;
 
 import org.yop.orm.model.Yopable;
-import org.yop.orm.sql.Constants;
+import org.yop.orm.sql.Config;
 import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
@@ -62,16 +62,17 @@ public class OrderBy<T extends Yopable> {
 	/**
 	 * Generate the 'ORDER BY' SQL portion for the {@link #orders}
 	 * @param target the target type (holding the fields whose getters are into {@link #orders}).
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL portion that can be added to the {@link Select} query.
 	 */
-	public String toSQL(Class<T> target) {
+	public String toSQL(Class<T> target, Config config) {
 		List<String> orderColumns = new ArrayList<>();
 		for (Order<T, ?> order : this.orders) {
 			Field field = Reflection.findField(target, order.getter);
 
 			String orderColumn =
 				ORMUtil.getTargetName(target)
-				+ Constants.DOT
+				+ config.dot()
 				+ ORMUtil.getColumnName(field);
 
 			orderColumn += order.asc ? ASC : DESC;

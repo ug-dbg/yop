@@ -7,7 +7,6 @@ import org.yop.orm.exception.YopMapperException;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.Context;
 import org.yop.orm.sql.Results;
 import org.yop.orm.sql.adapter.IResultCursor;
 import org.yop.orm.transform.ITransformer;
@@ -28,8 +27,6 @@ public class Mapper {
 
 	private static final Logger logger = LoggerFactory.getLogger(Mapper.class);
 
-	private static final String SEPARATOR = Context.SQL_SEPARATOR;
-
 	/**
 	 * Map the results of an SQL SELECT request on to a target class.
 	 * <br>
@@ -43,7 +40,7 @@ public class Mapper {
 	public static <T extends Yopable> Set<T> map(Results results, Class<T> clazz, FirstLevelCache cache) {
 		try {
 			return map(results, clazz, ORMUtil.getTargetName(clazz), cache);
-		} catch (IllegalAccessException | InstantiationException e) {
+		} catch (IllegalAccessException e) {
 			throw new YopMapperException("Error mapping resultset to [" + clazz.getName() + "]", e);
 		} catch (YopSQLException e) {
 			throw new YopSQLException(
@@ -67,7 +64,6 @@ public class Mapper {
 	 * @param <T>     the target type
 	 * @return a {@link LinkedHashSet} of Ts from the result set. (The order can be quite important with an ORDER BY).
 	 * @throws IllegalAccessException could not read a field
-	 * @throws InstantiationException could not instantiate a target element
 	 * @throws YopSQLException        error reading the resultset
 	 */
 	private static <T extends Yopable> Set<T> map(
@@ -75,7 +71,7 @@ public class Mapper {
 		Class<T> clazz,
 		String context,
 		FirstLevelCache cache)
-		throws IllegalAccessException, InstantiationException {
+		throws IllegalAccessException {
 
 		Map<Long, T> out = new LinkedHashMap<>();
 		while (results.getCursor().next()) {
@@ -148,7 +144,7 @@ public class Mapper {
 	@SuppressWarnings("unchecked")
 	private static void setFieldValue(Field field, Yopable element, String context, Results results) {
 		String columnName = field.getAnnotation(Column.class).name();
-		columnName = context + SEPARATOR + columnName;
+		columnName = context + results.getQuery().getConfig().sqlSeparator() + columnName;
 		String shortened = results.getQuery().getShortened(columnName);
 		Class<?> fieldType = field.getType();
 
@@ -250,7 +246,6 @@ public class Mapper {
 	 * @param context the target element context
 	 * @param <T> the target type
 	 * @throws IllegalAccessException could not read a field
-	 * @throws InstantiationException could not instantiate a target element
 	 * @throws YopSQLException        error reading the resultset
 	 * @throws YopMappingException    Incorrect mapping. Mostly a non Yopable/Collection of Yopable relationship.
 	 */
@@ -260,11 +255,12 @@ public class Mapper {
 		T element,
 		String context,
 		FirstLevelCache cache)
-		throws IllegalAccessException, InstantiationException {
+		throws IllegalAccessException {
 
 		Collection<Field> fields = ORMUtil.getJoinedFields(element.getClass());
+		String separator = results.getQuery().getConfig().sqlSeparator();
 		for (Field field : fields) {
-			String newContext = context + SEPARATOR + field.getName() + SEPARATOR;
+			String newContext = context + separator + field.getName() + separator;
 			Yopable target;
 			if(ORMUtil.isCollection(field)) {
 				Class<? extends Yopable> targetClass = ORMUtil.getRelationFieldType(field);

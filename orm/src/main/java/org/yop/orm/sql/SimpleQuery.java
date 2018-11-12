@@ -16,9 +16,10 @@ public class SimpleQuery extends Query {
 	 * @param sql        the SQL query to execute
 	 * @param type       the query type
 	 * @param parameters the query parameters
+	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 */
-	public SimpleQuery(String sql, Type type, Parameters parameters) {
-		super(sql, type);
+	public SimpleQuery(String sql, Type type, Parameters parameters, Config config) {
+		super(sql, type, config);
 		this.parameters = parameters;
 	}
 

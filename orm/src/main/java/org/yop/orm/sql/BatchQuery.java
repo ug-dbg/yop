@@ -31,11 +31,12 @@ public class BatchQuery extends Query {
 	/**
 	 * Default constructor : SQL query.
 	 *
-	 * @param sql  the SQL query to execute
-	 * @param type the query type
+	 * @param sql    the SQL query to execute
+	 * @param type   the query type
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 */
-	public BatchQuery(String sql, Type type) {
-		super(sql, type);
+	public BatchQuery(String sql, Type type, Config config) {
+		super(sql, type, config);
 	}
 
 	/**
@@ -116,7 +117,7 @@ public class BatchQuery extends Query {
 	 * </ul>
 	 * @param queries the queries to merge.
 	 * @return a single deduplicated BatchQuery (as a singleton list)
-	 *         or simply the deduplicated queries if {@link Constants#USE_BATCH_INSERTS} is set to false.
+	 *         or simply the deduplicated queries if {@link Config#useBatchInserts()} is set to false.
 	 * @throws YopRuntimeException when there are more than 1 SQL query among the queries
 	 */
 	public static List<Query> merge(List<Query> queries) {
@@ -128,7 +129,7 @@ public class BatchQuery extends Query {
 
 		for (Query query : uniqueQueries) {
 			if(merged == null) {
-				if(query.getType() == Type.INSERT && ! Constants.USE_BATCH_INSERTS) {
+				if(query.getType() == Type.INSERT && ! query.config.useBatchInserts()) {
 					// We are asked not to batch INSERT queries (driver limitation, for instance)
 					return uniqueQueries;
 				}
@@ -149,7 +150,7 @@ public class BatchQuery extends Query {
 		// Only one batch ? Return a SimpleQuery, for coherence purposes.
 		if (merged != null && merged.parametersBatches.size() == 1) {
 			Query simpleQuery = new SimpleQuery(
-				merged.sql, merged.getType(), merged.parametersBatches.get(0)
+				merged.sql, merged.getType(), merged.parametersBatches.get(0), merged.config
 			).askGeneratedKeys(merged.askGeneratedKeys, merged.target);
 			simpleQuery.elements.addAll(merged.getElements());
 			return Collections.singletonList(simpleQuery);
@@ -166,7 +167,7 @@ public class BatchQuery extends Query {
 	 * @return a batch query with the same {@link Query#sql}, {@link Query#target} and {@link #askGeneratedKeys}
 	 */
 	private static BatchQuery toBatch(Query query) {
-		BatchQuery batch = new BatchQuery(query.getSql(), query.getType());
+		BatchQuery batch = new BatchQuery(query.getSql(), query.getType(), query.config);
 		batch.target = query.target;
 		batch.askGeneratedKeys(query.askGeneratedKeys(), query.getTarget());
 		return batch;

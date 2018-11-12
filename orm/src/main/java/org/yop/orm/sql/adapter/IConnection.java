@@ -1,5 +1,6 @@
 package org.yop.orm.sql.adapter;
 
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Query;
 
 import java.sql.SQLException;
@@ -12,8 +13,29 @@ import java.sql.SQLException;
  * The reason for this is making a <i>very small</i> step toward Android.
  * <br><br>
  * Of course, you can easily get an IConnection for JDBC : {@link org.yop.orm.sql.adapter.jdbc.JDBCConnection}.
+ * <br><br>
+ * This connection abstraction also provides the configuration to use.
+ * <br>
+ * The default implementation returns a {@link Config} initialized from system properties or default values.
+ * <br>
+ * See {@link Config#initFromSystemProperties()}
+ * <br>
+ * The JDBC implementation provides a method to override default configuration :
+ * {@link org.yop.orm.sql.adapter.jdbc.JDBCConnection#withConfig(Config)}.
  */
 public interface IConnection extends AutoCloseable {
+
+	/**
+	 * Get the config for this connection (SQL separator, show sql...).
+	 * <br>
+	 * Override me to manage a custom configuration in your own implementation.
+	 * <br>
+	 * See {@link org.yop.orm.sql.adapter.jdbc.JDBCConnection#config()}
+	 * @return the default config, initialized from system properties.
+	 */
+	default Config config() {
+		return Config.DEFAULT;
+	}
 
 	/**
 	 * Prepare the request (e.g. SQL prepared statement) to be executed using the query.
