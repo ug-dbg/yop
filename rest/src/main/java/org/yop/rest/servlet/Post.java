@@ -125,6 +125,7 @@ public class Post implements HttpMethod {
 	private static Object doSelect(RestRequest restRequest, IConnection connection) {
 		Select<Yopable> select = Select.fromJSON(
 			restRequest.getContent(),
+			connection.config(),
 			restRequest.getRestResource().getClassLoader()
 		);
 		if (select.getTarget() != restRequest.getRestResource()) {
@@ -148,6 +149,7 @@ public class Post implements HttpMethod {
 	private static Object doDelete(RestRequest restRequest, IConnection connection) {
 		Delete<Yopable> delete = Delete.fromJSON(
 			restRequest.getContent(),
+			connection.config(),
 			restRequest.getRestResource().getClassLoader()
 		);
 		if (delete.getTarget() != restRequest.getRestResource()) {
@@ -171,6 +173,7 @@ public class Post implements HttpMethod {
 	private static Object doUpsert(RestRequest restRequest, IConnection connection) {
 		Upsert<Yopable> upsert = Upsert.fromJSON(
 			restRequest.getContent(),
+			connection.config(),
 			restRequest.getRestResource().getClassLoader()
 		);
 		if (upsert.getTarget() != restRequest.getRestResource()) {

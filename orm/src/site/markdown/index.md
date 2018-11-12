@@ -8,7 +8,7 @@ YOP is a lightweight ORM wannabe. Hit and run, no session, no bytecode generatio
 Actually, YOP is a tool to manage tree relation propagation at runtime when serializing/unserializing.  
 Relation propagation management is mostly achieved using Java method references.  
 
-The main idea is **not using literals** to indicate relations between objects but **getters** : 
+The main idea is **not using literals** to indicate relations between objects but **getters** :  
 - 'Find usages' and 'Refactor' tools can be safely used  
 - Auto-completion for method references should be available  
 
