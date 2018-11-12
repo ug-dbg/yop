@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import org.yop.orm.query.Context;
+import org.yop.orm.sql.Config;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
@@ -26,13 +27,14 @@ public interface JsonAble {
 	 * Default implementation :
 	 * set state from any non-static field of the class whose name matches a JSON representation key.
 	 * <br>
-	 * See {@link #fieldValue(Context, Field, JsonElement)}.
+	 * See {@link #fieldValue(Context, Field, JsonElement, Config)}.
 	 * @param context the current context
 	 * @param element the JSON element state
+	 * @param config  the SQL config. Needed for the sql separator to use - for some very specific cases.
 	 * @param <T> the context target type
 	 */
 	@SuppressWarnings("unchecked")
-	default <T extends Yopable> void fromJSON(Context<T> context, JsonElement element) {
+	default <T extends Yopable> void fromJSON(Context<T> context, JsonElement element, Config config) {
 		if (! (element instanceof JsonObject)) {
 			return;
 		}
@@ -42,7 +44,7 @@ public interface JsonAble {
 			if (field == null || java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
 				continue;
 			}
-			Object fieldValue = fieldValue(context, field, object.get(key));
+			Object fieldValue = fieldValue(context, field, object.get(key), config);
 			if (fieldValue != null) {
 				Reflection.set(field, this, fieldValue);
 			}
@@ -111,17 +113,23 @@ public interface JsonAble {
 	 * @param context        the current context
 	 * @param field          the target field
 	 * @param fieldValueJSON the field JSON state
+	 * @param config         the SQL config. Needed for the sql separator to use - for some very specific cases
 	 * @return the value that can be set on the field, null if the field type did not match anything.
 	 */
 	@SuppressWarnings("unchecked")
-	static Object fieldValue(Context<? extends Yopable> context, Field field, JsonElement fieldValueJSON) {
+	static Object fieldValue(
+		Context<? extends Yopable> context,
+		Field field,
+		JsonElement fieldValueJSON,
+		Config config) {
+
 		Class fieldType = Primitives.wrap(field.getType());
 		if (fieldType.isEnum()) {
 			return Enum.valueOf(fieldType, fieldValueJSON.getAsString());
 		}
 		if (JsonAble.class.isAssignableFrom(fieldType)) {
 			JsonAble fieldValue = (JsonAble) Reflection.newInstanceNoArgs(fieldType);
-			fieldValue.fromJSON(context, fieldValueJSON);
+			fieldValue.fromJSON(context, fieldValueJSON, config);
 			return fieldValue;
 		}
 		if (Boolean.class.isAssignableFrom(fieldType)) {

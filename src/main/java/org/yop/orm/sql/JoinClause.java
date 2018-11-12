@@ -56,7 +56,7 @@ public class JoinClause implements Comparable<JoinClause> {
 
 	@Override
 	public int compareTo(@Nonnull JoinClause o) {
-		return this.context.getPath().compareTo(o.context.getPath());
+		return this.context.getPath(Config.DEFAULT).compareTo(o.context.getPath(Config.DEFAULT));
 	}
 
 	/**

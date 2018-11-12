@@ -6,6 +6,7 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.gen.Column;
 import org.yop.orm.gen.ForeignKey;
 import org.yop.orm.gen.Table;
+import org.yop.orm.sql.Config;
 
 import java.sql.Time;
 import java.text.MessageFormat;
@@ -218,10 +219,11 @@ public abstract class ORMTypes extends HashMap<Class<?>, String> {
 	 * that can be used to prepare a DB for the Yopable objects of a given package.
 	 * <br><b>⚠⚠⚠  i.e. Every table concerned by the package prefix will be dropped in the script ! ⚠⚠⚠ </b>
 	 * @param packagePrefix the Yopable package prefix
+	 * @param config        the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL script, as an ordered list of SQL queries to run.
 	 */
-	public List<String> generateScript(String packagePrefix) {
-		Set<Table> tables = Table.findAllInClassPath(packagePrefix, this);
+	public List<String> generateScript(String packagePrefix, Config config) {
+		Set<Table> tables = Table.findAllInClassPath(packagePrefix, this, config);
 		List<String> script = new ArrayList<>();
 
 		// Relation tables must be deleted first

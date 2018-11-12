@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import org.yop.orm.evaluation.*;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.MessageUtil;
 
@@ -107,12 +108,13 @@ public class Where<T extends Yopable> implements JsonAble {
 	 * Create the current WHERE clause SQL.
 	 * @param context    the context from which the query clause must be built
 	 * @param parameters the query parameters that will be updated with this where clause parameters
+	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL WHERE clause
 	 */
-	public String toSQL(Context<T> context, Parameters parameters) {
+	public String toSQL(Context<T> context, Parameters parameters, Config config) {
 		String sql = "";
 		sql += Joiner.on(" AND ").join(
-				this.evaluations.stream().map(e -> e.toSQL(context, parameters)).collect(Collectors.toList())
+				this.evaluations.stream().map(e -> e.toSQL(context, parameters, config)).collect(Collectors.toList())
 		);
 		return sql;
 	}

@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.ORMUtil;
 
@@ -43,12 +44,12 @@ public class IdIn  implements Evaluation {
 	 * Simply build a SQL portion : '[Context][ID column] IN (?,?...)' and fill the parameters.
 	 */
 	@Override
-	public <Y extends Yopable> String toSQL(Context<Y> context, Parameters parameters) {
+	public <Y extends Yopable> String toSQL(Context<Y> context, Parameters parameters, Config config) {
 		if(this.values.isEmpty()) {
 			return "";
 		}
 
-		String idColumn = ORMUtil.getIdColumn(context);
+		String idColumn = ORMUtil.getIdColumn(context, config);
 		Field idField = ORMUtil.getIdField(context.getTarget());
 
 		return MessageFormat.format(
@@ -70,7 +71,7 @@ public class IdIn  implements Evaluation {
 	}
 
 	@Override
-	public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element) {
+	public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element, Config config) {
 		Evaluation.super.toJSON(context);
 		element.getAsJsonObject().get(VALUES).getAsJsonArray().forEach(e -> this.values.add(e.getAsLong()));
 	}

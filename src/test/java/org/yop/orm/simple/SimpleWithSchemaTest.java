@@ -160,7 +160,11 @@ public class SimpleWithSchemaTest extends DBMSSwitch {
 
 		Executor.executeQuery(
 			connection,
-			new SimpleQuery("SELECT COUNT(*) FROM yop.POJO_JOPO_relation", Query.Type.SELECT, new Parameters()),
+			new SimpleQuery(
+				"SELECT COUNT(*) FROM yop.POJO_JOPO_relation",
+				Query.Type.SELECT,
+				new Parameters(),
+				connection.config()),
 			action
 		);
 		}

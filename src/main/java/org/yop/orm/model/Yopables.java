@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.IJoin;
 import org.yop.orm.query.json.JSON;
+import org.yop.orm.sql.Config;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,7 +29,7 @@ public class Yopables<T extends Yopable> extends ArrayList<T> implements JsonAbl
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <U extends Yopable> void fromJSON(Context<U> context, JsonElement elements) {
+	public <U extends Yopable> void fromJSON(Context<U> context, JsonElement elements, Config config) {
 		this.addAll(JSON.from((Class) context.getTarget(), elements.getAsJsonArray()));
 	}
 

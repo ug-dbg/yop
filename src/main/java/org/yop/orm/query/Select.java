@@ -128,18 +128,19 @@ public class Select<T extends Yopable> implements JsonAble {
 	/**
 	 * Create a Select query from the given json String representation.
 	 * @param json         the Select query JSON representation
+	 * @param config       the SQL config (sql separator, use batch inserts...)
 	 * @param classLoaders the class loaders to use to try to load the target resource
 	 * @param <T> the target context type. This should match the one set in the JSON representation of the query !
 	 * @return a new Select query whose state is set from its JSON representation
 	 */
-	public static <T extends Yopable> Select<T> fromJSON(String json, ClassLoader... classLoaders) {
+	public static <T extends Yopable> Select<T> fromJSON(String json, Config config, ClassLoader... classLoaders) {
 		try {
 			JsonParser parser = new JsonParser();
 			JsonObject selectJSON = (JsonObject) parser.parse(json);
 			String targetClassName = selectJSON.getAsJsonPrimitive("target").getAsString();
 			Class<T> target = Reflection.forName(targetClassName, classLoaders);
 			Select<T> select = Select.from(target);
-			select.fromJSON(select.context, selectJSON);
+			select.fromJSON(select.context, selectJSON, config);
 			return select;
 		} catch (RuntimeException e) {
 			throw new YopSerializableQueryException(
@@ -248,14 +249,14 @@ public class Select<T extends Yopable> implements JsonAble {
 		Set<Long> ids;
 
 		Parameters parameters = new Parameters();
-		String request = this.toSQLAnswerRequest(parameters);
-		Query query = new SimpleQuery(request, Query.Type.SELECT, parameters);
+		String request = this.toSQLAnswerRequest(parameters, connection.config());
+		Query query = new SimpleQuery(request, Query.Type.SELECT, parameters, connection.config());
 
 		Set<T> elements = Executor.executeSelectQuery(
 			connection,
 			query,
 			this.context.getTarget(),
-			this.cache == null ? new FirstLevelCache() : this.cache
+			this.cache == null ? new FirstLevelCache(connection.config()) : this.cache
 		);
 		ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toSet());
 
@@ -264,13 +265,13 @@ public class Select<T extends Yopable> implements JsonAble {
 		}
 
 		parameters = new Parameters();
-		request = this.toSQLDataRequest(ids, parameters);
-		query = new SimpleQuery(request, Query.Type.SELECT, parameters);
+		request = this.toSQLDataRequest(ids, parameters, connection.config());
+		query = new SimpleQuery(request, Query.Type.SELECT, parameters, connection.config());
 		return Executor.executeSelectQuery(
 			connection,
 			query,
 			this.context.getTarget(),
-			this.cache == null ? new FirstLevelCache() : this.cache
+			this.cache == null ? new FirstLevelCache(connection.config()) : this.cache
 		);
 	}
 
@@ -290,14 +291,14 @@ public class Select<T extends Yopable> implements JsonAble {
 		Parameters parameters = new Parameters();
 		String request =
 			strategy == Strategy.IN
-			? this.toSQLDataRequestWithIN(parameters)
-			: this.toSQLDataRequest(parameters);
+			? this.toSQLDataRequestWithIN(parameters, connection.config())
+			: this.toSQLDataRequest(parameters, connection.config());
 
 		return Executor.executeSelectQuery(
 			connection,
-			new SimpleQuery(request, Query.Type.SELECT, parameters),
+			new SimpleQuery(request, Query.Type.SELECT, parameters, connection.config()),
 			this.context.getTarget(),
-			this.cache == null ? new FirstLevelCache() : this.cache
+			this.cache == null ? new FirstLevelCache(connection.config()) : this.cache
 		);
 	}
 
@@ -329,17 +330,18 @@ public class Select<T extends Yopable> implements JsonAble {
 	/**
 	 * Count the elements that match the query.
 	 * <br>
-	 * We actually use {@link #toSQLIDsRequest(Parameters, boolean)} to get distinct IDs and count the number of rows.
+	 * We actually use {@link #toSQLIDsRequest(Parameters, boolean, Config)}
+	 * to get distinct IDs and count the number of rows.
 	 * @param connection the connection to use for the request
 	 * @return the SELECT result, as an unique T
 	 */
 	public Long count(IConnection connection) {
 		Parameters parameters = new Parameters();
-		String request = this.toSQLIDsRequest(parameters, true);
+		String request = this.toSQLIDsRequest(parameters, true, connection.config());
 
 		return Executor.executeQuery(
 			connection,
-			new SimpleQuery(request, Query.Type.SELECT, parameters),
+			new SimpleQuery(request, Query.Type.SELECT, parameters, connection.config()),
 			results -> {results.getCursor().next(); return results.getCursor().getLong(1);}
 		);
 	}
@@ -353,10 +355,14 @@ public class Select<T extends Yopable> implements JsonAble {
 	 */
 	public IdMap executeForIds(IConnection connection) {
 		Parameters parameters = new Parameters();
-		String request = this.toSQLIDsRequest(parameters, false);
-		Query query = new SimpleQuery(request, Query.Type.SELECT, parameters);
+		String request = this.toSQLIDsRequest(parameters, false, connection.config());
+		Query query = new SimpleQuery(request, Query.Type.SELECT, parameters, connection.config());
 
-		return Executor.executeQuery(connection, query, IdMap.populateAction(this.context.getTarget()));
+		return Executor.executeQuery(
+			connection,
+			query,
+			IdMap.populateAction(this.context.getTarget(), connection.config())
+		);
 	}
 
 	/**
@@ -390,14 +396,15 @@ public class Select<T extends Yopable> implements JsonAble {
 	/**
 	 * Find all the columns to select (search in current target type and join clauses if required)
 	 * @param addJoinClauseColumns true to add the columns from the join clauses
+	 * @param config               the SQL config (sql separator, use batch inserts...)
 	 * @return the columns to select
 	 */
-	private Set<Context.SQLColumn> columns(boolean addJoinClauseColumns) {
-		Set<Context.SQLColumn> columns = this.context.getColumns();
+	private Set<Context.SQLColumn> columns(boolean addJoinClauseColumns, Config config) {
+		Set<Context.SQLColumn> columns = this.context.getColumns(config);
 
 		if (addJoinClauseColumns) {
 			for (IJoin<T, ? extends Yopable> join : this.joins) {
-				columns.addAll(join.columns(this.context, true));
+				columns.addAll(join.columns(this.context, true, config));
 			}
 		}
 		return columns;
@@ -405,28 +412,31 @@ public class Select<T extends Yopable> implements JsonAble {
 
 	/**
 	 * Find the target type ID alias
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the target type T id alias
 	 */
-	private String idAlias() {
-		return this.idAlias(this.context.tableAlias());
+	private String idAlias(Config config) {
+		return this.idAlias(this.context.tableAlias(), config);
 	}
 
 	/**
 	 * Find the target type ID alias
 	 * @param prefix a context prefix
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the target type T id alias that will be added before the computed id alias
 	 */
-	private String idAlias(String prefix) {
-		return this.context.idAlias(prefix);
+	private String idAlias(String prefix, Config config) {
+		return this.context.idAlias(prefix, config);
 	}
 
 	/**
 	 * Create the SQL columns clause
 	 * @param addJoinClauseColumns true to fetch the columns from the join clauses
+	 * @param config               the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL columns clause
 	 */
-	private String toSQLColumnsClause(boolean addJoinClauseColumns) {
-		Set<Context.SQLColumn> columns = this.columns(addJoinClauseColumns);
+	private String toSQLColumnsClause(boolean addJoinClauseColumns, Config config) {
+		Set<Context.SQLColumn> columns = this.columns(addJoinClauseColumns, config);
 		return
 			columns.isEmpty()
 			? "*"
@@ -435,11 +445,12 @@ public class Select<T extends Yopable> implements JsonAble {
 
 	/**
 	 * Create the SQL columns clause <b>only for ID columns </b>!
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL columns clause for ID columns
 	 */
-	private String toSQLIdColumnsClause() {
+	private String toSQLIdColumnsClause(Config config) {
 		Set<Context.SQLColumn> columns = this
-			.columns(true)
+			.columns(true, config)
 			.stream()
 			.filter(Context.SQLColumn::isId)
 			.collect(Collectors.toSet());
@@ -453,62 +464,69 @@ public class Select<T extends Yopable> implements JsonAble {
 	/**
 	 * Create the SQL join clause.
 	 * @param evaluate true to add the where clauses to the join clauses
+	 * @param config   the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL join clause
 	 */
-	private JoinClause.JoinClauses toSQLJoin(boolean evaluate) {
-		return AbstractJoin.toSQLJoin(this.joins, this.context, evaluate);
+	private JoinClause.JoinClauses toSQLJoin(boolean evaluate, Config config) {
+		return AbstractJoin.toSQLJoin(this.joins, this.context, evaluate, config);
 	}
 
 	/**
 	 * Build the WHERE clause from {@link #where} and for this {@link #context}.
 	 * <b>⚠ Does not prefix with the 'WHERE' keyword ! ⚠</b>
 	 * @param parameters the query parameters that will be populated with the WHERE clause parameters
+	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the Where clause for {@link #where} and {@link #context}
 	 */
-	private String toSQLWhere(Parameters parameters) {
-		return this.where.toSQL(this.context, parameters);
+	private String toSQLWhere(Parameters parameters, Config config) {
+		return this.where.toSQL(this.context, parameters, config);
 	}
 
 	/**
 	 * 2 query strategy : create the SQL 'answer' request : only find the target type that matches.
+	 * @param parameters the query parameters that will be populated with the WHERE clause parameters
+	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'answer' request.
 	 */
-	private String toSQLAnswerRequest(Parameters parameters) {
-		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true);
+	private String toSQLAnswerRequest(Parameters parameters, Config config) {
+		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true, config);
 		return this.select(
-			this.toSQLColumnsClause(false),
+			this.toSQLColumnsClause(false, config),
 			this.getTableName(),
-			this.context.getPath(),
+			this.context.getPath(config),
 			joinClauses.toSQL(parameters),
-			Where.toSQL(this.toSQLWhere(parameters), joinClauses.toSQLWhere(parameters)),
-			this.orderBy.toSQL(this.context.getTarget())
+			Where.toSQL(this.toSQLWhere(parameters, config), joinClauses.toSQLWhere(parameters)),
+			this.orderBy.toSQL(this.context.getTarget(), config)
 		);
 	}
 
 	/**
 	 * 2 query strategy : create the SQL 'data' request : fetch all data (including joins) for the given ids.
 	 * <br>
-	 * See {@link #toSQLAnswerRequest(Parameters)}
+	 * See {@link #toSQLAnswerRequest(Parameters, Config)}
+	 * @param parameters the query parameters that will be populated with the WHERE clause parameters
+	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'data' request.
 	 */
-	private String toSQLDataRequest(Set<Long> ids, Parameters parameters) {
-		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false);
+	private String toSQLDataRequest(Set<Long> ids, Parameters parameters, Config config) {
+		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
 		return this.select(
-			this.toSQLColumnsClause(true),
+			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
-			this.context.getPath(),
+			this.context.getPath(config),
 			joinClauses.toSQL(parameters),
-			Where.toSQL(this.idAlias() + " IN (" + Joiner.on(",").join(ids) + ") ", joinClauses.toSQLWhere(parameters)),
-			this.orderBy.toSQL(this.context.getTarget())
+			Where.toSQL(this.idAlias(config) + " IN (" + Joiner.on(",").join(ids) + ") ", joinClauses.toSQLWhere(parameters)),
+			this.orderBy.toSQL(this.context.getTarget(), config)
 		);
 	}
 
 	/**
 	 * Single query strategy with EXISTS : create the SQL 'data' request.
 	 * @param parameters the query parameters - will be populated with the actual request parameters
+	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'data' request.
 	 */
-	private String toSQLDataRequest(Parameters parameters) {
+	private String toSQLDataRequest(Parameters parameters, Config config) {
 		// First we have to build a 'select ids' query for the EXISTS subquery
 		// We copy the current 'Select' object to add a suffix to the context
 		// We link the EXISTS subquery to the global one (id = subquery.id)
@@ -516,28 +534,28 @@ public class Select<T extends Yopable> implements JsonAble {
 		Select<T> copyForAlias = new Select<>(this.context.copy("_0"), this.where, this.joins);
 
 		String whereClause = Where.toSQL(
-			copyForAlias.toSQLWhere(parameters),
-			this.idAlias() + " = " + copyForAlias.idAlias()
+			copyForAlias.toSQLWhere(parameters, config),
+			this.idAlias(config) + " = " + copyForAlias.idAlias(config)
 		);
 
-		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true);
+		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true, config);
 		String existsSubSelect = this.selectDistinct(
-			copyForAlias.idAlias(),
+			copyForAlias.idAlias(config),
 			copyForAlias.getTableName(),
-			copyForAlias.context.getPath(),
+			copyForAlias.context.getPath(config),
 			joinClauses.toSQL(parameters),
 			Where.toSQL(whereClause, joinClauses.toSQLWhere(parameters))
 		);
 
 		// Now we can build the global query that fetches the data when the EXISTS clause matches
-		joinClauses = this.toSQLJoin(false);
+		joinClauses = this.toSQLJoin(false, config);
 		return this.select(
-			this.toSQLColumnsClause(true),
+			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
-			this.context.getPath(),
+			this.context.getPath(config),
 			joinClauses.toSQL(parameters),
 			Where.toSQL(" EXISTS (" + existsSubSelect + ") ", joinClauses.toSQLWhere(parameters)),
-			this.orderBy.toSQL(this.context.getTarget())
+			this.orderBy.toSQL(this.context.getTarget(), config)
 		);
 	}
 
@@ -545,9 +563,10 @@ public class Select<T extends Yopable> implements JsonAble {
 	 * Single query strategy with EXISTS : create the SQL 'data' request that only returns ID columns.
 	 * @param parameters the query parameters - will be populated with the actual request parameters
 	 * @param count      if true, the request will be on 'COUNT(DISTINCT id_column)' instead of the actual columns
+	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'data' request.
 	 */
-	private String toSQLIDsRequest(Parameters parameters, boolean count) {
+	private String toSQLIDsRequest(Parameters parameters, boolean count, Config config) {
 		// First we have to build a 'select ids' query for the EXISTS subquery
 		// We copy the current 'Select' object to add a suffix to the context
 		// We link the EXISTS subquery to the global one (id = subquery.id)
@@ -555,28 +574,28 @@ public class Select<T extends Yopable> implements JsonAble {
 		Select<T> copyForAlias = new Select<>(this.context.copy("_0"), this.where, this.joins);
 
 		String whereClause = Where.toSQL(
-			copyForAlias.toSQLWhere(parameters),
-			this.idAlias() + " = " + copyForAlias.idAlias()
+			copyForAlias.toSQLWhere(parameters, config),
+			this.idAlias(config) + " = " + copyForAlias.idAlias(config)
 		);
 
-		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true);
+		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true, config);
 		String existsSubSelect = this.selectDistinct(
-			copyForAlias.idAlias(),
+			copyForAlias.idAlias(config),
 			copyForAlias.getTableName(),
-			copyForAlias.context.getPath(),
+			copyForAlias.context.getPath(config),
 			joinClauses.toSQL(parameters),
 			Where.toSQL(whereClause, joinClauses.toSQLWhere(parameters))
 		);
 
 		// Now we can build the global query that fetches the IDs for every type when the EXISTS clause matches
-		joinClauses = this.toSQLJoin(false);
+		joinClauses = this.toSQLJoin(false, config);
 		return this.select(
-			count ? MessageFormat.format(COUNT_DISTINCT, this.idAlias())  : this.toSQLIdColumnsClause(),
+			count ? MessageFormat.format(COUNT_DISTINCT, this.idAlias(config))  : this.toSQLIdColumnsClause(config),
 			this.getTableName(),
-			this.context.getPath(),
+			this.context.getPath(config),
 			joinClauses.toSQL(parameters),
 			Where.toSQL(" EXISTS (" + existsSubSelect + ") ", joinClauses.toSQLWhere(parameters)),
-			this.orderBy.toSQL(this.context.getTarget())
+			this.orderBy.toSQL(this.context.getTarget(), config)
 		);
 	}
 
@@ -584,26 +603,26 @@ public class Select<T extends Yopable> implements JsonAble {
 	 * Single query strategy with IN : create the SQL 'data' request.
 	 * @return the SQL 'data' request.
 	 */
-	private String toSQLDataRequestWithIN(Parameters parameters) {
-		String path = this.context.getPath();
-		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true);
+	private String toSQLDataRequestWithIN(Parameters parameters, Config config) {
+		String path = this.context.getPath(config);
+		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true, config);
 		String inSubQuery = this.select(
-			this.idAlias(),
+			this.idAlias(config),
 			this.getTableName(),
 			path,
 			joinClauses.toSQL(parameters),
-			Where.toSQL(this.toSQLWhere(parameters), joinClauses.toSQLWhere(parameters)),
+			Where.toSQL(this.toSQLWhere(parameters, config), joinClauses.toSQLWhere(parameters)),
 			""
 		);
 
-		joinClauses = this.toSQLJoin(false);
+		joinClauses = this.toSQLJoin(false, config);
 		return this.select(
-			this.toSQLColumnsClause(true),
+			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
 			path,
 			joinClauses.toSQL(parameters),
-			Where.toSQL(this.idAlias() + " IN (" + inSubQuery + ")", joinClauses.toSQLWhere(parameters)),
-			this.orderBy.toSQL(this.context.getTarget())
+			Where.toSQL(this.idAlias(config) + " IN (" + inSubQuery + ")", joinClauses.toSQLWhere(parameters)),
+			this.orderBy.toSQL(this.context.getTarget(), config)
 		);
 	}
 

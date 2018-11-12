@@ -8,6 +8,7 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.JoinClause;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.ORMUtil;
@@ -62,16 +63,21 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	}
 
 	@Override
-	public void toSQL(JoinClause.JoinClauses joinClauses, Context<From> parent, boolean includeWhereClause) {
+	public void toSQL(
+		JoinClause.JoinClauses joinClauses,
+		Context<From> parent,
+		boolean includeWhereClause,
+		Config config) {
+
 		Class<From> from = parent.getTarget();
 		Field field = this.getField(from);
 		Context<To> to = this.to(parent, field);
 
 		Parameters parameters = new Parameters();
-		String joinClause = toSQLJoin(this.joinType(), parent, to, field);
+		String joinClause = toSQLJoin(this.joinType(), parent, to, field, config);
 		if(includeWhereClause) {
 			Parameters whereParameters = new Parameters();
-			String whereClause = this.where.toSQL(to, whereParameters);
+			String whereClause = this.where.toSQL(to, whereParameters, config);
 			joinClauses.addWhereClause(whereClause, whereParameters);
 		}
 
@@ -84,13 +90,13 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 			joinClauses.put(to, new JoinClause(joinClause, to, parameters));
 		}
 
-		this.joins.forEach(join -> join.toSQL(joinClauses, to, includeWhereClause));
+		this.joins.forEach(join -> join.toSQL(joinClauses, to, includeWhereClause, config));
 	}
 
 	@Override
-	public String joinTableAlias(Context<From> context) {
+	public String joinTableAlias(Context<From> context, Config config) {
 		Field field = this.getField(context.getTarget());
-		return context.getPath() + Context.SQL_SEPARATOR + field.getName();
+		return context.getPath(config) + config.sqlSeparator() + field.getName();
 	}
 
 	@Override
@@ -134,15 +140,17 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	 * @param joins      the join clauses
 	 * @param context    the current context
 	 * @param evaluate   true to add {@link IJoin#where()} clauses evaluations
+	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL join clauses
 	 */
 	static <T extends Yopable> JoinClause.JoinClauses toSQLJoin(
 		Collection<IJoin<T, ? extends Yopable>> joins,
 		Context<T> context,
-		boolean evaluate) {
+		boolean evaluate,
+		Config config) {
 
 		JoinClause.JoinClauses joinClauses = new JoinClause.JoinClauses();
-		joins.forEach(j -> j.toSQL(joinClauses, context, evaluate));
+		joins.forEach(j -> j.toSQL(joinClauses, context, evaluate, config));
 		return joinClauses;
 	}
 
@@ -151,6 +159,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	 * @param parent the parent context
 	 * @param to     the target context
 	 * @param field  the field from 'parent' to 'to' (should have a @JoinTable/@JoinColumn annotation)
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @param <From> the source type
 	 * @param <To>   the target type
 	 * @return the SQL join table clauses
@@ -160,15 +169,16 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		JoinType type,
 		Context<From> parent,
 		Context<To> to,
-		Field field) {
+		Field field,
+		Config config) {
 
 		JoinTable joinTableAnnotation   = field.getAnnotation(JoinTable.class);
 		JoinColumn joinColumnAnnotation = field.getAnnotation(JoinColumn.class);
 
 		if (joinTableAnnotation != null) {
-			return toSQLJoin(type, parent, to, joinTableAnnotation, field.getName());
+			return toSQLJoin(type, parent, to, joinTableAnnotation, field.getName(), config);
 		} else if (joinColumnAnnotation != null) {
-			return toSQLJoin(type, parent, to, joinColumnAnnotation, field.getName());
+			return toSQLJoin(type, parent, to, joinColumnAnnotation, field.getName(), config);
 		} else {
 			throw new YopMappingException(
 				"Field [" + Reflection.fieldToString(field) + "] has no JoinTable/JoinColumn annotation !"
@@ -184,6 +194,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	 * @param to                  the target context
 	 * @param joinTableAnnotation the field join table annotation
 	 * @param relationName        the relation name from 'parent' to 'to' ({@link Field#getName()})
+	 * @param config              the SQL config (sql separator, use batch inserts...)
 	 * @param <From> the source type
 	 * @param <To>   the target type
 	 * @return the SQL join table clauses (1 for the target table and 1 for the join table)
@@ -193,15 +204,16 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		Context<From> parent,
 		Context<To> to,
 		JoinTable joinTableAnnotation,
-		String relationName) {
+		String relationName,
+		Config config) {
 
 		String joinTable = ORMUtil.getJoinTableQualifiedName(joinTableAnnotation);
 		String joinTableSourceColumn = joinTableAnnotation.sourceColumn();
 		String joinTableTargetColumn = joinTableAnnotation.targetColumn();
-		String relationAlias = parent.getPath() + Context.SQL_SEPARATOR + relationName;
+		String relationAlias = parent.getPath(config) + config.sqlSeparator() + relationName;
 		String fromIdColumn = Reflection.newInstanceNoArgs(parent.getTarget()).getIdColumn();
 
-		String targetTableAlias = to.getPath();
+		String targetTableAlias = to.getPath(config);
 		String toIdColumn = Reflection.newInstanceNoArgs(to.getTarget()).getIdColumn();
 
 		return
@@ -209,16 +221,16 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 				type,
 				joinTable,
 				relationAlias,
-				prefix(relationAlias, joinTableSourceColumn),
-				prefix(parent.getPath(), fromIdColumn)
+				prefix(relationAlias, joinTableSourceColumn, config),
+				prefix(parent.getPath(config), fromIdColumn, config)
 			)
 			+
 			toSQLJoin(
 				type,
 				to.getTableName(),
 				targetTableAlias,
-				prefix(targetTableAlias, toIdColumn),
-				prefix(relationAlias, joinTableTargetColumn)
+				prefix(targetTableAlias, toIdColumn, config),
+				prefix(relationAlias, joinTableTargetColumn, config)
 			);
 	}
 
@@ -230,6 +242,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	 * @param to                   the target context
 	 * @param joinColumnAnnotation the field join column annotation
 	 * @param relationName         the relation name from 'parent' to 'to' ({@link Field#getName()})
+	 * @param config               the SQL config (sql separator, use batch inserts...)
 	 * @param <From> the source type
 	 * @param <To>   the target type
 	 * @return the SQL join table clauses
@@ -240,10 +253,11 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		Context<From> parent,
 		Context<To> to,
 		JoinColumn joinColumnAnnotation,
-		String relationName) {
+		String relationName,
+		Config config) {
 
-		String sourceTableAlias = parent.getPath();
-		String targetTableAlias = to.getPath();
+		String sourceTableAlias = parent.getPath(config);
+		String targetTableAlias = to.getPath(config);
 
 		if (StringUtils.isNotBlank(joinColumnAnnotation.local())) {
 			String toIdColumn = Reflection.newInstanceNoArgs(to.getTarget()).getIdColumn();
@@ -252,8 +266,8 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 				type,
 				to.getTableName(),
 				targetTableAlias,
-				prefix(sourceTableAlias, joinColumnAnnotation.local()),
-				prefix(targetTableAlias, toIdColumn)
+				prefix(sourceTableAlias, joinColumnAnnotation.local(), config),
+				prefix(targetTableAlias, toIdColumn, config)
 			);
 		} else if (StringUtils.isNotBlank(joinColumnAnnotation.remote())) {
 			String idColumn = Reflection.newInstanceNoArgs(parent.getTarget()).getIdColumn();
@@ -262,8 +276,8 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 				type,
 				to.getTableName(),
 				targetTableAlias,
-				prefix(sourceTableAlias, idColumn),
-				prefix(targetTableAlias, joinColumnAnnotation.remote())
+				prefix(sourceTableAlias, idColumn, config),
+				prefix(targetTableAlias, joinColumnAnnotation.remote(), config)
 			);
 		} else {
 			throw new YopMappingException(
@@ -286,12 +300,13 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	}
 
 	/**
-	 * Concatenate the prefix and the value with {@link Context#DOT}.
+	 * Concatenate the prefix and the value with {@link Config#dot()}.
 	 * @param prefix the prefix
 	 * @param what   the element to prefix
+	 * @param config the SQL config (yes, it has a 'DOT' parameter :-D)
 	 * @return the prefixed value
 	 */
-	private static String prefix(String prefix, String what) {
-		return prefix + Context.DOT + what;
+	private static String prefix(String prefix, String what, Config config) {
+		return prefix + config.dot() + what;
 	}
 }

@@ -99,18 +99,19 @@ public class Delete<T extends Yopable> implements JsonAble {
 	/**
 	 * Create a Delete query from the given json String representation.
 	 * @param json         the Delete query JSON representation
+	 * @param config       the SQL config (sql separator, use batch inserts...)
 	 * @param classLoaders the class loaders to use to try to load the target resource
 	 * @param <T> the target context type. This should match the one set in the JSON representation of the query !
 	 * @return a new Delete query whose state is set from its JSON representation
 	 */
-	public static <T extends Yopable> Delete<T> fromJSON(String json, ClassLoader... classLoaders) {
+	public static <T extends Yopable> Delete<T> fromJSON(String json, Config config, ClassLoader... classLoaders) {
 		try {
 			JsonParser parser = new JsonParser();
 			JsonObject selectJSON = (JsonObject) parser.parse(json);
 			String targetClassName = selectJSON.getAsJsonPrimitive("target").getAsString();
 			Class<T> target = Reflection.forName(targetClassName, classLoaders);
 			Delete<T> delete = Delete.from(target);
-			delete.fromJSON(Context.root(delete.target), selectJSON);
+			delete.fromJSON(Context.root(delete.target), selectJSON, config);
 			return delete;
 		} catch (RuntimeException e) {
 			throw new YopSerializableQueryException(
@@ -184,7 +185,15 @@ public class Delete<T extends Yopable> implements JsonAble {
 	 */
 	public void executeQuery(IConnection connection) {
 		Parameters parameters = new Parameters();
-		Executor.executeQuery(connection, new SimpleQuery(this.toSQL(parameters), Query.Type.DELETE, parameters));
+		Executor.executeQuery(
+			connection,
+			new SimpleQuery(
+				this.toSQL(parameters, connection.config()),
+				Query.Type.DELETE,
+				parameters,
+				connection.config()
+			)
+		);
 	}
 
 	/**
@@ -202,11 +211,14 @@ public class Delete<T extends Yopable> implements JsonAble {
 		for (Map.Entry<Class<? extends Yopable>, Set<Long>> entry : idMap.entries()) {
 
 			// Create some 'delete by ID' batches, due to some DBMS limitations.
-			List<List<Long>> batches = Lists.partition(new ArrayList<>(entry.getValue()), Constants.MAX_PARAMS);
+			List<List<Long>> batches = Lists.partition(
+				new ArrayList<>(entry.getValue()),
+				connection.config().maxParams()
+			);
 			for (List<Long> batch : batches) {
 				Parameters parameters = new Parameters();
-				String sql = Delete.from(entry.getKey()).where(Where.id(batch)).toSQL(parameters);
-				queries.add(new SimpleQuery(sql, Query.Type.DELETE, parameters));
+				String sql = Delete.from(entry.getKey()).where(Where.id(batch)).toSQL(parameters, connection.config());
+				queries.add(new SimpleQuery(sql, Query.Type.DELETE, parameters, connection.config()));
 			}
 		}
 
@@ -218,18 +230,19 @@ public class Delete<T extends Yopable> implements JsonAble {
 	/**
 	 * Generate the SQL DELETE query
 	 * @param parameters the SQL parameters that will be populated with actual query parameters
+	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL DELETE query string
 	 */
-	private String toSQL(Parameters parameters) {
+	private String toSQL(Parameters parameters, Config config) {
 		Context<T> root = Context.root(this.target);
-		Set<Context.SQLColumn> columns = this.columns();
+		Set<Context.SQLColumn> columns = this.columns(config);
 
 		Set<String> tables = columns
 			.stream()
 			.map(c -> StringUtils.substringBeforeLast(c.getQualifiedId(), "."))
 			.collect(Collectors.toSet());
 
-		this.joins.forEach(j -> joinTables(j, root, tables));
+		this.joins.forEach(j -> joinTables(j, root, tables, config));
 
 		// 1 single table : omit the 'columns' clause, the 'as' clause and use a Fake context for the where clause
 		// (This was to deal with SQLite. I am not very proud of this.)
@@ -238,12 +251,12 @@ public class Delete<T extends Yopable> implements JsonAble {
 		Context<T> context = new Context.FakeContext<>(root, root.getTableName());
 		if (tables.size() > 1) {
 			columnsClause = Joiner.on(", ").join(tables.stream().map(t -> t + ".*").collect(Collectors.toSet()));
-			asClause = " as " + root.getPath();
+			asClause = " as " + root.getPath(config);
 			context = root;
 		}
 
-		String whereClause = this.where.toSQL(context, parameters);
-		JoinClause.JoinClauses joinClauses = this.toSQLJoin();
+		String whereClause = this.where.toSQL(context, parameters, config);
+		JoinClause.JoinClauses joinClauses = this.toSQLJoin(config);
 		return MessageFormat.format(
 			DELETE,
 			columnsClause,
@@ -255,24 +268,26 @@ public class Delete<T extends Yopable> implements JsonAble {
 
 	/**
 	 * Find all the columns from the DELETE query (search in current target type and join clauses)
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return all the columns this query should delete
 	 */
-	private Set<Context.SQLColumn> columns() {
+	private Set<Context.SQLColumn> columns(Config config) {
 		Context<T> root = Context.root(this.target);
-		Set<Context.SQLColumn> columns = root.getColumns();
+		Set<Context.SQLColumn> columns = root.getColumns(config);
 
 		for (IJoin<T, ? extends Yopable> join : this.joins) {
-			columns.addAll(join.columns(root, true));
+			columns.addAll(join.columns(root, true, config));
 		}
 		return columns;
 	}
 
 	/**
 	 * Create the SQL join clause for the DELETE statement.
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL join clause
 	 */
-	private JoinClause.JoinClauses toSQLJoin() {
-		return AbstractJoin.toSQLJoin(this.joins, Context.root(this.target), false);
+	private JoinClause.JoinClauses toSQLJoin(Config config) {
+		return AbstractJoin.toSQLJoin(this.joins, Context.root(this.target), false, config);
 	}
 
 	/**
@@ -280,12 +295,13 @@ public class Delete<T extends Yopable> implements JsonAble {
 	 * @param join    the join clause to read
 	 * @param context the current context
 	 * @param tables  the found join tables. Init with an empty set.
+	 * @param config  the SQL config (sql separator, use batch inserts...)
 	 */
 	@SuppressWarnings("unchecked")
-	private static void joinTables(IJoin join, Context context, Set<String> tables) {
-		tables.add(join.joinTableAlias(context));
+	private static void joinTables(IJoin join, Context context, Set<String> tables, Config config) {
+		tables.add(join.joinTableAlias(context, config));
 		for (Object subJoin : join.getJoins()) {
-			joinTables(((IJoin)subJoin), join.to(context), tables);
+			joinTables(((IJoin)subJoin), join.to(context), tables, config);
 		}
 	}
 }

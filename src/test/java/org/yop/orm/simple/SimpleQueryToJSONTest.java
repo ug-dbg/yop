@@ -14,10 +14,7 @@ import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.*;
 import org.yop.orm.simple.model.*;
-import org.yop.orm.sql.Executor;
-import org.yop.orm.sql.Parameters;
-import org.yop.orm.sql.Query;
-import org.yop.orm.sql.SimpleQuery;
+import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 
 import java.math.BigDecimal;
@@ -92,7 +89,7 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 			Set<Pojo> found_ref = select.execute(connection);
 
 			JsonObject selectJSON = select.toJSON();
-			Select<Pojo> selectFromJSON = Select.fromJSON(selectJSON.toString());
+			Select<Pojo> selectFromJSON = Select.fromJSON(selectJSON.toString(), connection.config());
 			Set<Pojo> found = selectFromJSON.execute(connection);
 
 			Assert.assertEquals(found_ref, found);
@@ -103,7 +100,7 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 				.join(toSet(Pojo::getOthers).where(Where.compare(Other::getName, Operator.NE, jopoName)));
 
 			selectJSON = select.toJSON();
-			selectFromJSON = Select.fromJSON(selectJSON.toString());
+			selectFromJSON = Select.fromJSON(selectJSON.toString(), connection.config());
 			found = selectFromJSON.execute(connection);
 
 			Assert.assertEquals(found_ref, found);
@@ -154,7 +151,7 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 			Set<Pojo> found_ref = select.execute(connection);
 
 			JsonObject selectJSON = select.toJSON();
-			Select<Pojo> selectFromJSON = Select.fromJSON(selectJSON.toString());
+			Select<Pojo> selectFromJSON = Select.fromJSON(selectJSON.toString(), connection.config());
 			Set<Pojo> found = selectFromJSON.execute(connection);
 
 			Assert.assertEquals(found_ref, found);
@@ -205,7 +202,7 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 			Set<Pojo> found_ref = select.execute(connection);
 
 			JsonObject selectJSON = select.toJSON();
-			Select<Pojo> selectFromJSON = Select.fromJSON(selectJSON.toString());
+			Select<Pojo> selectFromJSON = Select.fromJSON(selectJSON.toString(), connection.config());
 			Set<Pojo> found = selectFromJSON.execute(connection);
 
 			Assert.assertEquals(found_ref, found);
@@ -214,7 +211,7 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 
 	@Test(expected = YopSerializableQueryException.class)
 	public void testSerializeSelect_BadJSON() {
-		Select.fromJSON("{badJson: yes}");
+		Select.fromJSON("{badJson: yes}", Config.DEFAULT);
 	}
 
 	@Test
@@ -250,7 +247,7 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
 				.checkNaturalID();
 			JsonObject upsertJSON = upsert.toJSON();
-			Upsert upsertFromJsON = Upsert.fromJSON(upsertJSON.toString());
+			Upsert upsertFromJsON = Upsert.fromJSON(upsertJSON.toString(), connection.config());
 			upsertFromJsON.execute(connection);
 
 			Pojo fromDB = Select.from(Pojo.class)
@@ -268,7 +265,7 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 
 	@Test(expected = YopSerializableQueryException.class)
 	public void testSerializeUpsert_BadJSON() {
-		Upsert.fromJSON("{badJson: yes}");
+		Upsert.fromJSON("{badJson: yes}", Config.DEFAULT);
 	}
 
 	@Test
@@ -311,7 +308,7 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 			Delete<Pojo> delete = delete(Pojo.class)
 				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))));
 			JsonObject deleteJSON = delete.toJSON();
-			delete = Delete.fromJSON(deleteJSON.toString());
+			delete = Delete.fromJSON(deleteJSON.toString(), connection.config());
 			delete.executeQueries(connection);
 
 			Set<Pojo> afterDelete = select(Pojo.class).joinAll().execute(connection);
@@ -332,7 +329,12 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 
 			Executor.executeQuery(
 				connection,
-				new SimpleQuery("SELECT COUNT(*) FROM POJO_JOPO_relation", Query.Type.SELECT, new Parameters()),
+				new SimpleQuery(
+					"SELECT COUNT(*) FROM POJO_JOPO_relation",
+					Query.Type.SELECT,
+					new Parameters(),
+					connection.config()
+				),
 				action
 			);
 		}
@@ -340,7 +342,7 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 
 	@Test(expected = YopSerializableQueryException.class)
 	public void testSerializeDelete_BadJSON() {
-		Delete.fromJSON("{badJson: yes}");
+		Delete.fromJSON("{badJson: yes}", Config.DEFAULT);
 	}
 
 	@Test
@@ -349,7 +351,7 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 		PojoWithManyFields pojo = new PojoWithManyFields();
 		JsonElement pojoAsJSon = pojo.toJSON(context);
 		PojoWithManyFields deserialized = new PojoWithManyFields();
-		deserialized.fromJSON(context, pojoAsJSon);
+		deserialized.fromJSON(context, pojoAsJSon, Config.DEFAULT);
 		Assert.assertEquals(pojo, deserialized);
 	}
 

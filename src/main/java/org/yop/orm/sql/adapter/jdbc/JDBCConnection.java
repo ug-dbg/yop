@@ -3,6 +3,7 @@ package org.yop.orm.sql.adapter.jdbc;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.sql.BatchQuery;
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Query;
 import org.yop.orm.sql.adapter.IConnection;
@@ -23,12 +24,34 @@ public class JDBCConnection implements IConnection {
 	/** The underlying JDBC connection */
 	private final Connection connection;
 
+	/** Default config is read from system properties, with default values. */
+	private Config config = Config.DEFAULT;
+
 	/**
 	 * Default constructor : please give me the JDBC connection !
 	 * @param connection the JDBC connection to use
 	 */
 	public JDBCConnection(Connection connection) {
 		this.connection = connection;
+	}
+
+	/**
+	 * Set an explicit config for this connection (SQL separator, batch inserts, show sql...)
+	 * @param config the config to set
+	 * @return the current JDBC connection instance, for chaining purposes
+	 */
+	public JDBCConnection withConfig(Config config) {
+		this.config = config;
+		return this;
+	}
+
+	/**
+	 * Get the connection config : {@link #config} that might have been set using {@link #withConfig(Config)}.
+	 * @return the current {@link #config} instance
+	 */
+	@Override
+	public Config config() {
+		return this.config;
 	}
 
 	/**

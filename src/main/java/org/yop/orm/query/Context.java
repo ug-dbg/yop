@@ -4,7 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.sql.Constants;
+import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
@@ -18,16 +18,13 @@ import java.util.Set;
  * <br><br>
  * It has a target class, a parent context (that can be null) and a relation name to the parent context.
  * <br>
- * The path to a current can then be recursively built (see {@link #getPath()}) :
+ * The path to a current can then be recursively built (see {@link #getPath(Config)}) :
  * <i>
  * RootClass→relationA→IntermediaryClass→relationB→currentContextClass
  * </i>
  * @param <T> the context target class
  */
 public class Context<T extends Yopable> {
-
-	public static final String SQL_SEPARATOR = Constants.SQL_SEPARATOR;
-	static final String DOT = Constants.DOT;
 
 	/** Parent context. If null, this context is the root context. */
 	private final Context<? extends Yopable> parent;
@@ -86,15 +83,16 @@ public class Context<T extends Yopable> {
 	 * <br><br>
 	 * A context that is not root has a reference to the parent context, using a relation name.
 	 * So we can recursively build the path of the given context.
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the fully qualified context path
 	 */
-	public String getPath() {
+	public String getPath(Config config) {
 		Context<?> parent = this.parent;
 		StringBuilder path = new StringBuilder(ORMUtil.getTargetName(this.target)).append(this.targetAliasSuffix);
 
 		if(StringUtils.isNotBlank(this.relationToParent) && parent != null) {
-			path.insert(0, this.relationToParent + SQL_SEPARATOR);
-			path.insert(0, parent.getPath() + SQL_SEPARATOR);
+			path.insert(0, this.relationToParent + config.sqlSeparator());
+			path.insert(0, parent.getPath(config) + config.sqlSeparator());
 		}
 
 		return path.toString();
@@ -106,10 +104,11 @@ public class Context<T extends Yopable> {
 	 * The resulting path should look like this :
 	 * <b>RootClass→relationA→IntermediaryClass→relationB→currentContextClass.FIELD_COLUMN_NAME</b>
 	 * @param columnField the considered field for the path building. Must be a @Column field.
+	 * @param config      the SQL config (sql separator, use batch inserts...)
 	 * @return the fully qualified context path for the given field
 	 */
-	public String getPath(Field columnField) {
-		return this.getPath() + DOT + ORMUtil.getColumnName(columnField);
+	public String getPath(Field columnField, Config config) {
+		return this.getPath(config) + config.dot() + ORMUtil.getColumnName(columnField);
 	}
 
 	/**
@@ -130,16 +129,17 @@ public class Context<T extends Yopable> {
 
 	/**
 	 * Get the columns to fetch for the given context (find all @Column annotated fields)
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the columns to fetch
 	 */
-	public Set<SQLColumn> getColumns() {
+	public Set<SQLColumn> getColumns(Config config) {
 		Set<SQLColumn> columns = new HashSet<>();
-		String path = this.getPath();
+		String path = this.getPath(config);
 		Field idField = ORMUtil.getIdField(this.target);
 		for (Field field : Reflection.getFields(this.target, Column.class)) {
 			columns.add(new SQLColumn(
-				path + DOT + field.getAnnotation(Column.class).name(),
-				path + Context.SQL_SEPARATOR + field.getAnnotation(Column.class).name(),
+				path + config.dot() + field.getAnnotation(Column.class).name(),
+				path + config.sqlSeparator() + field.getAnnotation(Column.class).name(),
 				field.equals(idField)
 			));
 		}
@@ -157,19 +157,20 @@ public class Context<T extends Yopable> {
 	/**
 	 * Create the ID alias of the current target and add a prefix.
 	 * @param prefix the prefix to use
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the target class ID alias
 	 */
-	public String idAlias(String prefix) {
+	public String idAlias(String prefix, Config config) {
 		T newInstance = Reflection.newInstanceNoArgs(this.target);
 		Field idField = Reflection.get(this.target, newInstance.getIdFieldName());
 		if(idField != null && idField.isAnnotationPresent(Column.class)) {
-			return prefix + DOT + idField.getAnnotation(Column.class).name();
+			return prefix + config.dot() + idField.getAnnotation(Column.class).name();
 		}
-		return prefix + DOT + newInstance.getIdFieldName().toUpperCase();
+		return prefix + config.dot() + newInstance.getIdFieldName().toUpperCase();
 	}
 
 	/**
-	 * 2 contexts are considered the same if their {@link #getPath()} returns the same value.
+	 * 2 contexts are considered the same if their {@link #getPath(Config)} returns the same value.
 	 * <br><br>
 	 * {@inheritDoc}
 	 */
@@ -177,23 +178,23 @@ public class Context<T extends Yopable> {
 	public boolean equals(Object obj) {
 		return obj != null
 			&& obj instanceof Context
-			&& StringUtils.equals(this.getPath(), ((Context) obj).getPath());
+			&& StringUtils.equals(this.getPath(Config.DEFAULT), ((Context) obj).getPath(Config.DEFAULT));
 	}
 
 	/**
-	 * 2 contexts are considered the same if their {@link #getPath()} returns the same value.
+	 * 2 contexts are considered the same if their {@link #getPath(Config)} returns the same value.
 	 * <br>
 	 * <br>
 	 * {@inheritDoc}
 	 */
 	@Override
 	public int hashCode() {
-		return this.getPath().hashCode();
+		return this.getPath(Config.DEFAULT).hashCode();
 	}
 
 	@Override
 	public String toString() {
-		return "Context{" + this.getPath() + "}";
+		return "Context{" + this.getPath(Config.DEFAULT) + "}";
 	}
 
 	/**
@@ -245,7 +246,7 @@ public class Context<T extends Yopable> {
 		}
 
 		@Override
-		public String getPath() {
+		public String getPath(Config config) {
 			return this.fakePath;
 		}
 	}

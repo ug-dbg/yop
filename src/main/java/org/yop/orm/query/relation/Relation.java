@@ -5,6 +5,7 @@ import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Query;
 
 import java.lang.reflect.Field;
@@ -29,43 +30,48 @@ public interface Relation {
 
 	/**
 	 * Create a collection of queries to delete the relation between the source objects using the join directive
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return implementation default : an empty list
 	 */
-	default Collection<Query> toSQLDelete() {
+	default Collection<Query> toSQLDelete(Config config) {
 		return new ArrayList<>(0);
 	}
 
 	/**
 	 * Create a collection of queries to insert the relation between the source objects using the join directive
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return implementation default : an empty list
 	 */
-	default Collection<Query> toSQLInsert() {
+	default Collection<Query> toSQLInsert(Config config) {
 		return new ArrayList<>(0);
 	}
 
 	/**
 	 * Create a collection of queries to update the relation between the source objects using the join directive
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return implementation default : an empty list
 	 */
-	default Collection<Query> toSQLUpdate() {
+	default Collection<Query> toSQLUpdate(Config config) {
 		return new ArrayList<>(0);
 	}
 
 	/**
 	 * Create a collection of queries to batch insert the relation between the source objects using the join directive.
 	 * These queries should certainly use {@link org.yop.orm.sql.Parameters.DelayedValue}.
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return implementation default : an empty list
 	 */
-	default Collection<Query> toSQLBatchInsert() {
+	default Collection<Query> toSQLBatchInsert(Config config) {
 		return new ArrayList<>(0);
 	}
 
 	/**
 	 * Create a collection of queries to batch update the relation between the source objects using the join directive.
 	 * These queries should certainly use {@link org.yop.orm.sql.Parameters.DelayedValue}.
+	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return implementation default : an empty list
 	 */
-	default Collection<Query> toSQLBatchUpdate() {
+	default Collection<Query> toSQLBatchUpdate(Config config) {
 		return new ArrayList<>(0);
 	}
 

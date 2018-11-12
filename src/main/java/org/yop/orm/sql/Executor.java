@@ -1,6 +1,5 @@
 package org.yop.orm.sql;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopSQLException;
@@ -38,7 +37,7 @@ public class Executor {
 	 * @throws YopSQLException an SQL error occurred.
 	 */
 	public static <T extends Yopable> Set<T> executeSelectQuery(IConnection connection, Query query, Class<T> target) {
-		return executeSelectQuery(connection, query, target, new FirstLevelCache());
+		return executeSelectQuery(connection, query, target, new FirstLevelCache(connection.config()));
 	}
 
 	/**
@@ -100,7 +99,7 @@ public class Executor {
 		Query query,
 		Action<T> action) {
 
-		if(showSQL()) {
+		if(connection.config().showSQL()) {
 			logger.info("Executing SQL query [{}]", query);
 		}
 
@@ -115,14 +114,6 @@ public class Executor {
 		} catch (SQLException e) {
 			throw new YopSQLException(query, e);
 		}
-	}
-
-	/**
-	 * Read the {@link Constants#SHOW_SQL_PROPERTY}
-	 * @return true if the show sql property is set to true.
-	 */
-	private static boolean showSQL() {
-		return StringUtils.equals("true", System.getProperty(Constants.SHOW_SQL_PROPERTY));
 	}
 
 	/**

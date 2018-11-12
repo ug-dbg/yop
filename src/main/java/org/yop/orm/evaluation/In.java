@@ -7,7 +7,7 @@ import com.google.gson.JsonObject;
 import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
-import org.yop.orm.sql.Constants;
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
@@ -55,15 +55,15 @@ public class In implements Evaluation {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <Y extends Yopable> String toSQL(Context<Y> context, Parameters parameters) {
+	public <Y extends Yopable> String toSQL(Context<Y> context, Parameters parameters, Config config) {
 		if(this.values.isEmpty()) {
 			return "";
 		}
 
 		Field field = Reflection.findField(context.getTarget(), (Function<Y, ?>) this.getter);
 		String column =
-			context.getPath()
-			+ Constants.DOT
+			context.getPath(config)
+			+ config.dot()
 			+ ORMUtil.getColumnName(field);
 
 		return MessageFormat.format(
@@ -91,8 +91,8 @@ public class In implements Evaluation {
 	}
 
 	@Override
-	public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element) {
-		Evaluation.super.fromJSON(context, element);
+	public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element, Config config) {
+		Evaluation.super.fromJSON(context, element, config);
 		String fieldName = element.getAsJsonObject().get(FIELD).getAsString();
 		Field field = Reflection.get(context.getTarget(), fieldName);
 		if (field == null) {

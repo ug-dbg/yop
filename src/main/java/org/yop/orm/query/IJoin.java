@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.JoinClause;
 import org.yop.orm.util.ORMUtil;
 
@@ -95,15 +96,17 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	 * @param joinClauses        the join clauses map
 	 * @param context            the context from which the SQL clause must be built.
 	 * @param includeWhereClause true to include the where clauses evaluation
+	 * @param config             the SQL config (sql separator, use batch inserts...)
 	 */
-	void toSQL(JoinClause.JoinClauses joinClauses, Context<From> context, boolean includeWhereClause);
+	void toSQL(JoinClause.JoinClauses joinClauses, Context<From> context, boolean includeWhereClause, Config config);
 
 	/**
 	 * Return the join table alias from the given context
 	 * @param context the context from which the alias is built.
+	 * @param config  the SQL config (sql separator, use batch inserts...)
 	 * @return the join table alias for the given context
 	 */
-	String joinTableAlias(Context<From> context);
+	String joinTableAlias(Context<From> context, Config config);
 
 	/**
 	 * Get the field this join is related to, given the source class.
@@ -128,17 +131,18 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 
 	/**
 	 * Find all the columns to select (search in current target type and sub-join clauses if required)
-	 * @param context              the context (columns are deduced using {@link Context#getColumns()}.
+	 * @param context              the context (columns are deduced using {@link Context#getColumns(Config)}.
 	 * @param addJoinClauseColumns true to add the columns from the sub-join clauses
+	 * @param config               the SQL config (sql separator, use batch inserts...)
 	 * @return the columns to select
 	 */
-	default Set<Context.SQLColumn> columns(Context<From> context, boolean addJoinClauseColumns) {
+	default Set<Context.SQLColumn> columns(Context<From> context, boolean addJoinClauseColumns, Config config) {
 		Context<To> to = this.to(context);
-		Set<Context.SQLColumn> columns = to.getColumns();
+		Set<Context.SQLColumn> columns = to.getColumns(config);
 
 		if (addJoinClauseColumns) {
 			for (IJoin<To, ? extends Yopable> join : this.getJoins()) {
-				columns.addAll(join.columns(to, true));
+				columns.addAll(join.columns(to, true, config));
 			}
 		}
 		return columns;
@@ -169,8 +173,8 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	 */
 	class Joins<From extends Yopable> extends ArrayList<IJoin<From, ? extends Yopable>> implements JsonAble {
 		@Override
-		public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element) {
-			element.getAsJsonArray().forEach(e -> this.add(FieldJoin.from(context, e.getAsJsonObject())));
+		public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element, Config config) {
+			element.getAsJsonArray().forEach(e -> this.add(FieldJoin.from(context, e.getAsJsonObject(), config)));
 		}
 
 		@Override

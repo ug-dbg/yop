@@ -9,6 +9,7 @@ import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
@@ -21,7 +22,7 @@ import java.util.ArrayList;
  * <br>
  * For instance : ExampleEntity→name='foo' OR ExampleEntity='bar'.
  * <br>
- * There is only one method to implement {@link #toSQL(Context, Parameters)}.
+ * There is only one method to implement {@link #toSQL(Context, Parameters, Config)}.
  */
 public interface Evaluation extends JsonAble {
 
@@ -35,28 +36,30 @@ public interface Evaluation extends JsonAble {
 	 * @param <T> the target evaluation type
 	 * @return the SQL query portion for the evaluation, from the context
 	 */
-	<T extends Yopable> String toSQL(Context<T> context, Parameters parameters);
+	<T extends Yopable> String toSQL(Context<T> context, Parameters parameters, Config config);
 
 	/**
 	 * Read the field @Column annotation, or the ID column for a @JoinTable
 	 * @param field   the field to read
-	 * @param context the context from which the column name must be built. See {@link Context#getPath()}.
+	 * @param context the context from which the column name must be built.
+	 *                See {@link Context#getPath(org.yop.orm.sql.Config)}.
+	 * @param config  the SQL config. Needed for the sql separator to use.
 	 * @return the column name. If no @Column/@JoinTable annotation, returns the class name in upper case.
 	 */
 	@SuppressWarnings("unchecked")
-	static String columnName(Field field, Context<? extends Yopable> context) {
+	static String columnName(Field field, Context<? extends Yopable> context, Config config) {
 		if (field.isAnnotationPresent(JoinTable.class)) {
 			if(ORMUtil.isCollection(field)) {
 				Class<? extends Yopable> target = Reflection.getCollectionTarget(field);
 				Context<? extends Yopable> targetContext = context.to(target, field);
-				return ORMUtil.getIdColumn(targetContext);
+				return ORMUtil.getIdColumn(targetContext, config);
 			} else {
 				Class<? extends Yopable> target = (Class<? extends Yopable>) field.getType();
 				Context<? extends Yopable> targetContext = context.to(target, field);
-				return ORMUtil.getIdColumn(targetContext);
+				return ORMUtil.getIdColumn(targetContext, config);
 			}
 		}
-		return context.getPath(field);
+		return context.getPath(field, config);
 	}
 
 	/**
@@ -92,10 +95,10 @@ public interface Evaluation extends JsonAble {
 	 */
 	class Evaluations extends ArrayList<Evaluation> implements JsonAble {
 		@Override
-		public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element) {
+		public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element, Config config) {
 			for (JsonElement evaluationJSON : element.getAsJsonArray()) {
 				Evaluation evaluation = Evaluation.newInstance(((JsonObject) evaluationJSON).get(TYPE).getAsString());
-				evaluation.fromJSON(context, evaluationJSON);
+				evaluation.fromJSON(context, evaluationJSON, config);
 				this.add(evaluation);
 			}
 		}

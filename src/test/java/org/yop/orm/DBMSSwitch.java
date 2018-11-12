@@ -7,7 +7,7 @@ import org.junit.BeforeClass;
 import org.yop.orm.annotations.LongTest;
 import org.yop.orm.gen.Prepare;
 import org.yop.orm.simple.SimpleTest;
-import org.yop.orm.sql.Constants;
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.adapter.IConnection;
 
 import java.io.File;
@@ -84,7 +84,7 @@ public abstract class DBMSSwitch {
 
 	@BeforeClass
 	public static void init() {
-		System.setProperty(Constants.SHOW_SQL_PROPERTY, "true");
+		System.setProperty(Config.SHOW_SQL_PROPERTY, "true");
 	}
 
 	@Before
@@ -98,7 +98,7 @@ public abstract class DBMSSwitch {
 		// Generate the scripts for every dialect.
 		// This (artificially) improves code coverage.
 		// And it is not very expensive to ensure it runs with no exception thrown.
-		Arrays.stream(prefixes).forEach(Prepare::generateScripts);
+		Arrays.stream(prefixes).forEach(prefix -> Prepare.generateScripts(prefix, Config.DEFAULT));
 
 		// Generate and execute the preparation scripts for the package and the target database.
 		switch (dbms()) {

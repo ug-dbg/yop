@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.sql.BatchQuery;
-import org.yop.orm.sql.Constants;
 import org.yop.orm.sql.Query;
 import org.yop.orm.sql.adapter.IRequest;
 import org.yop.orm.sql.adapter.IResultCursor;
@@ -78,7 +77,7 @@ public class JDBCRequest implements IRequest {
 			throw new YopSQLException(this.query, e);
 		}
 
-		if (showSQL()) {
+		if (this.query.getConfig().showSQL()) {
 			logger.info("Query generated IDs : {}", this.query.getGeneratedIds());
 		}
 	}
@@ -127,13 +126,5 @@ public class JDBCRequest implements IRequest {
 				this.query.getGeneratedIds().add(generatedKeys.getLong(idIndex));
 			}
 		}
-	}
-
-	/**
-	 * Read the {@link Constants#SHOW_SQL_PROPERTY}
-	 * @return true if the show sql property is set to true.
-	 */
-	private static boolean showSQL() {
-		return StringUtils.equals("true", System.getProperty(Constants.SHOW_SQL_PROPERTY));
 	}
 }
