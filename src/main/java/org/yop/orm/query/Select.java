@@ -178,8 +178,8 @@ public class Select<T extends Yopable> implements JsonAble {
 	 * Add a paging directive.
 	 * <br>
 	 * See {@link Paging} and {@link Config#getPagingMethod()}.
-	 * @param offset  from which offset to start fetching
-	 * @param results the number of results to fetch
+	 * @param offset  from which offset to start fetching. If null → start from first offset.
+	 * @param results the number of results to fetch. If null → no limit.
 	 * @return the current SELECT request, for chaining purpose
 	 */
 	public Select<T> page(Long offset, Long results) {
