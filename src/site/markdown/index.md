@@ -39,6 +39,34 @@ Select
  .execute(connection);
 ```
 
+**Read with paging** :
+```java
+Select
+ .from(Library.class)
+ .page(10L, 5L)
+ .join(JoinSet.to(Library::getBooks))
+ .join(JoinSet.to(Library::getEmployees).where(
+    Where.compare(
+        Employee::getName, 
+        Operator.EQ, 
+        Path.pathSet(Library::getBooks).to(Book::getAuthor).to(Author::getName)
+)))
+ .execute(connection);
+```
+
+**Count** :
+```java
+Select
+ .from(Library.class)
+ .join(JoinSet.to(Library::getBooks))
+ .join(JoinSet.to(Library::getEmployees).where(
+    Where.compare(
+        Employee::getName, 
+        Operator.EQ, 
+        Path.pathSet(Library::getBooks).to(Book::getAuthor).to(Author::getName)
+)))
+ .count(connection);
+```
 
 **Delete** :   
 ```java
