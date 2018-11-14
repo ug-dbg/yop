@@ -209,7 +209,8 @@ paths:
               joins\": [\n        {\n          \"where\": {\n            \"evaluations\"\
               : []\n          },\n          \"joins\": [],\n          \"field\": \"\
               extra\"\n        }\n      ],\n      \"field\": \"others\"\n    }\n \
-              \ ],\n  \"target\": \"org.yop.rest.simple.model.Pojo\"\n}"
+              \ ],\n  \"paging\": {},\n  \"target\": \"org.yop.rest.simple.model.Pojo\"\
+              \n}"
       responses:
         200:
           description: "A set of [Pojo]"
@@ -760,7 +761,8 @@ paths:
               \   2,\n          3\n        ]\n      }\n    ]\n  },\n  \"joins\": [\n\
               \    {\n      \"where\": {\n        \"evaluations\": []\n      },\n\
               \      \"joins\": [],\n      \"field\": \"actionsForProfile\"\n    }\n\
-              \  ],\n  \"target\": \"org.yop.rest.users.model.Profile\"\n}"
+              \  ],\n  \"paging\": {},\n  \"target\": \"org.yop.rest.users.model.Profile\"\
+              \n}"
       responses:
         200:
           description: "A set of [Profile]"
@@ -1309,7 +1311,8 @@ paths:
             example: "{\n  \"where\": {\n    \"evaluations\": [\n      {\n       \
               \ \"type\": \"IdIn\",\n        \"values\": [\n          1,\n       \
               \   2,\n          3\n        ]\n      }\n    ]\n  },\n  \"joins\": [],\n\
-              \  \"target\": \"org.yop.rest.users.model.Action\"\n}"
+              \  \"paging\": {},\n  \"target\": \"org.yop.rest.users.model.Action\"\
+              \n}"
       responses:
         200:
           description: "A set of [Action]"
@@ -1862,8 +1865,8 @@ paths:
               \      \"joins\": [\n        {\n          \"where\": {\n           \
               \ \"evaluations\": []\n          },\n          \"joins\": [],\n    \
               \      \"field\": \"actionsForProfile\"\n        }\n      ],\n     \
-              \ \"field\": \"profiles\"\n    }\n  ],\n  \"target\": \"org.yop.rest.users.model.User\"\
-              \n}"
+              \ \"field\": \"profiles\"\n    }\n  ],\n  \"paging\": {},\n  \"target\"\
+              : \"org.yop.rest.users.model.User\"\n}"
       responses:
         200:
           description: "A set of [User]"

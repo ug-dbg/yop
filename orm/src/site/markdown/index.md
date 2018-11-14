@@ -15,58 +15,86 @@ The main idea is **not using literals** to indicate relations between objects bu
 Here are some API examples :
 
 **Create/Update** :
-<pre>  
-```Upsert   
-.from(Library.class)  
-.onto(library)  
-.join(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))    
-.join(JoinSet.to(Library::getEmployees))  
-.checkNaturalID()  
-.execute(connection);```
-</pre>
+```java
+Upsert   
+ .from(Library.class)  
+ .onto(library)  
+ .join(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))    
+ .join(JoinSet.to(Library::getEmployees))  
+ .checkNaturalID()  
+ .execute(connection);
+```
 
 **Read** :
-<pre>  
-```Select
-.from(Library.class)
-.join(JoinSet.to(Library::getBooks))
-.join(JoinSet.to(Library::getEmployees).where(
+```java
+Select
+ .from(Library.class)
+ .join(JoinSet.to(Library::getBooks))
+ .join(JoinSet.to(Library::getEmployees).where(
     Where.compare(
         Employee::getName, 
         Operator.EQ, 
         Path.pathSet(Library::getBooks).to(Book::getAuthor).to(Author::getName)
 )))
-.execute(connection);```
-</pre>
+ .execute(connection);
+```
 
+**Read with paging** :
+```java
+Select
+ .from(Library.class)
+ .page(10L, 5L)
+ .join(JoinSet.to(Library::getBooks))
+ .join(JoinSet.to(Library::getEmployees).where(
+    Where.compare(
+        Employee::getName, 
+        Operator.EQ, 
+        Path.pathSet(Library::getBooks).to(Book::getAuthor).to(Author::getName)
+)))
+ .execute(connection);
+```
+
+**Count** :
+```java
+Select
+ .from(Library.class)
+ .join(JoinSet.to(Library::getBooks))
+ .join(JoinSet.to(Library::getEmployees).where(
+    Where.compare(
+        Employee::getName, 
+        Operator.EQ, 
+        Path.pathSet(Library::getBooks).to(Book::getAuthor).to(Author::getName)
+)))
+ .count(connection);
+```
 
 **Delete** :   
-<pre>  
-```Delete.from(Library.class)
-.join(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))
-.executeQueries(connection);```
-</pre>
+```java
+Delete.from(Library.class)
+ .join(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))
+ .executeQueries(connection);
+```
 
 **Hydrate (fetch relation dynamically)** :  
-<pre>
-```Hydrate.from(Book.class).onto(booksWithID).fetchSet(Book::getChapters).execute(connection);```
-</pre>
+```java 
+Hydrate.from(Book.class).onto(booksWithID).fetchSet(Book::getChapters).execute(connection);
+```
 
 **Recurse (hydrate relations, recursively)** :   
-<pre>  
-```Recurse.from(Employee.class).onto(employeesWithID).join(Join.to(Employee::getManager)).execute(connection);```
-</pre>
+```java
+Recurse.from(Employee.class).onto(employeesWithID).join(Join.to(Employee::getManager)).execute(connection);
+```
 
 **JSON serialization** :  
-<pre>  
-```JSON.from(Library.class)
-.joinAll()
-.joinIDs(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))
-.joinIDs(JoinSet.to(Library::getEmployees).join(JoinSet.to(Employee::getProfiles)))
-.register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"))
-.onto(library)
-.toJSON();```
-</pre>
+```java
+JSON.from(Library.class)
+ .joinAll()
+ .joinIDs(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))
+ .joinIDs(JoinSet.to(Library::getEmployees).join(JoinSet.to(Employee::getProfiles)))
+ .register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"))
+ .onto(library)
+ .toJSON();
+```
 
 Yop can serialize from/to a database (**ORM**) or to **JSON**.  
 Yop queries are serializable to/from JSON.  

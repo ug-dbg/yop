@@ -154,49 +154,48 @@
 					</executions>
 				</plugin>
 
+				<!-- JaCoCo coverage reports -->
+				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>0.7.9</version>
+					<executions>
+						<execution>
+							<goals>
+								<goal>prepare-agent</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>generate-code-coverage-report</id>
+							<phase>test</phase>
+							<goals>
+								<goal>report</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
 
-                <!-- JaCoCo coverage reports -->
-                <plugin>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.7.9</version>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>prepare-agent</goal>
-                            </goals>
-                        </execution>
-                        <execution>
-                            <id>generate-code-coverage-report</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>report</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-
-                <!-- Generate a badge from a unified JaCoCo report -->
-                <plugin>
-                    <groupId>com.sigpwned</groupId>
-                    <artifactId>jacoco-badge-maven-plugin</artifactId>
-                    <version>0.1.4</version>
-                    <executions>
-                        <execution>
-                            <id>generate-jacoco-badge</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>badge</goal>
-                            </goals>
-                            <configuration>
-                                <passing>70</passing>
-                                <metric>instruction</metric>
-                                <reportFile>${project.reporting.outputDirectory}/jacoco/jacoco.csv</reportFile>
-                                <badgeFile>${project.build.directory}/jacoco.svg</badgeFile>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
+				<!-- Generate a badge from a unified JaCoCo report -->
+				<plugin>
+					<groupId>com.sigpwned</groupId>
+					<artifactId>jacoco-badge-maven-plugin</artifactId>
+					<version>0.1.4</version>
+					<executions>
+						<execution>
+							<id>generate-jacoco-badge</id>
+							<phase>test</phase>
+							<goals>
+								<goal>badge</goal>
+							</goals>
+							<configuration>
+								<passing>70</passing>
+								<metric>instruction</metric>
+								<reportFile>${project.reporting.outputDirectory}/jacoco/jacoco.csv</reportFile>
+								<badgeFile>${project.build.directory}/jacoco.svg</badgeFile>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
 
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
