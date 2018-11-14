@@ -11,6 +11,7 @@ import org.yop.orm.evaluation.Operator;
 import org.yop.orm.evaluation.Path;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.IdMap;
+import org.yop.orm.model.Yopable;
 import org.yop.orm.query.*;
 import org.yop.orm.simple.model.*;
 import org.yop.orm.sql.Executor;
@@ -25,9 +26,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 
 import static org.yop.orm.Yop.*;
 
@@ -42,6 +41,48 @@ public class SimpleTest extends DBMSSwitch {
 	@Override
 	protected String getPackagePrefixes() {
 		return "org.yop.orm.simple.model";
+	}
+
+	@Test
+	public void testPaging() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Collection<Pojo> pojos = new ArrayList<>();
+			for (int i = 0; i < 90; i++) {
+				Pojo newPojo = new Pojo();
+				newPojo.setVersion(i);
+				newPojo.setType(Pojo.Type.FOO);
+				newPojo.setActive(true);
+
+				Jopo jopo1 = new Jopo();
+				jopo1.setName("test limit 1 Pojo#" + i);
+				jopo1.setPojo(newPojo);
+				newPojo.getJopos().add(jopo1);
+				Jopo jopo2 = new Jopo();
+				jopo2.setName("test limit 2 Pojo#" + i);
+				jopo2.setPojo(newPojo);
+				newPojo.getJopos().add(jopo2);
+
+				pojos.add(newPojo);
+			}
+			upsert(Pojo.class).onto(pojos).join(toSet(Pojo::getJopos)).execute(connection);
+
+			Select<Pojo> selectWithPaging = Select.from(Pojo.class).joinAll().page(87L, 10L);
+			Set<Pojo> out = selectWithPaging.executeWithTwoQueries(connection);
+			Assert.assertEquals(3, out.size());
+
+			out = selectWithPaging.execute(connection, Select.Strategy.IN);
+			Assert.assertEquals(3, out.size());
+
+			// Yop does not support paging with 'EXISTS' → there is a fallback to 'IN'
+			out = selectWithPaging.execute(connection, Select.Strategy.IN);
+			Assert.assertEquals(3, out.size());
+
+			String selectWithPagingAsJSON = selectWithPaging.toJSON().toString();
+			selectWithPaging = Select.fromJSON(selectWithPagingAsJSON, connection.config());
+
+			out = selectWithPaging.executeWithTwoQueries(connection);
+			Assert.assertEquals(3, out.size());
+		}
 	}
 
 	@Test

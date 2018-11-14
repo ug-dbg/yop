@@ -1,5 +1,7 @@
 package org.yop.orm.sql;
 
+import org.yop.orm.query.Paging;
+
 import java.lang.reflect.Field;
 import java.sql.Statement;
 import java.util.HashMap;
@@ -35,6 +37,7 @@ public class Config {
 	public static final String SQL_MAX_PARAMETERS_PROPERTY  = "yop.sql.max.parameters";
 	public static final String SQL_USE_BATCH_INS_PROPERTY   = "yop.sql.batch_inserts";
 	public static final String SQL_DEFAULT_SEQ              = "yop.sql.default_sequence";
+	public static final String SQL_PAGING_METHOD            = "yop.sql.paging_method";
 
 	private final Map<String, String> config = new HashMap<>();
 
@@ -46,6 +49,7 @@ public class Config {
 		this.initFromSystemProperty(SQL_USE_BATCH_INS_PROPERTY,  "true");
 		this.initFromSystemProperty(SQL_MAX_PARAMETERS_PROPERTY, "1000");
 		this.initFromSystemProperty(SQL_DEFAULT_SEQ,             SQL_DEFAULT_SEQ_DEFAULT);
+		this.initFromSystemProperty(SQL_PAGING_METHOD,           Paging.Method.TWO_QUERIES.name());
 		return this;
 	}
 
@@ -122,6 +126,15 @@ public class Config {
 	 */
 	public String defaultSequence() {
 		return this.config.get(SQL_DEFAULT_SEQ);
+	}
+
+	/**
+	 * The paging method to use.
+	 * Fallback is {@link org.yop.orm.query.Paging.Method#TWO_QUERIES}, which should always work.
+	 * @return the paging method to use
+	 */
+	public Paging.Method getPagingMethod() {
+		return Paging.Method.byName(this.config.get(SQL_PAGING_METHOD));
 	}
 
 	/**

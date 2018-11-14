@@ -4,6 +4,8 @@ import com.google.common.base.Joiner;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yop.orm.evaluation.Comparison;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopSQLException;
@@ -15,11 +17,13 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.json.JSON;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.Reflection;
 
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,13 +54,15 @@ import java.util.stream.Collectors;
  */
 public class Select<T extends Yopable> implements JsonAble {
 
+	private static final Logger logger = LoggerFactory.getLogger(Select.class);
+
 	public enum Strategy {IN, EXISTS}
 
-	/** Select [what] FROM [table] [table_alias] [join clause] WHERE [where clause] [order by clause]*/
-	private static final String SELECT = " SELECT {0} FROM {1} {2} {3} WHERE {4} {5}";
+	/** Select [what] FROM [table] [table_alias] [join clause] WHERE [where clause] [order by clause] [extra] */
+	private static final String SELECT = " SELECT {0} FROM {1} {2} {3} WHERE {4} {5} {6}";
 
-	/** Select distinct([what]) FROM [table] [table_alias] [join clause] WHERE [where clause] */
-	private static final String SELECT_DISTINCT = " SELECT DISTINCT({0}) FROM {1} {2} {3} WHERE {4}";
+	/** Select distinct([what]) FROM [table] [table_alias] [join clause] WHERE [where clause] [extra] */
+	private static final String SELECT_DISTINCT = " SELECT DISTINCT({0}) FROM {1} {2} {3} WHERE {4} {5}";
 
 	/** Default where clause is always added. So I don't have to check if the 'WHERE' keyword is required ;-) */
 	private static final String DEFAULT_WHERE = " 1=1 ";
@@ -78,6 +84,9 @@ public class Select<T extends Yopable> implements JsonAble {
 
 	/** A custom first level cache that can be specified in some very specific cases */
 	private FirstLevelCache cache;
+
+	/** Page : from offset x, limit to y rows */
+	private Paging paging = new Paging(null, null);
 
 	/**
 	 * Private constructor. Please use {@link #from(Class)}
@@ -166,6 +175,19 @@ public class Select<T extends Yopable> implements JsonAble {
 	}
 
 	/**
+	 * Add a paging directive.
+	 * <br>
+	 * See {@link Paging} and {@link Config#getPagingMethod()}.
+	 * @param offset  from which offset to start fetching. If null → start from first offset.
+	 * @param results the number of results to fetch. If null → no limit.
+	 * @return the current SELECT request, for chaining purpose
+	 */
+	public Select<T> page(Long offset, Long results) {
+		this.paging = new Paging(offset, results);
+		return this;
+	}
+
+	/**
 	 * (Left) join to a new type.
 	 * @param join the join clause
 	 * @param <R> the target join type
@@ -238,6 +260,10 @@ public class Select<T extends Yopable> implements JsonAble {
 	 * Execute the SELECT request using 2 queries :
 	 * <ul>
 	 *     <li>Find the matching T ids</li>
+	 *     <li>
+	 *         If paging is activated and config is set to {@link org.yop.orm.query.Paging.Method#TWO_QUERIES} :
+	 *         filter the matching ids.
+	 *     </li>
 	 *     <li>Fetch the data</li>
 	 * </ul>
 	 * @param connection the connection to use for the request
@@ -246,7 +272,7 @@ public class Select<T extends Yopable> implements JsonAble {
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occurred
 	 */
 	public Set<T> executeWithTwoQueries(IConnection connection) {
-		Set<Long> ids;
+		List<Long> ids;
 
 		Parameters parameters = new Parameters();
 		String request = this.toSQLAnswerRequest(parameters, connection.config());
@@ -258,14 +284,18 @@ public class Select<T extends Yopable> implements JsonAble {
 			this.context.getTarget(),
 			this.cache == null ? new FirstLevelCache(connection.config()) : this.cache
 		);
-		ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toSet());
+		ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toList());
 
 		if(ids.isEmpty()) {
 			return new HashSet<>();
 		}
 
+		if (this.paging.isPaging()) {
+			ids = this.paging.pageIds(ids);
+		}
+
 		parameters = new Parameters();
-		request = this.toSQLDataRequest(ids, parameters, connection.config());
+		request = this.toSQLDataRequest(new HashSet<>(ids), parameters, connection.config());
 		query = new SimpleQuery(request, Query.Type.SELECT, parameters, connection.config());
 		return Executor.executeSelectQuery(
 			connection,
@@ -278,9 +308,13 @@ public class Select<T extends Yopable> implements JsonAble {
 	/**
 	 * Execute the SELECT request using 1 single query and a given strategy :
 	 * <ul>
-	 *     <li>{@link Strategy#EXISTS} : use a 'WHERE EXISTS' clause </li>
+	 *     <li>{@link Strategy#EXISTS} : use a 'WHERE EXISTS' clause, unless paging is active. </li>
 	 *     <li>{@link Strategy#IN} : use an 'IN' clause </li>
 	 * </ul>
+	 * ⚠⚠⚠ <b>
+	 *     If {@link #paging} is set and {@link Config#getPagingMethod()} is {@link Paging.Method#TWO_QUERIES},
+	 *     the strategy is ignored and we actually use {@link #executeWithTwoQueries(IConnection)}.
+	 * </b> ⚠⚠⚠
 	 * @param connection the connection to use for the request
 	 * @param strategy the strategy to use for the select query
 	 * @return the SELECT result, as a set of T
@@ -288,11 +322,16 @@ public class Select<T extends Yopable> implements JsonAble {
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occurred
 	 */
 	public Set<T> execute(IConnection connection, Strategy strategy) {
+		if (this.paging.isPaging() && connection.config().getPagingMethod() == Paging.Method.TWO_QUERIES) {
+			logger.warn("Paging method is set to [{}] → we are going to use 2 queries and page on IDs");
+			return this.executeWithTwoQueries(connection);
+		}
+
 		Parameters parameters = new Parameters();
 		String request =
-			strategy == Strategy.IN
+			(strategy == Strategy.IN || this.paging.isPaging())
 			? this.toSQLDataRequestWithIN(parameters, connection.config())
-			: this.toSQLDataRequest(parameters, connection.config());
+			: this.toSQLDataRequestWithEXISTS(parameters, connection.config());
 
 		return Executor.executeSelectQuery(
 			connection,
@@ -483,7 +522,13 @@ public class Select<T extends Yopable> implements JsonAble {
 	}
 
 	/**
-	 * 2 query strategy : create the SQL 'answer' request : only find the target type that matches.
+	 * 2 query strategy : create the SQL 'answer' request : only select columns for the target type.
+	 * <br>
+	 * Joins are added to the query but none of their columns are selected.
+	 * <br>
+	 * Then, ids should be extracted and a second query should be used to fetch the whole data graph.
+	 * <br>
+	 * See {@link #executeWithTwoQueries(IConnection)} and {@link #toSQLDataRequest(Set, Parameters, Config)}.
 	 * @param parameters the query parameters that will be populated with the WHERE clause parameters
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'answer' request.
@@ -496,7 +541,7 @@ public class Select<T extends Yopable> implements JsonAble {
 			this.context.getPath(config),
 			joinClauses.toSQL(parameters),
 			Where.toSQL(this.toSQLWhere(parameters, config), joinClauses.toSQLWhere(parameters)),
-			this.orderBy.toSQL(this.context.getTarget(), config)
+			OrderBy.<T>orderById(true).toSQL(this.context.getTarget(), config)
 		);
 	}
 
@@ -510,23 +555,30 @@ public class Select<T extends Yopable> implements JsonAble {
 	 */
 	private String toSQLDataRequest(Set<Long> ids, Parameters parameters, Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
+		String whereClause = Where.toSQL(
+			this.idAlias(config) + " IN (" + Joiner.on(",").join(ids) + ") ",
+			joinClauses.toSQLWhere(parameters)
+		);
+
 		return this.select(
 			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
 			this.context.getPath(config),
 			joinClauses.toSQL(parameters),
-			Where.toSQL(this.idAlias(config) + " IN (" + Joiner.on(",").join(ids) + ") ", joinClauses.toSQLWhere(parameters)),
+			whereClause,
 			this.orderBy.toSQL(this.context.getTarget(), config)
 		);
 	}
 
 	/**
 	 * Single query strategy with EXISTS : create the SQL 'data' request.
+	 * <br>
+	 * It uses a subquery to find the target type results, attached to the main query with a 'WHERE EXISTS' clause.
 	 * @param parameters the query parameters - will be populated with the actual request parameters
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'data' request.
 	 */
-	private String toSQLDataRequest(Parameters parameters, Config config) {
+	private String toSQLDataRequestWithEXISTS(Parameters parameters, Config config) {
 		// First we have to build a 'select ids' query for the EXISTS subquery
 		// We copy the current 'Select' object to add a suffix to the context
 		// We link the EXISTS subquery to the global one (id = subquery.id)
@@ -544,23 +596,30 @@ public class Select<T extends Yopable> implements JsonAble {
 			copyForAlias.getTableName(),
 			copyForAlias.context.getPath(config),
 			joinClauses.toSQL(parameters),
-			Where.toSQL(whereClause, joinClauses.toSQLWhere(parameters))
+			Where.toSQL(whereClause, joinClauses.toSQLWhere(parameters)),
+			this.paging.toSQL(this.context, parameters, config)
 		);
 
 		// Now we can build the global query that fetches the data when the EXISTS clause matches
 		joinClauses = this.toSQLJoin(false, config);
+		whereClause = Where.toSQL(
+			" EXISTS (" + existsSubSelect + ") ",
+			joinClauses.toSQLWhere(parameters)
+		);
 		return this.select(
 			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
 			this.context.getPath(config),
 			joinClauses.toSQL(parameters),
-			Where.toSQL(" EXISTS (" + existsSubSelect + ") ", joinClauses.toSQLWhere(parameters)),
+			whereClause,
 			this.orderBy.toSQL(this.context.getTarget(), config)
 		);
 	}
 
 	/**
-	 * Single query strategy with EXISTS : create the SQL 'data' request that only returns ID columns.
+	 * Create a SQL request that only returns ID columns.
+	 * <br>
+	 * This can be used as the subquery for an EXISTS clause or simply to count results.
 	 * @param parameters the query parameters - will be populated with the actual request parameters
 	 * @param count      if true, the request will be on 'COUNT(DISTINCT id_column)' instead of the actual columns
 	 * @param config     the SQL config (sql separator, use batch inserts...)
@@ -584,7 +643,8 @@ public class Select<T extends Yopable> implements JsonAble {
 			copyForAlias.getTableName(),
 			copyForAlias.context.getPath(config),
 			joinClauses.toSQL(parameters),
-			Where.toSQL(whereClause, joinClauses.toSQLWhere(parameters))
+			Where.toSQL(whereClause, joinClauses.toSQLWhere(parameters)),
+			this.paging.toSQL(this.context, parameters, config)
 		);
 
 		// Now we can build the global query that fetches the IDs for every type when the EXISTS clause matches
@@ -601,27 +661,34 @@ public class Select<T extends Yopable> implements JsonAble {
 
 	/**
 	 * Single query strategy with IN : create the SQL 'data' request.
+	 * <br>
+	 * It uses a subquery to find IDs of the target type, inside and 'id IN' clause.
 	 * @return the SQL 'data' request.
 	 */
 	private String toSQLDataRequestWithIN(Parameters parameters, Config config) {
 		String path = this.context.getPath(config);
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true, config);
-		String inSubQuery = this.select(
+		String inSubQuery = this.selectDistinct(
 			this.idAlias(config),
 			this.getTableName(),
 			path,
 			joinClauses.toSQL(parameters),
 			Where.toSQL(this.toSQLWhere(parameters, config), joinClauses.toSQLWhere(parameters)),
-			""
+			this.paging.toSQLOrderBy(this.context, config),
+			this.paging.toSQL(this.context, parameters, config)
 		);
 
 		joinClauses = this.toSQLJoin(false, config);
+		String whereClause = Where.toSQL(
+			this.idAlias(config) + " IN (" + inSubQuery + ")",
+			joinClauses.toSQLWhere(parameters)
+		);
 		return this.select(
 			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
 			path,
 			joinClauses.toSQL(parameters),
-			Where.toSQL(this.idAlias(config) + " IN (" + inSubQuery + ")", joinClauses.toSQLWhere(parameters)),
+			whereClause,
 			this.orderBy.toSQL(this.context.getTarget(), config)
 		);
 	}
@@ -641,7 +708,9 @@ public class Select<T extends Yopable> implements JsonAble {
 		String as,
 		String joinClause,
 		String whereClause,
-		String orderClause) {
+		String orderClause,
+		String... extras) {
+		String extra = MessageUtil.concat(extras);
 		return MessageFormat.format(
 			SELECT,
 			what,
@@ -649,7 +718,8 @@ public class Select<T extends Yopable> implements JsonAble {
 			as,
 			joinClause,
 			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause,
-			orderClause
+			orderClause,
+			extra
 		);
 	}
 
@@ -667,14 +737,17 @@ public class Select<T extends Yopable> implements JsonAble {
 		String from,
 		String as,
 		String joinClause,
-		String whereClause) {
+		String whereClause,
+		String... extras) {
+		String extra = MessageUtil.concat(extras);
 		return MessageFormat.format(
 			SELECT_DISTINCT,
 			what,
 			from,
 			as,
 			joinClause,
-			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause
+			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause,
+			extra
 		);
 	}
 }

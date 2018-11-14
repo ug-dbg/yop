@@ -36,6 +36,18 @@ public class OrderBy<T extends Yopable> {
 	OrderBy() {}
 
 	/**
+	 * Order by Id. This creates a new {@link Order} and uses {@link Yopable#getId()} as the getter.
+	 * @param asc true → ASC, false → DESC
+	 * @param <T> the target type (holding the field)
+	 * @return the Order by ID clause
+	 */
+	public static <T extends Yopable> OrderBy<T> orderById(boolean asc) {
+		OrderBy<T> orderBy = new OrderBy<>();
+		orderBy.orders.add(new Order<>(Yopable::getId, asc));
+		return orderBy;
+	}
+
+	/**
 	 * Initialize an Order by, for a given field.
 	 * @param getter the field getter
 	 * @param asc    true → ASC, false → DESC
