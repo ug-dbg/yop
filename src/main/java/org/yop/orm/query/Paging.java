@@ -120,7 +120,7 @@ public class Paging implements JsonAble {
 	 */
 	List<Long> pageIds(List<Long> ids) {
 		int from = this.offset == null ? 0 : this.offset.intValue();
-		int to = this.limit == null ? (ids.size()) : Math.min(ids.size(), from + this.limit.intValue() + 1);
+		int to = this.limit == null ? (ids.size()) : Math.min(ids.size(), from + this.limit.intValue());
 		return ids.subList(from, to);
 	}
 
