@@ -323,7 +323,10 @@ public class Select<T extends Yopable> implements JsonAble {
 	 */
 	public Set<T> execute(IConnection connection, Strategy strategy) {
 		if (this.paging.isPaging() && connection.config().getPagingMethod() == Paging.Method.TWO_QUERIES) {
-			logger.warn("Paging method is set to [{}] → we are going to use 2 queries and page on IDs");
+			logger.warn(
+				"Paging method is set to [{}] → we are going to use 2 queries and page on IDs",
+				connection.config().getPagingMethod().name()
+			);
 			return this.executeWithTwoQueries(connection);
 		}
 
