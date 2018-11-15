@@ -45,6 +45,24 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Pojo]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [Pojo]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [Pojo]."
+        required: false
+        schema:
+          type: "integer"
       responses:
         200:
           description: "A set of [Pojo]"
@@ -191,6 +209,12 @@ paths:
           - "select"
           - "upsert"
           - "delete"
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Pojo]."
+        required: false
+        schema:
+          type: "boolean"
       requestBody:
         description: "YOP custom query"
         content:
@@ -329,7 +353,25 @@ paths:
       - "Pojo"
       summary: "Do head operation on [Pojo]. Execute request. Set content-length.\
         \ No response."
-      parameters: []
+      parameters:
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Pojo]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [Pojo]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [Pojo]."
+        required: false
+        schema:
+          type: "integer"
       responses:
         200:
           description: "Empty response. See content-length for equivalent GET."
@@ -395,6 +437,24 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Pojo]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [Pojo]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [Pojo]."
+        required: false
+        schema:
+          type: "integer"
       - name: "id"
         in: "path"
         description: "[Pojo] ID"
@@ -528,6 +588,24 @@ paths:
       summary: "Do head operation on [Pojo]. Execute request. Set content-length.\
         \ No response."
       parameters:
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Pojo]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [Pojo]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [Pojo]."
+        required: false
+        schema:
+          type: "integer"
       - name: "id"
         in: "path"
         description: "[Pojo] ID"
@@ -601,6 +679,24 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Profile]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [Profile]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [Profile]."
+        required: false
+        schema:
+          type: "integer"
       responses:
         200:
           description: "A set of [Profile]"
@@ -747,6 +843,12 @@ paths:
           - "select"
           - "upsert"
           - "delete"
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Profile]."
+        required: false
+        schema:
+          type: "boolean"
       requestBody:
         description: "YOP custom query"
         content:
@@ -881,7 +983,25 @@ paths:
       - "Profile"
       summary: "Do head operation on [Profile]. Execute request. Set content-length.\
         \ No response."
-      parameters: []
+      parameters:
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Profile]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [Profile]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [Profile]."
+        required: false
+        schema:
+          type: "integer"
       responses:
         200:
           description: "Empty response. See content-length for equivalent GET."
@@ -947,6 +1067,24 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Profile]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [Profile]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [Profile]."
+        required: false
+        schema:
+          type: "integer"
       - name: "id"
         in: "path"
         description: "[Profile] ID"
@@ -1080,6 +1218,24 @@ paths:
       summary: "Do head operation on [Profile]. Execute request. Set content-length.\
         \ No response."
       parameters:
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Profile]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [Profile]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [Profile]."
+        required: false
+        schema:
+          type: "integer"
       - name: "id"
         in: "path"
         description: "[Profile] ID"
@@ -1153,6 +1309,24 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Action]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [Action]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [Action]."
+        required: false
+        schema:
+          type: "integer"
       responses:
         200:
           description: "A set of [Action]"
@@ -1299,6 +1473,12 @@ paths:
           - "select"
           - "upsert"
           - "delete"
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Action]."
+        required: false
+        schema:
+          type: "boolean"
       requestBody:
         description: "YOP custom query"
         content:
@@ -1431,7 +1611,25 @@ paths:
       - "Action"
       summary: "Do head operation on [Action]. Execute request. Set content-length.\
         \ No response."
-      parameters: []
+      parameters:
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Action]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [Action]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [Action]."
+        required: false
+        schema:
+          type: "integer"
       responses:
         200:
           description: "Empty response. See content-length for equivalent GET."
@@ -1497,6 +1695,24 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Action]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [Action]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [Action]."
+        required: false
+        schema:
+          type: "integer"
       - name: "id"
         in: "path"
         description: "[Action] ID"
@@ -1630,6 +1846,24 @@ paths:
       summary: "Do head operation on [Action]. Execute request. Set content-length.\
         \ No response."
       parameters:
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [Action]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [Action]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [Action]."
+        required: false
+        schema:
+          type: "integer"
       - name: "id"
         in: "path"
         description: "[Action] ID"
@@ -1703,6 +1937,24 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [User]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [User]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [User]."
+        required: false
+        schema:
+          type: "integer"
       responses:
         200:
           description: "A set of [User]"
@@ -1849,6 +2101,12 @@ paths:
           - "select"
           - "upsert"
           - "delete"
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [User]."
+        required: false
+        schema:
+          type: "boolean"
       requestBody:
         description: "YOP custom query"
         content:
@@ -1929,7 +2187,25 @@ paths:
       - "User"
       summary: "Do head operation on [User]. Execute request. Set content-length.\
         \ No response."
-      parameters: []
+      parameters:
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [User]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [User]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [User]."
+        required: false
+        schema:
+          type: "integer"
       responses:
         200:
           description: "Empty response. See content-length for equivalent GET."
@@ -1995,6 +2271,24 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [User]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [User]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [User]."
+        required: false
+        schema:
+          type: "integer"
       - name: "id"
         in: "path"
         description: "[User] ID"
@@ -2128,6 +2422,24 @@ paths:
       summary: "Do head operation on [User]. Execute request. Set content-length.\
         \ No response."
       parameters:
+      - name: "count"
+        in: "header"
+        description: "Set the total number of results in your query on [User]."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "offset"
+        in: "header"
+        description: "Set the offset from which to read in your query on [User]."
+        required: false
+        schema:
+          type: "integer"
+      - name: "limit"
+        in: "header"
+        description: "Set the number of results to return in your query on [User]."
+        required: false
+        schema:
+          type: "integer"
       - name: "id"
         in: "path"
         description: "[User] ID"
