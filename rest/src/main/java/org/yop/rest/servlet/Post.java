@@ -67,7 +67,7 @@ public class Post implements HttpMethod {
 	 * @throws IllegalArgumentException for an unknown query type.
 	 */
 	@Override
-	public Object executeDefault(RestRequest restRequest, IConnection connection) {
+	public ExecutionOutput executeDefault(RestRequest restRequest, IConnection connection) {
 		String queryType = restRequest.getParameterFirstValue(PARAM_TYPE);
 		switch (StringUtils.lowerCase(queryType)) {
 			case YopSchemas.SELECT : return doSelect(restRequest, connection);
@@ -94,6 +94,7 @@ public class Post implements HttpMethod {
 			.schema(typeParameterSchema)
 			.description("A custom Yop query for [" + resource + "] in JSON format");
 		post.getParameters().add(typeParameter);
+		post.getParameters().add(HttpMethod.countParameter(resource));
 
 		Schema queries = new ComposedSchema().anyOf(Arrays.asList(
 			new Schema().$ref(YopSchemas.SELECT),
@@ -122,7 +123,7 @@ public class Post implements HttpMethod {
 	 * @return a Set of Yopable, serialized to JSON using {@link Select#toJSONQuery()}
 	 * @throws IllegalArgumentException {@link RestRequest#getRestResource()} does not match {@link Select#getTarget()}
 	 */
-	private static Object doSelect(RestRequest restRequest, IConnection connection) {
+	private static ExecutionOutput doSelect(RestRequest restRequest, IConnection connection) {
 		Select<Yopable> select = Select.fromJSON(
 			restRequest.getContent(),
 			connection.config(),
@@ -135,8 +136,17 @@ public class Post implements HttpMethod {
 				+ "instead of [" + restRequest.getRestResource().getName() + "]"
 			);
 		}
+		if (restRequest.isPaging()) {
+			logger.info("Paging headers found. Overriding any paging configuration from JSON select query.");
+			select.page(restRequest.offset(), restRequest.limit());
+		}
+
 		Set<Yopable> results = select.execute(connection);
-		return select.toJSONQuery().onto(results).toJSON();
+		ExecutionOutput output = ExecutionOutput.forOutput(select.toJSONQuery().onto(results).toJSON());
+		if (restRequest.count()) {
+			output.addHeader(PARAM_COUNT, String.valueOf(select.count(connection)));
+		}
+		return output;
 	}
 
 	/**
@@ -146,7 +156,7 @@ public class Post implements HttpMethod {
 	 * @return an empty array list
 	 * @throws IllegalArgumentException {@link RestRequest#getRestResource()} does not match {@link Select#getTarget()}
 	 */
-	private static Object doDelete(RestRequest restRequest, IConnection connection) {
+	private static ExecutionOutput doDelete(RestRequest restRequest, IConnection connection) {
 		Delete<Yopable> delete = Delete.fromJSON(
 			restRequest.getContent(),
 			connection.config(),
@@ -160,7 +170,7 @@ public class Post implements HttpMethod {
 			);
 		}
 		delete.executeQueries(connection);
-		return new ArrayList<>(0);
+		return ExecutionOutput.forOutput(new ArrayList<>(0));
 	}
 
 	/**
@@ -170,7 +180,7 @@ public class Post implements HttpMethod {
 	 * @return an empty array list
 	 * @throws IllegalArgumentException {@link RestRequest#getRestResource()} does not match {@link Select#getTarget()}
 	 */
-	private static Object doUpsert(RestRequest restRequest, IConnection connection) {
+	private static ExecutionOutput doUpsert(RestRequest restRequest, IConnection connection) {
 		Upsert<Yopable> upsert = Upsert.fromJSON(
 			restRequest.getContent(),
 			connection.config(),
@@ -184,7 +194,7 @@ public class Post implements HttpMethod {
 			);
 		}
 		upsert.execute(connection);
-		return new ArrayList<>(0);
+		return ExecutionOutput.forOutput(new ArrayList<>(0));
 	}
 
 	/**

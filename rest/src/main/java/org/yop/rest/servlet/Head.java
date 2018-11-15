@@ -56,6 +56,9 @@ public class Head extends Get {
 		head.setSummary("Do head operation on [" + resource + "]. Execute request. Set content-length. No response.");
 		head.setResponses(new ApiResponses());
 		head.setParameters(new ArrayList<>());
+		head.getParameters().add(HttpMethod.countParameter(resource));
+		head.getParameters().add(HttpMethod.pagingOffsetParameter(resource));
+		head.getParameters().add(HttpMethod.pagingLimitParameter(resource));
 
 		ApiResponse responseItem = new ApiResponse();
 		responseItem.setDescription("Empty response. See content-length for equivalent GET.");

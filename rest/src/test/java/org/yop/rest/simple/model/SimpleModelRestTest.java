@@ -22,6 +22,7 @@ import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
 import org.yop.orm.simple.model.Pojo;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.rest.servlet.HttpMethod;
 import org.yop.rest.servlet.LoginServlet;
 import org.yop.rest.servlet.RestServletTest;
 import org.yop.rest.users.model.Action;
@@ -33,6 +34,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -320,6 +322,81 @@ public class SimpleModelRestTest extends RestServletTest {
 				Pojo fromDB = Select.from(Pojo.class).uniqueResult(connection);
 				Assert.assertNull(fromDB);
 			}
+		}
+	}
+
+	@Test
+	public void test_CRUD_Paging() throws SQLException, ClassNotFoundException, IOException {
+		Pojo newPojo;
+		try (IConnection connection = this.getConnection()) {
+			Collection<Pojo> pojos = new ArrayList<>(20);
+			for (int i = 1; i <= 20; i++) {
+				newPojo = new Pojo();
+				newPojo.setVersion(i);
+				newPojo.setType(Pojo.Type.FOO);
+				newPojo.setActive(true);
+				newPojo.setStringColumn("This is a string that will be set in the string column");
+
+				Jopo jopo1 = new Jopo();
+				jopo1.setName("JOPO 1 test CRUD with REST");
+				jopo1.setPojo(newPojo);
+				newPojo.getJopos().add(jopo1);
+
+				Jopo jopo2 = new Jopo();
+				jopo2.setName("JOPO 2 test CRUD with REST");
+				jopo2.setPojo(newPojo);
+				newPojo.getJopos().add(jopo2);
+
+				Other other = new Other();
+				other.setTimestamp(LocalDateTime.of(1337, 1, i, 13, 37));
+				other.setName("OTHER test CRUD with REST");
+				newPojo.getOthers().add(other);
+
+				pojos.add(newPojo);
+			}
+
+			upsert(Pojo.class)
+				.onto(pojos)
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers))
+				.checkNaturalID()
+				.execute(connection);
+
+			rogerCanRead(connection);
+		}
+
+		String sessionCookie = login();
+
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			// HEAD with joinAll and paging/count header, user logged in, user can read → 200 with no content
+			HttpGet httpHead = new HttpGet("http://localhost:1234/yop/rest/pojo?joinAll");
+			httpHead.setHeader("Cookie", sessionCookie);
+			httpHead.setHeader(HttpMethod.PARAM_COUNT, Boolean.TRUE.toString());
+			httpHead.setHeader(HttpMethod.PARAM_LIMIT, "5");
+			Response response = doRequest(httpclient, httpHead);
+			Assert.assertEquals(200, response.statusCode);
+			Assert.assertEquals("20", response.getHeaderValue("count"));
+
+			// GET with joinAll and paging/count header, user logged in, user can read → 200 with content
+			HttpGet httpGet = new HttpGet("http://localhost:1234/yop/rest/pojo?joinAll");
+			httpGet.setHeader("Cookie", sessionCookie);
+			httpGet.setHeader(HttpMethod.PARAM_COUNT, Boolean.TRUE.toString());
+			httpGet.setHeader(HttpMethod.PARAM_LIMIT, "5");
+			response = doRequest(httpclient, httpGet);
+			Assert.assertEquals(200, response.statusCode);
+			Assert.assertEquals(5, new JSONArray(response.content).length());
+			Assert.assertEquals("20", response.getHeaderValue("count"));
+
+			// GET with joinAll and paging/count header, user logged in, user can read → 200 with content
+			httpGet = new HttpGet("http://localhost:1234/yop/rest/pojo?joinAll");
+			httpGet.setHeader("Cookie", sessionCookie);
+			httpGet.setHeader(HttpMethod.PARAM_COUNT, Boolean.TRUE.toString());
+			httpGet.setHeader(HttpMethod.PARAM_LIMIT,  "5");
+			httpGet.setHeader(HttpMethod.PARAM_OFFSET, "18");
+			response = doRequest(httpclient, httpGet);
+			Assert.assertEquals(200, response.statusCode);
+			Assert.assertEquals(2, new JSONArray(response.content).length());
+			Assert.assertEquals("20", response.getHeaderValue("count"));
 		}
 	}
 

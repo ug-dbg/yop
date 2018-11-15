@@ -23,6 +23,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * Testing the {@link YopRestServlet} into an embedded Tomcat : {@link #tomcat}.
@@ -136,7 +139,8 @@ public abstract class RestServletTest extends DBMSSwitch {
 			return new SimpleModelRestTest.Response(
 				response.getStatusLine().getStatusCode(),
 				contentLength == null ? -1 :Integer.valueOf(contentLength.getValue()),
-				entity == null ? null : IOUtils.toString(entity.getContent())
+				entity == null ? null : IOUtils.toString(entity.getContent()),
+				response.getAllHeaders()
 			);
 		}
 	}
@@ -147,11 +151,22 @@ public abstract class RestServletTest extends DBMSSwitch {
 		public int statusCode;
 		public int contentLength;
 		public String content;
+		Collection<Header> headers = new ArrayList<>();
 
-		private Response(int statusCode, int contentLength, String content) {
+		private Response(int statusCode, int contentLength, String content, Header[] headers) {
 			this.statusCode = statusCode;
 			this.contentLength = contentLength;
 			this.content = content;
+			this.headers.addAll(Arrays.asList(headers));
+		}
+
+		public String getHeaderValue(String key){
+			return this.headers
+				.stream()
+				.filter(h -> h.getName().equals(key))
+				.map(Header::getValue)
+				.findFirst()
+				.orElse("");
 		}
 	}
 

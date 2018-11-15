@@ -6,6 +6,7 @@ import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.Header;
 import org.apache.http.NameValuePair;
@@ -266,6 +267,64 @@ class RestRequest {
 	boolean checkNaturalID() {
 		return this.parameters.containsMapping(HttpMethod.PARAM_CHECK_NK, "true")
 			|| this.parameters.containsMapping(HttpMethod.PARAM_CHECK_NK, null);
+	}
+
+	/**
+	 * Does this request has a 'count' directive in its headers ?
+	 * @return true if there is a {@link HttpMethod#PARAM_COUNT} header set to true
+	 */
+	boolean count() {
+		return this
+			.headers
+			.stream()
+			.filter(h -> HttpMethod.PARAM_COUNT.equals(h.getName()))
+			.map(Header::getValue)
+			.map(BooleanUtils::toBoolean)
+			.findFirst()
+			.orElse(false);
+	}
+
+	/**
+	 * Does this request has a 'paging' directive in its headers ?
+	 * @return true if there is either a {@link HttpMethod#PARAM_OFFSET} or a {@link HttpMethod#PARAM_LIMIT} header
+	 */
+	boolean isPaging() {
+		return this
+			.headers
+			.stream()
+			.anyMatch(h -> Arrays.asList(HttpMethod.PARAM_OFFSET, HttpMethod.PARAM_LIMIT).contains(h.getName()));
+	}
+
+	/**
+	 * Read the {@link HttpMethod#PARAM_OFFSET} header parameter value.
+	 * @return the paging offset header value, or null if this header is not set.
+	 */
+	Long offset() {
+		return this
+			.headers
+			.stream()
+			.filter(h -> HttpMethod.PARAM_OFFSET.equals(h.getName()))
+			.map(Header::getValue)
+			.filter(NumberUtils::isDigits)
+			.map(Long::valueOf)
+			.findFirst()
+			.orElse(null);
+	}
+
+	/**
+	 * Read the {@link HttpMethod#PARAM_LIMIT} header parameter value.
+	 * @return the paging limit header value, or null if this header is not set.
+	 */
+	Long limit() {
+		return this
+			.headers
+			.stream()
+			.filter(h -> HttpMethod.PARAM_LIMIT.equals(h.getName()))
+			.map(Header::getValue)
+			.filter(NumberUtils::isDigits)
+			.map(Long::valueOf)
+			.findFirst()
+			.orElse(null);
 	}
 
 	/**

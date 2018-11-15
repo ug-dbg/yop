@@ -11,6 +11,7 @@ import org.yop.rest.openapi.OpenAPIUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Set;
 
 import static javax.servlet.http.HttpServletResponse.*;
 
@@ -31,14 +32,18 @@ class Get implements HttpMethod {
 	 * Read the joinAll & joinIDs parameters.
 	 * @param restRequest the incoming request
 	 * @param connection the JDBC (or other) underlying connection
-	 * @return a set of {@link Yopable} or an unique {@link Yopable} if {@link RestRequest#getId()} is set.
+	 * @return a wrapped set of {@link Yopable} or a wrapped {@link Yopable} (if {@link RestRequest#getId()} is set).
 	 * @throws YopNoResultException if asked for a single element by ID and no result.
 	 */
 	@Override
-	public Object executeDefault(RestRequest restRequest, IConnection connection) {
+	public ExecutionOutput executeDefault(RestRequest restRequest, IConnection connection) {
 		Select<Yopable> select = Select.from(restRequest.getRestResource());
 		if (restRequest.joinAll() || restRequest.joinIDs()) {
 			select.joinAll();
+		}
+
+		if (restRequest.isPaging()) {
+			select.page(restRequest.offset(), restRequest.limit());
 		}
 
 		if (restRequest.getId() != null) {
@@ -49,9 +54,18 @@ class Get implements HttpMethod {
 					"No element [" + restRequest.getRestResource().getName() + "] for ID [" + restRequest.getId() + "]"
 				);
 			}
-			return uniqueResult;
+			ExecutionOutput output = ExecutionOutput.forOutput(uniqueResult);
+			if (restRequest.count()) {
+				output.addHeader(PARAM_COUNT, "1");
+			}
+			return output;
 		} else {
-			return select.execute(connection);
+			Set<Yopable> results = select.execute(connection);
+			ExecutionOutput output = ExecutionOutput.forOutput(results);
+			if (restRequest.count()) {
+				output.addHeader(PARAM_COUNT, String.valueOf(select.count(connection)));
+			}
+			return output;
 		}
 	}
 
@@ -64,6 +78,9 @@ class Get implements HttpMethod {
 		get.setParameters(new ArrayList<>());
 		get.getParameters().add(HttpMethod.joinAllParameter(resource));
 		get.getParameters().add(HttpMethod.joinIDsParameter(resource));
+		get.getParameters().add(HttpMethod.countParameter(resource));
+		get.getParameters().add(HttpMethod.pagingOffsetParameter(resource));
+		get.getParameters().add(HttpMethod.pagingLimitParameter(resource));
 
 		get.getResponses().addApiResponse(String.valueOf(SC_OK),                    HttpMethod.http200(yopable));
 		get.getResponses().addApiResponse(String.valueOf(SC_BAD_REQUEST),           HttpMethod.http400());

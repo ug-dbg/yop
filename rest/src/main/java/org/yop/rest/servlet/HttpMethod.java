@@ -63,6 +63,15 @@ public interface HttpMethod {
 	/** HTTP 'checkNaturalID' parameter : when inserting, check if the Natural Key already exists. */
 	String PARAM_CHECK_NK = "checkNaturalID";
 
+	/** HTTP 'count' parameter : return the total number of results in the output headers. */
+	String PARAM_COUNT = "count";
+
+	/** HTTP 'offset' parameter : return results from the given offset. */
+	String PARAM_OFFSET = "offset";
+
+	/** HTTP 'limit' parameter : only return X results. */
+	String PARAM_LIMIT = "limit";
+
 	/** JSON error message key */
 	String ERROR = "error";
 
@@ -141,6 +150,48 @@ public interface HttpMethod {
 			.required(false)
 			.schema(new Schema().type("boolean"))
 			.description("Check natural ID when inserting [" + forResource + "] elements. Do update if possible.");
+	}
+
+	/**
+	 * Create a {@link #PARAM_COUNT}' OpenAPI parameter for a given resource.
+	 * @param forResource the resource name (for {@link io.swagger.oas.models.parameters.Parameter#description}.
+	 * @return the OpenAPI 'count' parameter
+	 */
+	static io.swagger.oas.models.parameters.Parameter countParameter(String forResource) {
+		return new io.swagger.oas.models.parameters.Parameter()
+			.name(PARAM_COUNT)
+			.in("header")
+			.required(false)
+			.schema(new Schema().type("boolean"))
+			.description("Set the total number of results in your query on [" + forResource + "].");
+	}
+
+	/**
+	 * Create a {@link #PARAM_OFFSET}' OpenAPI parameter for a given resource.
+	 * @param forResource the resource name (for {@link io.swagger.oas.models.parameters.Parameter#description}.
+	 * @return the OpenAPI 'offset' parameter
+	 */
+	static io.swagger.oas.models.parameters.Parameter pagingOffsetParameter(String forResource) {
+		return new io.swagger.oas.models.parameters.Parameter()
+			.name(PARAM_OFFSET)
+			.in("header")
+			.required(false)
+			.schema(new Schema().type("integer"))
+			.description("Set the offset from which to read in your query on [" + forResource + "].");
+	}
+
+	/**
+	 * Create a {@link #PARAM_LIMIT}' OpenAPI parameter for a given resource.
+	 * @param forResource the resource name (for {@link io.swagger.oas.models.parameters.Parameter#description}.
+	 * @return the OpenAPI 'limit' parameter
+	 */
+	static io.swagger.oas.models.parameters.Parameter pagingLimitParameter(String forResource) {
+		return new io.swagger.oas.models.parameters.Parameter()
+			.name(PARAM_LIMIT)
+			.in("header")
+			.required(false)
+			.schema(new Schema().type("integer"))
+			.description("Set the number of results to return in your query on [" + forResource + "].");
 	}
 
 	/**
@@ -258,7 +309,7 @@ public interface HttpMethod {
 	 * @param connection the JDBC (or other) underlying connection
 	 * @return the execution result, be it from default or custom behavior
 	 */
-	default Object execute(RestRequest restRequest, IConnection connection) {
+	default ExecutionOutput execute(RestRequest restRequest, IConnection connection) {
 		if (restRequest.isCustomResource()) {
 			return this.executeCustom(restRequest, connection);
 		}
@@ -275,7 +326,7 @@ public interface HttpMethod {
 	 * @throws YopNoResourceException no custom resource found for the request
 	 * @throws YopResourceInvocationException an error occurred executing the custom method
 	 */
-	default Object executeCustom(RestRequest restRequest, IConnection connection) {
+	default ExecutionOutput executeCustom(RestRequest restRequest, IConnection connection) {
 		Optional<Method> candidate = restRequest.getCandidate();
 
 		if (! candidate.isPresent()) {
@@ -303,10 +354,13 @@ public interface HttpMethod {
 				}
 			}
 
+			Object out;
 			if (Modifier.isStatic(method.getModifiers())) {
-				return method.invoke(null, parameters);
+				out = method.invoke(null, parameters);
+			} else {
+				out = method.invoke(restRequest.getRestResource(), parameters);
 			}
-			return method.invoke(restRequest.getRestResource(), parameters);
+			return ExecutionOutput.forOutput(out);
 		} catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
 			throw new YopResourceInvocationException(
 				"Error invoking YOP resource [" + Objects.toString(candidate.get()) + "]",
@@ -390,9 +444,9 @@ public interface HttpMethod {
 	 * Execute the default behavior for the given request.
 	 * @param restRequest the incoming request
 	 * @param connection the JDBC (or other) underlying connection
-	 * @return the execution result
+	 * @return the execution result : a wrapper containing both the output and some extra output headers to set.
 	 */
-	Object executeDefault(RestRequest restRequest, IConnection connection);
+	ExecutionOutput executeDefault(RestRequest restRequest, IConnection connection);
 
 	/**
 	 * Generate an OpenAPI operation model for the given resource.
