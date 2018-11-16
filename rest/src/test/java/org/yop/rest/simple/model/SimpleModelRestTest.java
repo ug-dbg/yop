@@ -348,7 +348,7 @@ public class SimpleModelRestTest extends RestServletTest {
 				newPojo.getJopos().add(jopo2);
 
 				Other other = new Other();
-				other.setTimestamp(LocalDateTime.of(1337, 1, i, 13, 37));
+				other.setTimestamp(LocalDateTime.of(1999, 1, i, 13, 37));
 				other.setName("OTHER test CRUD with REST");
 				newPojo.getOthers().add(other);
 
