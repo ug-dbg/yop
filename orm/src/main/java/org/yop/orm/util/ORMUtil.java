@@ -118,7 +118,8 @@ public class ORMUtil {
 	 * <br>
 	 * This is different from {@link #getTableName(Class)} which determine the Table associated to a class.
 	 * <br><br>
-	 * For now this is simply {@link Class#getSimpleName()}.
+	 * For now this is simply "yop_" + {@link Class#getSimpleName()}.
+	 * The 'yop_' prefix prevents from using reserved words.
 	 * <br>
 	 * Restriction is you cannot use 2 classes with the same name in a request.
 	 * I don't feel it is totally absurd.
@@ -131,7 +132,7 @@ public class ORMUtil {
 	 */
 	public static <T extends Yopable> String getTargetName(Class<T> target) {
 		if (!TARGET_NAMES.containsKey(target)) {
-			TARGET_NAMES.put(target, target.getSimpleName());
+			TARGET_NAMES.put(target, "yop_" + target.getSimpleName());
 		}
 		return TARGET_NAMES.get(target);
 	}
@@ -228,6 +229,14 @@ public class ORMUtil {
 	 * @return simple link to {@link ORMTypes#getForType(Class)}
 	 */
 	public static String getColumnType(Field field, ORMTypes types) {
+		// enum ? Read the strategy
+		if (field.getType().isEnum() && field.isAnnotationPresent(Column.class)) {
+			switch (field.getAnnotation(org.yop.orm.annotations.Column.class).enum_strategy()) {
+				case ORDINAL: return types.getForType(Integer.class);
+				case NAME:
+				default: return types.getForType(String.class);
+			}
+		}
 		return types.getForType(field.getType());
 	}
 

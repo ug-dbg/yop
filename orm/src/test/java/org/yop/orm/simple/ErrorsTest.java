@@ -158,6 +158,7 @@ public class ErrorsTest extends DBMSSwitch {
 			Pojo::getType,
 			Column.class
 		);
+		Column.EnumStrategy old = (Column.EnumStrategy) typeAnnotationValues.get("enum_strategy");
 		try (IConnection connection = this.getConnection()) {
 			Pojo pojo = new Pojo();
 			pojo.setType(Pojo.Type.BAR);
@@ -169,7 +170,7 @@ public class ErrorsTest extends DBMSSwitch {
 
 			Yop.select(Pojo.class).execute(connection);
 		} finally {
-			typeAnnotationValues.put("enum_strategy", Column.EnumStrategy.NAME);
+			typeAnnotationValues.put("enum_strategy", old);
 		}
 	}
 
