@@ -22,7 +22,7 @@ import java.util.List;
  * An user can have several {@link Profile}, which contains the {@link Action} it is allowed to do.
  */
 @Rest(path = "user", description = "Users REST resource ")
-@Table(name = "user")
+@Table(name = "yop_user")
 public class User implements Yopable {
 
 	@Id

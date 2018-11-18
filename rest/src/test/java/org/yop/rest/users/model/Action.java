@@ -13,7 +13,7 @@ import java.util.Collection;
  * An action can be in one or several {@link Profile}.
  */
 @Rest(path = "action", description = "Actions REST resource ")
-@Table(name = "action")
+@Table(name = "yop_action")
 public class Action implements Yopable {
 
 	@Id

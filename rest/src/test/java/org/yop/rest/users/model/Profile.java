@@ -12,7 +12,7 @@ import java.util.List;
  * A profile is a set of {@link Action} a user is allowed to do.
  */
 @Rest(path = "profile", description = "Profiles REST resource ")
-@Table(name = "profile")
+@Table(name = "yop_profile")
 public class Profile implements Yopable {
 
 	@Id
