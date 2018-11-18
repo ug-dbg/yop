@@ -205,6 +205,14 @@ public class ORMUtil {
 	 * @return simple link to {@link ORMTypes#getForType(Class)}
 	 */
 	public static String getColumnType(Field field, ORMTypes types) {
+		// enum ? Read the strategy
+		if (field.getType().isEnum() && field.isAnnotationPresent(Column.class)) {
+			switch (field.getAnnotation(org.yop.orm.annotations.Column.class).enum_strategy()) {
+				case ORDINAL: return types.getForType(Integer.class);
+				case NAME:
+				default: return types.getForType(String.class);
+			}
+		}
 		return types.getForType(field.getType());
 	}
 
