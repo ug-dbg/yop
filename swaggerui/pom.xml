@@ -69,7 +69,6 @@
 			<version>${project.version}</version>
 			<type>test-jar</type>
 			<scope>test</scope>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.y-op</groupId>
@@ -77,7 +76,6 @@
 			<version>${project.version}</version>
 			<type>test-jar</type>
 			<scope>test</scope>
-			<optional>true</optional>
 		</dependency>
 
 		<!-- Logging -->

@@ -51,7 +51,6 @@
 			<version>${project.version}</version>
 			<type>test-jar</type>
 			<scope>test</scope>
-			<optional>true</optional>
 		</dependency>
 
 		<!-- Logging -->
