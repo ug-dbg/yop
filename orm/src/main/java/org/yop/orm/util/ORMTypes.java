@@ -18,11 +18,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * DBMS specificities.
+ * DBMS particularities.
  * <br>
  * This is pretty raw/patchy. This was written to prepare unit tests context.
  * <br><br>
- * This is required for schema generation and should only be used for this purpose only !
+ * This is required for schema generation and should be used for this purpose only !
  * <br>
  * Yop tries to generate some very basic SQL CRUD queries that does not rely on an SQL dialect.
  */
