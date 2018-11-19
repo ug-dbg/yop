@@ -28,6 +28,7 @@ public class Config {
 	/** Classic SQL dot operator */
 	public static final String DOT = ".";
 
+	/** See {@link #defaultSequence()} */
 	public static final String SQL_DEFAULT_SEQ_DEFAULT = "→DEFAULT_SEQ←";
 
 	public static final String SHOW_SQL_PROPERTY            = "yop.show_sql";
