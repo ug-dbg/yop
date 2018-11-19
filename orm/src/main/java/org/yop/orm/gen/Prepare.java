@@ -244,7 +244,13 @@ public class Prepare {
 	 * @param dialect       the dialect (one of the singleton from the {@link org.yop.orm.util.dialect} package)
 	 * @throws SQLException an error occurred running and committing the generation script
 	 */
-	private static void prepare(String packagePrefix, IConnection connection, ORMTypes dialect, ClassLoader classLoader) throws SQLException {
+	private static void prepare(
+		String packagePrefix,
+		IConnection connection,
+		ORMTypes dialect,
+		ClassLoader classLoader)
+		throws SQLException {
+
 		connection.setAutoCommit(true);
 		for (String line : dialect.generateScript(packagePrefix, classLoader, connection.config())) {
 			try {
