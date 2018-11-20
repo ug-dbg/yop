@@ -63,7 +63,7 @@ public class YopSwaggerUIServlet extends HttpServlet {
 
 		if (StringUtils.equalsAny(path, "", "/")) {
 			logger.debug("Redirect to index.html");
-			resp.sendRedirect(Paths.get(req.getServletPath(), "index.html").toString());
+			resp.sendRedirect(Paths.get(req.getContextPath(), req.getServletPath(), "index.html").toString());
 			return;
 		}
 
