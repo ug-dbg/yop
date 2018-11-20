@@ -3,7 +3,6 @@ package org.yop.orm.gen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
-import org.sqlite.SQLiteException;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
@@ -252,8 +251,9 @@ public class Prepare {
 					new SimpleQuery(line, Query.Type.UNKNOWN, new Parameters(), connection.config())
 				);
 			} catch (RuntimeException e) {
-				if (e.getCause() instanceof SQLiteException) {
+				if ("SQLiteException".equals(e.getCause().getClass().getSimpleName())) {
 					// When testing using SQLite, all the 'DROP' requests throws exception. That's quite normal.
+					// We want to avoid log pollution when doing standard tests : don't log the stack trace.
 					logger.warn("Error executing script line [{}] : [{}]", line, e.getCause().getMessage());
 				} else {
 					logger.warn("Error executing script line [{}]]", line, e);
