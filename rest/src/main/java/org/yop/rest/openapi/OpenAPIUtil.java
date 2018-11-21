@@ -13,10 +13,14 @@ import io.swagger.oas.models.info.Contact;
 import io.swagger.oas.models.info.Info;
 import io.swagger.oas.models.info.License;
 import io.swagger.oas.models.media.ArraySchema;
+import io.swagger.oas.models.media.Content;
+import io.swagger.oas.models.media.MediaType;
 import io.swagger.oas.models.media.Schema;
+import io.swagger.oas.models.parameters.RequestBody;
 import io.swagger.oas.models.responses.ApiResponses;
 import io.swagger.oas.models.tags.Tag;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
@@ -59,6 +63,7 @@ public class OpenAPIUtil {
 	 * Rough java type → JSON schema type/format equivalents.
 	 */
 	static final Map<Class, SchemaModel> JSON_SCHEMAS = new HashMap<Class, SchemaModel>() {{
+		this.put(Object.class,             new SchemaModel("object"));
 		this.put(Boolean.class,            new SchemaModel("boolean"));
 		this.put(Integer.class,            new SchemaModel("integer"));
 		this.put(Long.class,               new SchemaModel("integer"));
@@ -184,6 +189,10 @@ public class OpenAPIUtil {
 			return schema;
 		}
 		return null;
+	}
+
+	private static Schema<?> forResourceArray(Class<? extends Yopable> clazz) {
+		return new ArraySchema().items(forResource(clazz)).description("Array of " + clazz.getSimpleName());
 	}
 
 	/**
@@ -326,6 +335,7 @@ public class OpenAPIUtil {
 
 				operation.setParameters(new ArrayList<>());
 				for (java.lang.reflect.Parameter parameter : method.getParameters()) {
+					Class<?> type = parameter.getType();
 					String parameterDescription = "";
 					String in = "";
 					String name = "";
@@ -351,16 +361,45 @@ public class OpenAPIUtil {
 						in = "header";
 						parameterDescription = headerParam.description();
 					}
+					if (parameter.isAnnotationPresent(org.yop.rest.annotations.Content.class)) {
+						if (operation.getRequestBody() == null) {
+							RequestBody raw = new RequestBody().description("Raw content");
+							operation.requestBody(raw.content(new Content().addMediaType(
+								ContentType.APPLICATION_JSON.getMimeType(),
+								new MediaType().schema(JSON_SCHEMAS.get(Object.class).toSchema())
+							)));
+						}
+					}
+
+					if (parameter.isAnnotationPresent(org.yop.rest.annotations.BodyInstance.class)) {
+						if (yopable.isAssignableFrom(type)) {
+							RequestBody body = new RequestBody().description(type.getSimpleName());
+							operation.requestBody(body.content(new Content().addMediaType(
+								ContentType.APPLICATION_JSON.getMimeType(),
+								new MediaType().schema(forResource(yopable))
+							)));
+						}
+					}
+
+					if (parameter.isAnnotationPresent(org.yop.rest.annotations.BodyInstances.class)) {
+						if (Collection.class.isAssignableFrom(type)) {
+							RequestBody body = new RequestBody().description(type.getSimpleName());
+							operation.requestBody(body.content(new Content().addMediaType(
+								ContentType.APPLICATION_JSON.getMimeType(),
+								new MediaType().schema(forResourceArray(yopable))
+							)));
+						}
+					}
 
 					if (StringUtils.isNotBlank(name)) {
 						operation.getParameters().add(
-								new io.swagger.oas.models.parameters.Parameter()
-									.name(name)
-									.required(false)
-									.schema(JSON_SCHEMAS.get(Primitives.wrap(parameter.getType())).toSchema())
-									.required(required)
-									.in(in)
-									.description(parameterDescription)
+							new io.swagger.oas.models.parameters.Parameter()
+								.name(name)
+								.required(false)
+								.schema(JSON_SCHEMAS.get(Primitives.wrap(type)).toSchema())
+								.required(required)
+								.in(in)
+								.description(parameterDescription)
 						);
 					}
 				}

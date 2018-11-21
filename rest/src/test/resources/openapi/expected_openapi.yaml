@@ -2181,6 +2181,12 @@ paths:
       description: "Delete users and returned deleted entries. Not implemented yet\
         \ !"
       parameters: []
+      requestBody:
+        description: "Raw content"
+        content:
+          application/json:
+            schema:
+              type: "object"
       responses: {}
     head:
       tags:
