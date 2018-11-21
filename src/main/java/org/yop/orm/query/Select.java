@@ -286,12 +286,12 @@ public class Select<T extends Yopable> implements JsonAble {
 		);
 		ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toList());
 
-		if(ids.isEmpty()) {
-			return new HashSet<>();
-		}
-
 		if (this.paging.isPaging()) {
 			ids = this.paging.pageIds(ids);
+		}
+
+		if(ids.isEmpty()) {
+			return new HashSet<>();
 		}
 
 		parameters = new Parameters();
