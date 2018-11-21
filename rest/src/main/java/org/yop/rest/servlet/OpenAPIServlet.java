@@ -23,18 +23,18 @@ import java.util.ArrayList;
  * Parameters :
  * <ul>
  *     <li>{@link #PACKAGE_INIT_PARAM} is required to find the @Rest Yopable from the class path</li>
- *     <li>{@link #EXPOSITION_PATH} is required to generate the correct server endpoints in the OpenAPI model</li>
+ *     <li>{@link #EXPOSITION_PATH_PARAM} is required to generate the correct server endpoints in the OpenAPI model</li>
  * </ul>
  */
 public class OpenAPIServlet extends HttpServlet {
 
 	private static final Logger logger = LoggerFactory.getLogger(OpenAPIServlet.class);
 
-	static final String PACKAGE_INIT_PARAM = "packages";
-	static final String EXPOSITION_PATH = "exposition_path";
+	public static final String PACKAGE_INIT_PARAM    = "packages";
+	public static final String EXPOSITION_PATH_PARAM = "exposition_path";
 
-	private final Yopables yopablePaths = new Yopables();
-	private String expositionPath;
+	protected final Yopables yopablePaths = new Yopables();
+	protected String expositionPath;
 
 	/**
 	 * Set the REST resources exposition path. This will be used to generate the server info.
@@ -48,7 +48,7 @@ public class OpenAPIServlet extends HttpServlet {
 	public void init() throws ServletException {
 		super.init();
 		this.yopablePaths.fromPackage(this.getInitParameter(PACKAGE_INIT_PARAM));
-		this.expositionPath = this.getInitParameter(EXPOSITION_PATH);
+		this.expositionPath = this.getInitParameter(EXPOSITION_PATH_PARAM);
 	}
 
 	@Override

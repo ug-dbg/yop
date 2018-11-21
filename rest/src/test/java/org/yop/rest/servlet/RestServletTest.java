@@ -122,7 +122,7 @@ public abstract class RestServletTest extends DBMSSwitch {
 	private void addOpenAPIServlet(Context context) {
 		Wrapper wrapper = Tomcat.addServlet(context, OpenAPIServlet.class.getSimpleName(), new OpenAPIServlet());
 		wrapper.addInitParameter(OpenAPIServlet.PACKAGE_INIT_PARAM, "org.yop");
-		wrapper.addInitParameter(OpenAPIServlet.EXPOSITION_PATH, "/yop/rest");
+		wrapper.addInitParameter(OpenAPIServlet.EXPOSITION_PATH_PARAM, "/yop/rest");
 		context.addServletMappingDecoded("/yop/openapi", OpenAPIServlet.class.getSimpleName());
 	}
 
