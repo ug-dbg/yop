@@ -82,6 +82,9 @@ public class SimpleTest extends DBMSSwitch {
 
 			out = selectWithPaging.executeWithTwoQueries(connection);
 			Assert.assertEquals(3, out.size());
+
+			out = selectWithPaging.page(91L, 10L).executeWithTwoQueries(connection);
+			Assert.assertEquals(0, out.size());
 		}
 	}
 

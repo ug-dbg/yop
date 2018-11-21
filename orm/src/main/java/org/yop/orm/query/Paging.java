@@ -9,6 +9,7 @@ import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.MessageUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -121,7 +122,7 @@ public class Paging implements JsonAble {
 	List<Long> pageIds(List<Long> ids) {
 		int from = this.offset == null ? 0 : this.offset.intValue();
 		int to = this.limit == null ? (ids.size()) : Math.min(ids.size(), from + this.limit.intValue());
-		return ids.subList(from, to);
+		return from > to ? new ArrayList<>(0) : ids.subList(from, to);
 	}
 
 	/**
