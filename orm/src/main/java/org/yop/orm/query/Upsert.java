@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.Table;
+import org.yop.orm.evaluation.Comparison;
+import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.evaluation.NaturalKey;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopSerializableQueryException;
@@ -41,21 +43,16 @@ import java.util.stream.Collectors;
  * Upsert.from(Organisation.class).checkNaturalID().onto(organisation).joinAll().execute(connection);
  * }
  * </pre>
+ * <b>Implementation note : </b> Upsert does have a {@link #where} clause. It is useless and unused (for now ?).
  *
  * @param <T> the type to upsert.
  */
-public class Upsert<T extends Yopable> implements JsonAble {
+public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> implements JsonAble {
 
 	private static final Logger logger = LoggerFactory.getLogger(Upsert.class);
 
 	protected static final String INSERT = " INSERT INTO {0} ({1}) VALUES ({2}) ";
 	protected static final String UPDATE = " UPDATE {0} SET {1} WHERE ({2}) ";
-
-	/** Target class */
-	protected Class<T> target;
-
-	/** Join clauses */
-	protected final IJoin.Joins<T> joins = new IJoin.Joins<>();
 
 	/** Elements to save/update */
 	protected final Yopables<T> elements = new Yopables<>(this.joins);
@@ -68,7 +65,32 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	 * @param target the target class
 	 */
 	protected Upsert(Class<T> target) {
-		this.target = target;
+		super(Context.root(target));
+	}
+
+	/**
+	 * Where clauses are useless and unused (for now ?) in Upsert.
+	 */
+	@Override
+	public Where<T> where() {
+		return super.where();
+	}
+
+	/**
+	 * Where clauses are useless and unused (for now ?) in Upsert.
+	 */
+	@Override
+	public Upsert<T> where(Evaluation evaluation) {
+		return super.where(evaluation);
+	}
+
+
+	/**
+	 * Where clauses are useless and unused (for now ?) in Upsert.
+	 */
+	@Override
+	public Upsert<T> or(Comparison... compare) {
+		return super.or(compare);
 	}
 
 	/**
@@ -81,7 +103,7 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	 */
 	@SuppressWarnings("unchecked")
 	private <U extends Yopable> Upsert<U> subUpsert(IJoin<T, U> join, T on) {
-		Field field = join.getField(this.target);
+		Field field = join.getField(this.getTarget());
 		Object children = Reflection.readField(field, on);
 		if(children == null) {
 			return null;
@@ -115,13 +137,13 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	}
 
 	public JsonObject toJSON() {
-		return this.toJSON(Context.root(this.target));
+		return this.toJSON( this.context);
 	}
 
 	@Override
 	public <U extends Yopable> JsonObject toJSON(Context<U> context) {
 		JsonObject out = (JsonObject) JsonAble.super.toJSON(context);
-		out.addProperty("target", this.target.getCanonicalName());
+		out.addProperty("target", this.getTarget().getCanonicalName());
 		return out;
 	}
 
@@ -140,46 +162,13 @@ public class Upsert<T extends Yopable> implements JsonAble {
 			String targetClassName = selectJSON.getAsJsonPrimitive("target").getAsString();
 			Class<T> target = Reflection.forName(targetClassName, classLoaders);
 			Upsert<T> upsert = Upsert.from(target);
-			upsert.fromJSON(Context.root(upsert.target), selectJSON, config);
+			upsert.fromJSON(Context.root(upsert.getTarget()), selectJSON, config);
 			return upsert;
 		} catch (RuntimeException e) {
 			throw new YopSerializableQueryException(
 				"Could not create query from JSON [" + StringUtils.abbreviate(json, 30) + "]", e
 			);
 		}
-	}
-
-	/**
-	 * What is the target Yopable of this Upsert query ?
-	 * @return {@link #target}
-	 */
-	public Class<T> getTarget() {
-		return this.target;
-	}
-
-	/**
-	 * (Left) join to a new type.
-	 * @param join the join clause
-	 * @param <R> the target join type
-	 * @return the current SELECT request, for chaining purpose
-	 */
-	public <R extends Yopable> Upsert<T> join(IJoin<T, R> join) {
-		this.joins.add(join);
-		return this;
-	}
-
-	/**
-	 * Update the whole data graph. Stop on transient fields.
-	 * <br>
-	 * <b>⚠⚠⚠ There must be no cycle in the data graph model ! ⚠⚠⚠</b>
-	 * <br><br>
-	 * <b>⚠⚠⚠ Any join previously set is cleared ! Please add transient fetch clause after this ! ⚠⚠⚠</b>
-	 * @return the current SELECT request, for chaining purpose
-	 */
-	public Upsert<T> joinAll() {
-		this.joins.clear();
-		IJoin.joinAll(this.target, this.joins);
-		return this;
 	}
 
 	/**
@@ -271,7 +260,7 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	 */
 	protected void findNaturalIDs(IConnection connection) {
 		// Find existing elements
-		Select<T> naturalIDQuery = Select.from(this.target);
+		Select<T> naturalIDQuery = Select.from(this.getTarget());
 		for (T element : this.elements.stream().filter(e -> e.getId() == null).collect(Collectors.toList())) {
 			naturalIDQuery.where().or(new NaturalKey<>(element));
 		}
@@ -395,7 +384,7 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	 * @return the table name for the current context
 	 */
 	protected String getTableName() {
-		return ORMUtil.getTableQualifiedName(this.target);
+		return ORMUtil.getTableQualifiedName(this.getTarget());
 	}
 
 	/**
@@ -407,8 +396,8 @@ public class Upsert<T extends Yopable> implements JsonAble {
 	 * @return the columns to select
 	 */
 	protected Parameters values(T element, Config config) {
-		List<Field> fields = Reflection.getFields(this.target, Column.class);
-		Field idField = ORMUtil.getIdField(this.target);
+		List<Field> fields = Reflection.getFields(this.getTarget(), Column.class);
+		Field idField = ORMUtil.getIdField(this.getTarget());
 		Parameters parameters = new Parameters();
 		for (Field field : fields) {
 			if(field.equals(idField)) {

@@ -140,7 +140,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 */
 	@SuppressWarnings("unchecked")
 	private <U extends Yopable> BatchUpsert<U> subUpsert(IJoin<T, U> join, T on) {
-		Field field = join.getField(this.target);
+		Field field = join.getField(this.getTarget());
 		Object children = Reflection.readField(field, on);
 		if(children == null) {
 			return null;
@@ -222,8 +222,8 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 					Joiner.on(", ").join(columns),
 					Joiner.on(", ").join(values)
 				);
-				query = new BatchQuery<>(sql, Query.Type.INSERT, config, elementsToInsert, this.target);
-				query.askGeneratedKeys(true, this.target);
+				query = new BatchQuery<>(sql, Query.Type.INSERT, config, elementsToInsert, this.getTarget());
+				query.askGeneratedKeys(true, this.getTarget());
 			}
 
 			parameters.removeIf(Parameter::isSequence);
@@ -260,8 +260,6 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 			Collection<String> values = parameters.stream().map(p -> p.getName() + "=?").collect(Collectors.toList());
 
 			if(query == null) {
-				this.target = (Class<T>) element.getClass();
-
 				String whereClause = element.getIdColumn() + " = ? ";
 				String sql = MessageFormat.format(
 					UPDATE,
@@ -270,7 +268,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 					whereClause
 				);
 
-				query = new BatchQuery<>(sql, Query.Type.UPDATE, config, elementsToUpdate, this.target);
+				query = new BatchQuery<>(sql, Query.Type.UPDATE, config, elementsToUpdate, this.getTarget());
 			}
 
 			// Set the ID parameter back, at last position.
