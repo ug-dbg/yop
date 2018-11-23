@@ -16,7 +16,7 @@ import java.util.function.Function;
  * @param <Request> the request type (e.g. Select, Delete)
  * @param <T> the request target type
  */
-abstract class WithJoins<Request extends WithJoins, T extends Yopable> {
+abstract class AbstractRequest<Request extends AbstractRequest, T extends Yopable> {
 
 	/** Default where clause is always added. So I don't have to check if the 'WHERE' keyword is required ;-) */
 	static final String DEFAULT_WHERE = " 1=1 ";
@@ -34,7 +34,7 @@ abstract class WithJoins<Request extends WithJoins, T extends Yopable> {
 	 * Default constructor : final field {@link #context} must be initialized.
 	 * @param context the context of the request
 	 */
-	WithJoins(Context<T> context) {
+	AbstractRequest(Context<T> context) {
 		this.context = context;
 	}
 
@@ -71,7 +71,7 @@ abstract class WithJoins<Request extends WithJoins, T extends Yopable> {
 	 * @return the current SELECT request, for chaining purposes
 	 */
 	@SuppressWarnings("unchecked")
-	public final Request or(Comparison... compare) {
+	public Request or(Comparison... compare) {
 		this.where.or(compare);
 		return (Request) this;
 	}

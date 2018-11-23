@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to delete.
  */
-public class Delete<T extends Yopable> extends WithJoins<Delete<T>, T> implements JsonAble {
+public class Delete<T extends Yopable> extends AbstractRequest<Delete<T>, T> implements JsonAble {
 
 	private static final String DELETE = " DELETE {0} FROM {1} {2} WHERE {3} ";
 
