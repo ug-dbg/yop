@@ -42,7 +42,7 @@ abstract class WithJoins<Request extends WithJoins, T extends Yopable> {
 	 * Get the root target class.
 	 * @return {@link Context#getTarget()} from {@link #context}
 	 */
-	protected Class<T> getTarget() {
+	public Class<T> getTarget() {
 		return this.context.getTarget();
 	}
 
