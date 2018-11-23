@@ -96,8 +96,8 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	IJoin<From, To> where(Evaluation evaluation);
 
 	/**
-	 * Create the SQL join clause.
-	 * @param joinClauses        the join clauses map
+	 * Append the SQL join clause(s) from the current instance into the target map.
+	 * @param joinClauses        the target join clauses map
 	 * @param context            the context from which the SQL clause must be built.
 	 * @param includeWhereClause true to include the where clauses evaluation
 	 * @param config             the SQL config (sql separator, use batch inserts...)
