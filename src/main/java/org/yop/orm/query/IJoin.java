@@ -168,7 +168,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	/**
 	 * A collection of {@link IJoin} that is serializable to a JSON array.
 	 * <br>
-	 * <b>Implementation note</b> : when unserializing an {@link IJoin}, we return an explicit {@link FieldJoin} instance.
+	 * <b>Implementation note</b> : when deserializing an {@link IJoin}, return an explicit {@link FieldJoin} instance.
 	 * @param <From> the joins source context type
 	 */
 	class Joins<From extends Yopable> extends ArrayList<IJoin<From, ? extends Yopable>> implements JsonAble {
