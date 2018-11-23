@@ -9,10 +9,12 @@ import org.yop.orm.DBMSSwitch;
 import org.yop.orm.evaluation.Comparison;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.evaluation.Path;
+import org.yop.orm.exception.YopInvalidJoinException;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.IdMap;
-import org.yop.orm.model.Yopable;
-import org.yop.orm.query.*;
+import org.yop.orm.query.Delete;
+import org.yop.orm.query.Select;
+import org.yop.orm.query.Where;
 import org.yop.orm.simple.model.*;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
@@ -41,6 +43,83 @@ public class SimpleTest extends DBMSSwitch {
 	@Override
 	protected String getPackagePrefixes() {
 		return "org.yop.orm.simple.model";
+	}
+
+	@Test
+	public void testJoinsMultipleBranches() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Pojo newPojo = new Pojo();
+			newPojo.setVersion(10564337);
+			newPojo.setType(Pojo.Type.FOO);
+			newPojo.setActive(true);
+			Jopo jopo = new Jopo();
+			jopo.setName("jopo From code !");
+			jopo.setPojo(newPojo);
+			newPojo.getJopos().add(jopo);
+
+			Other other = new Other();
+			other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
+			other.setName("other name :)");
+			newPojo.getOthers().add(other);
+
+			Extra extra = new Extra();
+			extra.setStyle("rad");
+			extra.setUserName("roger");
+			extra.setOther(other);
+			other.setExtra(extra);
+
+			SuperExtra superExtra = new SuperExtra();
+			superExtra.setSize(123456789L);
+			extra.setSuperExtra(superExtra);
+
+			upsert(Pojo.class)
+					.onto(newPojo)
+					.join(toSet(Pojo::getJopos))
+					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+					.checkNaturalID()
+					.execute(connection);
+
+			Pojo found = Select
+					.from(Pojo.class)
+					.join(toSet(Pojo::getJopos))
+					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+					.uniqueResult(connection);
+			Assert.assertTrue(!found.getOthers().isEmpty());
+			Assert.assertTrue(found.getOthers().iterator().next().getExtra().getOther() != null);
+			Assert.assertTrue(found.getOthers().iterator().next().getExtra().getSuperExtra() != null);
+
+			found = Select
+					.from(Pojo.class)
+					.join(Pojo::getJopos)
+					.join(Pojo::getOthers, Other::getExtra, Extra::getOther)
+					.join(Pojo::getOthers, Other::getExtra, Extra::getSuperExtra)
+					.uniqueResult(connection);
+			Assert.assertTrue(!found.getOthers().isEmpty());
+			Assert.assertTrue(found.getOthers().iterator().next().getExtra().getOther() != null);
+			Assert.assertTrue(found.getOthers().iterator().next().getExtra().getSuperExtra() != null);
+		}
+	}
+
+	@Test (expected = YopInvalidJoinException.class)
+	public void testJoinsInvalidLambdaPath() {
+		Select
+			.from(Pojo.class)
+			.join(Pojo::getJopos)
+			.join(Pojo::getOthers, Other::getExtra, Extra::getOther)
+			.join(Pojo::getOthers, Other::getExtra, String::length)
+			.uniqueResult(null);
+	}
+
+	@Test (expected = YopInvalidJoinException.class)
+	public void testJoinsInvalidTargetOfLambdaPath() {
+		Select
+			.from(Pojo.class)
+			.join(Pojo::getJopos)
+			.join(Pojo::getOthers, Other::getExtra, Extra::getOther)
+			.join(Pojo::getOthers, Other::getExtra, Extra::getStyle)
+			.uniqueResult(null);
 	}
 
 	@Test
@@ -85,6 +164,8 @@ public class SimpleTest extends DBMSSwitch {
 
 			out = selectWithPaging.page(91L, 10L).executeWithTwoQueries(connection);
 			Assert.assertEquals(0, out.size());
+
+			Select.from(Pojo.class).join(Pojo::getOthers, Other::getExtra, Extra::getSuperExtra);
 		}
 	}
 

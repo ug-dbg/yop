@@ -4,17 +4,21 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.yop.orm.evaluation.Evaluation;
+import org.yop.orm.exception.YopInvalidJoinException;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.JoinClause;
+import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.ORMUtil;
+import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * A join clause.
@@ -168,7 +172,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	/**
 	 * A collection of {@link IJoin} that is serializable to a JSON array.
 	 * <br>
-	 * <b>Implementation note</b> : when unserializing an {@link IJoin}, we return an explicit {@link FieldJoin} instance.
+	 * <b>Implementation note</b> : when deserializing an {@link IJoin}, return an explicit {@link FieldJoin} instance.
 	 * @param <From> the joins source context type
 	 */
 	class Joins<From extends Yopable> extends ArrayList<IJoin<From, ? extends Yopable>> implements JsonAble {
@@ -183,6 +187,61 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 			JsonArray out = new JsonArray();
 			this.forEach(j -> out.add(j.toJSON(j.to((Context) context))));
 			return out;
+		}
+
+		/**
+		 * Add an explicit join path. The path is actually an ordered array of getters as functional interfaces.
+		 * <br>
+		 * The return type of one lambda must be coherent with the declaring type of the next.
+		 * <br>
+		 * <b>
+		 *      e.g. [Library::getBooks, Book::getAuthor, Author::getBooks] is valid
+		 *      <br>
+		 *      e.g. [Library::getBooks, Author::getBooks, Book::getAuthor] is NOT valid
+		 * </b>
+		 * @param context the root context, from which the join path starts
+		 * @param joins   the join path
+		 * @throws YopInvalidJoinException if the path is invalid
+		 */
+		@SuppressWarnings("unchecked")
+		void join(Context<From> context, Function... joins) {
+			if (joins.length == 0) {
+				return;
+			}
+
+			Class<? extends Yopable> next = context.getTarget();
+			FieldJoin join = null;
+			FieldJoin current = null;
+			String path = next.getSimpleName();
+			Field field;
+			for (Function function : joins) {
+				try {
+					field = Reflection.findField(next, function);
+				} catch (RuntimeException e) {
+					throw new YopInvalidJoinException(
+						"The join path is invalid. Field not found for lambda @[" + path + "]"
+					);
+				}
+
+				next = Reflection.getTarget(field);
+				path = MessageUtil.join("→", path, next.getSimpleName());
+				if (! Yopable.class.isAssignableFrom(next)) {
+					throw new YopInvalidJoinException(
+						"The join path is invalid. @[" + path + "], "
+						+ "last element type [" + next.getSimpleName() + "] is not acceptable."
+					);
+				}
+
+				FieldJoin newJoin = new FieldJoin(field);
+				if (join == null) {
+					join = newJoin;
+					current = join;
+				} else {
+					current.join(newJoin);
+					current = newJoin;
+				}
+			}
+			this.add(join);
 		}
 	}
 }
