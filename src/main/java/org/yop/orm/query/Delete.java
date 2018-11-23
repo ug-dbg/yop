@@ -5,7 +5,6 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.lang3.StringUtils;
-import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.JsonAble;
@@ -50,18 +49,12 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to delete.
  */
-public class Delete<T extends Yopable> implements JsonAble {
+public class Delete<T extends Yopable> extends WithJoins<Delete<T>, T> implements JsonAble {
 
 	private static final String DELETE = " DELETE {0} FROM {1} {2} WHERE {3} ";
-	private static final String DEFAULT_WHERE = " 1=1 ";
-
-	private final Class<T> target;
-	private Where<T> where;
-	private final IJoin.Joins<T> joins = new IJoin.Joins<>();
 
 	private Delete(Class<T> target) {
-		this.target = target;
-		this.where = new Where<>();
+		super(Context.root(target));
 	}
 
 	/**
@@ -86,13 +79,13 @@ public class Delete<T extends Yopable> implements JsonAble {
 	 * @return the JSON representation of the query
 	 */
 	public JsonObject toJSON() {
-		return this.toJSON(Context.root(this.target));
+		return this.toJSON(this.context);
 	}
 
 	@Override
 	public <U extends Yopable> JsonObject toJSON(Context<U> context) {
 		JsonObject out = (JsonObject) JsonAble.super.toJSON(context);
-		out.addProperty("target", this.target.getCanonicalName());
+		out.addProperty("target", this.getTarget().getCanonicalName());
 		return out;
 	}
 
@@ -111,7 +104,7 @@ public class Delete<T extends Yopable> implements JsonAble {
 			String targetClassName = selectJSON.getAsJsonPrimitive("target").getAsString();
 			Class<T> target = Reflection.forName(targetClassName, classLoaders);
 			Delete<T> delete = Delete.from(target);
-			delete.fromJSON(Context.root(delete.target), selectJSON, config);
+			delete.fromJSON(delete.context, selectJSON, config);
 			return delete;
 		} catch (RuntimeException e) {
 			throw new YopSerializableQueryException(
@@ -127,52 +120,7 @@ public class Delete<T extends Yopable> implements JsonAble {
 	 * @return a {@link Select} query with this {@link Delete} parameters (context, where and joins)
 	 */
 	public Select<T> toSelect() {
-		return new Select<>(Context.root(this.target), this.where, this.joins);
-	}
-
-	/**
-	 * What is the target Yopable of this Delete query ?
-	 * @return {@link #target}
-	 */
-	public Class<T> getTarget() {
-		return this.target;
-	}
-
-	/**
-	 * Add an evaluation to the where clause.
-	 * @param evaluation the evaluation
-	 * @return the current SELECT request, for chaining purposes
-	 */
-	public Delete<T> where(Evaluation evaluation) {
-		this.where.and(evaluation);
-		return this;
-	}
-
-	/**
-	 * Add a join clause to the delete statement.
-	 * <br>
-	 * <b>⚠⚠⚠ Any data that matches the join clause will be deleted ⚠⚠⚠</b>
-	 * @param join the join clause
-	 * @param <To> the target type
-	 * @return the current Delete query, for chaining purposes.
-	 */
-	public <To extends Yopable> Delete<T> join(IJoin<T, To> join) {
-		this.joins.add(join);
-		return this;
-	}
-
-	/**
-	 * Delete the whole data graph. Stop on transient fields.
-	 * <br>
-	 * <b>⚠⚠⚠ There must be no cycle in the data graph model ! ⚠⚠⚠</b>
-	 * <br><br>
-	 * <b>⚠⚠⚠ Any join previously set is cleared ! Please add transient fetch clause after this ! ⚠⚠⚠</b>
-	 * @return the current DELETE request, for chaining purpose
-	 */
-	public Delete<T> joinAll() {
-		this.joins.clear();
-		IJoin.joinAll(this.target, this.joins);
-		return this;
+		return new Select<>(this.context, this.where, this.joins);
 	}
 
 	/**
@@ -234,8 +182,8 @@ public class Delete<T extends Yopable> implements JsonAble {
 	 * @return the SQL DELETE query string
 	 */
 	private String toSQL(Parameters parameters, Config config) {
-		Context<T> root = Context.root(this.target);
-		Set<Context.SQLColumn> columns = this.columns(config);
+		Context<T> root = this.context;
+		Set<Context.SQLColumn> columns = this.columns(true, config);
 
 		Set<String> tables = columns
 			.stream()
@@ -256,7 +204,7 @@ public class Delete<T extends Yopable> implements JsonAble {
 		}
 
 		String whereClause = this.where.toSQL(context, parameters, config);
-		JoinClause.JoinClauses joinClauses = this.toSQLJoin(config);
+		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
 		return MessageFormat.format(
 			DELETE,
 			columnsClause,
@@ -264,30 +212,6 @@ public class Delete<T extends Yopable> implements JsonAble {
 			joinClauses.toSQL(parameters),
 			Where.toSQL(DEFAULT_WHERE, whereClause, joinClauses.toSQLWhere(parameters))
 		);
-	}
-
-	/**
-	 * Find all the columns from the DELETE query (search in current target type and join clauses)
-	 * @param config the SQL config (sql separator, use batch inserts...)
-	 * @return all the columns this query should delete
-	 */
-	private Set<Context.SQLColumn> columns(Config config) {
-		Context<T> root = Context.root(this.target);
-		Set<Context.SQLColumn> columns = root.getColumns(config);
-
-		for (IJoin<T, ? extends Yopable> join : this.joins) {
-			columns.addAll(join.columns(root, true, config));
-		}
-		return columns;
-	}
-
-	/**
-	 * Create the SQL join clause for the DELETE statement.
-	 * @param config the SQL config (sql separator, use batch inserts...)
-	 * @return the SQL join clause
-	 */
-	private JoinClause.JoinClauses toSQLJoin(Config config) {
-		return AbstractJoin.toSQLJoin(this.joins, Context.root(this.target), false, config);
 	}
 
 	/**

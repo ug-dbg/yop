@@ -6,15 +6,12 @@ import com.google.gson.JsonParser;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.evaluation.Comparison;
-import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.json.JSON;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.MessageUtil;
@@ -52,7 +49,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to search for.
  */
-public class Select<T extends Yopable> implements JsonAble {
+public class Select<T extends Yopable> extends WithJoins<Select<T>, T> implements JsonAble {
 
 	private static final Logger logger = LoggerFactory.getLogger(Select.class);
 
@@ -64,23 +61,11 @@ public class Select<T extends Yopable> implements JsonAble {
 	/** Select distinct([what]) FROM [table] [table_alias] [join clause] WHERE [where clause] [extra] */
 	private static final String SELECT_DISTINCT = " SELECT DISTINCT({0}) FROM {1} {2} {3} WHERE {4} {5}";
 
-	/** Default where clause is always added. So I don't have to check if the 'WHERE' keyword is required ;-) */
-	private static final String DEFAULT_WHERE = " 1=1 ";
-
 	/** COUNT(DISTINCT :idColumn) column selection */
 	private static final String COUNT_DISTINCT = " COUNT(DISTINCT {0}) ";
 
-	/** Select root context : target class and SQL path **/
-	private final Context<T> context;
-
-	/** Where clauses */
-	private final Where<T> where;
-
 	/** Order by clause. Defaults to no order.  */
 	private OrderBy<T> orderBy = new OrderBy<>();
-
-	/** Join clauses */
-	private IJoin.Joins<T> joins = new IJoin.Joins<>();
 
 	/** A custom first level cache that can be specified in some very specific cases */
 	private FirstLevelCache cache;
@@ -93,8 +78,7 @@ public class Select<T extends Yopable> implements JsonAble {
 	 * @param from the target class (select from class)
 	 */
 	private Select(Class<T> from) {
-		this.context = Context.root(from);
-		this.where = new Where<>();
+		super(Context.root(from));
 	}
 
 	/**
@@ -104,7 +88,7 @@ public class Select<T extends Yopable> implements JsonAble {
 	 * @param joins joins clauses
 	 */
 	Select(Context<T> from, Where<T> where, Collection<IJoin<T, ? extends Yopable>> joins) {
-		this.context = from;
+		super(from);
 		this.where = where;
 		this.joins.addAll(joins);
 	}
@@ -167,14 +151,6 @@ public class Select<T extends Yopable> implements JsonAble {
 	}
 
 	/**
-	 * The where clause of this SELECT request
-	 * @return the Where clause
-	 */
-	public Where<T> where() {
-		return this.where;
-	}
-
-	/**
 	 * Add a paging directive.
 	 * <br>
 	 * See {@link Paging} and {@link Config#getPagingMethod()}.
@@ -184,31 +160,6 @@ public class Select<T extends Yopable> implements JsonAble {
 	 */
 	public Select<T> page(Long offset, Long results) {
 		this.paging = new Paging(offset, results);
-		return this;
-	}
-
-	/**
-	 * (Left) join to a new type.
-	 * @param join the join clause
-	 * @param <R> the target join type
-	 * @return the current SELECT request, for chaining purpose
-	 */
-	public <R extends Yopable> Select<T> join(IJoin<T, R> join) {
-		this.joins.add(join);
-		return this;
-	}
-
-	/**
-	 * Fetch the whole data graph. Stop on transient fields.
-	 * <br>
-	 * <b>⚠⚠⚠ There must be no cycle in the data graph model ! ⚠⚠⚠</b>
-	 * <br><br>
-	 * <b>⚠⚠⚠ Any join previously set is cleared ! Please add transient fetch clause after this ! ⚠⚠⚠</b>
-	 * @return the current SELECT request, for chaining purpose
-	 */
-	public Select<T> joinAll() {
-		this.joins.clear();
-		IJoin.joinAll(this.context.getTarget(), this.joins);
 		return this;
 	}
 
@@ -242,18 +193,6 @@ public class Select<T extends Yopable> implements JsonAble {
 	 */
 	public Delete<T> toDelete() {
 		return new Delete<>(this.context.getTarget(), this.where, this.joins);
-	}
-
-	/**
-	 * Turn this SELECT query into a JSON query, with the same {@link #joins}.
-	 * <br>
-	 * <b>The joins clauses are not duplicated when creating the JSON query !</b>
-	 * @return a {@link JSON} query with this {@link Select} joins parameters
-	 */
-	public JSON<T> toJSONQuery() {
-		JSON<T> json = JSON.from(this.context.getTarget());
-		this.joins.forEach(json::join);
-		return json;
 	}
 
 	/**
@@ -408,48 +347,11 @@ public class Select<T extends Yopable> implements JsonAble {
 	}
 
 	/**
-	 * Add an evaluation to the where clause.
-	 * @param evaluation the evaluation
-	 * @return the current SELECT request, for chaining purposes
-	 */
-	public Select<T> where(Evaluation evaluation) {
-		this.where.and(evaluation);
-		return this;
-	}
-
-	/**
-	 * Add several comparisons to the where clause, with an OR operator between them.
-	 * @param compare the comparisons
-	 * @return the current SELECT request, for chaining purposes
-	 */
-	public final Select<T> or(Comparison... compare) {
-		this.where.or(compare);
-		return this;
-	}
-
-	/**
 	 * Get the target type table name from the @Table annotation
 	 * @return the target class (T) table name.
 	 */
 	private String getTableName() {
 		return this.context.getTableName();
-	}
-
-	/**
-	 * Find all the columns to select (search in current target type and join clauses if required)
-	 * @param addJoinClauseColumns true to add the columns from the join clauses
-	 * @param config               the SQL config (sql separator, use batch inserts...)
-	 * @return the columns to select
-	 */
-	private Set<Context.SQLColumn> columns(boolean addJoinClauseColumns, Config config) {
-		Set<Context.SQLColumn> columns = this.context.getColumns(config);
-
-		if (addJoinClauseColumns) {
-			for (IJoin<T, ? extends Yopable> join : this.joins) {
-				columns.addAll(join.columns(this.context, true, config));
-			}
-		}
-		return columns;
 	}
 
 	/**
@@ -501,16 +403,6 @@ public class Select<T extends Yopable> implements JsonAble {
 			columns.isEmpty()
 			? "*"
 			: Joiner.on(",").join(columns.stream().map(Context.SQLColumn::toSQL).collect(Collectors.toList()));
-	}
-
-	/**
-	 * Create the SQL join clause.
-	 * @param evaluate true to add the where clauses to the join clauses
-	 * @param config   the SQL config (sql separator, use batch inserts...)
-	 * @return the SQL join clause
-	 */
-	private JoinClause.JoinClauses toSQLJoin(boolean evaluate, Config config) {
-		return AbstractJoin.toSQLJoin(this.joins, this.context, evaluate, config);
 	}
 
 	/**

@@ -9,6 +9,7 @@ import org.yop.orm.DBMSSwitch;
 import org.yop.orm.evaluation.Comparison;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.evaluation.Path;
+import org.yop.orm.exception.YopInvalidJoinException;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.query.Delete;
@@ -72,24 +73,53 @@ public class SimpleTest extends DBMSSwitch {
 			extra.setSuperExtra(superExtra);
 
 			upsert(Pojo.class)
-				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
-				.checkNaturalID()
-				.execute(connection);
+					.onto(newPojo)
+					.join(toSet(Pojo::getJopos))
+					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+					.checkNaturalID()
+					.execute(connection);
 
 			Pojo found = Select
-				.from(Pojo.class)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
-				.uniqueResult(connection);
+					.from(Pojo.class)
+					.join(toSet(Pojo::getJopos))
+					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+					.uniqueResult(connection);
+			Assert.assertTrue(!found.getOthers().isEmpty());
+			Assert.assertTrue(found.getOthers().iterator().next().getExtra().getOther() != null);
+			Assert.assertTrue(found.getOthers().iterator().next().getExtra().getSuperExtra() != null);
 
-			Assert.assertTrue(! found.getOthers().isEmpty());
+			found = Select
+					.from(Pojo.class)
+					.join(Pojo::getJopos)
+					.join(Pojo::getOthers, Other::getExtra, Extra::getOther)
+					.join(Pojo::getOthers, Other::getExtra, Extra::getSuperExtra)
+					.uniqueResult(connection);
+			Assert.assertTrue(!found.getOthers().isEmpty());
 			Assert.assertTrue(found.getOthers().iterator().next().getExtra().getOther() != null);
 			Assert.assertTrue(found.getOthers().iterator().next().getExtra().getSuperExtra() != null);
 		}
+	}
+
+	@Test (expected = YopInvalidJoinException.class)
+	public void testJoinsInvalidLambdaPath() {
+		Select
+			.from(Pojo.class)
+			.join(Pojo::getJopos)
+			.join(Pojo::getOthers, Other::getExtra, Extra::getOther)
+			.join(Pojo::getOthers, Other::getExtra, String::length)
+			.uniqueResult(null);
+	}
+
+	@Test (expected = YopInvalidJoinException.class)
+	public void testJoinsInvalidTargetOfLambdaPath() {
+		Select
+			.from(Pojo.class)
+			.join(Pojo::getJopos)
+			.join(Pojo::getOthers, Other::getExtra, Extra::getOther)
+			.join(Pojo::getOthers, Other::getExtra, Extra::getStyle)
+			.uniqueResult(null);
 	}
 
 	@Test
@@ -134,6 +164,8 @@ public class SimpleTest extends DBMSSwitch {
 
 			out = selectWithPaging.page(91L, 10L).executeWithTwoQueries(connection);
 			Assert.assertEquals(0, out.size());
+
+			Select.from(Pojo.class).join(Pojo::getOthers, Other::getExtra, Extra::getSuperExtra);
 		}
 	}
 
