@@ -6,8 +6,8 @@ import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
-import org.yop.orm.util.ORMTypes;
 import org.yop.orm.util.ORMUtil;
+import org.yop.orm.util.dialect.IDialect;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
@@ -17,6 +17,13 @@ import java.util.List;
 
 /**
  * A table column that can generate a column clause in an SQL CREATE query.
+ * <br>
+ * Columns are {@link Comparable} :
+ * <ol>
+ *     <li>{@link #isPK()}, reversed</li>
+ *     <li>{@link #getName()}</li>
+ *     <li>nulls last</li>
+ * </ol>
  */
 public class Column implements Comparable<Column> {
 	private static final Comparator<Column> COMPARATOR =
@@ -29,7 +36,7 @@ public class Column implements Comparable<Column> {
 	private final int length;
 	private final List<String> sequences = new ArrayList<>();
 
-	private final ORMTypes types;
+	private final IDialect dialect;
 
 	private PrimaryKey pk;
 	private ForeignKey fk;
@@ -37,11 +44,11 @@ public class Column implements Comparable<Column> {
 	private boolean naturalKey;
 	private boolean notNull;
 
-	Column(String name, String type, int length, ORMTypes types) {
+	Column(String name, Class type, int length, IDialect dialect) {
 		this.name = name;
-		this.type = type;
+		this.type = dialect.getForType(type);
 		this.length = length;
-		this.types = types;
+		this.dialect = dialect;
 	}
 
 	public void setFK(ForeignKey fk) {
@@ -77,7 +84,7 @@ public class Column implements Comparable<Column> {
 	}
 
 	public String toSQL() {
-		return this.types.toSQL(this);
+		return this.dialect.toSQL(this);
 	}
 
 	public boolean isPK() {
@@ -99,7 +106,7 @@ public class Column implements Comparable<Column> {
 			", sequences=" + this.sequences +
 			", pk=" + this.pk +
 			", fk=" + this.fk +
-			", types=" + this.types +
+			", dialect=" + this.dialect +
 		'}';
 	}
 
@@ -109,12 +116,12 @@ public class Column implements Comparable<Column> {
 	}
 
 	@SuppressWarnings("unchecked")
-	static Column fromField(Field field, ORMTypes types, Config config) {
+	static Column fromField(Field field, Config config) {
 		Column column = new Column(
 			ORMUtil.getColumnName(field),
-			ORMUtil.getColumnType(field, types),
+			ORMUtil.getColumnType(field),
 			ORMUtil.getColumnLength(field),
-			types
+			config.getDialect()
 		);
 		column.notNull = ORMUtil.isColumnNotNullable(field);
 
@@ -131,13 +138,13 @@ public class Column implements Comparable<Column> {
 		return column;
 	}
 
-	static Column fromJoinColumnField(Field field, ORMTypes types) {
+	static Column fromJoinColumnField(Field field, Config config) {
 		JoinColumn joinColumn = field.getAnnotation(JoinColumn.class);
 		Column column = new Column(
 			joinColumn.local(),
-			types.getForType(Long.class),
+			Long.class,
 			50,
-			types
+			config.getDialect()
 		);
 		column.notNull = false;
 		column.naturalKey = field.isAnnotationPresent(NaturalId.class);

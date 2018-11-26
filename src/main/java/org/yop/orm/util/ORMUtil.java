@@ -1,5 +1,6 @@
 package org.yop.orm.util;
 
+import com.google.common.collect.Lists;
 import com.google.common.primitives.Primitives;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang.RandomStringUtils;
@@ -48,6 +49,33 @@ public class ORMUtil {
 			}
 			return OTHER;
 		}
+	}
+
+	/**
+	 * Generate a script (a list of SQL queries)
+	 * that can be used to prepare a DB for the Yopable objects of a given package.
+	 * <br><b>⚠⚠⚠  i.e. Every table concerned by the package prefix will be dropped in the script ! ⚠⚠⚠ </b>
+	 * @param packagePrefix the Yopable package prefix
+	 * @param config        the SQL config (dialect, sql separator, use batch inserts...)
+	 * @return the SQL script, as an ordered list of SQL queries to run.
+	 */
+	public static List<String> generateScript(String packagePrefix, Config config) {
+		Set<org.yop.orm.gen.Table> tables = org.yop.orm.gen.Table.findAllInClassPath(packagePrefix, config);
+		List<String> script = new ArrayList<>();
+
+		// Relation tables must be deleted first
+		for (org.yop.orm.gen.Table table : Lists.reverse(new ArrayList<>(tables))) {
+			script.add(table.toSQLDROP());
+		}
+
+		// Relation tables must be created last. See org.yop.orm.gen.Table#COMPARATOR
+		// Also add the other SQL queries (e.g. sequences)
+		for (org.yop.orm.gen.Table table : tables) {
+			script.add(table.toSQL());
+			script.addAll(table.otherSQL());
+		}
+
+		return script;
 	}
 
 	/**
@@ -202,19 +230,18 @@ public class ORMUtil {
 	/**
 	 * Get the column data type for a given field.
 	 * @param field the column field
-	 * @param types the specific DBMS types
-	 * @return simple link to {@link ORMTypes#getForType(Class)}
+	 * @return the field type, unless an enum type (read {@link Column#enum_strategy()} → Integer/String)
 	 */
-	public static String getColumnType(Field field, ORMTypes types) {
+	public static Class getColumnType(Field field) {
 		// enum ? Read the strategy
 		if (field.getType().isEnum() && field.isAnnotationPresent(Column.class)) {
 			switch (field.getAnnotation(org.yop.orm.annotations.Column.class).enum_strategy()) {
-				case ORDINAL: return types.getForType(Integer.class);
+				case ORDINAL: return Integer.class;
 				case NAME:
-				default: return types.getForType(String.class);
+				default: return String.class;
 			}
 		}
-		return types.getForType(field.getType());
+		return field.getType();
 	}
 
 	/**

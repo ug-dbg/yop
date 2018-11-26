@@ -6,7 +6,7 @@ import org.sqlite.SQLiteConfig;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
-import org.yop.orm.util.ORMTypes;
+import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.dialect.*;
 
 import java.io.File;
@@ -59,7 +59,7 @@ public class Prepare {
 
 		try (IConnection connection = getConnection(dbPath.toFile())) {
 			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection, SQLite.INSTANCE);
+				prepare(prefix, connection);
 			}
 		}
 		return dbPath.toFile();
@@ -83,7 +83,9 @@ public class Prepare {
 		SQLiteConfig config = new SQLiteConfig();
 		config.enforceForeignKeys(true);
 
-		return new JDBCConnection(DriverManager.getConnection(url, config.toProperties()));
+		return new JDBCConnection(DriverManager.getConnection(url, config.toProperties())).withConfig(
+			new Config().initFromSystemProperties().setDialect(SQLite.INSTANCE)
+		);
 	}
 
 	/**
@@ -102,7 +104,9 @@ public class Prepare {
 		String connectionString = "jdbc:mysql://" + MYSQL_ADDRESS;
 		Connection connection = DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD);
 		connection.prepareStatement("set foreign_key_checks=" + (foreignKeyChecks ? "1" : "0")).executeUpdate();
-		return new JDBCConnection(connection);
+		return new JDBCConnection(connection).withConfig(
+			new Config().initFromSystemProperties().setDialect(MySQL.INSTANCE)
+		);
 	}
 
 	/**
@@ -117,7 +121,7 @@ public class Prepare {
 	public static void prepareMySQL(String... packagePrefixes) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getMySQLConnection(false)) {
 			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection, MySQL.INSTANCE);
+				prepare(prefix, connection);
 			}
 		}
 	}
@@ -148,7 +152,7 @@ public class Prepare {
 	public static void preparePostgres(String... packagePrefixes) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getPostgresConnection()) {
 			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection, Postgres.INSTANCE);
+				prepare(prefix, connection);
 			}
 		}
 	}
@@ -164,7 +168,9 @@ public class Prepare {
 	public static IConnection getOracleConnection() throws ClassNotFoundException, SQLException {
 		Class.forName("oracle.jdbc.driver.OracleDriver");
 		String connectionString = "jdbc:oracle:thin:@//" + ORACLE_ADDRESS;
-		return new JDBCConnection(DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD));
+		return new JDBCConnection(DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD)).withConfig(
+			new Config().initFromSystemProperties().setDialect(Oracle.INSTANCE)
+		);
 	}
 
 	/**
@@ -179,7 +185,7 @@ public class Prepare {
 	public static void prepareOracle(String... packagePrefixes) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getOracleConnection()) {
 			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection, Oracle.INSTANCE);
+				prepare(prefix, connection);
 			}
 		}
 	}
@@ -195,7 +201,9 @@ public class Prepare {
 	public static IConnection getMSSQLConnection() throws ClassNotFoundException, SQLException {
 		Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 		String connectionString = "jdbc:sqlserver://" + MSSQL_ADDRESS;
-		return new JDBCConnection(DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD));
+		return new JDBCConnection(DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD)).withConfig(
+			new Config().initFromSystemProperties().setDialect(MSSQL.INSTANCE)
+		);
 	}
 
 	/**
@@ -210,41 +218,40 @@ public class Prepare {
 	public static void prepareMSSQL(String... packagePrefixes) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getMSSQLConnection()) {
 			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection, MSSQL.INSTANCE);
+				prepare(prefix, connection);
 			}
 		}
 	}
 
 	/**
-	 * Generate the DB scripts for a given package for all {@link ORMTypes}. Do not execute anything.
+	 * Generate the DB scripts for a given package for all {@link Dialect}. Do not execute anything.
 	 * <br>
 	 * Let's face it : this is just to improve code coverage.
 	 * @param packagePrefix the package prefix (find all Yopables)
 	 * @param config        the SQL config (sql separator, use batch inserts...)
 	 */
 	public static void generateScripts(String packagePrefix, Config config) {
-		List<ORMTypes> ormTypes = Arrays.asList(
+		List<IDialect> ormTypes = Arrays.asList(
 			SQLite.INSTANCE,
 			MySQL.INSTANCE,
 			Postgres.INSTANCE,
 			MSSQL.INSTANCE,
 			Oracle.INSTANCE
 		);
-		ormTypes.forEach(dialect -> dialect.generateScript(packagePrefix, config));
+		ormTypes.forEach(dialect -> ORMUtil.generateScript(packagePrefix, config));
 	}
 
 	/**
-	 * Prepare the target DB using the script from {@link ORMTypes#generateScript(String, Config)}.
+	 * Prepare the target DB using the script from {@link ORMUtil#generateScript(String, Config)}.
 	 * <br>
-	 * Please use the correct {@link ORMTypes} instance for the given connection ;-)
+	 * Please use the correct {@link Dialect} instance for the given connection ;-)
 	 * @param packagePrefix the package prefix (find all Yopables)
 	 * @param connection    the DB connection to use
-	 * @param dialect       the dialect (one of the singleton from the {@link org.yop.orm.util.dialect} package)
 	 * @throws SQLException an error occurred running and committing the generation script
 	 */
-	private static void prepare(String packagePrefix, IConnection connection, ORMTypes dialect) throws SQLException {
+	private static void prepare(String packagePrefix, IConnection connection) throws SQLException {
 		connection.setAutoCommit(true);
-		for (String line : dialect.generateScript(packagePrefix, connection.config())) {
+		for (String line : ORMUtil.generateScript(packagePrefix, connection.config())) {
 			try {
 				Executor.executeQuery(
 					connection,

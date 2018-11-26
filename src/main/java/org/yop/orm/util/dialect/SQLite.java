@@ -3,7 +3,6 @@ package org.yop.orm.util.dialect;
 import org.yop.orm.gen.Column;
 import org.yop.orm.gen.Table;
 import org.yop.orm.util.MessageUtil;
-import org.yop.orm.util.ORMTypes;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -11,28 +10,28 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 /**
- * SQLite dialect {@link ORMTypes} extension.
+ * SQLite dialect {@link Dialect} extension.
  * @see <a href="https://www.sqlite.org">https://www.sqlite.org</a>
  */
-public class SQLite extends ORMTypes {
+public class SQLite extends Dialect {
 
-	public static final ORMTypes INSTANCE = new SQLite();
+	public static final Dialect INSTANCE = new SQLite();
 
 	/**
 	 * Default constructor. Please use singleton {@link #INSTANCE}.
 	 */
 	private SQLite() {
 		super("TEXT");
-		this.put(String.class,     "TEXT");
-		this.put(Character.class,  "TEXT");
+		this.setForType(String.class,     "TEXT");
+		this.setForType(Character.class,  "TEXT");
 
-		this.put(Integer.class, "INTEGER");
-		this.put(Long.class,    "INTEGER");
-		this.put(Short.class,   "INTEGER");
-		this.put(Byte.class,    "INTEGER");
+		this.setForType(Integer.class, "INTEGER");
+		this.setForType(Long.class,    "INTEGER");
+		this.setForType(Short.class,   "INTEGER");
+		this.setForType(Byte.class,    "INTEGER");
 
-		this.put(Float.class,  "REAL");
-		this.put(Double.class, "REAL");
+		this.setForType(Float.class,  "REAL");
+		this.setForType(Double.class, "REAL");
 	}
 
 	@Override

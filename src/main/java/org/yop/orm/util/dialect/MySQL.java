@@ -1,17 +1,16 @@
 package org.yop.orm.util.dialect;
 
 import org.yop.orm.gen.Column;
-import org.yop.orm.util.ORMTypes;
 
 import java.util.Calendar;
 
 /**
- * MySQL dialect {@link ORMTypes} extension.
+ * MySQL dialect {@link Dialect} extension.
  * @see <a href="https://www.mysql.com/">https://www.mysql.com/</a>
  */
-public class MySQL extends ORMTypes {
+public class MySQL extends Dialect {
 
-	public static final ORMTypes INSTANCE = new MySQL();
+	public static final Dialect INSTANCE = new MySQL();
 	public static final String CONNECT_PARAMS =
 		"?useUnicode=true" +
 		"&characterEncoding=utf-8" +
@@ -23,7 +22,7 @@ public class MySQL extends ORMTypes {
 	 */
 	private MySQL() {
 		super("VARCHAR");
-		this.put(Calendar.class, "DATETIME");
+		this.setForType(Calendar.class, "DATETIME");
 	}
 
 	/**

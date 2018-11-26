@@ -1,31 +1,30 @@
 package org.yop.orm.util.dialect;
 
 import org.yop.orm.gen.Column;
-import org.yop.orm.util.ORMTypes;
 
 /**
- * Postgres dialect {@link ORMTypes} extension.
+ * Postgres dialect {@link Dialect} extension.
  * @see <a href="https://www.postgresql.org">https://www.postgresql.org</a>
  */
-public class Postgres extends ORMTypes {
+public class Postgres extends Dialect {
 
-	public static final ORMTypes INSTANCE = new Postgres();
+	public static final Dialect INSTANCE = new Postgres();
 
 	/**
 	 * Default constructor. Please use singleton {@link #INSTANCE}.
 	 */
 	private Postgres() {
 		super("varchar");
-		this.put(Boolean.class, "boolean");
+		this.setForType(Boolean.class, "boolean");
 	}
 
 	@Override
-	protected String autoIncrementKeyWord() {
+	public String autoIncrementKeyWord() {
 		return " SERIAL ";
 	}
 
 	@Override
-	protected String type(Column column) {
+	public String type(Column column) {
 		return column.getPk() == null ? super.type(column) : "";
 	}
 }

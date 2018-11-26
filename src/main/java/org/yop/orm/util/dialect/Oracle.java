@@ -2,7 +2,6 @@ package org.yop.orm.util.dialect;
 
 import org.yop.orm.gen.Column;
 import org.yop.orm.gen.Table;
-import org.yop.orm.util.ORMTypes;
 
 import java.text.MessageFormat;
 import java.time.LocalTime;
@@ -10,37 +9,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Oracle DB dialect {@link ORMTypes} extension.
+ * Oracle DB dialect {@link Dialect} extension.
  * <br><br>
  * This has been somehow tested with Oracle XE 11g.
  * @see <a href="https://www.oracle.com/database/index.html">https://www.oracle.com/database/index.html</a>
  */
-public class Oracle extends ORMTypes {
+public class Oracle extends Dialect {
 
 	private static final String SEQUENCE_SQL = "CREATE SEQUENCE {0} START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE";
 	private static final String DROP_SEQUENCE_SQL = "DROP SEQUENCE {0}";
 
-	public static final ORMTypes INSTANCE = new Oracle();
+	public static final Dialect INSTANCE = new Oracle();
 
 	/**
 	 * Default constructor. Please use singleton {@link #INSTANCE}.
 	 */
 	private Oracle() {
 		super("VARCHAR");
-		this.put(String.class,     "VARCHAR");
-		this.put(Character.class,  "VARCHAR");
+		this.setForType(String.class,     "VARCHAR");
+		this.setForType(Character.class,  "VARCHAR");
 
-		this.put(Integer.class, "NUMBER");
-		this.put(Long.class,    "NUMBER");
-		this.put(Short.class,   "NUMBER");
-		this.put(Byte.class,    "NUMBER");
+		this.setForType(Integer.class, "NUMBER");
+		this.setForType(Long.class,    "NUMBER");
+		this.setForType(Short.class,   "NUMBER");
+		this.setForType(Byte.class,    "NUMBER");
 
-		this.put(LocalTime.class,     "TIMESTAMP");
-		this.put(java.sql.Time.class, "TIMESTAMP");
+		this.setForType(LocalTime.class,     "TIMESTAMP");
+		this.setForType(java.sql.Time.class, "TIMESTAMP");
 	}
 
 	@Override
-	protected String autoIncrementKeyWord() {
+	public String autoIncrementKeyWord() {
 		return "";
 	}
 
