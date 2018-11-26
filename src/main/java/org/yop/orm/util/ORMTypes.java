@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * DBMS specificities.
+ * DBMS characteristics.
  * <br>
  * This is pretty raw/patchy. This was written to prepare unit tests context.
  * <br><br>
