@@ -13,7 +13,6 @@ import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.Reflection;
 
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,8 +49,6 @@ import java.util.stream.Collectors;
  * @param <T> the type to delete.
  */
 public class Delete<T extends Yopable> extends AbstractRequest<Delete<T>, T> implements JsonAble {
-
-	private static final String DELETE = " DELETE {0} FROM {1} {2} WHERE {3} ";
 
 	private Delete(Class<T> target) {
 		super(Context.root(target));
@@ -205,12 +202,11 @@ public class Delete<T extends Yopable> extends AbstractRequest<Delete<T>, T> imp
 
 		String whereClause = this.where.toSQL(context, parameters, config);
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
-		return MessageFormat.format(
-			DELETE,
+		return config.getDialect().delete(
 			columnsClause,
 			root.getTableName() + asClause,
 			joinClauses.toSQL(parameters),
-			Where.toSQL(DEFAULT_WHERE, whereClause, joinClauses.toSQLWhere(parameters))
+			Where.toSQL(whereClause, joinClauses.toSQLWhere(parameters))
 		);
 	}
 

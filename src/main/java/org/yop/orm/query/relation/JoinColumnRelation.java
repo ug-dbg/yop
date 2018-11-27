@@ -8,7 +8,6 @@ import org.yop.orm.sql.*;
 import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
-import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -24,8 +23,6 @@ import java.util.*;
  * @param <To>   the relation target type
  */
 class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Relation {
-
-	private static final String UPDATE = " UPDATE {0} SET {1} = {2} WHERE {3} = {4} ";
 
 	/** The source table name */
 	private String sourceTable;
@@ -79,6 +76,8 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 	 * Generate SQL update queries, for the given source objects, using the join directive.
 	 * <br>
 	 * The queries use {@link org.yop.orm.sql.Parameters.DelayedValue} to reference the objects IDs.
+	 * <br>
+	 * UPDATE [table] SET [column] = ? WHERE [idColumn] = ?
 	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return a collection of {@link Query.Type#UPDATE} queries
 	 */
@@ -89,7 +88,8 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 			From from = entry.getKey();
 
 			if (this.sourceTable != null) {
-				String sql = update(this.sourceTable, this.sourceColumn, entry.getKey().getIdColumn());
+				String idColumn = entry.getKey().getIdColumn();
+				String sql = config.getDialect().update(this.sourceTable, this.sourceColumn, idColumn);
 				for (To to : entry.getValue()) {
 					Parameters parameters = new Parameters()
 						.addParameter(this.sourceTable + "#" + this.sourceColumn, to::getId)
@@ -100,7 +100,8 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 
 			if (this.targetTable != null) {
 				for (To to : entry.getValue()) {
-					String sql = update(this.targetTable, this.targetColumn, to.getIdColumn());
+					String idColumn = to.getIdColumn();
+					String sql = config.getDialect().update(this.targetTable, this.targetColumn, idColumn);
 					Parameters parameters = new Parameters()
 						.addParameter(this.targetTable + "#" + this.targetColumn, from::getId)
 						.addParameter(this.targetTable + "#id", to::getId);
@@ -136,23 +137,5 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 			", From(" + RelationsToString.from(this.relations) + ")→To(" + RelationsToString.to(this.relations) + ")" +
 			", relations=" + RelationsToString.toString(this.relations) +
 		'}';
-	}
-
-	/**
-	 * Update query formatting.
-	 * @param table    the target table
-	 * @param column   the target column
-	 * @param idColumn the ID column
-	 * @return the formatted UPDATE query : UPDATE [table] SET [column] = ? WHERE [idColumn] = ?
-	 */
-	private static String update(String table, String column, String idColumn) {
-		return MessageFormat.format(
-			UPDATE,
-			table,
-			column,
-			"?",
-			idColumn,
-			"?"
-		);
 	}
 }

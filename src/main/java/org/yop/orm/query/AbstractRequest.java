@@ -18,9 +18,6 @@ import java.util.function.Function;
  */
 abstract class AbstractRequest<Request extends AbstractRequest, T extends Yopable> {
 
-	/** Default where clause is always added. So I don't have to check if the 'WHERE' keyword is required ;-) */
-	static final String DEFAULT_WHERE = " 1=1 ";
-
 	/** Root context : target class and SQL path **/
 	protected final Context<T> context;
 

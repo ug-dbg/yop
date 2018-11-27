@@ -4,11 +4,9 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
 import org.yop.orm.sql.*;
-import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,9 +20,6 @@ import java.util.stream.Collectors;
  * @param <To>   the relation target type
  */
 class JoinTableRelation<From extends Yopable, To extends Yopable> implements Relation {
-
-	private static final String DELETE_IN = " DELETE FROM {0} WHERE {1} IN ({2}) ";
-	private static final String INSERT    = " INSERT INTO {0} ({1},{2}) VALUES (?, ?) ";
 
 	/**
 	 * The relations to update.
@@ -78,13 +73,14 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 		}
 
 		Parameters parameters = new Parameters();
-		String sql = deleteIn(
+		Collection<From> sources = this.relations.keySet();
+		sources.forEach(from -> parameters.addParameter(this.relationTable + "#" + this.sourceColumn, from::getId));
+		List<String> ids = sources.stream().map(f -> "?").collect(Collectors.toList());
+
+		String sql = config.getDialect().deleteIn(
 			this.relationTable,
 			this.sourceColumn,
-			this.relations.keySet().stream().map(y -> {
-				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, y::getId);
-				return "?";
-			}).collect(Collectors.toList())
+			ids
 		);
 		return Collections.singletonList(new SimpleQuery(sql, Query.Type.DELETE, parameters, config));
 	}
@@ -100,8 +96,12 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 	public Collection<Query> toSQLInsert(Config config) {
 		Collection<Query> inserts = new ArrayList<>();
 
+		String insert = config.getDialect().insert(
+			this.relationTable,
+			Arrays.asList(this.sourceColumn, this.targetColumn),
+			Arrays.asList("?", "?")
+		);
 		for (Map.Entry<From, Collection<To>> relation : this.relations.entrySet()) {
-			String insert = insert(this.relationTable, this.sourceColumn, this.targetColumn);
 			From from = relation.getKey();
 
 			for (To to : relation.getValue()) {
@@ -126,8 +126,12 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 	public Collection<Query> toSQLBatchInsert(Config config) {
 		Collection<Query> inserts = new ArrayList<>();
 
+		String insert = config.getDialect().insert(
+			this.relationTable,
+			Arrays.asList(this.sourceColumn, this.targetColumn),
+			Arrays.asList("?", "?")
+		);
 		for (Map.Entry<From, Collection<To>> relation : this.relations.entrySet()) {
-			String insert = insert(this.relationTable, this.sourceColumn, this.targetColumn);
 			BatchQuery batchQuery = new BatchQuery(insert, Query.Type.INSERT, config);
 			From from = relation.getKey();
 
@@ -152,27 +156,5 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 			", From(" + RelationsToString.from(this.relations) + ")→To(" + RelationsToString.to(this.relations) + ")" +
 			", relations=" + RelationsToString.toString(this.relations) +
 		'}';
-	}
-
-	/**
-	 * Generate a 'DELETE IN' query
-	 * @param from         the relation table name
-	 * @param sourceColumn the source column name
-	 * @param ids          the IDs for the IN clause. Mostly a list of '?' if you want to use query parameters.
-	 * @return the {@link #DELETE_IN} formatted query
-	 */
-	private static String deleteIn(String from, String sourceColumn, Collection<String> ids) {
-		return MessageFormat.format(DELETE_IN, from, sourceColumn, MessageUtil.join(",", ids));
-	}
-
-	/**
-	 * Generate a 'DELETE IN' query. The formatted query has 2 query parameters, for source and target column values.
-	 * @param into         the relation table name
-	 * @param sourceColumn the source column name
-	 * @param targetColumn the target column name
-	 * @return the {@link #INSERT} formatted query
-	 */
-	private static String insert(String into, String sourceColumn, String targetColumn) {
-		return MessageFormat.format(INSERT, into, sourceColumn, targetColumn);
 	}
 }

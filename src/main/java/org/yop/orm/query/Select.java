@@ -14,10 +14,8 @@ import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
-import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.Reflection;
 
-import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -54,15 +52,6 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	private static final Logger logger = LoggerFactory.getLogger(Select.class);
 
 	public enum Strategy {IN, EXISTS}
-
-	/** Select [what] FROM [table] [table_alias] [join clause] WHERE [where clause] [order by clause] [extra] */
-	private static final String SELECT = " SELECT {0} FROM {1} {2} {3} WHERE {4} {5} {6}";
-
-	/** Select distinct([what]) FROM [table] [table_alias] [join clause] WHERE [where clause] [extra] */
-	private static final String SELECT_DISTINCT = " SELECT DISTINCT({0}) FROM {1} {2} {3} WHERE {4} {5}";
-
-	/** COUNT(DISTINCT :idColumn) column selection */
-	private static final String COUNT_DISTINCT = " COUNT(DISTINCT {0}) ";
 
 	/** Order by clause. Defaults to no order.  */
 	private OrderBy<T> orderBy = new OrderBy<>();
@@ -430,7 +419,7 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	 */
 	private String toSQLAnswerRequest(Parameters parameters, Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true, config);
-		return this.select(
+		return config.getDialect().select(
 			this.toSQLColumnsClause(false, config),
 			this.getTableName(),
 			this.context.getPath(config),
@@ -455,7 +444,7 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 			joinClauses.toSQLWhere(parameters)
 		);
 
-		return this.select(
+		return config.getDialect().select(
 			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
 			this.context.getPath(config),
@@ -486,7 +475,7 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 		);
 
 		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true, config);
-		String existsSubSelect = this.selectDistinct(
+		String existsSubSelect = config.getDialect().selectDistinct(
 			copyForAlias.idAlias(config),
 			copyForAlias.getTableName(),
 			copyForAlias.context.getPath(config),
@@ -501,7 +490,7 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 			" EXISTS (" + existsSubSelect + ") ",
 			joinClauses.toSQLWhere(parameters)
 		);
-		return this.select(
+		return config.getDialect().select(
 			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
 			this.context.getPath(config),
@@ -533,7 +522,7 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 		);
 
 		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true, config);
-		String existsSubSelect = this.selectDistinct(
+		String existsSubSelect = config.getDialect().select(
 			copyForAlias.idAlias(config),
 			copyForAlias.getTableName(),
 			copyForAlias.context.getPath(config),
@@ -544,8 +533,8 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 
 		// Now we can build the global query that fetches the IDs for every type when the EXISTS clause matches
 		joinClauses = this.toSQLJoin(false, config);
-		return this.select(
-			count ? MessageFormat.format(COUNT_DISTINCT, this.idAlias(config))  : this.toSQLIdColumnsClause(config),
+		return config.getDialect().select(
+			count ? config.getDialect().toSQLCount(this.idAlias(config)) : this.toSQLIdColumnsClause(config),
 			this.getTableName(),
 			this.context.getPath(config),
 			joinClauses.toSQL(parameters),
@@ -563,7 +552,7 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	private String toSQLDataRequestWithIN(Parameters parameters, Config config) {
 		String path = this.context.getPath(config);
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true, config);
-		String inSubQuery = this.selectDistinct(
+		String inSubQuery = config.getDialect().select(
 			this.idAlias(config),
 			this.getTableName(),
 			path,
@@ -578,71 +567,13 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 			this.idAlias(config) + " IN (" + inSubQuery + ")",
 			joinClauses.toSQLWhere(parameters)
 		);
-		return this.select(
+		return config.getDialect().select(
 			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
 			path,
 			joinClauses.toSQL(parameters),
 			whereClause,
 			this.orderBy.toSQL(this.context.getTarget(), config)
-		);
-	}
-
-	/**
-	 * Build the Select query from component clauses
-	 * @param what        Mandatory. Columns clause.
-	 * @param from        Mandatory. Target table.
-	 * @param as          Mandatory. Target table alias.
-	 * @param joinClause  Optional. Join clause.
-	 * @param whereClause Optional. Where clause.
-	 * @return the SQL select query.
-	 */
-	private String select(
-		String what,
-		String from,
-		String as,
-		String joinClause,
-		String whereClause,
-		String orderClause,
-		String... extras) {
-		String extra = MessageUtil.concat(extras);
-		return MessageFormat.format(
-			SELECT,
-			what,
-			from,
-			as,
-			joinClause,
-			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause,
-			orderClause,
-			extra
-		);
-	}
-
-	/**
-	 * Build the 'distinct' Select query from component clauses.
-	 * @param what        Mandatory. Column clause that is to be distinct.
-	 * @param from        Mandatory. Target table.
-	 * @param as          Mandatory. Target table alias.
-	 * @param joinClause  Optional. Join clause.
-	 * @param whereClause Optional. Where clause.
-	 * @return the SQL 'distinct' select query.
-	 */
-	private String selectDistinct(
-		String what,
-		String from,
-		String as,
-		String joinClause,
-		String whereClause,
-		String... extras) {
-		String extra = MessageUtil.concat(extras);
-		return MessageFormat.format(
-			SELECT_DISTINCT,
-			what,
-			from,
-			as,
-			joinClause,
-			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause,
-			extra
 		);
 	}
 }

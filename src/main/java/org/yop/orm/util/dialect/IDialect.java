@@ -1,5 +1,6 @@
 package org.yop.orm.util.dialect;
 
+import com.google.common.base.Joiner;
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.gen.Column;
 import org.yop.orm.gen.ForeignKey;
@@ -28,6 +29,36 @@ public interface IDialect {
 	String PK = " CONSTRAINT {0} PRIMARY KEY ({1}) ";
 	String FK = " CONSTRAINT {0} FOREIGN KEY ({1}) REFERENCES {2}({3}) ON DELETE CASCADE ";
 	String NK = " CONSTRAINT {0} UNIQUE ({1}) ";
+
+	/** Select [what] FROM [table] [table_alias] [join clause] WHERE [where clause] [order by clause] [extra] */
+	String SELECT = " SELECT {0} FROM {1} {2} {3} WHERE {4} {5} {6}";
+
+	/** Select distinct([what]) FROM [table] [table_alias] [join clause] WHERE [where clause] [extra] */
+	String SELECT_DISTINCT = " SELECT DISTINCT({0}) FROM {1} {2} {3} WHERE {4} {5}";
+
+	/** COUNT(DISTINCT :idColumn) column selection */
+	String COUNT_DISTINCT = " COUNT(DISTINCT {0}) ";
+
+	/** DELETE [columns] FROM [table] [join clauses] WHERE [where clause] */
+	String DELETE = " DELETE {0} FROM {1} {2} WHERE {3} ";
+
+	/** DELETE FROM [table] WHERE [column] IN ([values]) */
+	String DELETE_IN = " DELETE FROM {0} WHERE {1} IN ({2}) ";
+
+	/** INSERT INTO [table] ([columns]) VALUES ([column values]) */
+	String INSERT = " INSERT INTO {0} ({1}) VALUES ({2}) ";
+
+	/** UPDATE [table] SET ([column=value]+) WHERE ([idColumn] = ? ) */
+	String UPDATE = " UPDATE {0} SET {1} WHERE ({2} = ?) ";
+
+	/** [table] [table alias] on [column name] = [value]. Then prefix with the join type. */
+	String JOIN_ON = " {0} {1} on {2} = {3} ";
+
+	/** [column] IN ([comma separated values]) */
+	String IN = " {0} IN ({1}) ";
+
+	/** Default where clause is always added. So I don't have to check if the 'WHERE' keyword is required ;-) */
+	String DEFAULT_WHERE = " 1=1 ";
 
 	/**
 	 * @return the default SQL type for this dialect.
@@ -152,6 +183,8 @@ public interface IDialect {
 
 	/**
 	 * Generate the SQL CREATE query natural ID portion.
+	 * <br>
+	 * e.g.  CONSTRAINT BOOK_NK UNIQUE (publish_date, name, author_id)
 	 * @param table the table
 	 * @return the natural key query portions. (There should be 1 or 0)
 	 */
@@ -178,5 +211,170 @@ public interface IDialect {
 	 */
 	default String toSQLDrop(Table table) {
 		return MessageFormat.format(DROP, table.qualifiedName());
+	}
+
+	/**
+	 * Generate 'COUNT (DISTINCT [column alias])'.
+	 * @param columnAlias the column alias
+	 * @return COUNT (DISTINCT alias)
+	 */
+	default String toSQLCount(String columnAlias) {
+		return MessageFormat.format(COUNT_DISTINCT, columnAlias);
+	}
+
+	/**
+	 * Build the Select query from component clauses
+	 * @param what        Mandatory. Columns clause.
+	 * @param from        Mandatory. Target table.
+	 * @param as          Mandatory. Target table alias.
+	 * @param joinClause  Optional. Join clause.
+	 * @param whereClause Optional. Where clause.
+	 * @param orderClause Optional. Order clause.
+	 * @param extras      Any extra clause.
+	 * @return the SQL select query.
+	 */
+	default String select(
+		String what,
+		String from,
+		String as,
+		String joinClause,
+		String whereClause,
+		String orderClause,
+		String... extras) {
+		String extra = MessageUtil.concat(extras);
+		return MessageFormat.format(
+			SELECT,
+			what,
+			from,
+			as,
+			joinClause,
+			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause,
+			orderClause,
+			extra
+		);
+	}
+
+	/**
+	 * Build the 'distinct' Select query from component clauses.
+	 * @param what        Mandatory. Column clause that is to be distinct.
+	 * @param from        Mandatory. Target table.
+	 * @param as          Mandatory. Target table alias.
+	 * @param joinClause  Optional. Join clause.
+	 * @param whereClause Optional. Where clause.
+	 * @param extras      Any extra clause.
+	 * @return the SQL 'distinct' select query.
+	 */
+	default String selectDistinct(
+		String what,
+		String from,
+		String as,
+		String joinClause,
+		String whereClause,
+		String... extras) {
+		String extra = MessageUtil.concat(extras);
+		return MessageFormat.format(
+			SELECT_DISTINCT,
+			what,
+			from,
+			as,
+			joinClause,
+			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause,
+			extra
+		);
+	}
+
+	/**
+	 * Generate a 'DELETE' query
+	 * @param columnsClause the column clause (columns to select, comma separated)
+	 * @param tableName    the target table name
+	 * @param joinClauses  the joined table clauses
+	 * @param whereClause  the where clause. Optional.
+	 * @return the {@link #DELETE} formatted query
+	 */
+	default String delete(
+		String columnsClause,
+		String tableName,
+		String joinClauses,
+		String whereClause) {
+		return MessageFormat.format(
+			DELETE,
+			columnsClause,
+			tableName,
+			joinClauses,
+			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause
+		);
+	}
+
+	/**
+	 * Generate a 'DELETE IN' query
+	 * @param from         the relation table name
+	 * @param sourceColumn the source column name
+	 * @param ids          the IDs for the IN clause. Mostly a list of '?' if you want to use query parameters.
+	 * @return the {@link #DELETE_IN} formatted query
+	 */
+	default String deleteIn(String from, String sourceColumn, Collection<String> ids) {
+		return MessageFormat.format(DELETE_IN, from, sourceColumn, MessageUtil.join(",", ids));
+	}
+
+	/**
+	 * Generate an 'INSERT INTO' query.
+	 * @param tableName the target table name
+	 * @param columns   the columns to select
+	 * @param values    the column values
+	 * @return the {@link #INSERT} formatted query
+	 */
+	default String insert(String tableName, List<String> columns, List<String> values) {
+		return MessageFormat.format(INSERT, tableName, Joiner.on(", ").join(columns), Joiner.on(", ").join(values));
+	}
+
+	/**
+	 * Generate an 'UPDATE' query.
+	 * @param tableName       the target table name
+	 * @param columnAndValues the column and values '=' separated. e.g 'name=?'
+	 * @param idColumn        the id column (required for : WHERE idColumn = ?)
+	 * @return the {@link #UPDATE} formatted query
+	 */
+	default String update(String tableName, List<String> columnAndValues, String idColumn) {
+		return MessageFormat.format(UPDATE, tableName, Joiner.on(", ").join(columnAndValues), idColumn);
+	}
+
+	/**
+	 * Generate an 'UPDATE' query for a single column, useful for join tables update.
+	 * <br>
+	 * e.g. UPDATE table SET column=? WHERE idColumn=?
+	 * @param tableName  the target table name
+	 * @param column     the column name
+	 * @param idColumn   the id column (required for : WHERE idColumn = ?)
+	 * @return the {@link #UPDATE} formatted query
+	 */
+	default String update(String tableName, String column, String idColumn) {
+		return MessageFormat.format(UPDATE, tableName, column + "=?", idColumn);
+	}
+
+	/**
+	 * Generate a JOIN clause using {@link #JOIN_ON}.
+	 * <br>
+	 * e.g. left join join_table joined_table_alias on join_column_a = root_table_alias.column_a
+	 * @param joinType   the join type to use (see {@link org.yop.orm.query.AbstractJoin.JoinType#sql})
+	 * @param table      the table name
+	 * @param tableAlias the table alias
+	 * @param left       the left side of the "on" clause
+	 * @param right      the right side of the "on" clause
+	 * @return the formatted SQL join clause
+	 */
+	default String join(String joinType, String table, String tableAlias, String left, String right) {
+		return joinType + MessageFormat.format(JOIN_ON, table, tableAlias, left, right);
+	}
+
+	/**
+	 * Generate an 'IN' clause using {@link #IN}.
+	 * <br>
+	 * e.g. idColumn IN (?,?,?,?)
+	 * @param column the column name
+	 * @param values the values : for each value, a '?' will be added in 'IN ()'.
+	 * @return the {@link #IN} formatted clause
+	 */
+	default String in(String column, Collection<?> values) {
+		return MessageFormat.format(IN, column, values.stream().map(v -> "?").collect(Collectors.joining(",")));
 	}
 }

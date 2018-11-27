@@ -1,6 +1,5 @@
 package org.yop.orm.query.batch;
 
-import com.google.common.base.Joiner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopMappingException;
@@ -19,7 +18,6 @@ import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.sql.Statement;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -216,12 +214,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 				List<String>  columns = parameters.stream().map(Parameter::getName).collect(Collectors.toList());
 				List<String> values = parameters.stream().map(Parameter::toSQLValue).collect(Collectors.toList());
 
-				String sql = MessageFormat.format(
-					INSERT,
-					this.getTableName(),
-					Joiner.on(", ").join(columns),
-					Joiner.on(", ").join(values)
-				);
+				String sql = config.getDialect().insert(this.getTableName(), columns, values);
 				query = new BatchQuery<>(sql, Query.Type.INSERT, config, elementsToInsert, this.getTarget());
 				query.askGeneratedKeys(true, this.getTarget());
 			}
@@ -249,30 +242,15 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 			Parameters parameters = this.values(element, config);
 
 			// UPDATE query : ID column must be set last (WHERE clause, not VALUES)
-			Parameters.Parameter idParameter = null;
-			for (Parameters.Parameter parameter : parameters) {
-				if (ORMUtil.getIdColumn(element.getClass()).equals(parameter.getName())) {
-					idParameter = parameter;
-					break;
-				}
-			}
-			parameters.remove(idParameter);
-			Collection<String> values = parameters.stream().map(p -> p.getName() + "=?").collect(Collectors.toList());
+			String idColumn = ORMUtil.getIdColumn(element.getClass());
+			List<String> values = parameters.namesAndValues(p -> ! idColumn.equals(p.getName()));
+			parameters.moveLast(idColumn);
 
 			if(query == null) {
-				String whereClause = element.getIdColumn() + " = ? ";
-				String sql = MessageFormat.format(
-					UPDATE,
-					this.getTableName(),
-					Joiner.on(',').join(values),
-					whereClause
-				);
-
+				String sql = config.getDialect().update(this.getTableName(), values, element.getIdColumn());
 				query = new BatchQuery<>(sql, Query.Type.UPDATE, config, elementsToUpdate, this.getTarget());
 			}
 
-			// Set the ID parameter back, at last position.
-			parameters.add(idParameter);
 			query.addParametersBatch(parameters);
 		}
 		return query;
