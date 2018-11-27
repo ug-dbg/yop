@@ -1,6 +1,5 @@
 package org.yop.orm.query;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -29,7 +28,6 @@ import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,9 +48,6 @@ import java.util.stream.Collectors;
 public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> implements JsonAble {
 
 	private static final Logger logger = LoggerFactory.getLogger(Upsert.class);
-
-	protected static final String INSERT = " INSERT INTO {0} ({1}) VALUES ({2}) ";
-	protected static final String UPDATE = " UPDATE {0} SET {1} WHERE ({2}) ";
 
 	/** Elements to save/update */
 	protected final Yopables<T> elements = new Yopables<>(this.joins);
@@ -329,15 +324,10 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 	 */
 	protected SimpleQuery toSQLInsert(T element, Config config) {
 		Parameters parameters = this.values(element, config);
-		List<String> columns = parameters.stream().map(Parameters.Parameter::getName).collect(Collectors.toList());
-		List<String> values = parameters.stream().map(Parameters.Parameter::toSQLValue).collect(Collectors.toList());
+		List<String> columns = parameters.names(p -> true);
+		List<String> values = parameters.values(p -> true);
 
-		String sql = MessageFormat.format(
-			INSERT,
-			this.getTableName(),
-			Joiner.on(", ").join(columns),
-			Joiner.on(", ").join(values)
-		);
+		String sql = config.getDialect().insert(this.getTableName(), columns, values);
 
 		parameters.removeIf(Parameters.Parameter::isSequence);
 		SimpleQuery<T> query = new SimpleQuery<>(sql, Query.Type.INSERT, parameters, element, config);
@@ -355,27 +345,11 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 		Parameters parameters = this.values(element, config);
 
 		// UPDATE query : ID column must be set last (WHERE clause, not VALUES)
-		Parameters.Parameter idParameter = null;
-		for (Parameters.Parameter parameter : parameters) {
-			if (ORMUtil.getIdColumn(element.getClass()).equals(parameter.getName())) {
-				idParameter = parameter;
-				break;
-			}
-		}
-		parameters.remove(idParameter);
+		String idColumn = ORMUtil.getIdColumn(element.getClass());
+		List<String> values = parameters.namesAndValues(p -> !idColumn.equals(p.getName()));
+		parameters.moveLast(idColumn);
 
-		Collection<String> values = parameters.stream().map(p -> p.getName() + "=?").collect(Collectors.toList());
-
-		String whereClause = element.getIdColumn() + " = ? ";
-		String sql = MessageFormat.format(
-			UPDATE,
-			this.getTableName(),
-			Joiner.on(',').join(values),
-			whereClause
-		);
-
-		// Set the ID parameter back, at last position.
-		parameters.add(idParameter);
+		String sql = config.getDialect().update(this.getTableName(), values, idColumn);
 		return new SimpleQuery<>(sql, Query.Type.UPDATE, parameters, element, config);
 	}
 

@@ -5,9 +5,9 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.MessageUtil;
-import org.yop.orm.util.ORMTypes;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
+import org.yop.orm.util.dialect.IDialect;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
@@ -18,7 +18,11 @@ import java.util.stream.Collectors;
 /**
  * Table model, that can generate SQL CREATE queries.
  * <br>
- * This is pretty raw. This was written to prepare unit tests context.
+ * Tables are {@link Comparable}, comparing :
+ * <ol>
+ *     <li>{@link Table#isRelation()}</li>
+ *     <li>{@link Table#qualifiedName()}</li>
+ * </ol>
  */
 public class Table implements Comparable<Table> {
 
@@ -29,12 +33,12 @@ public class Table implements Comparable<Table> {
 
 	private String name;
 	private String schema;
-	private ORMTypes types;
+	private IDialect types;
 	private boolean relation = false;
 
 	private Collection<Column> columns = new ArrayList<>();
 
-	private Table(ORMTypes types) {
+	private Table(IDialect types) {
 		this.types = types;
 	}
 
@@ -68,6 +72,14 @@ public class Table implements Comparable<Table> {
 	 */
 	public List<String> otherSQL() {
 		return this.types.otherSQL(this);
+	}
+
+	/**
+	 * The 'DROP' query to drop this table.
+	 * @return the DROP query for this table and the {@link #types} dialect.
+	 */
+	public String toSQLDROP() {
+		return this.types.toSQLDrop(this);
 	}
 
 	@Override
@@ -105,12 +117,7 @@ public class Table implements Comparable<Table> {
 	 * @param classLoader   the class loader to use
 	 * @return the table objects that can be used to get INSERT queries
 	 */
-	public static Set<Table> findAllInClassPath(
-		String packagePrefix,
-		ORMTypes types,
-		ClassLoader classLoader,
-		Config config) {
-
+	public static Set<Table> findAllInClassPath(String packagePrefix, ClassLoader classLoader, Config config) {
 		Set<Class<? extends Yopable>> subtypes = ORMUtil.yopables(classLoader);
 
 		Set<Table> tables = new TreeSet<>();
@@ -118,7 +125,7 @@ public class Table implements Comparable<Table> {
 			.stream()
 			.filter(c -> Reflection.packageName(c).startsWith(packagePrefix))
 			.filter(c -> ! c.isInterface() &&  ! Modifier.isAbstract(c.getModifiers() ))
-			.forEach(clazz -> tables.addAll(Table.findTablesFor(clazz, types, config)));
+			.forEach(clazz -> tables.addAll(Table.findTablesFor(clazz, config)));
 
 		return tables;
 	}
@@ -126,39 +133,37 @@ public class Table implements Comparable<Table> {
 	/**
 	 * Find the Yopable table and its relation tables required to map the Yopable class.
 	 * @param clazz  the Yopable class
-	 * @param types  the ORM type, giving DBMS hints
 	 * @param config the SQL config. Needed for the sql separator to use.
 	 * @return the table objects that can be used to get INSERT queries
 	 */
-	public static Set<Table> findTablesFor(Class<? extends Yopable> clazz, ORMTypes types, Config config) {
+	public static Set<Table> findTablesFor(Class<? extends Yopable> clazz, Config config) {
 		Set<Table> tables = new HashSet<>();
-		tables.add(Table.fromClass(clazz, types, config));
-		readRelationTables(clazz, types, tables, config);
+		tables.add(Table.fromClass(clazz, config));
+		readRelationTables(clazz, tables, config);
 		return tables;
 	}
 
 	/**
 	 * Find the Yopable table required to map the Yopable class.
 	 * @param clazz  the Yopable class
-	 * @param types  the ORM type, giving DBMS hints
 	 * @param config the SQL config. Needed for the sql separator to use.
 	 * @return the table object that can be used to get INSERT query
 	 */
-	private static Table fromClass(Class<? extends Yopable> clazz, ORMTypes types, Config config) {
-		Table table = new Table(types);
+	private static Table fromClass(Class<? extends Yopable> clazz, Config config) {
+		Table table = new Table(config.getDialect());
 		table.schema = ORMUtil.getSchemaName(clazz);
 		table.name   = ORMUtil.getTableName(clazz);
 
 		table.columns = Reflection
 			.getFields(clazz, org.yop.orm.annotations.Column.class)
 			.stream()
-			.map(field -> Column.fromField(field, types, config))
+			.map(field -> Column.fromField(field, config))
 			.collect(Collectors.toList());
 
 		table.columns.addAll(
 			ORMUtil.joinColumnYopableFields(clazz)
 			.stream()
-			.map(field -> Column.fromJoinColumnField(field, types))
+			.map(field -> Column.fromJoinColumnField(field, config))
 			.collect(Collectors.toList())
 		);
 
@@ -166,16 +171,16 @@ public class Table implements Comparable<Table> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Table fromRelationField(Field relationField, ORMTypes types, Config config) {
+	private static Table fromRelationField(Field relationField, Config config) {
 		JoinTable joinTable = relationField.getAnnotation(JoinTable.class);
 
-		Table table = new Table(types);
+		Table table = new Table(config.getDialect());
 		table.relation = true;
 		table.schema = joinTable.schema();
 		table.name   = joinTable.table();
 
 		Class<? extends Yopable> sourceClass = (Class<? extends Yopable>) relationField.getDeclaringClass();
-		Column source = new Column(joinTable.sourceColumn(), types.getForType(Long.class), 0, types);
+		Column source = new Column(joinTable.sourceColumn(), Long.class, 0, config.getDialect());
 		createJoinTableColumnAttributes(source, sourceClass, joinTable.sourceForeignKey(), joinTable, config);
 		table.columns.add(source);
 
@@ -185,7 +190,7 @@ public class Table implements Comparable<Table> {
 		} else {
 			targetClass = (Class<? extends Yopable>)relationField.getType();
 		}
-		Column target = new Column(joinTable.targetColumn(), types.getForType(Long.class), 0, types);
+		Column target = new Column(joinTable.targetColumn(), Long.class, 0, config.getDialect());
 		createJoinTableColumnAttributes(target, targetClass, joinTable.targetForeignKey(), joinTable, config);
 		table.columns.add(target);
 
@@ -194,13 +199,12 @@ public class Table implements Comparable<Table> {
 
 	private static void readRelationTables(
 		Class<? extends Yopable> clazz,
-		ORMTypes types,
 		Set<Table> tables,
 		Config config) {
 		tables.addAll(ORMUtil
 			.joinTableFields(clazz)
 			.stream()
-			.map(field -> fromRelationField(field, types, config))
+			.map(field -> fromRelationField(field, config))
 			.collect(Collectors.toSet()));
 	}
 

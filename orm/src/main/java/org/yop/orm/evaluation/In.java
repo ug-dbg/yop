@@ -13,11 +13,9 @@ import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
-import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * IN clause evaluation.
@@ -27,8 +25,6 @@ import java.util.stream.Collectors;
  * This does not work for @JoinTable fields. Sorry about that.
  */
 public class In implements Evaluation {
-
-	private static final String IN = " {0} IN ({1}) ";
 
 	public static final String VALUES = "values";
 
@@ -66,14 +62,8 @@ public class In implements Evaluation {
 			+ config.dot()
 			+ ORMUtil.getColumnName(field);
 
-		return MessageFormat.format(
-			IN,
-			column,
-			this.values
-				.stream()
-				.map(value -> {parameters.addParameter(column + "=" + value, value, field); return "?";})
-				.collect(Collectors.joining(","))
-		);
+		this.values.forEach(value -> parameters.addParameter(column + "=" + value, value, field));
+		return config.getDialect().in(column, this.values);
 	}
 
 	@Override

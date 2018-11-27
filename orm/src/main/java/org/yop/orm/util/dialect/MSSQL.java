@@ -4,7 +4,6 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.gen.Column;
 import org.yop.orm.gen.Table;
 import org.yop.orm.util.MessageUtil;
-import org.yop.orm.util.ORMTypes;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -17,50 +16,50 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * MS-SQL (a.k.a SQL server) dialect {@link ORMTypes} extension.
+ * MS-SQL (a.k.a SQL server) dialect {@link Dialect} extension.
  * @see <a href="https://www.microsoft.com/en-us/sql-server">https://www.microsoft.com/en-us/sql-server</a>
  */
-public class MSSQL extends ORMTypes {
+public class MSSQL extends Dialect {
 
-	public static final ORMTypes INSTANCE = new MSSQL();
+	public static final Dialect INSTANCE = new MSSQL();
 
 	/**
 	 * Default constructor. Please use singleton {@link #INSTANCE}.
 	 */
 	private MSSQL() {
 		super("NVARCHAR");
-		this.put(String.class,     "NVARCHAR");
-		this.put(Character.class,  "NVARCHAR");
+		this.setForType(String.class,     "NVARCHAR");
+		this.setForType(Character.class,  "NVARCHAR");
 
-		this.put(Integer.class, "INTEGER");
-		this.put(Long.class,    "BIGINT");
-		this.put(Short.class,   "INTEGER");
-		this.put(Byte.class,    "INTEGER");
+		this.setForType(Integer.class, "INTEGER");
+		this.setForType(Long.class,    "BIGINT");
+		this.setForType(Short.class,   "INTEGER");
+		this.setForType(Byte.class,    "INTEGER");
 
-		this.put(Float.class,  "REAL");
-		this.put(Double.class, "REAL");
-		this.put(Date.class,          "DATETIME");
-		this.put(Calendar.class,      "DATETIME");
-		this.put(Instant.class,       "DATETIME");
-		this.put(LocalDate.class,     "DATE");
-		this.put(LocalDateTime.class, "DATETIME");
+		this.setForType(Float.class,  "REAL");
+		this.setForType(Double.class, "REAL");
+		this.setForType(Date.class,          "DATETIME");
+		this.setForType(Calendar.class,      "DATETIME");
+		this.setForType(Instant.class,       "DATETIME");
+		this.setForType(LocalDate.class,     "DATE");
+		this.setForType(LocalDateTime.class, "DATETIME");
 
-		this.put(Time.class,               "DATETIME");
-		this.put(java.sql.Date.class,      "DATE");
-		this.put(java.sql.Timestamp.class, "DATETIME");
+		this.setForType(Time.class,               "DATETIME");
+		this.setForType(java.sql.Date.class,      "DATE");
+		this.setForType(java.sql.Timestamp.class, "DATETIME");
 
-		this.put(BigInteger.class, "VARCHAR(MAX)");
-		this.put(BigDecimal.class, "VARCHAR(MAX)");
+		this.setForType(BigInteger.class, "VARCHAR(MAX)");
+		this.setForType(BigDecimal.class, "VARCHAR(MAX)");
 	}
 
 	@Override
-	protected String type(Column column) {
+	public String type(Column column) {
 		String type = column.getType();
 		return type + (StringUtils.endsWith(type, "VARCHAR") ? "(" + column.getLength() + ")" : "");
 	}
 
 	@Override
-	protected String autoIncrementKeyWord() {
+	public String autoIncrementKeyWord() {
 		return " IDENTITY (1,1) ";
 	}
 

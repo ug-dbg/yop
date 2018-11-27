@@ -10,17 +10,13 @@ import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
-import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.stream.Collectors;
 
 /**
  * ID restriction on several values. Can be easier to write than OR...
  */
 public class IdIn  implements Evaluation {
-
-	private static final String IN = " {0} IN ({1}) ";
 
 	public static final String VALUES = "values";
 
@@ -51,15 +47,9 @@ public class IdIn  implements Evaluation {
 
 		String idColumn = ORMUtil.getIdColumn(context, config);
 		Field idField = ORMUtil.getIdField(context.getTarget());
+		this.values.forEach(value -> parameters.addParameter(idColumn + "=" + value, value, idField));
 
-		return MessageFormat.format(
-			IN,
-			idColumn,
-			this.values
-				.stream()
-				.map(value -> {parameters.addParameter(idColumn + "=" + value, value, idField); return "?";})
-				.collect(Collectors.joining(","))
-		);
+		return config.getDialect().in(idColumn, this.values);
 	}
 
 	@Override

@@ -96,6 +96,18 @@ JSON.from(Library.class)
  .toJSON();
 ```
 
+**Explicit join using a path of getter references (up to 4 consecutive getters)**  
+⚠ Using this method, the compiler cannot warn you about incoherent paths ⚠
+```java
+Select   
+ .from(Library.class)    
+ .join(Library::getAuthors, Author::getBooks, Book::getChapters)    
+ .join(Library::getEmployees)  
+ .checkNaturalID()  
+ .execute(connection);
+```  
+  
+### In short
 Yop can serialize from/to a database (**ORM**) or to **JSON**.  
 Yop queries are serializable to/from JSON.  
 Yop tries to generate very standard SQL queries that works on most databases.  
@@ -103,7 +115,7 @@ Yop has some requirements on the Database schema (See Yop principles).
 Yop requires at least **Java 8**.  
 Yop can be used in conjunction with other ORM tools.  
 Yop is easy to bootstrap in a *scratch* main class.  
-Yop is ~5000 lines of code.  
+Yop is ~6000 lines of code.  
 Yop has been (poorly) unit tested on :  
 - SQLite (Xerial sqlite-jdbc 3.21)  
 - MySQL (5.7)  

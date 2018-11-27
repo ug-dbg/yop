@@ -39,7 +39,18 @@ Book bookFromDB = Select
 .where(Where.naturalId(book))
 .joinAll()
 .uniqueResult(connection)
+```  
+  
 ```
+// Using this lighter 'join' syntax, the compiler cannot warn you about incoherent paths
+Select   
+ .from(Library.class)    
+ .join(Library::getAuthors, Author::getBooks, Book::getChapters)    
+ .join(Library::getEmployees)  
+ .checkNaturalID()  
+ .execute(connection);
+  ```
+
 YOP *could* be able to run on **Android**.  
 See the [yop-android-poc](https://github.com/ug-dbg/yop-android-poc) for an infamous POC.
 

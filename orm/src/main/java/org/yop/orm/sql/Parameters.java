@@ -7,6 +7,10 @@ import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * SQL query parameters.
@@ -14,6 +18,51 @@ import java.util.ArrayList;
  * This is an array list, the index of the parameter in the SQL query is the parameter index in the list + 1.
  */
 public class Parameters extends ArrayList<Parameters.Parameter> {
+
+	/**
+	 * Return the parameters names, using {@link Parameter#getName()}.
+	 * @param includeIf an inclusion predicate : if the parameter does not match the predicate, it won't be returned
+	 * @return the list of names of the parameters that matched the predicate
+	 */
+	public List<String> names(Predicate<Parameter> includeIf) {
+		return this.stream().filter(includeIf).map(Parameters.Parameter::getName).collect(Collectors.toList());
+	}
+
+	/**
+	 * Return the parameters values, using {@link Parameter#toSQLValue()}.
+	 * <br>
+	 * This is likely to return a collection of '?'.
+	 * @param includeIf an inclusion predicate : if the parameter does not match the predicate, it won't be returned
+	 * @return the list of values of the parameters that matched the predicate
+	 */
+	public List<String> values(Predicate<Parameter> includeIf) {
+		return this.stream().filter(includeIf).map(Parameters.Parameter::toSQLValue).collect(Collectors.toList());
+	}
+
+	/**
+	 * Return the parameters names and values, using {@link Parameter#toSQLValue()}.
+	 * <br>
+	 * This is likely to return something like [parameter1=?, parameter2=?, ...]
+	 * @param includeIf an inclusion predicate : if the parameter does not match the predicate, it won't be returned
+	 * @return the list of (name1=value1, name2=value2) of the parameters that matched the predicate
+	 */
+	public List<String> namesAndValues(Predicate<Parameter> includeIf) {
+		return this.stream().filter(includeIf).map(p -> p.getName() + "=" + p.toSQLValue()).collect(Collectors.toList());
+	}
+
+	/**
+	 * Move a parameter to the end of the list.
+	 * <br>
+	 * The first parameter whose name equals 'name' will be removed and added to the end of the list.
+	 * @param name the parameter name
+	 */
+	public void moveLast(String name) {
+		Optional<Parameter> columnParameter = this.stream().filter(p -> p.getName().equals(name)).findFirst();
+		if (columnParameter.isPresent()) {
+			this.remove(columnParameter.get());
+			this.add(columnParameter.get());
+		}
+	}
 
 	/**
 	 * Add a new SQL parameter.

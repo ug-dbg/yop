@@ -1,6 +1,7 @@
 package org.yop.orm.sql;
 
 import org.yop.orm.query.Paging;
+import org.yop.orm.util.dialect.IDialect;
 
 import java.lang.reflect.Field;
 import java.sql.Statement;
@@ -41,6 +42,7 @@ public class Config {
 	public static final String SQL_PAGING_METHOD            = "yop.sql.paging_method";
 
 	private final Map<String, String> config = new HashMap<>();
+	private IDialect dialect = IDialect.defaultDialect();
 
 	public Config initFromSystemProperties() {
 		this.initFromSystemProperty(SHOW_SQL_PROPERTY,           "false");
@@ -51,6 +53,24 @@ public class Config {
 		this.initFromSystemProperty(SQL_MAX_PARAMETERS_PROPERTY, "1000");
 		this.initFromSystemProperty(SQL_DEFAULT_SEQ,             SQL_DEFAULT_SEQ_DEFAULT);
 		this.initFromSystemProperty(SQL_PAGING_METHOD,           Paging.Method.TWO_QUERIES.name());
+		return this;
+	}
+
+	/**
+	 * Get the dialect associated to this config.
+	 * @return {@link #dialect}
+	 */
+	public IDialect getDialect() {
+		return this.dialect;
+	}
+
+	/**
+	 * Set the dialect to use with this config
+	 * @param dialect the dialect implementation to use
+	 * @return the current config object, for chaining purposes
+	 */
+	public Config setDialect(IDialect dialect) {
+		this.dialect = dialect;
 		return this;
 	}
 

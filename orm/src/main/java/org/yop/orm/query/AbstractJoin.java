@@ -15,7 +15,6 @@ import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
-import java.text.MessageFormat;
 import java.util.Collection;
 
 /**
@@ -36,9 +35,6 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 
 		private final String sql;
 	}
-
-	/** [table] [table alias] on [column name] = [value] */
-	private static final String JOIN = " {0} {1} on {2} = {3} ";
 
 	/** The where clause on the target class */
 	protected final Where<To> where = new Where<>();
@@ -217,16 +213,16 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		String toIdColumn = Reflection.newInstanceNoArgs(to.getTarget()).getIdColumn();
 
 		return
-			toSQLJoin(
-				type,
+			config.getDialect().join(
+				type.sql,
 				joinTable,
 				relationAlias,
 				prefix(relationAlias, joinTableSourceColumn, config),
 				prefix(parent.getPath(config), fromIdColumn, config)
 			)
 			+
-			toSQLJoin(
-				type,
+			config.getDialect().join(
+				type.sql,
 				to.getTableName(),
 				targetTableAlias,
 				prefix(targetTableAlias, toIdColumn, config),
@@ -262,8 +258,8 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		if (StringUtils.isNotBlank(joinColumnAnnotation.local())) {
 			String toIdColumn = Reflection.newInstanceNoArgs(to.getTarget()).getIdColumn();
 
-			return toSQLJoin(
-				type,
+			return config.getDialect().join(
+				type.sql,
 				to.getTableName(),
 				targetTableAlias,
 				prefix(sourceTableAlias, joinColumnAnnotation.local(), config),
@@ -272,8 +268,8 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		} else if (StringUtils.isNotBlank(joinColumnAnnotation.remote())) {
 			String idColumn = Reflection.newInstanceNoArgs(parent.getTarget()).getIdColumn();
 
-			return toSQLJoin(
-				type,
+			return config.getDialect().join(
+				type.sql,
 				to.getTableName(),
 				targetTableAlias,
 				prefix(sourceTableAlias, idColumn, config),
@@ -284,19 +280,6 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 				"Incoherent JoinColumn mapping [" + parent.getTarget().getName() + "#" + relationName + "]"
 			);
 		}
-	}
-
-	/**
-	 * Format JOIN clause using {@link #JOIN} and the parameters
-	 * @param type       the join type to use (mostly {@link JoinType#LEFT_JOIN})
-	 * @param table      the table name
-	 * @param tableAlias the table alias
-	 * @param left       the left side of the "on" clause
-	 * @param right      the right side of the "on" clause
-	 * @return the formatted SQL join clause
-	 */
-	private static String toSQLJoin(JoinType type, String table, String tableAlias, String left, String right) {
-		return type.sql + MessageFormat.format(JOIN, table, tableAlias, left, right);
 	}
 
 	/**
