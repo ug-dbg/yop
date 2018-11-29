@@ -55,6 +55,9 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 	/** If set to true, any insert will do a preliminary SELECT query to find any entry whose natural key matches */
 	protected boolean checkNaturalID = false;
 
+	/** If set to true, {@link #checkNaturalID} will be propagated when using {@link #subUpsert(IJoin, Yopable)} */
+	protected boolean propagateCheckNaturalID = false;
+
 	/**
 	 * Protected constructor, please use {@link #from(Class)}
 	 * @param target the target class
@@ -104,13 +107,19 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 			return null;
 		}
 
+		Class<U> target = join.getTarget(field);
+		boolean naturalKey = ! ORMUtil.getNaturalKeyFields(join.getTarget(field)).isEmpty();
 		if (children instanceof Collection) {
 			if(! ((Collection) children).isEmpty()) {
-				return new Upsert<>(join.getTarget(field)).onto((Collection<U>) children);
+				return new Upsert<>(target)
+					.onto((Collection<U>) children)
+					.checkNaturalID(naturalKey && this.checkNaturalID, this.propagateCheckNaturalID);
 			}
 			return null;
 		} else if (children instanceof Yopable) {
-			return new Upsert<>(join.getTarget(field)).onto((U) children);
+			return new Upsert<>(target)
+				.onto((U) children)
+				.checkNaturalID(naturalKey && this.checkNaturalID, this.propagateCheckNaturalID);
 		}
 
 		throw new YopMappingException(
@@ -169,10 +178,37 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 	/**
 	 * Check for natural ID before insert. Merge and update existing rows.
 	 * <br>
-	 * @return the current SELECT request, for chaining purpose
+	 * @return the current UPSERT request, for chaining purpose
 	 */
 	public Upsert<T> checkNaturalID() {
+		return this.checkNaturalID(false);
+	}
+
+	/**
+	 * Check for natural ID before insert. Merge and update existing rows.
+	 * <br>
+	 * The propagation parameter can be useful with joins :
+	 * you might want - or not - to check for natural ID in your joined data. Default is 'false'.
+	 * <br>
+	 * @param propagate if true, {@link #checkNaturalID} will be propagated to any {@link #subUpsert(IJoin, Yopable)}
+	 * @return the current UPSERT request, for chaining purpose
+	 */
+	public Upsert<T> checkNaturalID(boolean propagate) {
 		this.checkNaturalID = true;
+		this.propagateCheckNaturalID = propagate;
+		return this;
+	}
+
+	/**
+	 * Check for natural ID before insert. Merge and update existing rows. Explicit value and propagate value.
+	 * <br>
+	 * @param value     the value for {@link #checkNaturalID}
+	 * @param propagate the value for {@link #propagateCheckNaturalID}
+	 * @return the current UPSERT request, for chaining purpose
+	 */
+	protected Upsert<T> checkNaturalID(boolean value, boolean propagate) {
+		this.checkNaturalID = value;
+		this.propagateCheckNaturalID = propagate;
 		return this;
 	}
 
