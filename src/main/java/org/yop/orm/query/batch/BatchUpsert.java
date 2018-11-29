@@ -64,6 +64,15 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	}
 
 	/**
+	 * Check for natural ID before insert. Merge and update existing rows.
+	 * <br>
+	 * @return the current BATCH UPSERT request, for chaining purpose
+	 */
+	protected BatchUpsert<T> checkNaturalID(boolean value, boolean propagate) {
+		return (BatchUpsert<T>) super.checkNaturalID(value, propagate);
+	}
+
+	/**
 	 * Execute the upsert request, using batches when possible.
 	 * <br>
 	 * <br>
@@ -114,7 +123,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 			}
 		}
 
-		// If the user asked for natural key checking, do a preliminary SELECT request to find any existing ID
+		// If the user asked for natural key checking, do a preliminaryBATCH UPSERTrequest to find any existing ID
 		if (this.checkNaturalID) {
 			this.findNaturalIDs(connection);
 		}
@@ -144,13 +153,19 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 			return null;
 		}
 
+		Class<U> target = join.getTarget(field);
+		boolean naturalKey = ! ORMUtil.getNaturalKeyFields(join.getTarget(field)).isEmpty();
 		if (children instanceof Collection) {
 			if(! ((Collection) children).isEmpty()) {
-				return (BatchUpsert<U>) new BatchUpsert<>(join.getTarget(field)).onto((Collection<U>) children);
+				return ((BatchUpsert<U>) new BatchUpsert<>(target)
+					.onto((Collection<U>) children))
+					.checkNaturalID(naturalKey && this.checkNaturalID, this.propagateCheckNaturalID);
 			}
 			return null;
 		} else if (children instanceof Yopable) {
-			return (BatchUpsert<U>) new BatchUpsert<>(join.getTarget(field)).onto((U) children);
+			return ((BatchUpsert<U>) new BatchUpsert<>(target)
+				.onto((U) children))
+				.checkNaturalID(naturalKey && this.checkNaturalID, this.propagateCheckNaturalID);
 		}
 
 		throw new YopMappingException(
