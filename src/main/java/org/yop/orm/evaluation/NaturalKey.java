@@ -94,7 +94,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 			String name = context.getPath(config) + "#" + field.getName() + " = " + "?";
 			parameters.addParameter(name, ref, field);
 		}
-		return Evaluation.columnName(field, context, config) + "=" + (ref == null ? "" : "?");
+		return Evaluation.columnName(field, context, config) + (ref == null ? " IS NULL " : "=?");
 	}
 
 }
