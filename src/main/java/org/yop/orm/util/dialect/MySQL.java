@@ -48,7 +48,7 @@ public class MySQL extends Dialect {
 	 * @return NULL / NOT NULL / ∅
 	 */
 	private String nullable(Column column) {
-		if(column.isNotNull() || column.isNaturalKey()) {
+		if(column.isNotNull()) {
 			return " NOT NULL ";
 		}
 		if("TIMESTAMP".equals(column.getType())) {
