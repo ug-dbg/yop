@@ -206,7 +206,7 @@ public class Delete<T extends Yopable> extends AbstractRequest<Delete<T>, T> imp
 			columnsClause,
 			root.getTableName() + asClause,
 			joinClauses.toSQL(parameters),
-			Where.toSQL(whereClause, joinClauses.toSQLWhere(parameters))
+			Where.toSQL(config, whereClause, joinClauses.toSQLWhere(parameters))
 		);
 	}
 

@@ -424,7 +424,7 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 			this.getTableName(),
 			this.context.getPath(config),
 			joinClauses.toSQL(parameters),
-			Where.toSQL(this.toSQLWhere(parameters, config), joinClauses.toSQLWhere(parameters)),
+			Where.toSQL(config, this.toSQLWhere(parameters, config), joinClauses.toSQLWhere(parameters)),
 			OrderBy.<T>orderById(true).toSQL(this.context.getTarget(), config)
 		);
 	}
@@ -440,6 +440,7 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	private String toSQLDataRequest(Set<Long> ids, Parameters parameters, Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
 		String whereClause = Where.toSQL(
+			config,
 			this.idAlias(config) + " IN (" + Joiner.on(",").join(ids) + ") ",
 			joinClauses.toSQLWhere(parameters)
 		);
@@ -463,41 +464,7 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	 * @return the SQL 'data' request.
 	 */
 	private String toSQLDataRequestWithEXISTS(Parameters parameters, Config config) {
-		// First we have to build a 'select ids' query for the EXISTS subquery
-		// We copy the current 'Select' object to add a suffix to the context
-		// We link the EXISTS subquery to the global one (id = subquery.id)
-		// This is not very elegant, I must confess
-		Select<T> copyForAlias = new Select<>(this.context.copy("_0"), this.where, this.joins);
-
-		String whereClause = Where.toSQL(
-			copyForAlias.toSQLWhere(parameters, config),
-			this.idAlias(config) + " = " + copyForAlias.idAlias(config)
-		);
-
-		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true, config);
-		String existsSubSelect = config.getDialect().selectDistinct(
-			copyForAlias.idAlias(config),
-			copyForAlias.getTableName(),
-			copyForAlias.context.getPath(config),
-			joinClauses.toSQL(parameters),
-			Where.toSQL(whereClause, joinClauses.toSQLWhere(parameters)),
-			this.paging.toSQL(this.context, parameters, config)
-		);
-
-		// Now we can build the global query that fetches the data when the EXISTS clause matches
-		joinClauses = this.toSQLJoin(false, config);
-		whereClause = Where.toSQL(
-			" EXISTS (" + existsSubSelect + ") ",
-			joinClauses.toSQLWhere(parameters)
-		);
-		return config.getDialect().select(
-			this.toSQLColumnsClause(true, config),
-			this.getTableName(),
-			this.context.getPath(config),
-			joinClauses.toSQL(parameters),
-			whereClause,
-			this.orderBy.toSQL(this.context.getTarget(), config)
-		);
+		return this.toSQLWithExists(parameters, config, false, false);
 	}
 
 	/**
@@ -510,35 +477,46 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	 * @return the SQL 'data' request.
 	 */
 	private String toSQLIDsRequest(Parameters parameters, boolean count, Config config) {
+		return this.toSQLWithExists(parameters, config, count, true);
+	}
+
+	/**
+	 * Create a 'SELECT WHERE EXISTS' query, using a subquery.
+	 * <br>
+	 * This relies on the dialect implementation.
+	 * <br>
+	 * FIXME : paramater order must be coherent with the query building. Something should be done.
+	 * @param parameters the query parameters
+	 * @param config     the SQL config (sql separator, use batch inserts, dialect...)
+	 * @param count      true if this query is for counting matches
+	 * @param onlyIDs    true to only return ID columns. Useless if 'count' is set to 'true'
+	 * @return the sqL 'SELECT WHERE EXISTS' query
+	 */
+	private String toSQLWithExists(Parameters parameters, Config config, boolean count, boolean onlyIDs) {
 		// First we have to build a 'select ids' query for the EXISTS subquery
 		// We copy the current 'Select' object to add a suffix to the context
 		// We link the EXISTS subquery to the global one (id = subquery.id)
 		// This is not very elegant, I must confess
-		Select<T> copyForAlias = new Select<>(this.context.copy("_0"), this.where, this.joins);
+		Select<T> subSelect = new Select<>(this.context.copy("_0"), this.where, this.joins);
+		JoinClause.JoinClauses subSelectJoinClauses = subSelect.toSQLJoin(true, config);
+		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
 
-		String whereClause = Where.toSQL(
-			copyForAlias.toSQLWhere(parameters, config),
-			this.idAlias(config) + " = " + copyForAlias.idAlias(config)
-		);
+		String columns = count
+			? config.getDialect().toSQLCount(this.idAlias(config))
+			: onlyIDs ? this.toSQLIdColumnsClause(config) : this.toSQLColumnsClause(true, config);
 
-		JoinClause.JoinClauses joinClauses = copyForAlias.toSQLJoin(true, config);
-		String existsSubSelect = config.getDialect().select(
-			copyForAlias.idAlias(config),
-			copyForAlias.getTableName(),
-			copyForAlias.context.getPath(config),
-			joinClauses.toSQL(parameters),
-			Where.toSQL(whereClause, joinClauses.toSQLWhere(parameters)),
-			this.paging.toSQL(this.context, parameters, config)
-		);
-
-		// Now we can build the global query that fetches the IDs for every type when the EXISTS clause matches
-		joinClauses = this.toSQLJoin(false, config);
-		return config.getDialect().select(
-			count ? config.getDialect().toSQLCount(this.idAlias(config)) : this.toSQLIdColumnsClause(config),
+		return config.getDialect().selectWhereExists(
+			this.idAlias(config),
+			columns,
 			this.getTableName(),
 			this.context.getPath(config),
 			joinClauses.toSQL(parameters),
-			Where.toSQL(" EXISTS (" + existsSubSelect + ") ", joinClauses.toSQLWhere(parameters)),
+			joinClauses.toSQLWhere(parameters),
+			subSelect.idAlias(config),
+			subSelect.context.getPath(config),
+			subSelectJoinClauses.toSQL(parameters),
+			Where.toSQL(config, subSelect.toSQLWhere(parameters, config), subSelectJoinClauses.toSQLWhere(parameters)),
+			this.paging.toSQL(this.context, parameters, config),
 			this.orderBy.toSQL(this.context.getTarget(), config)
 		);
 	}
@@ -550,29 +528,17 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	 * @return the SQL 'data' request.
 	 */
 	private String toSQLDataRequestWithIN(Parameters parameters, Config config) {
-		String path = this.context.getPath(config);
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true, config);
-		String inSubQuery = config.getDialect().select(
+		return config.getDialect().selectWhereIdIn(
 			this.idAlias(config),
-			this.getTableName(),
-			path,
-			joinClauses.toSQL(parameters),
-			Where.toSQL(this.toSQLWhere(parameters, config), joinClauses.toSQLWhere(parameters)),
-			this.paging.toSQLOrderBy(this.context, config),
-			this.paging.toSQL(this.context, parameters, config)
-		);
-
-		joinClauses = this.toSQLJoin(false, config);
-		String whereClause = Where.toSQL(
-			this.idAlias(config) + " IN (" + inSubQuery + ")",
-			joinClauses.toSQLWhere(parameters)
-		);
-		return config.getDialect().select(
 			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
-			path,
+			this.context.getPath(config),
 			joinClauses.toSQL(parameters),
-			whereClause,
+			joinClauses.toSQLWhere(parameters),
+			this.toSQLWhere(parameters, config),
+			this.paging.toSQLOrderBy(this.context, config),
+			this.paging.toSQL(this.context, parameters, config),
 			this.orderBy.toSQL(this.context.getTarget(), config)
 		);
 	}

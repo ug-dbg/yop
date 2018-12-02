@@ -180,21 +180,21 @@ public class Where<T extends Yopable> implements JsonAble {
 	}
 
 	/**
-	 * Simply join some where clauses using " AND ". Clauses can be null or empty.
+	 * Join some where clauses. Clauses can be null or empty.
 	 * @param whereClauses the where clauses to join
 	 * @return the new where clause
 	 */
-	public static String toSQL(String... whereClauses) {
-		return toSQL(Arrays.asList(whereClauses));
+	public static String toSQL(Config config, String... whereClauses) {
+		return toSQL(config, Arrays.asList(whereClauses));
 	}
 
 
 	/**
-	 * Simply join some where clauses using " AND ". Clauses can be null or empty.
+	 * Join some where clauses. Clauses can be null or empty.
 	 * @param whereClauses the where clauses to join
 	 * @return the new where clause
 	 */
-	public static String toSQL(Collection<String> whereClauses) {
-		return MessageUtil.join(" AND ", whereClauses);
+	public static String toSQL(Config config, Collection<String> whereClauses) {
+		return config.getDialect().where(whereClauses);
 	}
 }

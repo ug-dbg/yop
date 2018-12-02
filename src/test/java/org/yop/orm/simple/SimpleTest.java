@@ -80,9 +80,25 @@ public class SimpleTest extends DBMSSwitch {
 					.checkNaturalID()
 					.execute(connection);
 
+			Collection<Pojo> fromSelectWithBadJoinWhere = Select
+				.from(Pojo.class)
+				.join(toSet(Pojo::getJopos).where(new Comparison(Jopo::getId, Operator.GE, 2L)))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+				.execute(connection, Select.Strategy.EXISTS);
+			Assert.assertEquals(0, fromSelectWithBadJoinWhere.size());
+
+			fromSelectWithBadJoinWhere = Select
+				.from(Pojo.class)
+				.join(toSet(Pojo::getJopos).where(new Comparison(Jopo::getId, Operator.GE, 2L)))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+				.execute(connection, Select.Strategy.IN);
+			Assert.assertEquals(0, fromSelectWithBadJoinWhere.size());
+
 			Pojo found = Select
 					.from(Pojo.class)
-					.join(toSet(Pojo::getJopos))
+					.join(toSet(Pojo::getJopos).where(new Comparison(Jopo::getId, Operator.GE, 1L)))
 					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
 					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
 					.uniqueResult(connection);

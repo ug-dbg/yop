@@ -57,6 +57,10 @@ public interface IDialect {
 	/** [column] IN ([comma separated values]) */
 	String IN = " {0} IN ({1}) ";
 
+	String AND = " AND ";
+
+	String EXISTS = " EXISTS ({0}) ";
+
 	/** Default where clause is always added. So I don't have to check if the 'WHERE' keyword is required ;-) */
 	String DEFAULT_WHERE = " 1=1 ";
 
@@ -376,5 +380,110 @@ public interface IDialect {
 	 */
 	default String in(String column, Collection<?> values) {
 		return MessageFormat.format(IN, column, values.stream().map(v -> "?").collect(Collectors.joining(",")));
+	}
+
+	/**
+	 * Simply join the where clauses using " AND ". Clauses can be null or empty.
+	 * @param whereClauses the where clauses to join
+	 * @return the new where clause
+	 */
+	default String where(String... whereClauses) {
+		return this.where(Arrays.asList(whereClauses));
+	}
+
+	/**
+	 * Simply join the where clauses using " AND ". Clauses can be null or empty.
+	 * @param whereClauses the where clauses to join
+	 * @return the new where clause
+	 */
+	default String where(Collection<String> whereClauses) {
+		return MessageUtil.join(AND, whereClauses);
+	}
+
+	/**
+	 * Create a 'SELECT WHERE EXISTS ()' query, using a subselect, from the different parts of the query.
+	 * <br>
+	 * FIXME : using this method is requires the parameters to be in the same order as the query build.
+	 * @param idAlias              the main table ID alias
+	 * @param columns              the columns to select
+	 * @param from                 the main table
+	 * @param as                   the main table alias
+	 * @param joinClause           the join clause
+	 * @param joinClauseWhere      the where clause from all the join clauses
+	 * @param subSelectIdAlias     the main table ID alias for the subselect query
+	 * @param subSelectAs          the subselect main table alias
+	 * @param subSelectJoinClause  the subselect join clauses
+	 * @param subSelectWhereClause the subselect where clause
+	 * @param pagingClause         the paging clause
+	 * @param orderClause          the 'order by' clause
+	 * @return the assembled SELECT WHERE EXIST query
+	 */
+	default String selectWhereExists(
+		String idAlias,
+		String columns,
+		String from,
+		String as,
+		String joinClause,
+		String joinClauseWhere,
+		String subSelectIdAlias,
+		String subSelectAs,
+		String subSelectJoinClause,
+		String subSelectWhereClause,
+		String pagingClause,
+		String orderClause) {
+
+		String subSelect = this.selectDistinct(
+			subSelectIdAlias,
+			from,
+			subSelectAs,
+			subSelectJoinClause,
+			this.where(subSelectWhereClause, idAlias + " = " + subSelectIdAlias),
+			pagingClause
+		);
+
+		String where = this.where(joinClauseWhere, MessageFormat.format(EXISTS, subSelect));
+		return this.select(columns, from, as, joinClause, where, orderClause);
+	}
+
+	/**
+	 * Create a 'SELECT WHERE ID IN ()' query, using a subselect, from the different parts of the query.
+	 * <br>
+	 * FIXME : using this method is requires the parameters to be in the same order as the query build.
+	 * @param idAlias         the main table ID alias
+	 * @param columns         the columns to select
+	 * @param from            the main table
+	 * @param as              the main table alias
+	 * @param joinClause      the join clause
+	 * @param joinClauseWhere the where clause from all the join clauses
+	 * @param whereClause     the where clause
+	 * @param pagingOrderBy   the 'order by' clause that can be required for the paging clause
+	 * @param pagingClause    the paging clause
+	 * @param orderClause     the 'order by' clause
+	 * @return the assembled SELECT WHERE ID IN query
+	 */
+	default String selectWhereIdIn(
+		String idAlias,
+		String columns,
+		String from,
+		String as,
+		String joinClause,
+		String joinClauseWhere,
+		String whereClause,
+		String pagingOrderBy,
+		String pagingClause,
+		String orderClause) {
+
+		String inSubQuery = this.select(
+			idAlias,
+			from,
+			as,
+			"",
+			this.where(whereClause, joinClauseWhere),
+			pagingOrderBy,
+			pagingClause
+		);
+
+		String where = idAlias + MessageFormat.format(IN, "", inSubQuery);
+		return this.select(columns, from, as, joinClause, where, orderClause);
 	}
 }

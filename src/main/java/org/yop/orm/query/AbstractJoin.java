@@ -74,7 +74,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		if(includeWhereClause) {
 			Parameters whereParameters = new Parameters();
 			String whereClause = this.where.toSQL(to, whereParameters, config);
-			joinClauses.addWhereClause(whereClause, whereParameters);
+			joinClauses.addWhereClause(config, whereClause, whereParameters);
 		}
 
 		if(joinClauses.containsKey(to)) {

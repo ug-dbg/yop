@@ -6,7 +6,6 @@ import com.google.gson.JsonObject;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
-import org.yop.orm.query.Where;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.ORMUtil;
@@ -45,7 +44,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 	@Override
 	public <U extends Yopable> String toSQL(Context<U> context, Parameters parameters, Config config) {
 		List<Field> naturalKeys = ORMUtil.getNaturalKeyFields(this.reference.getClass());
-		return Where.toSQL(
+		return config.getDialect().where(
 			naturalKeys
 				.stream()
 				.map(field -> this.getFieldRestriction(context, field, parameters, config))

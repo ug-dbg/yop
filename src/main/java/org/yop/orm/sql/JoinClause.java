@@ -67,12 +67,13 @@ public class JoinClause implements Comparable<JoinClause> {
 		private WhereClause whereClause = new WhereClause();
 
 		/**
-		 * Add a where clause (from a join)
+		 * Add a where clause (from a join).
+		 * @param config     the SQL config (sql separator, use batch inserts...)
 		 * @param clause     the where clause
 		 * @param parameters the where clause parameters
 		 */
-		public void addWhereClause(String clause, Parameters parameters) {
-			this.whereClause.clause = Where.toSQL(this.whereClause.clause, clause);
+		public void addWhereClause(Config config, String clause, Parameters parameters) {
+			this.whereClause.clause = Where.toSQL(config, this.whereClause.clause, clause);
 			this.whereClause.parameters.addAll(parameters);
 		}
 
