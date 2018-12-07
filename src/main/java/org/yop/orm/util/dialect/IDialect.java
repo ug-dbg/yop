@@ -1,10 +1,10 @@
 package org.yop.orm.util.dialect;
 
-import com.google.common.base.Joiner;
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.gen.Column;
 import org.yop.orm.gen.ForeignKey;
 import org.yop.orm.gen.Table;
+import org.yop.orm.sql.SQLPart;
 import org.yop.orm.util.MessageUtil;
 
 import java.text.MessageFormat;
@@ -31,35 +31,37 @@ public interface IDialect {
 	String NK = " CONSTRAINT {0} UNIQUE ({1}) ";
 
 	/** Select [what] FROM [table] [table_alias] [join clause] WHERE [where clause] [order by clause] [extra] */
-	String SELECT = " SELECT {0} FROM {1} {2} {3} WHERE {4} {5} {6}";
+	String SELECT = " SELECT {:columns} FROM {:table} {:table_alias} {:joins} WHERE {:where} {:order_by} {:extra}";
 
 	/** Select distinct([what]) FROM [table] [table_alias] [join clause] WHERE [where clause] [extra] */
-	String SELECT_DISTINCT = " SELECT DISTINCT({0}) FROM {1} {2} {3} WHERE {4} {5}";
+	String SELECT_DISTINCT = " SELECT DISTINCT({:columns}) FROM {:table} {:table_alias} {:joins} WHERE {:where} {:extra}";
 
 	/** COUNT(DISTINCT :idColumn) column selection */
-	String COUNT_DISTINCT = " COUNT(DISTINCT {0}) ";
+	String COUNT_DISTINCT = " COUNT(DISTINCT {:column}) ";
 
 	/** DELETE [columns] FROM [table] [join clauses] WHERE [where clause] */
-	String DELETE = " DELETE {0} FROM {1} {2} WHERE {3} ";
+	String DELETE = " DELETE {:columns} FROM {:table} {:joins} WHERE {:where} ";
 
 	/** DELETE FROM [table] WHERE [column] IN ([values]) */
-	String DELETE_IN = " DELETE FROM {0} WHERE {1} IN ({2}) ";
+	String DELETE_IN = " DELETE FROM {:table} WHERE {:column} IN ({:values}) ";
 
 	/** INSERT INTO [table] ([columns]) VALUES ([column values]) */
-	String INSERT = " INSERT INTO {0} ({1}) VALUES ({2}) ";
+	String INSERT = " INSERT INTO {:table} ({:columns}) VALUES ({:values}) ";
 
 	/** UPDATE [table] SET ([column=value]+) WHERE ([idColumn] = ? ) */
-	String UPDATE = " UPDATE {0} SET {1} WHERE ({2} = ?) ";
+	String UPDATE = " UPDATE {:table} SET {:column_and_values} WHERE ({:idcolumn_equals}) ";
 
 	/** [table] [table alias] on [column name] = [value]. Then prefix with the join type. */
-	String JOIN_ON = " {0} {1} on {2} = {3} ";
+	String JOIN_ON = " {:table} {:alias} on {:column} = {:value} ";
 
 	/** [column] IN ([comma separated values]) */
-	String IN = " {0} IN ({1}) ";
+	String IN = " {:column} IN ({:values}) ";
 
 	String AND = " AND ";
 
-	String EXISTS = " EXISTS ({0}) ";
+	String EXISTS = " EXISTS ({:sub_select}) ";
+
+	String EQUALS = "{:a} = {:b}";
 
 	/** Default where clause is always added. So I don't have to check if the 'WHERE' keyword is required ;-) */
 	String DEFAULT_WHERE = " 1=1 ";
@@ -223,7 +225,7 @@ public interface IDialect {
 	 * @return COUNT (DISTINCT alias)
 	 */
 	default String toSQLCount(String columnAlias) {
-		return MessageFormat.format(COUNT_DISTINCT, columnAlias);
+		return SQLPart.forPattern(COUNT_DISTINCT, columnAlias).toString();
 	}
 
 	/**
@@ -237,22 +239,22 @@ public interface IDialect {
 	 * @param extras      Any extra clause.
 	 * @return the SQL select query.
 	 */
-	default String select(
-		String what,
-		String from,
-		String as,
-		String joinClause,
-		String whereClause,
-		String orderClause,
-		String... extras) {
-		String extra = MessageUtil.concat(extras);
-		return MessageFormat.format(
+	default SQLPart select(
+		CharSequence what,
+		CharSequence from,
+		CharSequence as,
+		CharSequence joinClause,
+		CharSequence whereClause,
+		CharSequence orderClause,
+		CharSequence... extras) {
+		CharSequence extra = SQLPart.join(" ", extras);
+		return SQLPart.forPattern(
 			SELECT,
 			what,
 			from,
 			as,
 			joinClause,
-			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause,
+			StringUtils.isBlank(whereClause.toString()) ? DEFAULT_WHERE : whereClause,
 			orderClause,
 			extra
 		);
@@ -268,21 +270,21 @@ public interface IDialect {
 	 * @param extras      Any extra clause.
 	 * @return the SQL 'distinct' select query.
 	 */
-	default String selectDistinct(
-		String what,
-		String from,
-		String as,
-		String joinClause,
-		String whereClause,
-		String... extras) {
-		String extra = MessageUtil.concat(extras);
-		return MessageFormat.format(
+	default SQLPart selectDistinct(
+		CharSequence what,
+		CharSequence from,
+		CharSequence as,
+		CharSequence joinClause,
+		CharSequence whereClause,
+		CharSequence... extras) {
+		CharSequence extra = SQLPart.join(" ", extras);
+		return SQLPart.forPattern(
 			SELECT_DISTINCT,
 			what,
 			from,
 			as,
 			joinClause,
-			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause,
+			StringUtils.isBlank(whereClause.toString()) ? DEFAULT_WHERE : whereClause,
 			extra
 		);
 	}
@@ -295,17 +297,17 @@ public interface IDialect {
 	 * @param whereClause  the where clause. Optional.
 	 * @return the {@link #DELETE} formatted query
 	 */
-	default String delete(
-		String columnsClause,
-		String tableName,
-		String joinClauses,
-		String whereClause) {
-		return MessageFormat.format(
+	default SQLPart delete(
+		CharSequence columnsClause,
+		CharSequence tableName,
+		CharSequence joinClauses,
+		CharSequence whereClause) {
+		return SQLPart.forPattern(
 			DELETE,
 			columnsClause,
 			tableName,
 			joinClauses,
-			StringUtils.isBlank(whereClause) ? DEFAULT_WHERE : whereClause
+			StringUtils.isBlank(whereClause.toString()) ? DEFAULT_WHERE : whereClause
 		);
 	}
 
@@ -316,8 +318,13 @@ public interface IDialect {
 	 * @param ids          the IDs for the IN clause. Mostly a list of '?' if you want to use query parameters.
 	 * @return the {@link #DELETE_IN} formatted query
 	 */
-	default String deleteIn(String from, String sourceColumn, Collection<String> ids) {
-		return MessageFormat.format(DELETE_IN, from, sourceColumn, MessageUtil.join(",", ids));
+	default SQLPart deleteIn(String from, String sourceColumn, List<SQLPart> ids) {
+		return SQLPart.forPattern(
+			DELETE_IN,
+			from,
+			sourceColumn,
+			SQLPart.join(",", ids)
+		);
 	}
 
 	/**
@@ -327,8 +334,13 @@ public interface IDialect {
 	 * @param values    the column values
 	 * @return the {@link #INSERT} formatted query
 	 */
-	default String insert(String tableName, List<String> columns, List<String> values) {
-		return MessageFormat.format(INSERT, tableName, Joiner.on(", ").join(columns), Joiner.on(", ").join(values));
+	default SQLPart insert(String tableName, List<? extends CharSequence> columns, List<? extends CharSequence> values) {
+		return SQLPart.forPattern(
+			INSERT,
+			tableName,
+			SQLPart.join(" , ", columns),
+			SQLPart.join(" , ", values)
+		);
 	}
 
 	/**
@@ -338,21 +350,26 @@ public interface IDialect {
 	 * @param idColumn        the id column (required for : WHERE idColumn = ?)
 	 * @return the {@link #UPDATE} formatted query
 	 */
-	default String update(String tableName, List<String> columnAndValues, String idColumn) {
-		return MessageFormat.format(UPDATE, tableName, Joiner.on(", ").join(columnAndValues), idColumn);
+	default SQLPart update(String tableName, List<? extends CharSequence> columnAndValues, SQLPart idColumn) {
+		return SQLPart.forPattern(
+			UPDATE,
+			tableName,
+			SQLPart.join(", ", columnAndValues),
+			idColumn
+		);
 	}
 
 	/**
 	 * Generate an 'UPDATE' query for a single column, useful for join tables update.
 	 * <br>
 	 * e.g. UPDATE table SET column=? WHERE idColumn=?
-	 * @param tableName  the target table name
-	 * @param column     the column name
+	 * @param tableName      the target table name
+	 * @param columnAndValue the column name and value
 	 * @param idColumn   the id column (required for : WHERE idColumn = ?)
 	 * @return the {@link #UPDATE} formatted query
 	 */
-	default String update(String tableName, String column, String idColumn) {
-		return MessageFormat.format(UPDATE, tableName, column + "=?", idColumn);
+	default SQLPart update(String tableName, SQLPart columnAndValue, SQLPart idColumn) {
+		return SQLPart.forPattern(UPDATE, tableName, columnAndValue, idColumn);
 	}
 
 	/**
@@ -367,7 +384,7 @@ public interface IDialect {
 	 * @return the formatted SQL join clause
 	 */
 	default String join(String joinType, String table, String tableAlias, String left, String right) {
-		return joinType + MessageFormat.format(JOIN_ON, table, tableAlias, left, right);
+		return joinType + SQLPart.forPattern(JOIN_ON, table, tableAlias, left, right).toString();
 	}
 
 	/**
@@ -378,8 +395,8 @@ public interface IDialect {
 	 * @param values the values : for each value, a '?' will be added in 'IN ()'.
 	 * @return the {@link #IN} formatted clause
 	 */
-	default String in(String column, Collection<?> values) {
-		return MessageFormat.format(IN, column, values.stream().map(v -> "?").collect(Collectors.joining(",")));
+	default SQLPart in(String column, List<? extends CharSequence> values) {
+		return SQLPart.forPattern(IN, column, SQLPart.join(" , ", values));
 	}
 
 	/**
@@ -387,7 +404,7 @@ public interface IDialect {
 	 * @param whereClauses the where clauses to join
 	 * @return the new where clause
 	 */
-	default String where(String... whereClauses) {
+	default SQLPart where(CharSequence... whereClauses) {
 		return this.where(Arrays.asList(whereClauses));
 	}
 
@@ -396,14 +413,23 @@ public interface IDialect {
 	 * @param whereClauses the where clauses to join
 	 * @return the new where clause
 	 */
-	default String where(Collection<String> whereClauses) {
-		return MessageUtil.join(AND, whereClauses);
+	default SQLPart where(List<? extends CharSequence> whereClauses) {
+		return SQLPart.join(AND, whereClauses);
+	}
+
+	/**
+	 * Join the 2 sequences using {@link #EQUALS} pattern.
+	 * @param a the left part
+	 * @param b the right part
+	 * @return a new SQL part, for the {@link #EQUALS} pattern.
+	 */
+	default SQLPart equals(CharSequence a, CharSequence b) {
+		return SQLPart.forPattern(EQUALS, a, b);
 	}
 
 	/**
 	 * Create a 'SELECT WHERE EXISTS ()' query, using a subselect, from the different parts of the query.
 	 * <br>
-	 * FIXME : using this method is requires the parameters to be in the same order as the query build.
 	 * @param idAlias              the main table ID alias
 	 * @param columns              the columns to select
 	 * @param from                 the main table
@@ -418,37 +444,36 @@ public interface IDialect {
 	 * @param orderClause          the 'order by' clause
 	 * @return the assembled SELECT WHERE EXIST query
 	 */
-	default String selectWhereExists(
-		String idAlias,
-		String columns,
-		String from,
-		String as,
-		String joinClause,
-		String joinClauseWhere,
-		String subSelectIdAlias,
-		String subSelectAs,
-		String subSelectJoinClause,
-		String subSelectWhereClause,
-		String pagingClause,
-		String orderClause) {
+	default SQLPart selectWhereExists(
+		CharSequence idAlias,
+		CharSequence columns,
+		CharSequence from,
+		CharSequence as,
+		CharSequence joinClause,
+		CharSequence joinClauseWhere,
+		CharSequence subSelectIdAlias,
+		CharSequence subSelectAs,
+		CharSequence subSelectJoinClause,
+		CharSequence subSelectWhereClause,
+		CharSequence pagingClause,
+		CharSequence orderClause) {
 
-		String subSelect = this.selectDistinct(
+		SQLPart subSelect = this.selectDistinct(
 			subSelectIdAlias,
 			from,
 			subSelectAs,
 			subSelectJoinClause,
-			this.where(subSelectWhereClause, idAlias + " = " + subSelectIdAlias),
+			this.where(subSelectWhereClause, this.equals(idAlias, subSelectIdAlias)),
 			pagingClause
 		);
 
-		String where = this.where(joinClauseWhere, MessageFormat.format(EXISTS, subSelect));
+		SQLPart where = this.where(joinClauseWhere, SQLPart.forPattern(EXISTS, subSelect));
 		return this.select(columns, from, as, joinClause, where, orderClause);
 	}
 
 	/**
 	 * Create a 'SELECT WHERE ID IN ()' query, using a subselect, from the different parts of the query.
 	 * <br>
-	 * FIXME : using this method is requires the parameters to be in the same order as the query build.
 	 * @param idAlias         the main table ID alias
 	 * @param columns         the columns to select
 	 * @param from            the main table
@@ -461,19 +486,19 @@ public interface IDialect {
 	 * @param orderClause     the 'order by' clause
 	 * @return the assembled SELECT WHERE ID IN query
 	 */
-	default String selectWhereIdIn(
-		String idAlias,
-		String columns,
-		String from,
-		String as,
-		String joinClause,
-		String joinClauseWhere,
-		String whereClause,
-		String pagingOrderBy,
-		String pagingClause,
-		String orderClause) {
+	default SQLPart selectWhereIdIn(
+		CharSequence idAlias,
+		CharSequence columns,
+		CharSequence from,
+		CharSequence as,
+		CharSequence joinClause,
+		CharSequence joinClauseWhere,
+		CharSequence whereClause,
+		CharSequence pagingOrderBy,
+		CharSequence pagingClause,
+		CharSequence orderClause) {
 
-		String inSubQuery = this.select(
+		SQLPart inSubQuery = this.select(
 			idAlias,
 			from,
 			as,
@@ -483,7 +508,7 @@ public interface IDialect {
 			pagingClause
 		);
 
-		String where = idAlias + MessageFormat.format(IN, "", inSubQuery);
+		SQLPart where = SQLPart.join(" ", idAlias, SQLPart.forPattern(IN, "", inSubQuery));
 		return this.select(columns, from, as, joinClause, where, orderClause);
 	}
 }

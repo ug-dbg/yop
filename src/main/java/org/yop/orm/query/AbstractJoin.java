@@ -72,16 +72,11 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		Parameters parameters = new Parameters();
 		String joinClause = toSQLJoin(this.joinType(), parent, to, field, config);
 		if(includeWhereClause) {
-			Parameters whereParameters = new Parameters();
-			String whereClause = this.where.toSQL(to, whereParameters, config);
-			joinClauses.addWhereClause(config, whereClause, whereParameters);
+			joinClauses.addWhereClause(config, this.where.toSQL(to, config));
 		}
 
 		if(joinClauses.containsKey(to)) {
-			logger.debug("Join clause for [{}], already exists ! Trying to choose the most strict.", to);
-			if(joinClauses.get(to).getParameters().size() < parameters.size()) {
-				joinClauses.put(to, new JoinClause(joinClause, to, parameters));
-			}
+			logger.debug("Join clause for [{}], already exists !", to);
 		} else {
 			joinClauses.put(to, new JoinClause(joinClause, to, parameters));
 		}

@@ -88,24 +88,34 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 			From from = entry.getKey();
 
 			if (this.sourceTable != null) {
-				String idColumn = entry.getKey().getIdColumn();
-				String sql = config.getDialect().update(this.sourceTable, this.sourceColumn, idColumn);
+				SQLPart idColumn = config.getDialect().equals(
+					entry.getKey().getIdColumn(),
+					SQLPart.parameter(this.sourceTable + "#id", from::getId)
+				);
+
 				for (To to : entry.getValue()) {
-					Parameters parameters = new Parameters()
-						.addParameter(this.sourceTable + "#" + this.sourceColumn, to::getId)
-						.addParameter(this.sourceTable + "#id", from::getId);
-					updates.add(new SimpleQuery(sql, Query.Type.UPDATE, parameters, config));
+					SQLPart sourceColumn = config.getDialect().equals(
+						this.sourceColumn,
+						SQLPart.parameter(this.sourceTable + "#" + this.sourceColumn, to::getId)
+					);
+					SQLPart sql = config.getDialect().update(this.sourceTable, sourceColumn, idColumn);
+					updates.add(new SimpleQuery(sql, Query.Type.UPDATE, config));
 				}
 			}
 
 			if (this.targetTable != null) {
+				SQLPart targetColumn = config.getDialect().equals(
+					this.targetColumn,
+					SQLPart.parameter(this.targetTable + "#" + this.targetColumn, from::getId)
+				);
+
 				for (To to : entry.getValue()) {
-					String idColumn = to.getIdColumn();
-					String sql = config.getDialect().update(this.targetTable, this.targetColumn, idColumn);
-					Parameters parameters = new Parameters()
-						.addParameter(this.targetTable + "#" + this.targetColumn, from::getId)
-						.addParameter(this.targetTable + "#id", to::getId);
-					updates.add(new SimpleQuery(sql, Query.Type.UPDATE, parameters, config));
+					SQLPart idColumn = config.getDialect().equals(
+						entry.getKey().getIdColumn(),
+						SQLPart.parameter(this.sourceTable + "#id", to::getId)
+					);
+					SQLPart sql = config.getDialect().update(this.targetTable, targetColumn, idColumn);
+					updates.add(new SimpleQuery(sql, Query.Type.UPDATE, config));
 				}
 			}
 		}

@@ -202,9 +202,8 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	public Set<T> executeWithTwoQueries(IConnection connection) {
 		List<Long> ids;
 
-		Parameters parameters = new Parameters();
-		String request = this.toSQLAnswerRequest(parameters, connection.config());
-		Query query = new SimpleQuery(request, Query.Type.SELECT, parameters, connection.config());
+		SQLPart request = this.toSQLAnswerRequest(connection.config());
+		Query query = new SimpleQuery(request, Query.Type.SELECT, connection.config());
 
 		Set<T> elements = Executor.executeSelectQuery(
 			connection,
@@ -222,9 +221,8 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 			return new HashSet<>();
 		}
 
-		parameters = new Parameters();
-		request = this.toSQLDataRequest(new HashSet<>(ids), parameters, connection.config());
-		query = new SimpleQuery(request, Query.Type.SELECT, parameters, connection.config());
+		request = this.toSQLDataRequest(new HashSet<>(ids), connection.config());
+		query = new SimpleQuery(request, Query.Type.SELECT, connection.config());
 		return Executor.executeSelectQuery(
 			connection,
 			query,
@@ -258,15 +256,14 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 			return this.executeWithTwoQueries(connection);
 		}
 
-		Parameters parameters = new Parameters();
-		String request =
+		SQLPart request =
 			(strategy == Strategy.IN || this.paging.isPaging())
-			? this.toSQLDataRequestWithIN(parameters, connection.config())
-			: this.toSQLDataRequestWithEXISTS(parameters, connection.config());
+			? this.toSQLDataRequestWithIN(connection.config())
+			: this.toSQLDataRequestWithEXISTS(connection.config());
 
 		return Executor.executeSelectQuery(
 			connection,
-			new SimpleQuery(request, Query.Type.SELECT, parameters, connection.config()),
+			new SimpleQuery(request, Query.Type.SELECT, connection.config()),
 			this.context.getTarget(),
 			this.cache == null ? new FirstLevelCache(connection.config()) : this.cache
 		);
@@ -300,18 +297,17 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	/**
 	 * Count the elements that match the query.
 	 * <br>
-	 * We actually use {@link #toSQLIDsRequest(Parameters, boolean, Config)}
+	 * We actually use {@link #toSQLIDsRequest(boolean, Config)}
 	 * to get distinct IDs and count the number of rows.
 	 * @param connection the connection to use for the request
 	 * @return the SELECT result, as an unique T
 	 */
 	public Long count(IConnection connection) {
-		Parameters parameters = new Parameters();
-		String request = this.toSQLIDsRequest(parameters, true, connection.config());
+		SQLPart request = this.toSQLIDsRequest(true, connection.config());
 
 		return Executor.executeQuery(
 			connection,
-			new SimpleQuery(request, Query.Type.SELECT, parameters, connection.config()),
+			new SimpleQuery(request, Query.Type.SELECT, connection.config()),
 			results -> {results.getCursor().next(); return results.getCursor().getLong(1);}
 		);
 	}
@@ -324,9 +320,8 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occurred
 	 */
 	public IdMap executeForIds(IConnection connection) {
-		Parameters parameters = new Parameters();
-		String request = this.toSQLIDsRequest(parameters, false, connection.config());
-		Query query = new SimpleQuery(request, Query.Type.SELECT, parameters, connection.config());
+		SQLPart request = this.toSQLIDsRequest(false, connection.config());
+		Query query = new SimpleQuery(request, Query.Type.SELECT, connection.config());
 
 		return Executor.executeQuery(
 			connection,
@@ -397,12 +392,11 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	/**
 	 * Build the WHERE clause from {@link #where} and for this {@link #context}.
 	 * <b>⚠ Does not prefix with the 'WHERE' keyword ! ⚠</b>
-	 * @param parameters the query parameters that will be populated with the WHERE clause parameters
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the Where clause for {@link #where} and {@link #context}
 	 */
-	private String toSQLWhere(Parameters parameters, Config config) {
-		return this.where.toSQL(this.context, parameters, config);
+	private SQLPart toSQLWhere(Config config) {
+		return this.where.toSQL(this.context, config);
 	}
 
 	/**
@@ -412,19 +406,18 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	 * <br>
 	 * Then, ids should be extracted and a second query should be used to fetch the whole data graph.
 	 * <br>
-	 * See {@link #executeWithTwoQueries(IConnection)} and {@link #toSQLDataRequest(Set, Parameters, Config)}.
-	 * @param parameters the query parameters that will be populated with the WHERE clause parameters
+	 * See {@link #executeWithTwoQueries(IConnection)} and {@link #toSQLDataRequest(Set, Config)}.
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'answer' request.
 	 */
-	private String toSQLAnswerRequest(Parameters parameters, Config config) {
+	private SQLPart toSQLAnswerRequest(Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true, config);
 		return config.getDialect().select(
 			this.toSQLColumnsClause(false, config),
 			this.getTableName(),
 			this.context.getPath(config),
-			joinClauses.toSQL(parameters),
-			Where.toSQL(config, this.toSQLWhere(parameters, config), joinClauses.toSQLWhere(parameters)),
+			joinClauses.toSQL(config),
+			Where.toSQL(config, this.toSQLWhere(config), joinClauses.toSQLWhere()),
 			OrderBy.<T>orderById(true).toSQL(this.context.getTarget(), config)
 		);
 	}
@@ -432,24 +425,23 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	/**
 	 * 2 query strategy : create the SQL 'data' request : fetch all data (including joins) for the given ids.
 	 * <br>
-	 * See {@link #toSQLAnswerRequest(Parameters, Config)}
-	 * @param parameters the query parameters that will be populated with the WHERE clause parameters
+	 * See {@link #toSQLAnswerRequest(Config)}
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'data' request.
 	 */
-	private String toSQLDataRequest(Set<Long> ids, Parameters parameters, Config config) {
+	private SQLPart toSQLDataRequest(Set<Long> ids, Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
-		String whereClause = Where.toSQL(
+		SQLPart whereClause = Where.toSQL(
 			config,
-			this.idAlias(config) + " IN (" + Joiner.on(",").join(ids) + ") ",
-			joinClauses.toSQLWhere(parameters)
+			config.getDialect().in(this.idAlias(config), ids.stream().map(String::valueOf).collect(Collectors.toList())) ,
+			joinClauses.toSQLWhere()
 		);
 
 		return config.getDialect().select(
 			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
 			this.context.getPath(config),
-			joinClauses.toSQL(parameters),
+			joinClauses.toSQL(config),
 			whereClause,
 			this.orderBy.toSQL(this.context.getTarget(), config)
 		);
@@ -459,25 +451,23 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	 * Single query strategy with EXISTS : create the SQL 'data' request.
 	 * <br>
 	 * It uses a subquery to find the target type results, attached to the main query with a 'WHERE EXISTS' clause.
-	 * @param parameters the query parameters - will be populated with the actual request parameters
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'data' request.
 	 */
-	private String toSQLDataRequestWithEXISTS(Parameters parameters, Config config) {
-		return this.toSQLWithExists(parameters, config, false, false);
+	private SQLPart toSQLDataRequestWithEXISTS(Config config) {
+		return this.toSQLWithExists(config, false, false);
 	}
 
 	/**
 	 * Create a SQL request that only returns ID columns.
 	 * <br>
 	 * This can be used as the subquery for an EXISTS clause or simply to count results.
-	 * @param parameters the query parameters - will be populated with the actual request parameters
 	 * @param count      if true, the request will be on 'COUNT(DISTINCT id_column)' instead of the actual columns
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'data' request.
 	 */
-	private String toSQLIDsRequest(Parameters parameters, boolean count, Config config) {
-		return this.toSQLWithExists(parameters, config, count, true);
+	private SQLPart toSQLIDsRequest(boolean count, Config config) {
+		return this.toSQLWithExists(config, count, true);
 	}
 
 	/**
@@ -485,14 +475,12 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	 * <br>
 	 * This relies on the dialect implementation.
 	 * <br>
-	 * FIXME : paramater order must be coherent with the query building. Something should be done.
-	 * @param parameters the query parameters
 	 * @param config     the SQL config (sql separator, use batch inserts, dialect...)
 	 * @param count      true if this query is for counting matches
 	 * @param onlyIDs    true to only return ID columns. Useless if 'count' is set to 'true'
 	 * @return the sqL 'SELECT WHERE EXISTS' query
 	 */
-	private String toSQLWithExists(Parameters parameters, Config config, boolean count, boolean onlyIDs) {
+	private SQLPart toSQLWithExists(Config config, boolean count, boolean onlyIDs) {
 		// First we have to build a 'select ids' query for the EXISTS subquery
 		// We copy the current 'Select' object to add a suffix to the context
 		// We link the EXISTS subquery to the global one (id = subquery.id)
@@ -510,13 +498,13 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 			columns,
 			this.getTableName(),
 			this.context.getPath(config),
-			joinClauses.toSQL(parameters),
-			joinClauses.toSQLWhere(parameters),
+			joinClauses.toSQL(config),
+			joinClauses.toSQLWhere(),
 			subSelect.idAlias(config),
 			subSelect.context.getPath(config),
-			subSelectJoinClauses.toSQL(parameters),
-			Where.toSQL(config, subSelect.toSQLWhere(parameters, config), subSelectJoinClauses.toSQLWhere(parameters)),
-			this.paging.toSQL(this.context, parameters, config),
+			subSelectJoinClauses.toSQL(config),
+			Where.toSQL(config, subSelect.toSQLWhere(config), subSelectJoinClauses.toSQLWhere()),
+			this.paging.toSQL(this.context, config),
 			this.orderBy.toSQL(this.context.getTarget(), config)
 		);
 	}
@@ -527,18 +515,18 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	 * It uses a subquery to find IDs of the target type, inside and 'id IN' clause.
 	 * @return the SQL 'data' request.
 	 */
-	private String toSQLDataRequestWithIN(Parameters parameters, Config config) {
+	private SQLPart toSQLDataRequestWithIN(Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true, config);
 		return config.getDialect().selectWhereIdIn(
 			this.idAlias(config),
 			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
 			this.context.getPath(config),
-			joinClauses.toSQL(parameters),
-			joinClauses.toSQLWhere(parameters),
-			this.toSQLWhere(parameters, config),
+			joinClauses.toSQL(config),
+			joinClauses.toSQLWhere(),
+			this.toSQLWhere(config),
 			this.paging.toSQLOrderBy(this.context, config),
-			this.paging.toSQL(this.context, parameters, config),
+			this.paging.toSQL(this.context, config),
 			this.orderBy.toSQL(this.context.getTarget(), config)
 		);
 	}

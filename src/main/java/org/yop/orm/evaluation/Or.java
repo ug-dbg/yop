@@ -1,13 +1,13 @@
 package org.yop.orm.evaluation;
 
-import com.google.common.base.Joiner;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
-import org.yop.orm.sql.Parameters;
+import org.yop.orm.sql.SQLPart;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -40,19 +40,19 @@ public class Or implements Evaluation {
 	/**
 	 * {@inheritDoc}
 	 * <br><br>
-	 * Simply joins the {@link #evaluations} {@link Evaluation#toSQL(Context, Parameters, Config)} with an " OR " keyword.
+	 * Simply joins the {@link #evaluations} {@link Evaluation#toSQL(Context, Config)} with an " OR " keyword.
 	 * <br>
 	 * If {@link #evaluations} is not empty, the output SQL is wrapped into parentheses.
 	 */
 	@Override
-	public <T extends Yopable> String toSQL(Context<T> context, Parameters parameters, Config config) {
+	public <T extends Yopable> CharSequence toSQL(Context<T> context, Config config) {
 		if(this.evaluations.isEmpty()) {
 			return "";
 		}
-		return "("
-			+ Joiner.on(" OR ").join(
-				this.evaluations.stream().map(e -> e.toSQL(context, parameters, config)).collect(Collectors.toList())
-			)
-		+ ")";
+		List<CharSequence> evaluations = this.evaluations
+			.stream()
+			.map(e -> e.toSQL(context, config))
+			.collect(Collectors.toList());
+		return new SQLPart("(").append(SQLPart.join(" OR ", evaluations)).append(")");
 	}
 }

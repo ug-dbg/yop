@@ -218,7 +218,8 @@ public class Mapper {
 			}
 		} catch (RuntimeException e) {
 			throw new YopMapperException(
-				"Could not map enum [" + strategy + ":" + value + "] on [" + enumType.getName() + "]"
+				"Could not map enum [" + strategy + ":" + value + "] on [" + enumType.getName() + "]",
+				e
 			);
 		}
 	}

@@ -19,7 +19,6 @@ import org.yop.orm.util.Reflection;
 import java.lang.reflect.Field;
 import java.sql.Statement;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.yop.orm.sql.Parameters.Parameter;
 
@@ -196,13 +195,13 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 		List<org.yop.orm.sql.Query> out = new ArrayList<>();
 		if(!elementsToInsert.isEmpty()) {
 			if (config.useBatchInserts()) {
-				out.add(this.toSQLInserts(elementsToInsert, config));
+				out.add(this.toSQL(elementsToInsert, Query.Type.INSERT, config));
 			} else {
-				elementsToInsert.forEach(element -> out.add(super.toSQLInsert(element, config)));
+				elementsToInsert.forEach(element -> out.add(this.toSQL(element, Query.Type.INSERT, config)));
 			}
 		}
 		if(!elementsToUpdate.isEmpty()) {
-			out.add(this.toSQLUpdates(elementsToUpdate, config));
+			out.add(this.toSQL(elementsToUpdate, Query.Type.UPDATE, config));
 		}
 
 		return out;
@@ -210,62 +209,36 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 
 	/**
 	 * Create a batch query for all the given elements to insert.
-	 * @param elementsToInsert the elements to insert.
+	 * @param elements the elements to insert.
 	 * @param config  the SQL config (sql separator, use batch inserts...)
 	 * @return an INSERT batch query for the elements
 	 */
-	private BatchQuery<T> toSQLInserts(List<T> elementsToInsert, Config config) {
-		if(elementsToInsert.isEmpty()) {
+	private BatchQuery<T> toSQL(List<T> elements, Query.Type type, Config config) {
+		if(elements.isEmpty()) {
 			throw new YopRuntimeException("Trying to create batch query on no target element !");
 		}
 
 		BatchQuery<T> query = null;
-		for (T element : elementsToInsert) {
-			Parameters parameters = this.values(element, config);
+		SimpleQuery reference = null;
+		Class<T> target = this.context.getTarget();
+		int batch = 0;
+		for (T element : elements) {
+			batch++;
+			if (reference == null) {
+				reference = this.toSQL(element, type, config);
 
-			// First element : create the SQL query.
-			// Every next element will simply be added as a new batch for the same query :)
-			if(query == null) {
-				List<String>  columns = parameters.stream().map(Parameter::getName).collect(Collectors.toList());
-				List<String> values = parameters.stream().map(Parameter::toSQLValue).collect(Collectors.toList());
-
-				String sql = config.getDialect().insert(this.getTableName(), columns, values);
-				query = new BatchQuery<>(sql, Query.Type.INSERT, config, elementsToInsert, this.getTarget());
-				query.askGeneratedKeys(true, this.getTarget());
+				query = new BatchQuery<>(reference.getSql(), type, config, elements, target);
+				query.addParametersBatch(reference.getParameters());
+				query.askGeneratedKeys(Query.Type.INSERT == type, this.getTarget());
+				continue;
 			}
-
-			parameters.removeIf(Parameter::isSequence);
-			query.addParametersBatch(parameters);
-		}
-		return query;
-	}
-
-	/**
-	 * Create a batch query for all the given elements to update.
-	 * @param elementsToUpdate the elements to update.
-	 * @param config           the SQL config (sql separator, use batch inserts...)
-	 * @return an UPDATE batch query for the elements
-	 */
-	@SuppressWarnings("unchecked")
-	private BatchQuery<T> toSQLUpdates(List<T> elementsToUpdate, Config config) {
-		if(elementsToUpdate.isEmpty()) {
-			throw new YopRuntimeException("Trying to create batch query on no target element !");
-		}
-
-		BatchQuery<T> query = null;
-		for (T element : elementsToUpdate) {
-			Parameters parameters = this.values(element, config);
-
-			// UPDATE query : ID column must be set last (WHERE clause, not VALUES)
-			String idColumn = ORMUtil.getIdColumn(element.getClass());
-			List<String> values = parameters.namesAndValues(p -> ! idColumn.equals(p.getName()));
-			parameters.moveLast(idColumn);
-
-			if(query == null) {
-				String sql = config.getDialect().update(this.getTableName(), values, element.getIdColumn());
-				query = new BatchQuery<>(sql, Query.Type.UPDATE, config, elementsToUpdate, this.getTarget());
+			Parameters parameters = new Parameters();
+			for (Parameter parameter : reference.getParameters()) {
+				Field field = parameter.getField();
+				String name = parameter.getName();
+				Object fieldValue = ORMUtil.readField(field, element);
+				parameters.addParameter(name + "#" + batch, fieldValue, field, parameter.isSequence());
 			}
-
 			query.addParametersBatch(parameters);
 		}
 		return query;

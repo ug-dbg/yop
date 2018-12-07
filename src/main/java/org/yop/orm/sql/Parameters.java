@@ -7,10 +7,6 @@ import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * SQL query parameters.
@@ -20,52 +16,32 @@ import java.util.stream.Collectors;
 public class Parameters extends ArrayList<Parameters.Parameter> {
 
 	/**
-	 * Return the parameters names, using {@link Parameter#getName()}.
-	 * @param includeIf an inclusion predicate : if the parameter does not match the predicate, it won't be returned
-	 * @return the list of names of the parameters that matched the predicate
-	 */
-	public List<String> names(Predicate<Parameter> includeIf) {
-		return this.stream().filter(includeIf).map(Parameters.Parameter::getName).collect(Collectors.toList());
-	}
-
-	/**
-	 * Return the parameters values, using {@link Parameter#toSQLValue()}.
+	 * Add a new SQL parameter that is not a sequence.
 	 * <br>
-	 * This is likely to return a collection of '?'.
-	 * @param includeIf an inclusion predicate : if the parameter does not match the predicate, it won't be returned
-	 * @return the list of values of the parameters that matched the predicate
+	 * See {@link #parameterForField(String, Object, Field, boolean)}.
+	 * @param name  the SQL parameter name (will be displayed in the logs if show_sql = true)
+	 * @param value the SQL parameter value
+	 * @param field the field associated to the value. Required to check enum/transformer strategies. Might be null.
+	 * @return the current Parameters object, for chaining purposes
 	 */
-	public List<String> values(Predicate<Parameter> includeIf) {
-		return this.stream().filter(includeIf).map(Parameters.Parameter::toSQLValue).collect(Collectors.toList());
+	public Parameters addParameter(String name, Object value, Field field, boolean sequence) {
+		this.add(parameterForField(name, value, field, sequence));
+		return this;
 	}
 
 	/**
-	 * Return the parameters names and values, using {@link Parameter#toSQLValue()}.
-	 * <br>
-	 * This is likely to return something like [parameter1=?, parameter2=?, ...]
-	 * @param includeIf an inclusion predicate : if the parameter does not match the predicate, it won't be returned
-	 * @return the list of (name1=value1, name2=value2) of the parameters that matched the predicate
+	 * Add a new SQL parameter that is a {@link DelayedValue}.
+	 * @param name  the SQL parameter name (will be displayed in the logs if show_sql = true)
+	 * @param value the SQL parameter delayed value
+	 * @return the current Parameters object, for chaining purposes
 	 */
-	public List<String> namesAndValues(Predicate<Parameter> includeIf) {
-		return this.stream().filter(includeIf).map(p -> p.getName() + "=" + p.toSQLValue()).collect(Collectors.toList());
+	public Parameters addParameter(String name, DelayedValue value) {
+		this.add(new Parameters.Parameter(name, value, null, false));
+		return this;
 	}
 
 	/**
-	 * Move a parameter to the end of the list.
-	 * <br>
-	 * The first parameter whose name equals 'name' will be removed and added to the end of the list.
-	 * @param name the parameter name
-	 */
-	public void moveLast(String name) {
-		Optional<Parameter> columnParameter = this.stream().filter(p -> p.getName().equals(name)).findFirst();
-		if (columnParameter.isPresent()) {
-			this.remove(columnParameter.get());
-			this.add(columnParameter.get());
-		}
-	}
-
-	/**
-	 * Add a new SQL parameter.
+	 * Create a new SQL parameter.
 	 * <br>
 	 * If the field associated to the value is not null, its column configuration is read and configurations :
 	 * <ul>
@@ -77,10 +53,10 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 	 * @param name  the SQL parameter name (will be displayed in the logs if show_sql = true)
 	 * @param value the SQL parameter value
 	 * @param field the field associated to the value. Required to check enum/transformer strategies. Might be null.
-	 * @return the current Parameters object, for chaining purposes
+	 * @return the new Parameter instance
 	 */
 	@SuppressWarnings("unchecked")
-	public Parameters addParameter(String name, Object value, Field field) {
+	private static Parameter parameterForField(String name, Object value, Field field, boolean sequence) {
 		Object parameterValue = value;
 
 		if (field != null && field.isAnnotationPresent(Column.class)) {
@@ -104,31 +80,7 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 			parameterValue = ORMUtil.getTransformerFor(field).forSQL(parameterValue, column);
 
 		}
-		this.add(new Parameters.Parameter(name, parameterValue, false));
-		return this;
-	}
-
-	/**
-	 * Add a new SQL parameter that is a {@link DelayedValue}.
-	 * @param name  the SQL parameter name (will be displayed in the logs if show_sql = true)
-	 * @param value the SQL parameter delayed value
-	 * @return the current Parameters object, for chaining purposes
-	 */
-	public Parameters addParameter(String name, DelayedValue value) {
-		this.add(new Parameters.Parameter(name, value, false));
-		return this;
-	}
-
-	/**
-	 * Add a new SQL sequence parameter.
-	 * A sequence parameter will not be added as a JDBC param but must be explicitly written in the SQL query.
-	 * @param name  the SQL parameter name (will be displayed in the logs if show_sql = true)
-	 * @param value the SQL parameter value
-	 * @return the current Parameters object, for chaining purposes
-	 */
-	public Parameters addSequenceParameter(String name, Object value) {
-		this.add(new Parameters.Parameter(name, value, true));
-		return this;
+		return new Parameters.Parameter(name, parameterValue, field, sequence);
 	}
 
 	/**
@@ -138,11 +90,13 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 		final String name;
 		final Object value;
 		final boolean sequence;
+		Field field;
 
-		Parameter(String name, Object value, boolean sequence) {
+		private Parameter(String name, Object value, Field field, boolean sequence) {
 			this.name = name;
 			this.value = value;
 			this.sequence = sequence;
+			this.field = field;
 		}
 
 		public String getName() {
@@ -157,16 +111,8 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 			return this.sequence;
 		}
 
-		/**
-		 * Returns the parameter value that can be added to the SQL query.
-		 * <ul>
-		 *     <li>parameter is a sequence parameter → {@link #value}</li>
-		 *     <li>else → '?'</li>
-		 * </ul>
-		 * @return the parameter SQL value
-		 */
-		public String toSQLValue() {
-			return this.sequence ? String.valueOf(this.value) : "?";
+		public Field getField() {
+			return this.field;
 		}
 
 		@Override

@@ -72,17 +72,18 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 			return new ArrayList<>(0);
 		}
 
-		Parameters parameters = new Parameters();
 		Collection<From> sources = this.relations.keySet();
-		sources.forEach(from -> parameters.addParameter(this.relationTable + "#" + this.sourceColumn, from::getId));
-		List<String> ids = sources.stream().map(f -> "?").collect(Collectors.toList());
+		List<SQLPart> ids = sources
+			.stream()
+			.map(from -> SQLPart.parameter(this.relationTable + "#" + this.sourceColumn, from::getId))
+			.collect(Collectors.toList());
 
-		String sql = config.getDialect().deleteIn(
+		SQLPart sql = config.getDialect().deleteIn(
 			this.relationTable,
 			this.sourceColumn,
 			ids
 		);
-		return Collections.singletonList(new SimpleQuery(sql, Query.Type.DELETE, parameters, config));
+		return Collections.singletonList(new SimpleQuery(sql, Query.Type.DELETE, config));
 	}
 
 	/**
@@ -96,11 +97,13 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 	public Collection<Query> toSQLInsert(Config config) {
 		Collection<Query> inserts = new ArrayList<>();
 
-		String insert = config.getDialect().insert(
+		SQLPart fake = SQLPart.parameter("fake", () -> null);
+		String sql = config.getDialect().insert(
 			this.relationTable,
 			Arrays.asList(this.sourceColumn, this.targetColumn),
-			Arrays.asList("?", "?")
-		);
+			Arrays.asList(fake, fake)
+		).toString();
+
 		for (Map.Entry<From, Collection<To>> relation : this.relations.entrySet()) {
 			From from = relation.getKey();
 
@@ -108,7 +111,9 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 				Parameters parameters = new Parameters();
 				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, from::getId);
 				parameters.addParameter(this.relationTable + "#" + this.targetColumn, to::getId);
-				inserts.add(new SimpleQuery(insert, Query.Type.INSERT, parameters, config));
+
+				SQLPart insert = new SQLPart(sql, parameters);
+				inserts.add(new SimpleQuery(insert, Query.Type.INSERT, config));
 			}
 		}
 
@@ -126,11 +131,13 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 	public Collection<Query> toSQLBatchInsert(Config config) {
 		Collection<Query> inserts = new ArrayList<>();
 
+		SQLPart fake = SQLPart.parameter("fake", () -> null);
 		String insert = config.getDialect().insert(
 			this.relationTable,
 			Arrays.asList(this.sourceColumn, this.targetColumn),
-			Arrays.asList("?", "?")
-		);
+			Arrays.asList(fake, fake)
+		).toString();
+
 		for (Map.Entry<From, Collection<To>> relation : this.relations.entrySet()) {
 			BatchQuery batchQuery = new BatchQuery(insert, Query.Type.INSERT, config);
 			From from = relation.getKey();

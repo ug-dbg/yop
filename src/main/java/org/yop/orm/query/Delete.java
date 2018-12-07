@@ -129,13 +129,11 @@ public class Delete<T extends Yopable> extends AbstractRequest<Delete<T>, T> imp
 	 * @param connection the connection to use
 	 */
 	public void executeQuery(IConnection connection) {
-		Parameters parameters = new Parameters();
 		Executor.executeQuery(
 			connection,
 			new SimpleQuery(
-				this.toSQL(parameters, connection.config()),
+				this.toSQL(connection.config()),
 				Query.Type.DELETE,
-				parameters,
 				connection.config()
 			)
 		);
@@ -161,9 +159,8 @@ public class Delete<T extends Yopable> extends AbstractRequest<Delete<T>, T> imp
 				connection.config().maxParams()
 			);
 			for (List<Long> batch : batches) {
-				Parameters parameters = new Parameters();
-				String sql = Delete.from(entry.getKey()).where(Where.id(batch)).toSQL(parameters, connection.config());
-				queries.add(new SimpleQuery(sql, Query.Type.DELETE, parameters, connection.config()));
+				SQLPart sql = Delete.from(entry.getKey()).where(Where.id(batch)).toSQL(connection.config());
+				queries.add(new SimpleQuery(sql, Query.Type.DELETE, connection.config()));
 			}
 		}
 
@@ -174,11 +171,10 @@ public class Delete<T extends Yopable> extends AbstractRequest<Delete<T>, T> imp
 
 	/**
 	 * Generate the SQL DELETE query
-	 * @param parameters the SQL parameters that will be populated with actual query parameters
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL DELETE query string
 	 */
-	private String toSQL(Parameters parameters, Config config) {
+	private SQLPart toSQL(Config config) {
 		Context<T> root = this.context;
 		Set<Context.SQLColumn> columns = this.columns(true, config);
 
@@ -200,13 +196,13 @@ public class Delete<T extends Yopable> extends AbstractRequest<Delete<T>, T> imp
 			context = root;
 		}
 
-		String whereClause = this.where.toSQL(context, parameters, config);
+		SQLPart whereClause = this.where.toSQL(context, config);
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
 		return config.getDialect().delete(
 			columnsClause,
 			root.getTableName() + asClause,
-			joinClauses.toSQL(parameters),
-			Where.toSQL(config, whereClause, joinClauses.toSQLWhere(parameters))
+			joinClauses.toSQL(config),
+			Where.toSQL(config, whereClause, joinClauses.toSQLWhere())
 		);
 	}
 

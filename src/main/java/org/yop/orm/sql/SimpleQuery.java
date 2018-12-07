@@ -1,5 +1,7 @@
 package org.yop.orm.sql;
 
+import org.yop.orm.exception.YopIncoherentQueryException;
+
 /**
  * A query implementation with no batch mechanism : {@link #nextBatch()} returns true once, then false.
  */
@@ -12,15 +14,27 @@ public class SimpleQuery extends Query {
 	private boolean next = true;
 
 	/**
-	 * Default constructor : SQL query and parameters.
-	 * @param sql        the SQL query to execute
+	 * Default constructor : SQL query WITH NO PARAMETER.
+	 * @param sql        the SQL query to execute (query string + parameters)
 	 * @param type       the query type
-	 * @param parameters the query parameters
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 */
-	public SimpleQuery(String sql, Type type, Parameters parameters, Config config) {
-		super(sql, type, config);
-		this.parameters = parameters;
+	public SimpleQuery(String sql, Type type, Config config) {
+		this(new SQLPart(sql), type, config);
+	}
+
+	/**
+	 * Default constructor : SQL query part (with its parameters).
+	 * @param sql        the SQL query to execute (query string + parameters)
+	 * @param type       the query type
+	 * @param config     the SQL config (sql separator, use batch inserts...)
+	 */
+	public SimpleQuery(SQLPart sql, Type type, Config config) {
+		super(sql.toString(), type, config);
+		if (! sql.isCoherent()) {
+			throw new YopIncoherentQueryException(sql);
+		}
+		this.parameters = sql.getParameters();
 	}
 
 	/**

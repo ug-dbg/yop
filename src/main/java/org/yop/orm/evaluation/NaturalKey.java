@@ -8,6 +8,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Parameters;
+import org.yop.orm.sql.SQLPart;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
@@ -42,12 +43,12 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 	}
 
 	@Override
-	public <U extends Yopable> String toSQL(Context<U> context, Parameters parameters, Config config) {
+	public <U extends Yopable> SQLPart toSQL(Context<U> context, Config config) {
 		List<Field> naturalKeys = ORMUtil.getNaturalKeyFields(this.reference.getClass());
 		return config.getDialect().where(
 			naturalKeys
 				.stream()
-				.map(field -> this.getFieldRestriction(context, field, parameters, config))
+				.map(field -> this.getFieldRestriction(context, field, config))
 				.collect(Collectors.toList()
 		));
 	}
@@ -84,16 +85,19 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 	 * Build a restriction for a field of the natural ID.
 	 * @param context    the current context (→ column prefix)
 	 * @param field      the field on which the restriction must be built
-	 * @param parameters the SQL query parameters (will be populated with the field value)
 	 * @return the SQL portion for the given context→field restriction
 	 */
-	private String getFieldRestriction(Context<?> context, Field field, Parameters parameters, Config config) {
+	private SQLPart getFieldRestriction(Context<?> context, Field field, Config config) {
 		Object ref = ORMUtil.readField(field, this.reference);
+		Parameters parameters = new Parameters();
 		if(ref != null) {
 			String name = context.getPath(config) + "#" + field.getName() + " = " + "?";
-			parameters.addParameter(name, ref, field);
+			parameters.addParameter(name, ref, field, false);
 		}
-		return Evaluation.columnName(field, context, config) + (ref == null ? " IS NULL " : "=?");
+		return new SQLPart(
+			Evaluation.columnName(field, context, config) + (ref == null ? " IS NULL " : "=?"),
+			parameters
+		);
 	}
 
 }

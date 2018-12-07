@@ -1,12 +1,10 @@
 package org.yop.orm.query;
 
-import com.google.common.base.Joiner;
 import org.yop.orm.evaluation.*;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
-import org.yop.orm.sql.Parameters;
-import org.yop.orm.util.MessageUtil;
+import org.yop.orm.sql.SQLPart;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -107,16 +105,13 @@ public class Where<T extends Yopable> implements JsonAble {
 	/**
 	 * Create the current WHERE clause SQL.
 	 * @param context    the context from which the query clause must be built
-	 * @param parameters the query parameters that will be updated with this where clause parameters
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL WHERE clause
 	 */
-	public String toSQL(Context<T> context, Parameters parameters, Config config) {
-		String sql = "";
-		sql += Joiner.on(" AND ").join(
-				this.evaluations.stream().map(e -> e.toSQL(context, parameters, config)).collect(Collectors.toList())
+	public SQLPart toSQL(Context<T> context, Config config) {
+		return config.getDialect().where(
+			this.evaluations.stream().map(e -> e.toSQL(context, config)).collect(Collectors.toList())
 		);
-		return sql;
 	}
 
 	/**
@@ -184,7 +179,7 @@ public class Where<T extends Yopable> implements JsonAble {
 	 * @param whereClauses the where clauses to join
 	 * @return the new where clause
 	 */
-	public static String toSQL(Config config, String... whereClauses) {
+	public static SQLPart toSQL(Config config, CharSequence... whereClauses) {
 		return toSQL(config, Arrays.asList(whereClauses));
 	}
 
@@ -194,7 +189,7 @@ public class Where<T extends Yopable> implements JsonAble {
 	 * @param whereClauses the where clauses to join
 	 * @return the new where clause
 	 */
-	public static String toSQL(Config config, Collection<String> whereClauses) {
+	public static SQLPart toSQL(Config config, List<? extends CharSequence> whereClauses) {
 		return config.getDialect().where(whereClauses);
 	}
 }

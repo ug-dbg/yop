@@ -137,9 +137,11 @@ public class Context<T extends Yopable> {
 		String path = this.getPath(config);
 		Field idField = ORMUtil.getIdField(this.target);
 		for (Field field : Reflection.getFields(this.target, Column.class)) {
+			String name = field.getAnnotation(Column.class).name();
 			columns.add(new SQLColumn(
-				path + config.dot() + field.getAnnotation(Column.class).name(),
-				path + config.sqlSeparator() + field.getAnnotation(Column.class).name(),
+				name,
+				path + config.dot() + name,
+				path + config.sqlSeparator() + name,
 				field.equals(idField)
 			));
 		}
@@ -255,13 +257,15 @@ public class Context<T extends Yopable> {
 	 * Convenience class to store an SQL column (qualified ID and alias)
 	 */
 	static class SQLColumn {
+		private final String name;
 		private final String qualifiedId;
 		private final String alias;
 
 		/** Is this column the ID of a Yopable class ? */
 		private final boolean id;
 
-		SQLColumn(String qualifiedId, String alias, boolean id) {
+		SQLColumn(String name, String qualifiedId, String alias, boolean id) {
+			this.name = name;
 			this.qualifiedId = qualifiedId;
 			this.alias = alias;
 			this.id = id;
@@ -269,6 +273,10 @@ public class Context<T extends Yopable> {
 
 		public String toSQL() {
 			return this.qualifiedId + " AS \"" + this.alias + "\"";
+		}
+
+		public String getName() {
+			return this.name;
 		}
 
 		public String getQualifiedId() {
