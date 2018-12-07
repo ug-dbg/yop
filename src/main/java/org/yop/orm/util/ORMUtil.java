@@ -55,12 +55,12 @@ public class ORMUtil {
 	 * Generate a script (a list of SQL queries)
 	 * that can be used to prepare a DB for the Yopable objects of a given package.
 	 * <br><b>⚠⚠⚠  i.e. Every table concerned by the package prefix will be dropped in the script ! ⚠⚠⚠ </b>
-	 * @param packagePrefix the Yopable package prefix
-	 * @param config        the SQL config (dialect, sql separator, use batch inserts...)
+	 * @param packageName the Yopable classes package name
+	 * @param config      the SQL config (dialect, sql separator, use batch inserts...)
 	 * @return the SQL script, as an ordered list of SQL queries to run.
 	 */
-	public static List<String> generateScript(String packagePrefix, Config config) {
-		Set<org.yop.orm.gen.Table> tables = org.yop.orm.gen.Table.findAllInClassPath(packagePrefix, config);
+	public static List<String> generateScript(String packageName, Config config) {
+		Set<org.yop.orm.gen.Table> tables = org.yop.orm.gen.Table.findAllInClassPath(packageName, config);
 		List<String> script = new ArrayList<>();
 
 		// Relation tables must be deleted first

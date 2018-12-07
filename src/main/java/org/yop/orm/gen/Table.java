@@ -114,16 +114,16 @@ public class Table implements Comparable<Table> {
 
 	/**
 	 * Find all the tables required to map the Yopable classes with the given package prefix
-	 * @param packagePrefix the package prefix. Can be fickle.
+	 * @param packageName the package name. Can be fickle.
 	 * @return the table objects that can be used to get INSERT queries
 	 */
-	public static Set<Table> findAllInClassPath(String packagePrefix, Config config) {
+	public static Set<Table> findAllInClassPath(String packageName, Config config) {
 		Set<Class<? extends Yopable>> subtypes = new Reflections("").getSubTypesOf(Yopable.class);
 
 		Set<Table> tables = new TreeSet<>();
 		subtypes
 			.stream()
-			.filter(c -> Reflection.packageName(c).startsWith(packagePrefix))
+			.filter(c -> Reflection.packageName(c).equals(packageName))
 			.filter(c -> ! c.isInterface() &&  ! Modifier.isAbstract(c.getModifiers() ))
 			.forEach(clazz -> tables.addAll(Table.findTablesFor(clazz, config)));
 

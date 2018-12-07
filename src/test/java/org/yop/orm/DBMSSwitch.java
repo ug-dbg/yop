@@ -34,7 +34,7 @@ public abstract class DBMSSwitch {
 	private File db;
 
 	/**
-	 * Get the package prefixes for which Yopable tables should be created.
+	 * Get the package names for which Yopable tables should be created.
 	 * <br>
 	 * Packages must be separated with any of the these chars :
 	 * <ul>
@@ -44,9 +44,9 @@ public abstract class DBMSSwitch {
 	 *     <li>'|'</li>
 	 * </ul>
 	 * But not '.', obviously :-D
-	 * @return the Yopable data objects package prefix
+	 * @return the Yopable data objects package names
 	 */
-	protected abstract String getPackagePrefixes();
+	protected abstract String getPackageNames();
 
 	/**
 	 * Get the current DBMS code.
@@ -93,21 +93,21 @@ public abstract class DBMSSwitch {
 			"DBMSSwitch.check() method returned false. Test class [" + this.getClass().getName() + "] won't be run.",
 			this.check()
 		);
-		String[] prefixes = StringUtils.split(this.getPackagePrefixes(), " ;,/|");
+		String[] names = StringUtils.split(this.getPackageNames(), " ;,/|");
 
 		// Generate the scripts for every dialect.
 		// This (artificially) improves code coverage.
 		// And it is not very expensive to ensure it runs with no exception thrown.
-		Arrays.stream(prefixes).forEach(prefix -> Prepare.generateScripts(prefix, Config.DEFAULT));
+		Arrays.stream(names).forEach(name -> Prepare.generateScripts(name, Config.DEFAULT));
 
 		// Generate and execute the preparation scripts for the package and the target database.
 		switch (dbms()) {
-			case "mysql" :     Prepare.prepareMySQL(prefixes);    break;
-			case "postgres" :  Prepare.preparePostgres(prefixes); break;
-			case "oracle" :    Prepare.prepareOracle(prefixes);   break;
-			case "mssql" :     Prepare.prepareMSSQL(prefixes);    break;
+			case "mysql" :     Prepare.prepareMySQL(names);    break;
+			case "postgres" :  Prepare.preparePostgres(names); break;
+			case "oracle" :    Prepare.prepareOracle(names);   break;
+			case "mssql" :     Prepare.prepareMSSQL(names);    break;
 			case "sqlite" :
-			default: this.db = Prepare.createSQLiteDatabase(SimpleTest.class.getName(), prefixes);
+			default: this.db = Prepare.createSQLiteDatabase(SimpleTest.class.getName(), names);
 		}
 	}
 }

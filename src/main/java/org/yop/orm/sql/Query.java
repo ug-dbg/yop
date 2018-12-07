@@ -1,6 +1,8 @@
 package org.yop.orm.sql;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IRequest;
@@ -32,8 +34,27 @@ import java.util.*;
  */
 public abstract class Query {
 
+	private static final Logger logger = LoggerFactory.getLogger(Query.class);
+
 	/** Query type enum, with an 'unknown' value */
-	public enum Type {CREATE, DROP, SELECT, INSERT, UPDATE, DELETE, UNKNOWN}
+	public enum Type {
+		CREATE, DROP, SELECT, INSERT, UPDATE, DELETE, UNKNOWN;
+
+		/**
+		 * Guess the query type from the SQL.
+		 * @param sql the SQL request
+		 * @return the query type. {@link #UNKNOWN} if no match.
+		 */
+		public static Type guess(String sql) {
+			String guess = StringUtils.trim(StringUtils.substringBefore(StringUtils.trim(sql), " ")).toUpperCase();
+			try {
+				return valueOf(guess);
+			} catch (RuntimeException e) {
+				logger.debug("No query type match for [{}]. Guess was [{}]", sql, guess);
+				return UNKNOWN;
+			}
+		}
+	}
 
 	/** The regex used to split the query into words. Yes, it is dubious. */
 	private static final String SQL_WORD_SPLIT_PATTERN = " ,;\"";

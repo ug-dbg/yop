@@ -40,10 +40,10 @@ public class Prepare {
 	private static final String MSSQL_ADDRESS    = DBMS_HOST + "\\" + DBMS_DB   + ":" + DBMS_PORT;
 
 	/**
-	 * Create an SQLite database with the given name and for the given package prefix.
+	 * Create an SQLite database with the given name and for the given package name.
 	 * The db will be stored in a temp file with the 'delete on exit' flag.
 	 * @param name          the SQLite db name.
-	 * @param packagePrefixes the package prefix to scan for Yopable objects
+	 * @param packageNames the package names to scan for Yopable objects
 	 * @return the db file
 	 * @throws IOException Error reading/writing the SQLite database file
 	 * @throws SQLException SQL error opening connection
@@ -51,15 +51,15 @@ public class Prepare {
 	 */
 	public static File createSQLiteDatabase(
 		String name,
-		String... packagePrefixes)
+		String... packageNames)
 		throws IOException, SQLException, ClassNotFoundException {
 
 		Path dbPath = Files.createTempFile(name, "_temp.db");
 		dbPath.toFile().deleteOnExit();
 
 		try (IConnection connection = getConnection(dbPath.toFile())) {
-			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection);
+			for (String packageName : packageNames) {
+				prepare(packageName, connection);
 			}
 		}
 		return dbPath.toFile();
@@ -114,14 +114,14 @@ public class Prepare {
 	 * <br><b>⚠⚠⚠  i.e. DROP AND RE-CREATE EVERY TABLE THAT MATCHES THE GIVEN PACKAGE PREFIX! ⚠⚠⚠ </b>
 	 * <br>
 	 * {@link com.mysql.jdbc.Driver} should be in the classpath.
-	 * @param packagePrefixes the package prefixes to scan for Yopable objects
+	 * @param packageNames the package names to scan for Yopable objects
 	 * @throws ClassNotFoundException {@link com.mysql.jdbc.Driver} not found
 	 * @throws SQLException SQL error opening connection
 	 */
-	public static void prepareMySQL(String... packagePrefixes) throws SQLException, ClassNotFoundException {
+	public static void prepareMySQL(String... packageNames) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getMySQLConnection(false)) {
-			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection);
+			for (String name : packageNames) {
+				prepare(name, connection);
 			}
 		}
 	}
@@ -147,14 +147,14 @@ public class Prepare {
 	 * <br><b>⚠⚠⚠  i.e. DROP AND RE-CREATE EVERY TABLE THAT MATCHES THE GIVEN PACKAGE PREFIX! ⚠⚠⚠ </b>
 	 * <br>
 	 * {@link org.postgresql.Driver} should be in the classpath.
-	 * @param packagePrefixes the package prefixes to scan for Yopable objects
+	 * @param packageNames the package names to scan for Yopable objects
 	 * @throws ClassNotFoundException {@link org.postgresql.Driver} not found
 	 * @throws SQLException SQL error opening connection
 	 */
-	public static void preparePostgres(String... packagePrefixes) throws SQLException, ClassNotFoundException {
+	public static void preparePostgres(String... packageNames) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getPostgresConnection()) {
-			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection);
+			for (String name : packageNames) {
+				prepare(name, connection);
 			}
 		}
 	}
@@ -180,14 +180,14 @@ public class Prepare {
 	 * <br><b>⚠⚠⚠  i.e. DROP AND RE-CREATE EVERY TABLE THAT MATCHES THE GIVEN PACKAGE PREFIX! ⚠⚠⚠ </b>
 	 * <br>
 	 * {@link oracle.jdbc.driver.OracleDriver} should be in the classpath.
-	 * @param packagePrefixes the package prefixes to scan for Yopable objects
+	 * @param packageNames the package names to scan for Yopable objects
 	 * @throws ClassNotFoundException {@link oracle.jdbc.driver.OracleDriver} not found
 	 * @throws SQLException SQL error opening connection
 	 */
-	public static void prepareOracle(String... packagePrefixes) throws SQLException, ClassNotFoundException {
+	public static void prepareOracle(String... packageNames) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getOracleConnection()) {
-			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection);
+			for (String name : packageNames) {
+				prepare(name, connection);
 			}
 		}
 	}
@@ -213,14 +213,14 @@ public class Prepare {
 	 * <br><b>⚠⚠⚠  i.e. DROP AND RE-CREATE EVERY TABLE THAT MATCHES THE GIVEN PACKAGE PREFIX! ⚠⚠⚠ </b>
 	 * <br>
 	 * {@link com.microsoft.sqlserver.jdbc.SQLServerDriver} should be in the classpath.
-	 * @param packagePrefixes the package prefixes to scan for Yopable objects
+	 * @param packageNames the package names to scan for Yopable objects
 	 * @throws ClassNotFoundException {@link com.microsoft.sqlserver.jdbc.SQLServerDriver} not found
 	 * @throws SQLException SQL error opening connection
 	 */
-	public static void prepareMSSQL(String... packagePrefixes) throws SQLException, ClassNotFoundException {
+	public static void prepareMSSQL(String... packageNames) throws SQLException, ClassNotFoundException {
 		try (IConnection connection = getMSSQLConnection()) {
-			for (String prefix : packagePrefixes) {
-				prepare(prefix, connection);
+			for (String name : packageNames) {
+				prepare(name, connection);
 			}
 		}
 	}
@@ -229,10 +229,10 @@ public class Prepare {
 	 * Generate the DB scripts for a given package for all {@link Dialect}. Do not execute anything.
 	 * <br>
 	 * Let's face it : this is just to improve code coverage.
-	 * @param packagePrefix the package prefix (find all Yopables)
-	 * @param config        the SQL config (sql separator, use batch inserts...)
+	 * @param packageName the package name (find all Yopables)
+	 * @param config      the SQL config (sql separator, use batch inserts...)
 	 */
-	public static void generateScripts(String packagePrefix, Config config) {
+	public static void generateScripts(String packageName, Config config) {
 		List<IDialect> ormTypes = Arrays.asList(
 			SQLite.INSTANCE,
 			MySQL.INSTANCE,
@@ -240,28 +240,29 @@ public class Prepare {
 			MSSQL.INSTANCE,
 			Oracle.INSTANCE
 		);
-		ormTypes.forEach(dialect -> ORMUtil.generateScript(packagePrefix, config));
+		ormTypes.forEach(dialect -> ORMUtil.generateScript(packageName, config));
 	}
 
 	/**
 	 * Prepare the target DB using the script from {@link ORMUtil#generateScript(String, Config)}.
 	 * <br>
 	 * Please use the correct {@link Dialect} instance for the given connection ;-)
-	 * @param packagePrefix the package prefix (find all Yopables)
+	 * @param packageName the package name (find all Yopables)
 	 * @param connection    the DB connection to use
 	 * @throws SQLException an error occurred running and committing the generation script
 	 */
-	private static void prepare(String packagePrefix, IConnection connection) throws SQLException {
+	private static void prepare(String packageName, IConnection connection) throws SQLException {
 		connection.setAutoCommit(true);
-		for (String line : ORMUtil.generateScript(packagePrefix, connection.config())) {
+		for (String line : ORMUtil.generateScript(packageName, connection.config())) {
+			Query.Type type = Query.Type.guess(line);
 			try {
 				Executor.executeQuery(
 					connection,
-					new SimpleQuery(line, Query.Type.UNKNOWN, connection.config())
+					new SimpleQuery(line, type, connection.config())
 				);
 			} catch (RuntimeException e) {
-				if ("SQLiteException".equals(e.getCause().getClass().getSimpleName())) {
-					// When testing using SQLite, all the 'DROP' requests throws exception. That's quite normal.
+				if (type == Query.Type.DROP) {
+					// When testing, all the 'DROP' requests possibly throw an exception. That's quite normal.
 					// We want to avoid log pollution when doing standard tests : don't log the stack trace.
 					logger.warn("Error executing script line [{}] : [{}]", line, e.getCause().getMessage());
 				} else {
