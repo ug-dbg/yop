@@ -6,7 +6,6 @@ import org.yop.orm.evaluation.Explicit;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
-import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.MessageUtil;
 
 import java.util.ArrayList;
@@ -143,26 +142,25 @@ public class Paging implements JsonAble {
 	 * <br>
 	 * This reads the config {@link Config#getPagingMethod()}.
 	 * @param context    the query context
-	 * @param parameters the query parameters
 	 * @param config     the connection configuration
 	 * @return a SQL limit restriction.
 	 *         An empty string if {@link Config#getPagingMethod()} is {@link Method#TWO_QUERIES}.
 	 */
-	public String toSQL(Context<?> context, Parameters parameters, Config config) {
+	public CharSequence toSQL(Context<?> context, Config config) {
 		if (! this.isPaging()) {
 			return "";
 		}
 
 		if (config.getPagingMethod() == Method.LIMIT) {
 			return MessageUtil.concat(
-				this.toSQLLimit(context, parameters, config),
-				this.toSQLOffset(context, parameters, config)
+				this.toSQLLimit(context, config),
+				this.toSQLOffset(context,config)
 			);
 		}
 		if (config.getPagingMethod() == Method.SQL_2008) {
 			return MessageUtil.concat(
-				this.toSQLOffset(context, parameters, config),
-				this.toSQLLimit(context, parameters, config)
+				this.toSQLOffset(context, config),
+				this.toSQLLimit(context, config)
 			);
 		}
 		if (config.getPagingMethod() == Method.TWO_QUERIES) {
@@ -171,15 +169,15 @@ public class Paging implements JsonAble {
 		return "";
 	}
 
-	private String toSQLLimit(Context<?> context, Parameters parameters, Config config) {
+	private CharSequence toSQLLimit(Context<?> context, Config config) {
 		return this.limit == null ? "" : new Explicit(config.getPagingMethod().limit())
 			.setParameter("limit",  this.limit)
-			.toSQL(context, parameters, config);
+			.toSQL(context, config);
 	}
 
-	private String toSQLOffset(Context<?> context, Parameters parameters, Config config) {
+	private CharSequence toSQLOffset(Context<?> context, Config config) {
 		return this.offset == null ? "" : new Explicit(config.getPagingMethod().offset())
 			.setParameter("offset",  this.offset)
-			.toSQL(context, parameters, config);
+			.toSQL(context, config);
 	}
 }

@@ -8,14 +8,16 @@ import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
-import org.yop.orm.sql.Parameters;
+import org.yop.orm.sql.SQLPart;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * IN clause evaluation.
@@ -51,19 +53,19 @@ public class In implements Evaluation {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <Y extends Yopable> String toSQL(Context<Y> context, Parameters parameters, Config config) {
+	public <Y extends Yopable> CharSequence toSQL(Context<Y> context, Config config) {
 		if(this.values.isEmpty()) {
 			return "";
 		}
 
 		Field field = Reflection.findField(context.getTarget(), (Function<Y, ?>) this.getter);
-		String column =
-			context.getPath(config)
-			+ config.dot()
-			+ ORMUtil.getColumnName(field);
+		String column = context.getPath(config) + config.dot() + ORMUtil.getColumnName(field);
 
-		this.values.forEach(value -> parameters.addParameter(column + "=" + value, value, field));
-		return config.getDialect().in(column, this.values);
+		List<SQLPart> values = this.values
+			.stream()
+			.map(value -> SQLPart.parameter(column + "=" + value, value, field))
+			.collect(Collectors.toList());
+		return config.getDialect().in(column, values);
 	}
 
 	@Override

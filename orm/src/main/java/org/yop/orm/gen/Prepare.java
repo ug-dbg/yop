@@ -138,7 +138,9 @@ public class Prepare {
 	public static IConnection getPostgresConnection() throws ClassNotFoundException, SQLException {
 		Class.forName("org.postgresql.Driver");
 		String connectionString = "jdbc:postgresql://" + POSTGRES_ADDRESS;
-		return new JDBCConnection(DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD));
+		return new JDBCConnection(
+			DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD)
+		).withConfig(new Config().initFromSystemProperties().setDialect(Postgres.INSTANCE));
 	}
 
 	/**
@@ -256,7 +258,7 @@ public class Prepare {
 			try {
 				Executor.executeQuery(
 					connection,
-					new SimpleQuery(line, Query.Type.UNKNOWN, new Parameters(), connection.config())
+					new SimpleQuery(line, Query.Type.UNKNOWN, connection.config())
 				);
 			} catch (RuntimeException e) {
 				if ("SQLiteException".equals(e.getCause().getClass().getSimpleName())) {

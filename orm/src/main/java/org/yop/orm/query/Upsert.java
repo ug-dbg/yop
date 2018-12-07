@@ -19,10 +19,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.model.YopableEquals;
 import org.yop.orm.model.Yopables;
 import org.yop.orm.query.relation.Relation;
-import org.yop.orm.sql.Config;
-import org.yop.orm.sql.Executor;
-import org.yop.orm.sql.Parameters;
-import org.yop.orm.sql.Query;
+import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
@@ -345,11 +342,22 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 
 		for (T element : this.elements) {
 			queries.add(
-				element.getId() == null ? this.toSQLInsert(element, config) : this.toSQLUpdate(element, config)
+				this.toSQL(element, element.getId() == null ? Query.Type.INSERT : Query.Type.UPDATE, config)
 			);
 		}
 
 		return queries;
+	}
+
+	/**
+	 * Create a query for an element.
+	 * @param element the target element
+	 * @param type    the query type ({@link Query.Type#INSERT} or {@link Query.Type#UPDATE})
+	 * @param config the SQL config (sql separator, use batch inserts...)
+	 * @return a new {@link SimpleQuery} for the target element
+	 */
+	protected SimpleQuery<T> toSQL(T element, Query.Type type, Config config) {
+		return type == Query.Type.INSERT ? this.toSQLInsert(element, config) : this.toSQLUpdate(element, config);
 	}
 
 	/**
@@ -358,15 +366,13 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 	 * @param config  the SQL config (sql separator, use batch inserts...)
 	 * @return the generated Query
 	 */
-	protected SimpleQuery toSQLInsert(T element, Config config) {
-		Parameters parameters = this.values(element, config);
-		List<String> columns = parameters.names(p -> true);
-		List<String> values = parameters.values(p -> true);
+	private SimpleQuery toSQLInsert(T element, Config config) {
+		Map<String, SQLPart> valueForColumn = this.valuePerColumn(element, config, true);
+		List<String> columns = new ArrayList<>(valueForColumn.keySet());
+		List<SQLPart> values = new ArrayList<>(valueForColumn.values());
 
-		String sql = config.getDialect().insert(this.getTableName(), columns, values);
-
-		parameters.removeIf(Parameters.Parameter::isSequence);
-		SimpleQuery<T> query = new SimpleQuery<>(sql, Query.Type.INSERT, parameters, element, config);
+		SQLPart sql = config.getDialect().insert(this.getTableName(), columns, values);
+		SimpleQuery<T> query = new SimpleQuery<>(sql, Query.Type.INSERT, element, config);
 		query.askGeneratedKeys(true, element.getClass());
 		return query;
 	}
@@ -378,15 +384,18 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 	 * @return the generated Query
 	 */
 	private SimpleQuery<T> toSQLUpdate(T element, Config config) {
-		Parameters parameters = this.values(element, config);
+		List<SQLPart> values = new ArrayList<>(this.valuePerColumn(element, config, false).values());
 
 		// UPDATE query : ID column must be set last (WHERE clause, not VALUES)
-		String idColumn = ORMUtil.getIdColumn(element.getClass());
-		List<String> values = parameters.namesAndValues(p -> !idColumn.equals(p.getName()));
-		parameters.moveLast(idColumn);
+		Field idField = ORMUtil.getIdField(element.getClass());
+		String idColumn = ORMUtil.getColumnName(idField);
+		SQLPart whereIdColumn = config.getDialect().equals(
+			idColumn,
+			SQLPart.parameter("idcolumn", element.getId(), idField)
+		);
 
-		String sql = config.getDialect().update(this.getTableName(), values, idColumn);
-		return new SimpleQuery<>(sql, Query.Type.UPDATE, parameters, element, config);
+		SQLPart sql = config.getDialect().update(this.getTableName(), values, whereIdColumn);
+		return new SimpleQuery<>(sql, Query.Type.UPDATE, element, config);
 	}
 
 	/**
@@ -400,51 +409,54 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 	/**
 	 * Find all the columns and values to set.
 	 * <br>
-	 * A sequence parameter might be set if specified !
+	 * <b>
+	 *     Here is what we return here :
+	 *     <ul>
+	 *         <li>insert : columnName → SQLPart[columnName = ?]</li>
+	 *         <li>update : columnName → SQLPart[?]</li>
+	 *     </ul>
+	 * </b>
+	 * N.B. For a sequence ID field in an insert query, the column is present if and only if sequences are activated.
 	 * @param element the element to read for its values
 	 * @param config  the SQL config (sql separator, use batch inserts...)
-	 * @return the columns to select
+	 * @param insert  true if values are for an insert query.
+	 * @return the columns to select and their SQL part parameter.
 	 */
-	protected Parameters values(T element, Config config) {
+	protected Map<String, SQLPart> valuePerColumn(T element, Config config, boolean insert) {
 		List<Field> fields = Reflection.getFields(this.getTarget(), Column.class);
 		Field idField = ORMUtil.getIdField(this.getTarget());
-		Parameters parameters = new Parameters();
+		Map<String, SQLPart> out = new HashMap<>();
+
 		for (Field field : fields) {
+			String columnName = ORMUtil.getColumnName(field);
+			Object value = ORMUtil.readField(field, element);
+			boolean isSequence = config.useSequences() && !ORMUtil.readSequence(idField, config).isEmpty();
+
+			SQLPart column;
 			if(field.equals(idField)) {
-				setIdField(field, element, parameters, config);
-				continue;
-			}
-			parameters.addParameter(
-				field.getAnnotation(Column.class).name(),
-				ORMUtil.readField(field, element),
-				field
-			);
-		}
+				value = getUpsertIdValue(element, config);
 
-		return parameters;
-	}
+				if (insert && isSequence) {
+					// ID field, insert, sequence → include this column as sequence nextval.
+					column = new SQLPart((String) value);
+				} else {
+					// ID field, insert, not a sequence → do not include this column : autoincrement.
+					continue;
+				}
 
-	/**
-	 * Add the ID field value to the query parameters. <br>
-	 * Check if the field is a sequence.
-	 * @param idField    the id field
-	 * @param element    the element where to read the field
-	 * @param parameters the query parameters.
-	 * @param config     the SQL config (sql separator, use batch inserts...)
-	 */
-	private static void setIdField(Field idField, Yopable element, Parameters parameters, Config config) {
-		Object value = getUpsertIdValue(element, config);
-
-		if(value != null) {
-			boolean isSequence = config.useSequences()
-			&& !ORMUtil.readSequence(idField, config).isEmpty();
-
-			if (isSequence) {
-				parameters.addSequenceParameter(element.getIdColumn(), value);
 			} else {
-				parameters.addParameter(element.getIdColumn(), value, idField);
+				column = SQLPart.parameter(columnName, value, field);
 			}
+
+			// Update : columnName → [columnName = ?]
+			// Insert → columnName → [?]
+			if (! insert) {
+				column = config.getDialect().equals(new SQLPart(columnName), column);
+			}
+			out.put(columnName, column);
 		}
+
+		return out;
 	}
 
 	/**
@@ -481,8 +493,8 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 	 * SQL query + parameters aggregation.
 	 */
 	protected static class SimpleQuery<T extends Yopable> extends org.yop.orm.sql.SimpleQuery {
-		private SimpleQuery(String sql, Type type, Parameters parameters, T element, Config config) {
-			super(sql, type, parameters, config);
+		private SimpleQuery(SQLPart sql, Type type, T element, Config config) {
+			super(sql, type, config);
 			this.elements.add(element);
 			this.target = element == null ? null : element.getClass();
 		}

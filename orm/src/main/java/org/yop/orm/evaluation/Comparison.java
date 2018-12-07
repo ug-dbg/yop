@@ -7,7 +7,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.IJoin;
 import org.yop.orm.sql.Config;
-import org.yop.orm.sql.Parameters;
+import org.yop.orm.sql.SQLPart;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
@@ -37,7 +37,7 @@ public class Comparison implements Evaluation {
 	/** The comparison value reference */
 	private Comparable ref;
 
-	/** The target field. Deduced from {@link #getter} in {@link #toSQL(Context, Parameters, Config)}*/
+	/** The target field. Deduced from {@link #getter} in {@link #toSQL(Context, Config)}*/
 	private Field field;
 
 	private Comparison(){}
@@ -109,27 +109,29 @@ public class Comparison implements Evaluation {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T extends Yopable> String toSQL(Context<T> context, Parameters parameters, Config config) {
+	public <T extends Yopable> SQLPart toSQL(Context<T> context, Config config) {
 		if (this.field == null) {
 			this.field = Reflection.findField(context.getTarget(), (Function<T, ?>) this.getter);
 		}
 
-		if(this.ref != null && ! (this.ref instanceof Path)) {
-			String name = context.getPath(config) + "#" + this.field.getName() + " " + this.op.toSQL() + "?";
-			parameters.addParameter(name, this.ref, this.field);
-		}
-
-		return Evaluation.columnName(this.field, context, config) + this.op.toSQL() + refSQL(this.ref, context, config);
+		return SQLPart.join(
+			" ",
+			new SQLPart(Evaluation.columnName(this.field, context, config)),
+			this.op.toSQL(),
+			this.refSQL(this.ref, context, config)
+		);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static String refSQL(Comparable ref, Context context, Config config) {
+	private CharSequence refSQL(Comparable ref, Context context, Config config) {
 		if (ref == null) {
 			return "";
 		}
 		if (ref instanceof Path) {
 			return ((Path) ref).toPath(context.root().getTarget(), config);
 		}
-		return "?";
+
+		String name = context.getPath(config) + "#" + this.field.getName() + " " + this.op.toSQL() + "?";
+		return SQLPart.parameter(name, ref, this.field);
 	}
 }

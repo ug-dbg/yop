@@ -10,7 +10,6 @@ import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
-import org.yop.orm.sql.Parameters;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
@@ -22,7 +21,7 @@ import java.util.ArrayList;
  * <br>
  * For instance : ExampleEntity→name='foo' OR ExampleEntity='bar'.
  * <br>
- * There is only one method to implement {@link #toSQL(Context, Parameters, Config)}.
+ * There is only one method to implement {@link #toSQL(Context, Config)}.
  */
 public interface Evaluation extends JsonAble {
 
@@ -32,11 +31,10 @@ public interface Evaluation extends JsonAble {
 	/**
 	 * Build the SQL portion for the evaluation, fill the given parameters with the evaluation value(s)
 	 * @param context    the current context for the evaluation
-	 * @param parameters the SQL query parameters
 	 * @param <T> the target evaluation type
 	 * @return the SQL query portion for the evaluation, from the context
 	 */
-	<T extends Yopable> String toSQL(Context<T> context, Parameters parameters, Config config);
+	<T extends Yopable> CharSequence toSQL(Context<T> context, Config config);
 
 	/**
 	 * Read the field @Column annotation, or the ID column for a @JoinTable

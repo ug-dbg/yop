@@ -2,12 +2,9 @@ package org.yop.orm.sql;
 
 import org.yop.orm.query.Context;
 import org.yop.orm.query.IJoin;
-import org.yop.orm.query.Where;
 
 import javax.annotation.Nonnull;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * A join clause, as an SQL query portion with parameters, for a given context.
@@ -64,16 +61,15 @@ public class JoinClause implements Comparable<JoinClause> {
 	 */
 	public static class JoinClauses extends HashMap<Context<?>, JoinClause> {
 		/** The where clause aggregated from all the joins */
-		private WhereClause whereClause = new WhereClause();
+		private SQLPart whereClause = new SQLPart("");
 
 		/**
-		 * Add a where clause (from a join)
-		 * @param clause     the where clause
-		 * @param parameters the where clause parameters
+		 * Add a where clause (from a join).
+		 * @param config the SQL config (dialect, sql separator, use batch inserts...)
+		 * @param sql    the where clause to append
 		 */
-		public void addWhereClause(String clause, Parameters parameters) {
-			this.whereClause.clause = Where.toSQL(this.whereClause.clause, clause);
-			this.whereClause.parameters.addAll(parameters);
+		public void addWhereClause(Config config, SQLPart sql) {
+			this.whereClause = config.getDialect().where(this.whereClause, sql);
 		}
 
 		/**
@@ -82,36 +78,27 @@ public class JoinClause implements Comparable<JoinClause> {
 		 * Join clauses are appended from the closest to the farthest.
 		 * <br>
 		 * The where clause is not included !
-		 * @param parameters the query parameters that will be populated with the join clauses parameters
 		 * @return the join clauses SQL portion
 		 */
-		public String toSQL(Parameters parameters) {
+		public SQLPart toSQL(Config config) {
 			// Join clauses have to be ordered from the closest context to the farthest when building the output !
 			Set<JoinClause> clauses = new TreeSet<>(this.values());
-
+			List<Parameters.Parameter> parameters = new ArrayList<>();
 			StringBuilder sql = new StringBuilder();
 			for (JoinClause joinClause : clauses) {
 				sql.append(joinClause.getJoinClause());
 				parameters.addAll(joinClause.getParameters());
 			}
 
-			return sql.toString();
+			return new SQLPart(sql.toString(), parameters);
 		}
 
 		/**
 		 * Generate the SQL portion for these join clauses' where clause
-		 * @param parameters the query parameters that will be populated with the join clauses' where clause parameters
-		 * @return the join clauses' where clause SQL portion
+		 * @return the join clauses' where clause SQL part
 		 */
-		public String toSQLWhere(Parameters parameters) {
-			parameters.addAll(this.whereClause.parameters);
-			return this.whereClause.clause;
+		public SQLPart toSQLWhere() {
+			return this.whereClause;
 		}
-	}
-
-	/** The where clause for all the joins */
-	private static class WhereClause {
-		private String clause = "";
-		private Parameters parameters = new Parameters();
 	}
 }
