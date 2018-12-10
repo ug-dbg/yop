@@ -7,6 +7,7 @@ import org.yop.orm.gen.Table;
 import org.yop.orm.sql.SQLPart;
 import org.yop.orm.util.MessageUtil;
 
+import java.sql.JDBCType;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -86,11 +87,18 @@ public interface IDialect {
 	String getForType(Class<?> type);
 
 	/**
+	 * Get the Java type for the given SQL type.
+	 * @param sqlType the sql type
+	 * @return the java type class
+	 */
+	Class<?> getForType(int sqlType);
+
+	/**
 	 * Create a default dialect implementation, with "VARCHAR" default type.
 	 * @return a new instance of {@link Dialect}.
 	 */
 	static IDialect defaultDialect() {
-		return new Dialect("VARCHAR") {};
+		return new Dialect(JDBCType.VARCHAR.getName()) {};
 	}
 
 	/**

@@ -1,6 +1,7 @@
 package org.yop.orm.util;
 
 import com.google.common.primitives.Primitives;
+import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +46,10 @@ public class TransformUtil {
 			return what;
 		}
 
+		if (Boolean.class.equals(Primitives.wrap(into))) {
+			return BooleanUtils.toBoolean(String.valueOf(what)) || what.equals(1) || what.equals("1");
+		}
+
 		if(String.class.equals(into)) {
 			return String.valueOf(what);
 		}
@@ -66,9 +71,6 @@ public class TransformUtil {
 		}
 
 		if(what instanceof String) {
-			if (Boolean.class.isAssignableFrom(Primitives.wrap(into))) {
-				return Boolean.valueOf((String) what) || "1".equals(what);
-			}
 			if (LocalTime.class.isAssignableFrom(into)) {
 				return LocalTime.parse((CharSequence) what);
 			}

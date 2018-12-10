@@ -2,12 +2,18 @@ package org.yop.orm.util.dialect;
 
 import com.google.common.primitives.Primitives;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.JDBCType;
 import java.sql.Time;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * DBMS dialect types.
@@ -61,33 +67,54 @@ abstract class Dialect implements IDialect {
 		return this.getDefault();
 	}
 
+	@Override
+	public Class<?> getForType(int sqlType) {
+		String typeName = JDBCType.valueOf(sqlType).getName();
+		return this.types.entrySet()
+			.stream()
+			.filter(e -> typeName.equals(e.getValue()))
+			.findFirst()
+			.map(Map.Entry::getKey)
+			.orElse(Object.class);
+	}
+
 	/**
 	 * Default constructor, with default type.
 	 * Add basic types matching.
+	 * <br>
+	 * This method uses the generic types from {@link JDBCType}.
 	 * @param defaultType the {@link #defaultType} to set.
 	 */
 	Dialect(String defaultType) {
 		this.defaultType = defaultType;
-		this.types.put(String.class,     "VARCHAR");
-		this.types.put(Character.class,  "VARCHAR");
+		this.types.put(Boolean.class, JDBCType.BIT.getName());
 
-		this.types.put(Integer.class, "INTEGER");
-		this.types.put(Long.class,    "BIGINT");
-		this.types.put(Short.class,   "INTEGER");
-		this.types.put(Byte.class,    "INTEGER");
+		this.types.put(String.class,    JDBCType.VARCHAR.getName());
+		this.types.put(Character.class, JDBCType.CHAR.getName());
 
-		this.types.put(Float.class,  "REAL");
-		this.types.put(Double.class, "REAL");
+		this.types.put(Integer.class, JDBCType.INTEGER.getName());
+		this.types.put(Long.class,    JDBCType.BIGINT.getName());
+		this.types.put(Short.class,   JDBCType.SMALLINT.getName());
+		this.types.put(Byte.class,    JDBCType.INTEGER.getName());
 
-		this.types.put(Date.class,          "TIMESTAMP");
-		this.types.put(Calendar.class,      "TIMESTAMP");
-		this.types.put(Instant.class,       "TIMESTAMP");
-		this.types.put(LocalTime.class,     "TIME");
-		this.types.put(LocalDate.class,     "DATE");
-		this.types.put(LocalDateTime.class, "TIMESTAMP");
+		this.types.put(Float.class,  JDBCType.REAL.getName());
+		this.types.put(Double.class, JDBCType.DOUBLE.getName());
 
-		this.types.put(Time.class,               "TIME");
-		this.types.put(java.sql.Date.class,      "DATE");
-		this.types.put(java.sql.Timestamp.class, "TIMESTAMP");
+		this.types.put(BigDecimal.class, JDBCType.VARCHAR.getName());
+		this.types.put(BigInteger.class, JDBCType.VARCHAR.getName());
+
+		this.types.put(Date.class,          JDBCType.TIMESTAMP.getName());
+		this.types.put(Calendar.class,      JDBCType.TIMESTAMP.getName());
+		this.types.put(Instant.class,       JDBCType.TIMESTAMP.getName());
+		this.types.put(LocalTime.class,     JDBCType.TIME.getName());
+		this.types.put(LocalDate.class,     JDBCType.DATE.getName());
+		this.types.put(LocalDateTime.class, JDBCType.TIMESTAMP.getName());
+
+		this.types.put(Time.class,               JDBCType.TIME.getName());
+		this.types.put(java.sql.Date.class,      JDBCType.DATE.getName());
+		this.types.put(java.sql.Timestamp.class, JDBCType.TIMESTAMP.getName());
+
+		this.types.put(Byte[].class, JDBCType.BINARY.getName());
+		this.types.put(byte[].class, JDBCType.BINARY.getName());
 	}
 }
