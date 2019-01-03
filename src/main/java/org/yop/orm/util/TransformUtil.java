@@ -47,7 +47,7 @@ public class TransformUtil {
 		}
 
 		if (Boolean.class.equals(Primitives.wrap(into))) {
-			return BooleanUtils.toBoolean(String.valueOf(what)) || what.equals(1) || what.equals("1");
+			return BooleanUtils.toBoolean(String.valueOf(what)) || "1".equals(String.valueOf(what));
 		}
 
 		if(String.class.equals(into)) {
