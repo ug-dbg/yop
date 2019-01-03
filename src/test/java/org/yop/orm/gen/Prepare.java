@@ -80,12 +80,14 @@ public class Prepare {
 		String url = "jdbc:sqlite:" + db.getAbsolutePath();
 		Class.forName("org.sqlite.JDBC");
 
-		SQLiteConfig config = new SQLiteConfig();
-		config.enforceForeignKeys(true);
+		SQLiteConfig sqliteConfig = new SQLiteConfig();
+		sqliteConfig.enforceForeignKeys(true);
+		Config config = new Config()
+			.initFromSystemProperties()
+			.set(Config.SQL_USE_BATCH_INS_PROPERTY, "false")
+			.setDialect(SQLite.INSTANCE);
 
-		return new JDBCConnection(DriverManager.getConnection(url, config.toProperties())).withConfig(
-			new Config().initFromSystemProperties().setDialect(SQLite.INSTANCE)
-		);
+		return new JDBCConnection(DriverManager.getConnection(url, sqliteConfig.toProperties())).withConfig(config);
 	}
 
 	/**

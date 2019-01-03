@@ -14,7 +14,9 @@ import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.query.Delete;
 import org.yop.orm.query.Select;
+import org.yop.orm.query.Upsert;
 import org.yop.orm.query.Where;
+import org.yop.orm.query.batch.BatchUpsert;
 import org.yop.orm.simple.model.*;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Query;
@@ -231,6 +233,63 @@ public class SimpleTest extends DBMSSwitch {
 			select(Pojo.class)
 				.join(toSet(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
 				.execute(connection);
+		}
+	}
+
+	@Test
+	public void testPartialUpsert() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Pojo newPojo = new Pojo();
+			newPojo.setVersion(10564337);
+			newPojo.setType(Pojo.Type.FOO);
+			newPojo.setActive(true);
+
+			Upsert.from(Pojo.class).onto(newPojo).execute(connection);
+
+			newPojo.setPassword("mypassword");
+			newPojo.setaVeryLongInteger(new BigInteger("1235684541964545646"));
+			Upsert.from(Pojo.class).onto(newPojo).onFields(Pojo::getPassword, Pojo::getaVeryLongInteger).execute(connection);
+
+			Pojo fromDB = Select.from(Pojo.class).uniqueResult(connection);
+			Assert.assertEquals(newPojo.getPassword(), fromDB.getPassword());
+			Assert.assertEquals(newPojo.getaVeryLongInteger(), fromDB.getaVeryLongInteger());
+		}
+	}
+
+	@Test
+	public void testPartialBatchUpsert() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			if (! connection.config().useBatchInserts()) {
+				logger.warn("Connection does not support batches, skipping test.");
+				return;
+			}
+
+			List<Pojo> pojos = new ArrayList<>(10);
+
+			for (int i = 0; i < 10; i++) {
+				Pojo newPojo = new Pojo();
+				newPojo.setVersion(10564337 + i);
+				newPojo.setType(Pojo.Type.FOO);
+				newPojo.setActive(true);
+				pojos.add(newPojo);
+			}
+
+			BatchUpsert.from(Pojo.class).onto(pojos).execute(connection);
+
+			for (Pojo pojo : pojos) {
+				pojo.setPassword("mypassword");
+				pojo.setaVeryLongInteger(new BigInteger("1235684541964545646"));
+			}
+
+
+			BatchUpsert.from(Pojo.class).onto(pojos).onFields(Pojo::getPassword, Pojo::getaVeryLongInteger).execute(connection);
+
+			Set<Pojo> fromDB = Select.from(Pojo.class).execute(connection);
+			for (Pojo pojo : fromDB) {
+				Assert.assertEquals(pojo.getPassword(), "mypassword");
+				Assert.assertEquals(pojo.getaVeryLongInteger(), new BigInteger("1235684541964545646"));
+			}
+
 		}
 	}
 

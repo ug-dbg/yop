@@ -26,6 +26,7 @@ import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +49,8 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 
 	/** Elements to save/update */
 	protected final Yopables<T> elements = new Yopables<>(this.joins);
+
+	protected final List<Field> targetFields = new ArrayList<>();
 
 	/** If set to true, any insert will do a preliminary SELECT query to find any entry whose natural key matches */
 	protected boolean checkNaturalID = false;
@@ -226,6 +229,23 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 	 */
 	public Upsert<T> onto(Collection<T> elements) {
 		this.elements.addAll(elements);
+		return this;
+	}
+
+	/**
+	 * Partial Update.
+	 * <br>
+	 * Restrict an update operation to the given fields (via their getters).
+	 * <br>
+	 * This makes no sense on insert operations → it will not make any difference on insert operations.
+	 * @param getters the getters of the fields
+	 * @return the current UPSERT, for chaining purposes
+	 */
+	@SafeVarargs
+	public final Upsert<T> onFields(Function<T, ?>... getters) {
+		for (Function<T, ?> getter : getters) {
+			this.targetFields.add(Reflection.findField(this.getTarget(), getter));
+		}
 		return this;
 	}
 
@@ -428,6 +448,11 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 		Map<String, SQLPart> out = new HashMap<>();
 
 		for (Field field : fields) {
+			if (! insert && ! this.targetFields.isEmpty() && ! this.targetFields.contains(field)) {
+				logger.debug("Partial update : field [{}] is excluded.", Reflection.fieldToString(field));
+				continue;
+			}
+
 			String columnName = ORMUtil.getColumnName(field);
 			Object value = ORMUtil.readField(field, element);
 			boolean isSequence = config.useSequences() && !ORMUtil.readSequence(idField, config).isEmpty();

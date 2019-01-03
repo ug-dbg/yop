@@ -87,9 +87,11 @@ public class Config {
 	 * Set a config property.
 	 * @param key   the config key
 	 * @param value the config value
+	 * @return the current config instance
 	 */
-	public void set(String key, String value) {
+	public Config set(String key, String value) {
 		this.config.put(key, value);
+		return this;
 	}
 
 	/** DOT constant. Sue me ! */
