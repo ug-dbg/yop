@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -82,9 +83,18 @@ public class MSSQL extends Dialect {
 		elements.addAll(this.toSQLNK(table));
 
 		return MessageFormat.format(
-			CREATE,
+			SQL.CREATE,
 			table.qualifiedName(),
 			MessageUtil.join(", ", elements)
+		);
+	}
+
+	@Override
+	public String selectAndLockPattern(boolean distinct) {
+		String defaultPattern = super.selectPattern(distinct);
+		return defaultPattern.replaceFirst(
+			Pattern.quote(SQL.PARAM_TABLE_ALIAS),
+			SQL.PARAM_TABLE_ALIAS + " WITH (updlock) "
 		);
 	}
 }

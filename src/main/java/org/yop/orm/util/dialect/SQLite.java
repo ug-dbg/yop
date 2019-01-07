@@ -50,9 +50,14 @@ public class SQLite extends Dialect {
 		elements.addAll(this.toSQLNK(table));
 
 		return MessageFormat.format(
-			CREATE,
+			SQL.CREATE,
 			table.qualifiedName(),
 			MessageUtil.join(", ", elements)
 		);
+	}
+
+	@Override
+	public String selectAndLockPattern(boolean distinct) {
+		throw new UnsupportedOperationException("SQLite does not support locking.");
 	}
 }
