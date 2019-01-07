@@ -6,11 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
 import org.yop.orm.evaluation.Operator;
+import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Select;
 import org.yop.orm.query.Upsert;
 import org.yop.orm.query.Where;
 import org.yop.orm.simple.model.*;
+import org.yop.orm.sql.Config;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.util.Reflection;
 
 import java.sql.SQLException;
 import java.time.Instant;
@@ -106,6 +109,29 @@ public class LockTest extends DBMSSwitch {
 				logger.info("Timeout waiting for locked rows : success.");
 			}
 		}
+	}
+
+	@Test
+	public void testSelectToJSON() {
+		String selectJSON = select(Pojo.class)
+			.joinAll()
+			.join(Pojo::getOthers, Other::getExtra, Extra::getOther)
+			.join(Pojo::getOthers, Other::getExtra, Extra::getSuperExtra)
+			.toJSON()
+			.toString();
+
+		Select<Yopable> selectQuery = Select.fromJSON(selectJSON, Config.DEFAULT);
+		Assert.assertFalse((Boolean) Reflection.readField(Reflection.get(Select.class, "lock"), selectQuery));
+
+		selectJSON = select(Pojo.class)
+			.lock()
+			.joinAll()
+			.join(Pojo::getOthers, Other::getExtra, Extra::getOther)
+			.join(Pojo::getOthers, Other::getExtra, Extra::getSuperExtra)
+			.toJSON()
+			.toString();
+		selectQuery = Select.fromJSON(selectJSON, Config.DEFAULT);
+		Assert.assertTrue((Boolean) Reflection.readField(Reflection.get(Select.class, "lock"), selectQuery));
 	}
 
 }
