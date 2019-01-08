@@ -55,7 +55,7 @@ public class SimpleModelRestTest extends RestServletTest {
 	private static final String PASS_WORD = "ThisIsRoger'sPassword";
 
 	@Override
-	protected String getPackagePrefixes() {
+	protected String getPackageNames() {
 		return "org.yop.rest.simple.model, org.yop.rest.users.model";
 	}
 

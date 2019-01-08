@@ -29,10 +29,12 @@ public class Oracle extends Dialect {
 		this.setForType(String.class,     "VARCHAR");
 		this.setForType(Character.class,  "VARCHAR");
 
-		this.setForType(Integer.class, "NUMBER");
+		this.setForType(Double.class,  "BINARY_DOUBLE");
 		this.setForType(Long.class,    "NUMBER");
+		this.setForType(Integer.class, "NUMBER");
 		this.setForType(Short.class,   "NUMBER");
 		this.setForType(Byte.class,    "NUMBER");
+		this.setForType(Boolean.class, "NUMBER(1)");
 
 		this.setForType(LocalTime.class,     "TIMESTAMP");
 		this.setForType(java.sql.Time.class, "TIMESTAMP");

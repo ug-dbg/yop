@@ -28,7 +28,7 @@ public class ErrorsTest extends DBMSSwitch {
 	private static final Logger logger = LoggerFactory.getLogger(ErrorsTest.class);
 
 	@Override
-	protected String getPackagePrefixes() {
+	protected String getPackageNames() {
 		// Load the 'simple' model, but not the 'invalid_model' package.
 		// Then preparation does not prepare tables for the 'invalid_model' pojos.
 		return "org.yop.orm.simple.model";

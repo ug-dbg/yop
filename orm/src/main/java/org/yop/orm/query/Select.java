@@ -62,6 +62,9 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	/** Page : from offset x, limit to y rows */
 	private Paging paging = new Paging(null, null);
 
+	/** Lock the Select results (i.e. SELECT... FOR UPDATE) */
+	private boolean lock = false;
+
 	/**
 	 * Private constructor. Please use {@link #from(Class)}
 	 * @param from the target class (select from class)
@@ -159,6 +162,16 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	 */
 	public Select<T> orderBy(OrderBy<T> order) {
 		this.orderBy = order;
+		return this;
+	}
+
+	/**
+	 * Lock the results of the current query, i.e. SELECT... FOR UPDATE. Use with caution.
+	 * <br> <b>Some DBMS does not support locking.</b>
+	 * @return the current SELECT query, for chaining purposes.
+	 */
+	public Select<T> lock() {
+		this.lock = true;
 		return this;
 	}
 
@@ -413,6 +426,7 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	private SQLPart toSQLAnswerRequest(Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true, config);
 		return config.getDialect().select(
+			false,
 			this.toSQLColumnsClause(false, config),
 			this.getTableName(),
 			this.context.getPath(config),
@@ -438,6 +452,7 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 		);
 
 		return config.getDialect().select(
+			this.lock,
 			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
 			this.context.getPath(config),
@@ -494,6 +509,7 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 			: onlyIDs ? this.toSQLIdColumnsClause(config) : this.toSQLColumnsClause(true, config);
 
 		return config.getDialect().selectWhereExists(
+			this.lock,
 			this.idAlias(config),
 			columns,
 			this.getTableName(),
@@ -518,6 +534,7 @@ public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> imp
 	private SQLPart toSQLDataRequestWithIN(Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true, config);
 		return config.getDialect().selectWhereIdIn(
+			this.lock,
 			this.idAlias(config),
 			this.toSQLColumnsClause(true, config),
 			this.getTableName(),

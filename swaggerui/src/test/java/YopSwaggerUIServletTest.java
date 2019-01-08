@@ -19,7 +19,7 @@ public class YopSwaggerUIServletTest extends RestServletTest {
 	private static final String KEEP_RUNNING_FLAG = "yop.swaggerui.rest.test.keep_running";
 
 	@Override
-	protected String getPackagePrefixes() {
+	protected String getPackageNames() {
 		return "org.yop.rest.users.model,org.yop.rest.simple.model";
 	}
 

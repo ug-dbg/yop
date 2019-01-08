@@ -113,17 +113,17 @@ public class Table implements Comparable<Table> {
 
 	/**
 	 * Find all the tables required to map the Yopable classes with the given package prefix
-	 * @param packagePrefix the package prefix. Can be fickle.
+	 * @param packageName the package name. Can be fickle.
 	 * @param classLoader   the class loader to use
 	 * @return the table objects that can be used to get INSERT queries
 	 */
-	public static Set<Table> findAllInClassPath(String packagePrefix, ClassLoader classLoader, Config config) {
+	public static Set<Table> findAllInClassPath(String packageName, ClassLoader classLoader, Config config) {
 		Set<Class<? extends Yopable>> subtypes = ORMUtil.yopables(classLoader);
 
 		Set<Table> tables = new TreeSet<>();
 		subtypes
 			.stream()
-			.filter(c -> Reflection.packageName(c).startsWith(packagePrefix))
+			.filter(c -> Reflection.packageName(c).equals(packageName))
 			.filter(c -> ! c.isInterface() &&  ! Modifier.isAbstract(c.getModifiers() ))
 			.forEach(clazz -> tables.addAll(Table.findTablesFor(clazz, config)));
 

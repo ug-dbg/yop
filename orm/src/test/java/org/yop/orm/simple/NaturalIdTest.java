@@ -20,7 +20,7 @@ import java.sql.SQLException;
 public class NaturalIdTest extends DBMSSwitch {
 
 	@Override
-	protected String getPackagePrefixes() {
+	protected String getPackageNames() {
 		return "org.yop.orm.simple.model";
 	}
 

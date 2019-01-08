@@ -30,7 +30,7 @@ public class SupplyChainTest extends DBMSSwitch {
 	private static final Logger logger = LoggerFactory.getLogger(SupplyChainTest.class);
 
 	@Override
-	protected String getPackagePrefixes() {
+	protected String getPackageNames() {
 		return "org.yop.orm.supplychain.model";
 	}
 

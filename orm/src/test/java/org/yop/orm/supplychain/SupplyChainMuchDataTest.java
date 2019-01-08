@@ -39,7 +39,7 @@ public class SupplyChainMuchDataTest extends DBMSSwitch {
 	}
 
 	@Override
-	protected String getPackagePrefixes() {
+	protected String getPackageNames() {
 		return "org.yop.orm.supplychain.model";
 	}
 

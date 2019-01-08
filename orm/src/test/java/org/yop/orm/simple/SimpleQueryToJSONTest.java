@@ -36,7 +36,7 @@ import static org.yop.orm.Yop.*;
 public class SimpleQueryToJSONTest extends DBMSSwitch {
 
 	@Override
-	protected String getPackagePrefixes() {
+	protected String getPackageNames() {
 		return "org.yop.orm.simple.model";
 	}
 

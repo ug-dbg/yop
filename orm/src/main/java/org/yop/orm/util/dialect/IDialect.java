@@ -7,9 +7,12 @@ import org.yop.orm.gen.Table;
 import org.yop.orm.sql.SQLPart;
 import org.yop.orm.util.MessageUtil;
 
+import java.sql.JDBCType;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.yop.orm.util.dialect.SQL.*;
 
 /**
  * Interface of an SQL dialect.
@@ -18,53 +21,11 @@ import java.util.stream.Collectors;
  * <ul>
  *     <li>know the SQL type for a Java type</li>
  *     <li>generate SQL for SQL data structures (Column, Table)</li>
- *     <li>generate SQL for SQL requests (Create, Drop)</li>
+ *     <li>generate SQL for SQL requests (Create, Drop, Select, Insert, Update, Delete)</li>
  * </ul>
  * NB : Yop tries to generate some very basic SQL CRUD queries that does not rely on an SQL dialect.
  */
 public interface IDialect {
-
-	String CREATE = " CREATE TABLE {0} ({1}) ";
-	String DROP = " DROP TABLE {0} ";
-	String PK = " CONSTRAINT {0} PRIMARY KEY ({1}) ";
-	String FK = " CONSTRAINT {0} FOREIGN KEY ({1}) REFERENCES {2}({3}) ON DELETE CASCADE ";
-	String NK = " CONSTRAINT {0} UNIQUE ({1}) ";
-
-	/** Select [what] FROM [table] [table_alias] [join clause] WHERE [where clause] [order by clause] [extra] */
-	String SELECT = " SELECT {:columns} FROM {:table} {:table_alias} {:joins} WHERE {:where} {:order_by} {:extra}";
-
-	/** Select distinct([what]) FROM [table] [table_alias] [join clause] WHERE [where clause] [extra] */
-	String SELECT_DISTINCT = " SELECT DISTINCT({:columns}) FROM {:table} {:table_alias} {:joins} WHERE {:where} {:extra}";
-
-	/** COUNT(DISTINCT :idColumn) column selection */
-	String COUNT_DISTINCT = " COUNT(DISTINCT {:column}) ";
-
-	/** DELETE [columns] FROM [table] [join clauses] WHERE [where clause] */
-	String DELETE = " DELETE {:columns} FROM {:table} {:joins} WHERE {:where} ";
-
-	/** DELETE FROM [table] WHERE [column] IN ([values]) */
-	String DELETE_IN = " DELETE FROM {:table} WHERE {:column} IN ({:values}) ";
-
-	/** INSERT INTO [table] ([columns]) VALUES ([column values]) */
-	String INSERT = " INSERT INTO {:table} ({:columns}) VALUES ({:values}) ";
-
-	/** UPDATE [table] SET ([column=value]+) WHERE ([idColumn] = ? ) */
-	String UPDATE = " UPDATE {:table} SET {:column_and_values} WHERE ({:idcolumn_equals}) ";
-
-	/** [table] [table alias] on [column name] = [value]. Then prefix with the join type. */
-	String JOIN_ON = " {:table} {:alias} on {:column} = {:value} ";
-
-	/** [column] IN ([comma separated values]) */
-	String IN = " {:column} IN ({:values}) ";
-
-	String AND = " AND ";
-
-	String EXISTS = " EXISTS ({:sub_select}) ";
-
-	String EQUALS = "{:a} = {:b}";
-
-	/** Default where clause is always added. So I don't have to check if the 'WHERE' keyword is required ;-) */
-	String DEFAULT_WHERE = " 1=1 ";
 
 	/**
 	 * @return the default SQL type for this dialect.
@@ -86,11 +47,18 @@ public interface IDialect {
 	String getForType(Class<?> type);
 
 	/**
+	 * Get the Java type for the given SQL type.
+	 * @param sqlType the sql type
+	 * @return the java type class
+	 */
+	Class<?> getForType(int sqlType);
+
+	/**
 	 * Create a default dialect implementation, with "VARCHAR" default type.
 	 * @return a new instance of {@link Dialect}.
 	 */
 	static IDialect defaultDialect() {
-		return new Dialect("VARCHAR") {};
+		return new Dialect(JDBCType.VARCHAR.getName()) {};
 	}
 
 	/**
@@ -178,8 +146,7 @@ public interface IDialect {
 		if(fk == null) {
 			return "";
 		}
-		return MessageFormat.format(
-			FK,
+		return MessageFormat.format(FK,
 			fk.getName(),
 			column.getName(),
 			fk.getReferencedTable(),
@@ -220,16 +187,47 @@ public interface IDialect {
 	}
 
 	/**
+	 * Get the pattern for a SELECT query.
+	 * <br>
+	 * This is a pipe to either {@link #selectAndLockPattern(boolean)} or {@link #selectPattern(boolean)}.
+	 * @param lock     true → SELECT... FOR UPDATE (or whatever the name in the underlying dialect)
+	 * @param distinct true → SELECT DISTINCT([column])
+	 * @return the select pattern to use
+	 */
+	default String selectPattern(boolean lock, boolean distinct) {
+		return lock ? this.selectAndLockPattern(distinct) : this.selectPattern(distinct);
+	}
+
+	/**
+	 * Get the pattern for a SELECT query <b>WITH NO LOCKING</b>.
+	 * @param distinct true → SELECT DISTINCT([column])
+	 * @return the select pattern to use
+	 */
+	default String selectPattern(boolean distinct) {
+		return distinct ? DEFAULT_SELECT_DISTINCT_PATTERN : DEFAULT_SELECT_PATTERN;
+	}
+
+	/**
+	 * Get the pattern for a SELECT query <b>WITH LOCKING</b>.
+	 * @param distinct true → SELECT DISTINCT(id)
+	 * @return the select pattern to use
+	 */
+	default String selectAndLockPattern(boolean distinct) {
+		return distinct ? DEFAULT_SELECT_DISTINCT_FOR_UPDATE_PATTERN : DEFAULT_SELECT_FOR_UPDATE_PATTERN;
+	}
+
+	/**
 	 * Generate 'COUNT (DISTINCT [column alias])'.
 	 * @param columnAlias the column alias
 	 * @return COUNT (DISTINCT alias)
 	 */
 	default String toSQLCount(String columnAlias) {
-		return SQLPart.forPattern(COUNT_DISTINCT, columnAlias).toString();
+		return SQLPart.forPattern(DEFAULT_COUNT_DISTINCT_PATTERN, columnAlias).toString();
 	}
 
 	/**
 	 * Build the Select query from component clauses
+	 * @param lock        true to lock the SELECT results.
 	 * @param what        Mandatory. Columns clause.
 	 * @param from        Mandatory. Target table.
 	 * @param as          Mandatory. Target table alias.
@@ -240,6 +238,7 @@ public interface IDialect {
 	 * @return the SQL select query.
 	 */
 	default SQLPart select(
+		boolean lock,
 		CharSequence what,
 		CharSequence from,
 		CharSequence as,
@@ -247,21 +246,16 @@ public interface IDialect {
 		CharSequence whereClause,
 		CharSequence orderClause,
 		CharSequence... extras) {
-		CharSequence extra = SQLPart.join(" ", extras);
-		return SQLPart.forPattern(
-			SELECT,
-			what,
-			from,
-			as,
-			joinClause,
-			StringUtils.isBlank(whereClause.toString()) ? DEFAULT_WHERE : whereClause,
-			orderClause,
-			extra
-		);
+
+		String pattern = this.selectPattern(lock, false);
+		CharSequence any = SQLPart.join(" ", extras);
+		CharSequence safeWhereClause = StringUtils.isBlank(whereClause.toString()) ? DEFAULT_WHERE : whereClause;
+		return SQLPart.forPattern(pattern, what, from, as, joinClause, safeWhereClause, orderClause, any);
 	}
 
 	/**
 	 * Build the 'distinct' Select query from component clauses.
+	 * @param lock        true to lock the SELECT results.
 	 * @param what        Mandatory. Column clause that is to be distinct.
 	 * @param from        Mandatory. Target table.
 	 * @param as          Mandatory. Target table alias.
@@ -271,22 +265,18 @@ public interface IDialect {
 	 * @return the SQL 'distinct' select query.
 	 */
 	default SQLPart selectDistinct(
+		boolean lock,
 		CharSequence what,
 		CharSequence from,
 		CharSequence as,
 		CharSequence joinClause,
 		CharSequence whereClause,
 		CharSequence... extras) {
-		CharSequence extra = SQLPart.join(" ", extras);
-		return SQLPart.forPattern(
-			SELECT_DISTINCT,
-			what,
-			from,
-			as,
-			joinClause,
-			StringUtils.isBlank(whereClause.toString()) ? DEFAULT_WHERE : whereClause,
-			extra
-		);
+
+		String pattern = this.selectPattern(lock, true);
+		CharSequence any = SQLPart.join(" ", extras);
+		CharSequence safeWhereClause = StringUtils.isBlank(whereClause.toString()) ? DEFAULT_WHERE : whereClause;
+		return SQLPart.forPattern(pattern, what, from, as, joinClause, safeWhereClause, "", any);
 	}
 
 	/**
@@ -295,20 +285,16 @@ public interface IDialect {
 	 * @param tableName    the target table name
 	 * @param joinClauses  the joined table clauses
 	 * @param whereClause  the where clause. Optional.
-	 * @return the {@link #DELETE} formatted query
+	 * @return the {@link SQL#DELETE} formatted query
 	 */
 	default SQLPart delete(
 		CharSequence columnsClause,
 		CharSequence tableName,
 		CharSequence joinClauses,
 		CharSequence whereClause) {
-		return SQLPart.forPattern(
-			DELETE,
-			columnsClause,
-			tableName,
-			joinClauses,
-			StringUtils.isBlank(whereClause.toString()) ? DEFAULT_WHERE : whereClause
-		);
+
+		CharSequence safeWhereClause = StringUtils.isBlank(whereClause.toString()) ? DEFAULT_WHERE : whereClause;
+		return SQLPart.forPattern(DEFAULT_DELETE_PATTERN, columnsClause, tableName, joinClauses, safeWhereClause);
 	}
 
 	/**
@@ -316,15 +302,10 @@ public interface IDialect {
 	 * @param from         the relation table name
 	 * @param sourceColumn the source column name
 	 * @param ids          the IDs for the IN clause. Mostly a list of '?' if you want to use query parameters.
-	 * @return the {@link #DELETE_IN} formatted query
+	 * @return the {@link SQL#DEFAULT_DELETE_IN_PATTERN} formatted query
 	 */
 	default SQLPart deleteIn(String from, String sourceColumn, List<SQLPart> ids) {
-		return SQLPart.forPattern(
-			DELETE_IN,
-			from,
-			sourceColumn,
-			SQLPart.join(",", ids)
-		);
+		return SQLPart.forPattern(DEFAULT_DELETE_IN_PATTERN, from, sourceColumn, SQLPart.join(",", ids));
 	}
 
 	/**
@@ -332,11 +313,11 @@ public interface IDialect {
 	 * @param tableName the target table name
 	 * @param columns   the columns to select
 	 * @param values    the column values
-	 * @return the {@link #INSERT} formatted query
+	 * @return the {@link SQL#INSERT} formatted query
 	 */
 	default SQLPart insert(String tableName, List<? extends CharSequence> columns, List<? extends CharSequence> values) {
 		return SQLPart.forPattern(
-			INSERT,
+			DEFAULT_INSERT_PATTERN,
 			tableName,
 			SQLPart.join(" , ", columns),
 			SQLPart.join(" , ", values)
@@ -348,15 +329,10 @@ public interface IDialect {
 	 * @param tableName       the target table name
 	 * @param columnAndValues the column and values '=' separated. e.g 'name=?'
 	 * @param idColumn        the id column (required for : WHERE idColumn = ?)
-	 * @return the {@link #UPDATE} formatted query
+	 * @return the {@link SQL#UPDATE} formatted query
 	 */
 	default SQLPart update(String tableName, List<? extends CharSequence> columnAndValues, SQLPart idColumn) {
-		return SQLPart.forPattern(
-			UPDATE,
-			tableName,
-			SQLPart.join(", ", columnAndValues),
-			idColumn
-		);
+		return SQLPart.forPattern(DEFAULT_UPDATE_PATTERN, tableName, SQLPart.join(", ", columnAndValues), idColumn);
 	}
 
 	/**
@@ -366,14 +342,14 @@ public interface IDialect {
 	 * @param tableName      the target table name
 	 * @param columnAndValue the column name and value
 	 * @param idColumn   the id column (required for : WHERE idColumn = ?)
-	 * @return the {@link #UPDATE} formatted query
+	 * @return the {@link SQL#UPDATE} formatted query
 	 */
 	default SQLPart update(String tableName, SQLPart columnAndValue, SQLPart idColumn) {
-		return SQLPart.forPattern(UPDATE, tableName, columnAndValue, idColumn);
+		return SQLPart.forPattern(DEFAULT_UPDATE_PATTERN, tableName, columnAndValue, idColumn);
 	}
 
 	/**
-	 * Generate a JOIN clause using {@link #JOIN_ON}.
+	 * Generate a JOIN clause using {@link SQL#DEFAULT_JOIN_ON_PATTERN}.
 	 * <br>
 	 * e.g. left join join_table joined_table_alias on join_column_a = root_table_alias.column_a
 	 * @param joinType   the join type to use (see {@link org.yop.orm.query.AbstractJoin.JoinType#sql})
@@ -384,19 +360,19 @@ public interface IDialect {
 	 * @return the formatted SQL join clause
 	 */
 	default String join(String joinType, String table, String tableAlias, String left, String right) {
-		return joinType + SQLPart.forPattern(JOIN_ON, table, tableAlias, left, right).toString();
+		return joinType + SQLPart.forPattern(DEFAULT_JOIN_ON_PATTERN, table, tableAlias, left, right).toString();
 	}
 
 	/**
-	 * Generate an 'IN' clause using {@link #IN}.
+	 * Generate an 'IN' clause using {@link SQL#IN}.
 	 * <br>
 	 * e.g. idColumn IN (?,?,?,?)
 	 * @param column the column name
 	 * @param values the values : for each value, a '?' will be added in 'IN ()'.
-	 * @return the {@link #IN} formatted clause
+	 * @return the {@link SQL#IN} formatted clause
 	 */
 	default SQLPart in(String column, List<? extends CharSequence> values) {
-		return SQLPart.forPattern(IN, column, SQLPart.join(" , ", values));
+		return SQLPart.forPattern(DEFAULT_IN_PATTERN, column, SQLPart.join(" , ", values));
 	}
 
 	/**
@@ -414,22 +390,23 @@ public interface IDialect {
 	 * @return the new where clause
 	 */
 	default SQLPart where(List<? extends CharSequence> whereClauses) {
-		return SQLPart.join(AND, whereClauses);
+		return SQLPart.join(" " + AND + " ", whereClauses);
 	}
 
 	/**
-	 * Join the 2 sequences using {@link #EQUALS} pattern.
+	 * Join the 2 sequences using {@link SQL#DEFAULT_EQUALS_PATTERN} pattern.
 	 * @param a the left part
 	 * @param b the right part
-	 * @return a new SQL part, for the {@link #EQUALS} pattern.
+	 * @return a new SQL part, for the {@link SQL#DEFAULT_EQUALS_PATTERN} pattern.
 	 */
 	default SQLPart equals(CharSequence a, CharSequence b) {
-		return SQLPart.forPattern(EQUALS, a, b);
+		return SQLPart.forPattern(DEFAULT_EQUALS_PATTERN, a, b);
 	}
 
 	/**
 	 * Create a 'SELECT WHERE EXISTS ()' query, using a subselect, from the different parts of the query.
 	 * <br>
+	 * @param lock                 true to lock the SELECT results.
 	 * @param idAlias              the main table ID alias
 	 * @param columns              the columns to select
 	 * @param from                 the main table
@@ -445,6 +422,7 @@ public interface IDialect {
 	 * @return the assembled SELECT WHERE EXIST query
 	 */
 	default SQLPart selectWhereExists(
+		boolean lock,
 		CharSequence idAlias,
 		CharSequence columns,
 		CharSequence from,
@@ -456,9 +434,11 @@ public interface IDialect {
 		CharSequence subSelectJoinClause,
 		CharSequence subSelectWhereClause,
 		CharSequence pagingClause,
-		CharSequence orderClause) {
+		CharSequence orderClause,
+		CharSequence... extras) {
 
 		SQLPart subSelect = this.selectDistinct(
+			false,
 			subSelectIdAlias,
 			from,
 			subSelectAs,
@@ -467,13 +447,14 @@ public interface IDialect {
 			pagingClause
 		);
 
-		SQLPart where = this.where(joinClauseWhere, SQLPart.forPattern(EXISTS, subSelect));
-		return this.select(columns, from, as, joinClause, where, orderClause);
+		SQLPart where = this.where(joinClauseWhere, SQLPart.forPattern(DEFAULT_EXISTS_PATTERN, subSelect));
+		return this.select(lock, columns, from, as, joinClause, where, orderClause, extras);
 	}
 
 	/**
 	 * Create a 'SELECT WHERE ID IN ()' query, using a subselect, from the different parts of the query.
 	 * <br>
+	 * @param lock            true to lock the SELECT results.
 	 * @param idAlias         the main table ID alias
 	 * @param columns         the columns to select
 	 * @param from            the main table
@@ -487,6 +468,7 @@ public interface IDialect {
 	 * @return the assembled SELECT WHERE ID IN query
 	 */
 	default SQLPart selectWhereIdIn(
+		boolean lock,
 		CharSequence idAlias,
 		CharSequence columns,
 		CharSequence from,
@@ -496,9 +478,11 @@ public interface IDialect {
 		CharSequence whereClause,
 		CharSequence pagingOrderBy,
 		CharSequence pagingClause,
-		CharSequence orderClause) {
+		CharSequence orderClause,
+		CharSequence... extras) {
 
 		SQLPart inSubQuery = this.select(
+			false,
 			idAlias,
 			from,
 			as,
@@ -508,7 +492,7 @@ public interface IDialect {
 			pagingClause
 		);
 
-		SQLPart where = SQLPart.join(" ", idAlias, SQLPart.forPattern(IN, "", inSubQuery));
-		return this.select(columns, from, as, joinClause, where, orderClause);
+		SQLPart whereInSubQuery = SQLPart.join(" ", idAlias, SQLPart.forPattern(DEFAULT_IN_PATTERN, "", inSubQuery));
+		return this.select(lock, columns, from, as, joinClause, whereInSubQuery, orderClause, extras);
 	}
 }
