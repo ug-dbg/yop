@@ -6,7 +6,7 @@ import org.yop.orm.evaluation.Explicit;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
-import org.yop.orm.util.MessageUtil;
+import org.yop.orm.sql.SQLPart;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -152,16 +152,10 @@ public class Paging implements JsonAble {
 		}
 
 		if (config.getPagingMethod() == Method.LIMIT) {
-			return MessageUtil.concat(
-				this.toSQLLimit(context, config),
-				this.toSQLOffset(context,config)
-			);
+			return SQLPart.join(" ", this.toSQLLimit(context, config), this.toSQLOffset(context,config));
 		}
 		if (config.getPagingMethod() == Method.SQL_2008) {
-			return MessageUtil.concat(
-				this.toSQLOffset(context, config),
-				this.toSQLLimit(context, config)
-			);
+			return SQLPart.join(" ", this.toSQLOffset(context, config), this.toSQLLimit(context, config));
 		}
 		if (config.getPagingMethod() == Method.TWO_QUERIES) {
 			logger.info("Paging method uses 2 queries. Paging will be done by filtering fetched ids.");
