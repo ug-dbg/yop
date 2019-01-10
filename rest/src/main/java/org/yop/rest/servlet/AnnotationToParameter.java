@@ -30,8 +30,8 @@ public interface AnnotationToParameter {
 		this.put(RequestParam.class,  (r, p) -> r.getParameterFirstValue(p.getAnnotation(RequestParam.class).name()));
 		this.put(PathParam.class,     (r, p) -> r.getPathParam(p.getAnnotation(PathParam.class).name()));
 		this.put(Header.class,        (r, p) -> r.getRequest().getHeader(p.getAnnotation(Header.class).name()));
-		this.put(BodyInstance.class,  (r, p) -> r.contentAsJSONObject());
-		this.put(BodyInstances.class, (r, p) -> r.contentAsJSONArray());
+		this.put(BodyInstance.class,  (r, p) -> r.contentAsYopable());
+		this.put(BodyInstances.class, (r, p) -> r.contentAsYopables());
 	}};
 
 	/**

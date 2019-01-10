@@ -72,6 +72,9 @@ public interface HttpMethod {
 	/** HTTP 'limit' parameter : only return X results. */
 	String PARAM_LIMIT = "limit";
 
+	/** JSON 'partial' parameter (only update provided fields) */
+	String PARAM_PARTIAL = "partial";
+
 	/** JSON error message key */
 	String ERROR = "error";
 
@@ -192,6 +195,20 @@ public interface HttpMethod {
 			.required(false)
 			.schema(new Schema().type("integer"))
 			.description("Set the number of results to return in your query on [" + forResource + "].");
+	}
+
+	/**
+	 * Create a {@link #PARAM_PARTIAL}' OpenAPI parameter for a given resource.
+	 * @param forResource the resource name (for {@link io.swagger.oas.models.parameters.Parameter#description}.
+	 * @return the OpenAPI 'partial' parameter
+	 */
+	static io.swagger.oas.models.parameters.Parameter partialParameter(String forResource) {
+		return new io.swagger.oas.models.parameters.Parameter()
+			.name(PARAM_PARTIAL)
+			.in("header")
+			.required(false)
+			.schema(new Schema().type("boolean"))
+			.description("Only update the provided fields of [" + forResource + "]. Only suitable for update operation.");
 	}
 
 	/**

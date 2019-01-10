@@ -138,6 +138,13 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "partial"
+        in: "header"
+        description: "Only update the provided fields of [Pojo]. Only suitable for\
+          \ update operation."
+        required: false
+        schema:
+          type: "boolean"
       requestBody:
         content:
           application/json:
@@ -772,6 +779,13 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "partial"
+        in: "header"
+        description: "Only update the provided fields of [Profile]. Only suitable\
+          \ for update operation."
+        required: false
+        schema:
+          type: "boolean"
       requestBody:
         content:
           application/json:
@@ -1402,6 +1416,13 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "partial"
+        in: "header"
+        description: "Only update the provided fields of [Action]. Only suitable for\
+          \ update operation."
+        required: false
+        schema:
+          type: "boolean"
       requestBody:
         content:
           application/json:
@@ -2027,6 +2048,13 @@ paths:
         in: "query"
         description: "Check natural ID when inserting [User] elements. Do update if\
           \ possible."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "partial"
+        in: "header"
+        description: "Only update the provided fields of [User]. Only suitable for\
+          \ update operation."
         required: false
         schema:
           type: "boolean"

@@ -328,6 +328,21 @@ class RestRequest {
 	}
 
 	/**
+	 * Read the {@link HttpMethod#PARAM_PARTIAL} header parameter value.
+	 * @return the partial header parameter value, or false if this header is not set.
+	 */
+	boolean isPartial() {
+		return this
+			.headers
+			.stream()
+			.filter(h -> HttpMethod.PARAM_PARTIAL.equals(h.getName()))
+			.map(Header::getValue)
+			.map(BooleanUtils::toBoolean)
+			.findFirst()
+			.orElse(false);
+	}
+
+	/**
 	 * Get the body from the input request.
 	 * @return {@link #content} read from {@link HttpServletRequest#getInputStream()}.
 	 */
@@ -370,7 +385,7 @@ class RestRequest {
 	 * @return a collection of Yopable from the incoming request
 	 * @throws YopBadContentException Could not parse the input content as JSON array
 	 */
-	Collection<Yopable> contentAsJSONArray() {
+	Collection<Yopable> contentAsYopables() {
 		try {
 			JsonElement objects = new JsonParser().parse(this.content);
 			return JSON.from(this.restResource, objects.getAsJsonArray());
@@ -387,7 +402,7 @@ class RestRequest {
 	 * @return a Yopable instance from the incoming request
 	 * @throws YopBadContentException Could not parse the input content as JSON object
 	 */
-	Yopable contentAsJSONObject() {
+	Yopable contentAsYopable() {
 		try {
 			JsonElement object = new JsonParser().parse(this.content);
 			return JSON.from(this.restResource, object.getAsJsonObject());
