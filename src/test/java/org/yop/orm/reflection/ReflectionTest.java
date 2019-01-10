@@ -155,6 +155,19 @@ public class ReflectionTest {
 		Assert.assertEquals(Jopo.class, target);
 	}
 
+	@Test
+	public void test_readFieldFromFieldName() {
+		Local local = new Local();
+		Map<String, String> map = new HashMap<>();
+		local.map = map;
+		Assert.assertTrue(map == Reflection.readField("map", local));
+	}
+
+	@Test (expected = YopRuntimeException.class)
+	public void test_readFieldFromInvalidFieldName() {
+		Reflection.readField("mapWithBadName", new Local());
+	}
+
 	private static class Local {
 		private Map<String, String> map;
 

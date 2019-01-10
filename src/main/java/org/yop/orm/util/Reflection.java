@@ -123,7 +123,7 @@ public class Reflection {
 	}
 
 	/**
-	 * Read the value of a field on a target objet.
+	 * Read the value of a field on a target object.
 	 * <br>
 	 * This method does not throw any {@link IllegalAccessException} !
 	 * @param field the field to read
@@ -137,6 +137,30 @@ public class Reflection {
 		} catch (IllegalAccessException | RuntimeException e) {
 			throw new YopRuntimeException(
 				"Could not read [" + Reflection.fieldToString(field) + "] on [" + onto + "]",
+				e
+			);
+		}
+	}
+
+	/**
+	 * Read the value of a field on a target object.
+	 * <br>
+	 * This method does not throw any {@link IllegalAccessException} !
+	 * @param fieldName the name of the field to read
+	 * @param onto      the target object where to read the field
+	 * @return the field value
+	 * @throws YopRuntimeException if the field could not be read or does not exist.
+	 */
+	public static Object readField(String fieldName, Object onto) {
+		try {
+			Field field = get(onto.getClass(), fieldName);
+			if (field == null) {
+				throw new YopRuntimeException("No field [" + fieldName + "] in [" + onto.getClass().getName() + "]");
+			}
+			return field.get(onto);
+		} catch (IllegalAccessException | RuntimeException e) {
+			throw new YopRuntimeException(
+				"Could not read [" + fieldName + "] on [" + onto + "]",
 				e
 			);
 		}
