@@ -263,6 +263,13 @@
 				</exclusions>
 			</dependency>
 
+			<!-- Servlet API -->
+			<dependency>
+				<groupId>javax.servlet</groupId>
+				<artifactId>javax.servlet-api</artifactId>
+				<version>3.1.0</version>
+			</dependency>
+
 			<!-- Apache commons -->
 			<dependency>
 				<groupId>commons-lang</groupId>

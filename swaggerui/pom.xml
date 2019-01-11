@@ -51,18 +51,32 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.y-op</groupId>
-			<artifactId>rest</artifactId>
-			<version>${project.version}</version>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.webjars</groupId>
 			<artifactId>swagger-ui</artifactId>
 			<version>${swaggerui.version}</version>
 		</dependency>
 
+		<!-- Apache commons -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+		</dependency>
+
 		<!-- Test dependencies : YOP-ORM/REST, JUnit & SQL drivers & Embedded Tomcat -->
+		<dependency>
+			<groupId>org.y-op</groupId>
+			<artifactId>rest</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.y-op</groupId>
 			<artifactId>orm</artifactId>
@@ -79,6 +93,10 @@
 		</dependency>
 
 		<!-- Logging -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
