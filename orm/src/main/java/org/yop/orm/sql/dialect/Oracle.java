@@ -1,4 +1,4 @@
-package org.yop.orm.util.dialect;
+package org.yop.orm.sql.dialect;
 
 import org.yop.orm.gen.Column;
 import org.yop.orm.gen.Table;
@@ -43,6 +43,21 @@ public class Oracle extends Dialect {
 	@Override
 	public String autoIncrementKeyWord() {
 		return "";
+	}
+
+	@Override
+	public String pathSeparator() {
+		return "#";
+	}
+
+	@Override
+	public int aliasMaxLength() {
+		return 29;
+	}
+
+	@Override
+	public boolean useSequences() {
+		return true;
 	}
 
 	/**

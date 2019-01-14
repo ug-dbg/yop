@@ -1,4 +1,4 @@
-package org.yop.orm.util.dialect;
+package org.yop.orm.sql.dialect;
 
 import com.google.common.primitives.Primitives;
 

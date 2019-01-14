@@ -1,4 +1,4 @@
-package org.yop.orm.util.dialect;
+package org.yop.orm.sql.dialect;
 
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.gen.Column;
@@ -87,6 +87,16 @@ public class MSSQL extends Dialect {
 			table.qualifiedName(),
 			MessageUtil.join(", ", elements)
 		);
+	}
+
+	@Override
+	public String pathSeparator() {
+		return "$";
+	}
+
+	@Override
+	public boolean useBatchInserts() {
+		return false;
 	}
 
 	@Override

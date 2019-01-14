@@ -1,4 +1,4 @@
-package org.yop.orm.util.dialect;
+package org.yop.orm.sql.dialect;
 
 import org.yop.orm.util.MessageUtil;
 
@@ -113,8 +113,7 @@ abstract class SQL {
 
 	/** COUNT(DISTINCT :idColumn) column selection */
 	static final String DEFAULT_COUNT_DISTINCT_PATTERN = join(
-		COUNT,
-		"(",
+		COUNT + "(",
 		DISTINCT,
 		PARAM_COLUMN,
 		")"

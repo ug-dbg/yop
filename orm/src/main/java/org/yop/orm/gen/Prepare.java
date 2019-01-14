@@ -7,7 +7,7 @@ import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
 import org.yop.orm.util.ORMUtil;
-import org.yop.orm.util.dialect.*;
+import org.yop.orm.sql.dialect.*;
 
 import java.io.File;
 import java.io.IOException;
