@@ -113,8 +113,7 @@ abstract class SQL {
 
 	/** COUNT(DISTINCT :idColumn) column selection */
 	static final String DEFAULT_COUNT_DISTINCT_PATTERN = join(
-		COUNT,
-		"(",
+		COUNT + "(",
 		DISTINCT,
 		PARAM_COLUMN,
 		")"
