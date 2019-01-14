@@ -45,6 +45,21 @@ public class Oracle extends Dialect {
 		return "";
 	}
 
+	@Override
+	public String pathSeparator() {
+		return "#";
+	}
+
+	@Override
+	public int aliasMaxLength() {
+		return 29;
+	}
+
+	@Override
+	public boolean useSequences() {
+		return true;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * <br><br>
