@@ -90,6 +90,16 @@ public class MSSQL extends Dialect {
 	}
 
 	@Override
+	public String pathSeparator() {
+		return "$";
+	}
+
+	@Override
+	public boolean useBatchInserts() {
+		return false;
+	}
+
+	@Override
 	public String selectAndLockPattern(boolean distinct) {
 		String defaultPattern = super.selectPattern(distinct);
 		return defaultPattern.replaceFirst(
