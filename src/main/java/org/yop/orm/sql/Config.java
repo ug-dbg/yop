@@ -18,10 +18,11 @@ import java.util.Map;
  *     <li>...</li>
  * </ul>
  * This config holds a default reference : {@link #DEFAULT}
- * which is initialized from the system properties or default values.
+ * which is initialized from the system properties or the dialect default values.
  * <br>
  * This config should be provided by the {@link org.yop.orm.sql.adapter.IConnection} connection.
  */
+@SuppressWarnings("WeakerAccess")
 public class Config {
 
 	public static final Config DEFAULT = new Config().initFromSystemProperties();
@@ -29,6 +30,7 @@ public class Config {
 	/** Classic SQL dot operator */
 	public static final String DOT = ".";
 
+	/** See {@link #defaultSequence()} */
 	public static final String SQL_DEFAULT_SEQ_DEFAULT = "→DEFAULT_SEQ←";
 
 	public static final String SHOW_SQL_PROPERTY            = "yop.show_sql";
@@ -44,14 +46,8 @@ public class Config {
 	private IDialect dialect = IDialect.defaultDialect();
 
 	public Config initFromSystemProperties() {
-		this.initFromSystemProperty(SHOW_SQL_PROPERTY,           "false");
-		this.initFromSystemProperty(SQL_SEPARATOR_PROPERTY,      "→");
-		this.initFromSystemProperty(SQL_MAX_LENGTH_PROPERTY,     "40");
-		this.initFromSystemProperty(SQL_USE_SEQUENCES_PROPERTY,  "false");
-		this.initFromSystemProperty(SQL_USE_BATCH_INS_PROPERTY,  "true");
-		this.initFromSystemProperty(SQL_MAX_PARAMETERS_PROPERTY, "1000");
-		this.initFromSystemProperty(SQL_DEFAULT_SEQ,             SQL_DEFAULT_SEQ_DEFAULT);
-		this.initFromSystemProperty(SQL_PAGING_METHOD,           Paging.Method.TWO_QUERIES.name());
+		this.initFromSystemProperty(SHOW_SQL_PROPERTY, "false");
+		this.initFromSystemProperty(SQL_DEFAULT_SEQ,   SQL_DEFAULT_SEQ_DEFAULT);
 		return this;
 	}
 
@@ -106,17 +102,21 @@ public class Config {
 
 	/** alias components separator */
 	public String sqlSeparator() {
-		return this.config.get(SQL_SEPARATOR_PROPERTY);
+		return this.config.getOrDefault(SQL_SEPARATOR_PROPERTY, this.dialect.pathSeparator());
 	}
 
 	/** The max length allowed for aliasing in SQL */
 	public int aliasMaxLength() {
-		return Integer.valueOf(this.config.get(SQL_MAX_LENGTH_PROPERTY));
+		return this.config.containsKey(SQL_MAX_LENGTH_PROPERTY)
+			? Integer.valueOf(this.config.get(SQL_MAX_LENGTH_PROPERTY))
+			: this.dialect.aliasMaxLength();
 	}
 
 	/** use sequences (Oracle style) */
 	public boolean useSequences() {
-		return "true".equals(this.config.get(SQL_USE_SEQUENCES_PROPERTY));
+		return this.config.containsKey(SQL_USE_SEQUENCES_PROPERTY)
+			? "true".equals(this.config.get(SQL_USE_SEQUENCES_PROPERTY))
+			: this.dialect.useSequences();
 	}
 
 	/**
@@ -129,12 +129,16 @@ public class Config {
 	 * </ul>
 	 */
 	public boolean useBatchInserts() {
-		return "true".equals(this.config.get(SQL_USE_BATCH_INS_PROPERTY));
+		return this.config.containsKey(SQL_USE_BATCH_INS_PROPERTY)
+			? "true".equals(this.config.get(SQL_USE_BATCH_INS_PROPERTY))
+			: this.dialect.useBatchInserts();
 	}
 
 	/** Max number of parameters in a query */
 	public Integer maxParams() {
-		return Integer.valueOf(this.config.get(SQL_MAX_PARAMETERS_PROPERTY));
+		return this.config.containsKey(SQL_MAX_PARAMETERS_PROPERTY)
+			? Integer.valueOf(this.config.get(SQL_MAX_PARAMETERS_PROPERTY))
+			: this.dialect.maxParameters();
 	}
 
 	/**
@@ -156,7 +160,9 @@ public class Config {
 	 * @return the paging method to use
 	 */
 	public Paging.Method getPagingMethod() {
-		return Paging.Method.byName(this.config.get(SQL_PAGING_METHOD));
+		return this.config.containsKey(SQL_PAGING_METHOD)
+			? Paging.Method.byName(this.config.get(SQL_PAGING_METHOD))
+			: this.dialect.pagingMethod();
 	}
 
 	/**

@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.gen.Column;
 import org.yop.orm.gen.ForeignKey;
 import org.yop.orm.gen.Table;
+import org.yop.orm.query.Paging;
 import org.yop.orm.sql.SQLPart;
 import org.yop.orm.util.MessageUtil;
 
@@ -25,6 +26,7 @@ import static org.yop.orm.util.dialect.SQL.*;
  * </ul>
  * NB : Yop tries to generate some very basic SQL CRUD queries that does not rely on an SQL dialect.
  */
+@SuppressWarnings("unused")
 public interface IDialect {
 
 	/**
@@ -52,6 +54,58 @@ public interface IDialect {
 	 * @return the java type class
 	 */
 	Class<?> getForType(int sqlType);
+
+	/**
+	 * Yop uses SQL column labels to store the path of an entity in the data graph.
+	 * <br>
+	 * This is the separator to use for these paths.
+	 * @return default value : '→'
+	 */
+	default String pathSeparator() {
+		return "→";
+	}
+
+	/**
+	 * When a column name in a query is too long, YOP replaces it with a generated alias.
+	 * @return default value : 40
+	 */
+	default int aliasMaxLength() {
+		return 40;
+	}
+
+	/**
+	 * Some dialects does not support auto-increment syntax and uses sequences instead, e.g. Oracle.
+	 * @return default value : false
+	 */
+	default boolean useSequences() {
+		return false;
+	}
+
+	/**
+	 * Some DBMS does not support batch inserts.
+	 * @return default value : true
+	 */
+	default boolean useBatchInserts() {
+		return true;
+	}
+
+	/**
+	 * The maximum amount of JDBC parameters this dialect supports.
+	 * <br>
+	 * This is mostly used when deleting by ID.
+	 * @return default value : 1000
+	 */
+	default int maxParameters() {
+		return 1000;
+	}
+
+	/**
+	 * The paging method of this dialect. See {@link Paging}.
+	 * @return default value : {@link org.yop.orm.query.Paging.Method#TWO_QUERIES}
+	 */
+	default Paging.Method pagingMethod() {
+		return Paging.Method.TWO_QUERIES;
+	}
 
 	/**
 	 * Create a default dialect implementation, with "VARCHAR" default type.
