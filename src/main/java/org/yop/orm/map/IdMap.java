@@ -6,7 +6,6 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Executor;
-import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.Results;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
@@ -70,7 +69,7 @@ public class IdMap {
 	/**
 	 * The executor action that can be used to map a specific SQL request resultset into a new instance of IdMap.
 	 * <br>
-	 * See : {@link org.yop.orm.query.Select#toSQLIDsRequest(Parameters, boolean, Config)}.
+	 * See : {@link org.yop.orm.query.Select#toSQLIDsRequest(boolean, Config)}.
 	 * @param target the root target class (Context will be built from it)
 	 * @param config the SQL config. Needed for the sql separator to use.
 	 * @return the Action that can be given to the {@link Executor}
