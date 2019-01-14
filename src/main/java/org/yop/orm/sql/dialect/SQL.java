@@ -1,4 +1,4 @@
-package org.yop.orm.util.dialect;
+package org.yop.orm.sql.dialect;
 
 import org.yop.orm.util.MessageUtil;
 

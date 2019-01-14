@@ -7,7 +7,7 @@ import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
-import org.yop.orm.util.dialect.IDialect;
+import org.yop.orm.sql.dialect.IDialect;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;

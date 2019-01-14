@@ -1,4 +1,4 @@
-package org.yop.orm.util.dialect;
+package org.yop.orm.sql.dialect;
 
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.gen.Column;
@@ -13,7 +13,7 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.yop.orm.util.dialect.SQL.*;
+import static org.yop.orm.sql.dialect.SQL.*;
 
 /**
  * Interface of an SQL dialect.

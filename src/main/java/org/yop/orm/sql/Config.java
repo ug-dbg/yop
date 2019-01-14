@@ -1,7 +1,7 @@
 package org.yop.orm.sql;
 
 import org.yop.orm.query.Paging;
-import org.yop.orm.util.dialect.IDialect;
+import org.yop.orm.sql.dialect.IDialect;
 
 import java.lang.reflect.Field;
 import java.sql.Statement;
