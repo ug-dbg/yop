@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopInvalidJoinException;
+import org.yop.orm.exception.YopJoinCycleException;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
@@ -14,10 +15,7 @@ import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -159,13 +157,39 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	 * @param <T> the source type
 	 */
 	static <T extends Yopable> void joinAll(Class<T> source, Collection<IJoin<T, ?  extends Yopable>> joins) {
+		joinAll(source, joins, new HashSet<>());
+	}
+
+	/**
+	 * Join all relation fields from the source class.
+	 * @param source the source class, where fields will be searched
+	 * @param joins  the target joins collection
+	 * @param <T> the source type
+	 */
+	static <T extends Yopable> void joinAll(
+		Class<T> source,
+		Collection<IJoin<T, ?  extends Yopable>> joins,
+		Set<Field> cycleBreaker) {
+
 		List<Field> fields = ORMUtil.nonTransientJoinedFields(source);
+
 		for (Field field : fields) {
+			if (cycleBreaker.contains(field)) {
+				throw new YopJoinCycleException(field);
+			}
+			cycleBreaker.add(field);
+
 			IJoin<T, Yopable> join = new FieldJoin<>(field);
 			joins.add(join);
 
 			Class<Yopable> newTarget = join.getTarget(field);
-			joinAll(newTarget, join.getJoins());
+
+			try {
+				joinAll(newTarget, join.getJoins(), cycleBreaker);
+			} catch (YopJoinCycleException e) {
+				e.addProcessedJoins((Collection) joins);
+				throw e;
+			}
 		}
 	}
 
