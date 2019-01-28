@@ -24,6 +24,7 @@ import static org.yop.orm.util.Reflection.isNotTransient;
 /**
  * Some utility methods to read ORM annotations, find ID field, column type...
  */
+@SuppressWarnings("WeakerAccess")
 public class ORMUtil {
 
 	private static final Logger logger = LoggerFactory.getLogger(ORMUtil.class);
@@ -297,9 +298,10 @@ public class ORMUtil {
 
 	/**
 	 * Generate an unique shortened alias for the given one
-	 * @param alias the alias that is too long
+	 * @param alias the alias that is too long. Unused for now.
 	 * @return an unique alphabetic alias
 	 */
+	@SuppressWarnings("unused")
 	public static String uniqueShortened(String alias, Config config) {
 		return RandomStringUtils.randomAlphabetic(Math.min(config.aliasMaxLength(), 10));
 	}
