@@ -12,10 +12,7 @@ import org.yop.orm.evaluation.Path;
 import org.yop.orm.exception.YopInvalidJoinException;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.IdMap;
-import org.yop.orm.query.Delete;
-import org.yop.orm.query.Select;
-import org.yop.orm.query.Upsert;
-import org.yop.orm.query.Where;
+import org.yop.orm.query.*;
 import org.yop.orm.query.batch.BatchUpsert;
 import org.yop.orm.simple.model.*;
 import org.yop.orm.sql.Executor;
@@ -817,6 +814,53 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertEquals(parent, pojo1.getParent());
 			Assert.assertEquals(Collections.singletonList(pojo1), pojo2.getChildren());
 			Assert.assertTrue(pojo1.getParent() == pojo2);
+		}
+	}
+
+	@Test
+	public void testRecurseParentChildren() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Pojo pojo = new Pojo();
+			pojo.setVersion(1);
+			pojo.setType(Pojo.Type.FOO);
+			pojo.setActive(true);
+
+			Pojo parent = new Pojo();
+			parent.setVersion(0);
+			parent.setType(Pojo.Type.FOO);
+			parent.setActive(true);
+			pojo.setParent(parent);
+
+			for (int i = 1; i <= 10; i++) {
+				Pojo child = new Pojo();
+				child.setVersion(pojo.getVersion() + i);
+				child.setType(Pojo.Type.BAR);
+				child.setActive(true);
+				pojo.getChildren().add(child);
+			}
+
+			Upsert
+				.from(Pojo.class).onto(pojo)
+				.join(Pojo::getParent)
+				.join(Pojo::getChildren)
+				.execute(connection);
+
+			Pojo fromDB = Select
+				.from(Pojo.class)
+				.where(Where.compare(Pojo::getVersion, Operator.EQ, pojo.getVersion()))
+				.join(Pojo::getParent)
+				.join(Pojo::getChildren)
+				.uniqueResult(connection);
+
+			Recurse
+				.from(Pojo.class)
+				.onto(fromDB)
+				.join(Join.to(Pojo::getParent))
+				.join(JoinSet.to(Pojo::getChildren))
+				.execute(connection);
+			Assert.assertTrue(fromDB.getParent().getChildren().get(0) == fromDB);
+			Assert.assertEquals(10, fromDB.getChildren().size());
+			Assert.assertTrue(fromDB.getChildren().get(0).getParent() == fromDB);
 		}
 	}
 
