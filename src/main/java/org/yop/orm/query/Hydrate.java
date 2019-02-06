@@ -5,13 +5,14 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
-import org.yop.orm.util.JoinUtil;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
-import java.util.*;
-import java.util.function.Function;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -24,25 +25,19 @@ import java.util.stream.Collectors;
  *
  * @param <T> the target type
  */
-public class Hydrate<T extends Yopable> {
+public class Hydrate<T extends Yopable> extends AbstractRequest<Hydrate<T>, T>{
 
 	private static final Logger logger = LoggerFactory.getLogger(Hydrate.class);
 
-	/** The target class */
-	private final Class<T> target;
-
 	/** Elements to hydrate */
 	private final Map<Long, T> elements = new HashMap<>() ;
-
-	/** Relations to hydrate */
-	private final Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
 
 	/**
 	 * Private constructor. Please use {@link #from(Class)} which does the same job.
 	 * @param target the target class
 	 */
 	private Hydrate(Class<T> target){
-		this.target = target;
+		super(Context.root(target));
 	}
 
 	/**
@@ -53,42 +48,6 @@ public class Hydrate<T extends Yopable> {
 	 */
 	public static <T extends Yopable> Hydrate<T> from(Class<T> target) {
 		return new Hydrate<>(target);
-	}
-
-	/**
-	 * Fetch the whole data graph for the target elements. Stop on transient fields.
-	 * <br>
-	 * <b>⚠⚠⚠ There must be no cycle in the data graph model ! ⚠⚠⚠</b>
-	 * <br><br>
-	 * <b>⚠⚠⚠ Any join previously set is cleared ! Please add transient fetch clause after this ! ⚠⚠⚠</b>
-	 * @return the current Hydrate instance, for chaining purposes
-	 */
-	public Hydrate<T> fetchAll() {
-		this.joins.clear();
-		JoinUtil.joinAll(this.target, this.joins);
-		return this;
-	}
-
-	/**
-	 * Add a simple relation to be hydrated on the target elements.
-	 * @param getter the relation getter
-	 * @param <R> the target type of the relation
-	 * @return the current Hydrate instance, for chaining purposes
-	 */
-	public <R extends Yopable> Hydrate<T> fetch(Function<T, R> getter) {
-		this.joins.add(Join.to(getter));
-		return this;
-	}
-
-	/**
-	 * Add a N-relation to be hydrated on the target elements.
-	 * @param getter the relation getter
-	 * @param <R> the target type of the relation
-	 * @return the current Hydrate instance, for chaining purposes
-	 */
-	public <R extends Yopable> Hydrate<T> fetchSet(Function<T, Collection<R>> getter) {
-		this.joins.add(JoinSet.to(getter));
-		return this;
 	}
 
 	/**
@@ -138,7 +97,7 @@ public class Hydrate<T extends Yopable> {
 		}
 
 		Set<Long> ids = this.elements.values().stream().map(Yopable::getId).collect(Collectors.toSet());
-		Select<T> select = Select.from(this.target).where(Where.id(ids));
+		Select<T> select = Select.from(this.getTarget()).where(Where.id(ids));
 		this.joins.forEach(select::join);
 		Set<T> elementsFromDB = select.execute(connection);
 
@@ -158,7 +117,7 @@ public class Hydrate<T extends Yopable> {
 	 */
 	private void assign(T element, T fromDB, IJoin<T, ?> join) {
 		Collection<? extends Yopable> relationValue = join.getTarget(fromDB);
-		Field relationField = join.getField(this.target);
+		Field relationField = join.getField(this.getTarget());
 
 		if (ORMUtil.isCollection(relationField)) {
 			Reflection.set(relationField, element, relationValue);

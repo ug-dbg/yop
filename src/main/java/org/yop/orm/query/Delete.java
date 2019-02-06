@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to delete.
  */
-public class Delete<T extends Yopable> extends AbstractRequest<Delete<T>, T> implements JsonAble {
+public class Delete<T extends Yopable> extends AbstractWhereRequest<Delete<T>, T> implements JsonAble {
 
 	private Delete(Class<T> target) {
 		super(Context.root(target));
@@ -116,6 +116,7 @@ public class Delete<T extends Yopable> extends AbstractRequest<Delete<T>, T> imp
 	 * <b>The where and joins clauses are not duplicated when creating the SELECT query !</b>
 	 * @return a {@link Select} query with this {@link Delete} parameters (context, where and joins)
 	 */
+	@SuppressWarnings("WeakerAccess")
 	public Select<T> toSelect() {
 		return new Select<>(this.context, this.where, this.joins);
 	}

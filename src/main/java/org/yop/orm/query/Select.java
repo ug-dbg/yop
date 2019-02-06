@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to search for.
  */
-public class Select<T extends Yopable> extends AbstractRequest<Select<T>, T> implements JsonAble {
+public class Select<T extends Yopable> extends AbstractWhereRequest<Select<T>, T> implements JsonAble {
 
 	private static final Logger logger = LoggerFactory.getLogger(Select.class);
 

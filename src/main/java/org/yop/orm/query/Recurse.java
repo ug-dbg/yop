@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
-import org.yop.orm.util.JoinUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
@@ -64,25 +63,19 @@ import java.util.stream.Collectors;
  *  </pre>
  * @param <T> the target type.
  */
-public class Recurse<T extends Yopable> {
+public class Recurse<T extends Yopable> extends AbstractRequest<Recurse<T>, T> {
 
 	private static final Logger logger = LoggerFactory.getLogger(Recurse.class);
 
-	/** Target class */
-	protected final Class<T> target;
-
 	/** Elements on which to recurse */
 	protected final Collection<T> elements = new ArrayList<>();
-
-	/** Join clauses */
-	private final Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
 
 	/**
 	 * Protected constructor, please use {@link #from(Class)}
 	 * @param target the target class
 	 */
 	private Recurse(Class<T> target) {
-		this.target = target;
+		super(Context.root(target));
 	}
 
 	/**
@@ -112,49 +105,6 @@ public class Recurse<T extends Yopable> {
 	 */
 	public Recurse<T> onto(Collection<T> elements) {
 		this.elements.addAll(elements);
-		return this;
-	}
-
-	/**
-	 * (Left) join to a new type.
-	 * @param join the join clause
-	 * @param <R> the target join type
-	 * @return the current SELECT request, for chaining purpose
-	 */
-	public <R extends Yopable> Recurse<T> join(IJoin<T, R> join) {
-		this.joins.add(join);
-		return this;
-	}
-
-	/**
-	 * Fetch the whole data graph. Stop on transient fields.
-	 * <br>
-	 * <b>
-	 *     ⚠⚠⚠
-	 *     <br>
-	 *     There must be no cycle in the data graph model !
-	 *     <br>
-	 *     In a recurse query, any found element where a join clause is a applicable
-	 *     will trigger a sub-select query, using this join clause.
-	 *     <br>
-	 *     ⚠⚠⚠
-	 * </b>
-	 * <br><br>
-	 * <b>⚠⚠⚠ Any join previously set is cleared ! Please add transient fetch clause after this ! ⚠⚠⚠</b>
-	 * @return the current RECURSE request, for chaining purpose
-	 */
-	public Recurse<T> joinAll() {
-		this.joins.clear();
-		JoinUtil.joinAll(this.target, this.joins);
-		return this;
-	}
-
-	/**
-	 * Add the joins which are targeted by profiles, using {@link org.yop.orm.annotations.JoinProfile} on fields.
-	 * @return the current request, for chaining purpose
-	 */
-	public Recurse<T> joinProfiles(String... profiles) {
-		JoinUtil.joinProfiles(this.target, this.joins, profiles);
 		return this;
 	}
 
@@ -222,18 +172,18 @@ public class Recurse<T extends Yopable> {
 			);
 		}
 
-		Select<T> select = Select.from(this.target).setCache(cache).where(Where.id(byID.keySet()));
+		Select<T> select = Select.from(this.getTarget()).setCache(cache).where(Where.id(byID.keySet()));
 		this.joins.forEach(select::join);
 		Set<T> fetched = select.execute(connection, strategy);
 
 		Collection<T> next = new HashSet<>();
 		for (IJoin<T, ?> join : this.joins) {
 			// Assign the data, reading the field from the join directive and the fetched data
-			Field field = join.getField(this.target);
+			Field field = join.getField(this.getTarget());
 			fetched.forEach(from -> Reflection.setFrom(field, from, byID.get(from.getId())));
 
 			// Walk through the fetched data using the 'join' directive and grab any target type object
-			recurseCandidates(join, this.elements, next, this.target);
+			recurseCandidates(join, this.elements, next, this.getTarget());
 		}
 
 		// Do not recurse on the source elements of this RECURSE query
@@ -245,7 +195,7 @@ public class Recurse<T extends Yopable> {
 		// Recurse !
 		if (! next.isEmpty()) {
 			done.addAll(next);
-			Recurse.from(this.target).join(this.joins).onto(next).recurse(connection, cache, done, strategy);
+			Recurse.from(this.getTarget()).join(this.joins).onto(next).recurse(connection, cache, done, strategy);
 		}
 	}
 

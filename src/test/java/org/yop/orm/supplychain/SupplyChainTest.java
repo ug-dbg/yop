@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
-import org.yop.orm.evaluation.In;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.query.*;
@@ -79,7 +78,7 @@ public class SupplyChainTest extends DBMSSwitch {
 			Set<Long> capacities = new TreeSet<>(Arrays.asList(2L, 4L, 6L));
 			Set<Warehouse> warehouses = Select
 				.from(Warehouse.class)
-				.where(new In(Warehouse::getCapacity, capacities))
+				.where(Warehouse::getCapacity, capacities)
 				.execute(connection);
 			Assert.assertEquals(capacities.size(), warehouses.size());
 			Assert.assertEquals(
@@ -90,7 +89,7 @@ public class SupplyChainTest extends DBMSSwitch {
 			Set<String> addresses = new TreeSet<>(Arrays.asList("1 My warehouses avenue", "2 My warehouses avenue"));
 			warehouses = Select
 				.from(Warehouse.class)
-				.where(new In(Warehouse::getAddress, addresses))
+				.where(Warehouse::getAddress, addresses)
 				.execute(connection);
 			Assert.assertEquals(addresses.size(), warehouses.size());
 			Assert.assertEquals(

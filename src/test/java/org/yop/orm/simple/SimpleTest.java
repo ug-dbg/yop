@@ -83,7 +83,7 @@ public class SimpleTest extends DBMSSwitch {
 
 			Pojo fromDB = Select
 				.from(Pojo.class)
-				.where(Where.compare(Pojo::getVersion, Operator.EQ, pojo.getVersion()))
+				.where(Pojo::getVersion, Operator.EQ, pojo.getVersion())
 				.joinProfiles("pojo_children_and_parent")
 				.uniqueResult(connection);
 			Assert.assertEquals(pojo, fromDB);
@@ -756,7 +756,7 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertEquals(1, found.size());
 			Pojo fromNaturalID = found.iterator().next();
 
-			hydrate(Pojo.class).onto(fromNaturalID).fetchSet(Pojo::getJopos).execute(connection);
+			hydrate(Pojo.class).onto(fromNaturalID).join(Pojo::getJopos).execute(connection);
 			Assert.assertEquals(newPojo.getJopos(), fromNaturalID.getJopos());
 			Assert.assertEquals(0, fromNaturalID.getOthers().size());
 
@@ -764,7 +764,7 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertEquals(1, found.size());
 			fromNaturalID = found.iterator().next();
 
-			hydrate(Pojo.class).onto(fromNaturalID).fetchAll().execute(connection);
+			hydrate(Pojo.class).onto(fromNaturalID).joinAll().execute(connection);
 			Assert.assertEquals(newPojo.getJopos(),  fromNaturalID.getJopos());
 			Assert.assertEquals(newPojo.getOthers(), fromNaturalID.getOthers());
 
@@ -783,7 +783,7 @@ public class SimpleTest extends DBMSSwitch {
 			found = select.execute(connection);
 			Assert.assertEquals(1, found.size());
 			fromNaturalID = found.iterator().next();
-			hydrate(Pojo.class).onto(fromNaturalID).fetchAll().fetch(Pojo::getParent).execute(connection);
+			hydrate(Pojo.class).onto(fromNaturalID).joinAll().join(Pojo::getParent).execute(connection);
 			Assert.assertEquals(newPojo.getJopos(),  fromNaturalID.getJopos());
 			Assert.assertEquals(newPojo.getOthers(), fromNaturalID.getOthers());
 			Assert.assertEquals(parent, fromNaturalID.getParent());
@@ -797,9 +797,9 @@ public class SimpleTest extends DBMSSwitch {
 
 			hydrate(Pojo.class)
 				.onto(Arrays.asList(pojo1, pojo2))
-				.fetchAll()
-				.fetch(Pojo::getParent)
-				.fetchSet(Pojo::getChildren)
+				.joinAll()
+				.join(Pojo::getParent)
+				.join(Pojo::getChildren)
 				.execute(connection);
 
 			Assert.assertEquals(parent, pojo1.getParent());

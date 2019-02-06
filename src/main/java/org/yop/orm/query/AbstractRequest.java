@@ -1,7 +1,5 @@
 package org.yop.orm.query;
 
-import org.yop.orm.evaluation.Comparison;
-import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopInvalidJoinException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.json.JSON;
@@ -13,17 +11,14 @@ import java.util.Set;
 import java.util.function.Function;
 
 /**
- * A request that have join clauses, a where clause and relative to a context (e.g. Select, Delete).
- * @param <Request> the request type (e.g. Select, Delete)
+ * A request that have join clauses relative to a context (e.g. Select, Delete, Upsert...).
+ * @param <Request> the request type (e.g. Select, Upsert, Delete...)
  * @param <T> the request target type
  */
 abstract class AbstractRequest<Request extends AbstractRequest, T extends Yopable> {
 
 	/** Root context : target class and SQL path **/
 	protected final Context<T> context;
-
-	/** Where clauses */
-	protected Where<T> where = new Where<>();
 
 	/** Join clauses */
 	protected IJoin.Joins<T> joins = new IJoin.Joins<>();
@@ -42,36 +37,6 @@ abstract class AbstractRequest<Request extends AbstractRequest, T extends Yopabl
 	 */
 	protected Class<T> getTarget() {
 		return this.context.getTarget();
-	}
-
-	/**
-	 * The where clause of this SELECT request
-	 * @return the Where clause
-	 */
-	public Where<T> where() {
-		return this.where;
-	}
-
-	/**
-	 * Add an evaluation to the where clause.
-	 * @param evaluation the evaluation
-	 * @return the current SELECT request, for chaining purposes
-	 */
-	@SuppressWarnings("unchecked")
-	public Request where(Evaluation evaluation) {
-		this.where.and(evaluation);
-		return (Request) this;
-	}
-
-	/**
-	 * Add several comparisons to the where clause, with an OR operator between them.
-	 * @param compare the comparisons
-	 * @return the current SELECT request, for chaining purposes
-	 */
-	@SuppressWarnings("unchecked")
-	public Request or(Comparison... compare) {
-		this.where.or(compare);
-		return (Request) this;
 	}
 
 	/**
