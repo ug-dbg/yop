@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.util.JoinUtil;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
@@ -64,7 +65,7 @@ public class Hydrate<T extends Yopable> {
 	 */
 	public Hydrate<T> fetchAll() {
 		this.joins.clear();
-		IJoin.joinAll(this.target, this.joins);
+		JoinUtil.joinAll(this.target, this.joins);
 		return this;
 	}
 

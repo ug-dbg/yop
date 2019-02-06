@@ -7,6 +7,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.json.JSON;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.JoinClause;
+import org.yop.orm.util.JoinUtil;
 
 import java.util.Set;
 import java.util.function.Function;
@@ -173,7 +174,17 @@ abstract class AbstractRequest<Request extends AbstractRequest, T extends Yopabl
 	@SuppressWarnings("unchecked")
 	public Request joinAll() {
 		this.joins.clear();
-		IJoin.joinAll(this.context.getTarget(), this.joins);
+		JoinUtil.joinAll(this.context.getTarget(), this.joins);
+		return (Request) this;
+	}
+
+	/**
+	 * Add the joins which are targeted by profiles, using {@link org.yop.orm.annotations.JoinProfile} on fields.
+	 * @return the current request, for chaining purpose
+	 */
+	@SuppressWarnings("unchecked")
+	public Request joinProfiles(String... profiles) {
+		JoinUtil.joinProfiles(this.context.getTarget(), this.joins, profiles);
 		return (Request) this;
 	}
 

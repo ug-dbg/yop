@@ -19,6 +19,7 @@ import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Query;
 import org.yop.orm.sql.SimpleQuery;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.util.JoinUtil;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -41,6 +42,66 @@ public class SimpleTest extends DBMSSwitch {
 	@Override
 	protected String getPackageNames() {
 		return "org.yop.orm.simple.model";
+	}
+
+	@Test
+	public void testPrintJoins() {
+		IJoin.Joins<Pojo> joins = new IJoin.Joins<>();
+		JoinUtil.joinAll(Pojo.class, joins);
+		joins.add(Join.to(Pojo::getParent));
+		joins.add(JoinSet.to(Pojo::getChildren));
+		joins.print(Pojo.class);
+
+		joins = new IJoin.Joins<>();
+		JoinUtil.joinProfiles(Pojo.class, joins, "pojo_profile1", "pojo_children_and_parent");
+		joins.print(Pojo.class);
+	}
+
+	@Test
+	public void testProfileJoins() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Pojo pojo = new Pojo();
+			pojo.setVersion(1);
+			pojo.setType(Pojo.Type.FOO);
+			pojo.setActive(true);
+
+			Pojo parent = new Pojo();
+			parent.setVersion(0);
+			parent.setType(Pojo.Type.FOO);
+			parent.setActive(true);
+			pojo.setParent(parent);
+
+			for (int i = 1; i <= 10; i++) {
+				Pojo child = new Pojo();
+				child.setVersion(pojo.getVersion() + i);
+				child.setType(Pojo.Type.BAR);
+				child.setActive(true);
+				pojo.getChildren().add(child);
+			}
+
+			Upsert.from(Pojo.class).onto(pojo).joinProfiles("pojo_children_and_parent").execute(connection);
+
+			Pojo fromDB = Select
+				.from(Pojo.class)
+				.where(Where.compare(Pojo::getVersion, Operator.EQ, pojo.getVersion()))
+				.joinProfiles("pojo_children_and_parent")
+				.uniqueResult(connection);
+			Assert.assertEquals(pojo, fromDB);
+			Assert.assertEquals(10, fromDB.getChildren().size());
+			Assert.assertEquals(new HashSet<>(pojo.getChildren()), new HashSet<>(fromDB.getChildren()));
+			Assert.assertNotNull(pojo.getParent());
+			Assert.assertEquals(pojo.getParent(), fromDB.getParent());
+
+			Recurse
+				.from(Pojo.class)
+				.onto(fromDB)
+				.join(Join.to(Pojo::getParent))
+				.join(JoinSet.to(Pojo::getChildren))
+				.execute(connection);
+			Assert.assertTrue(fromDB.getParent().getChildren().get(0) == fromDB);
+			Assert.assertEquals(10, fromDB.getChildren().size());
+			Assert.assertTrue(fromDB.getChildren().get(0).getParent() == fromDB);
+		}
 	}
 
 	@Test

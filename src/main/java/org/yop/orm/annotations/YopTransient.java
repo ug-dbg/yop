@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
  * but can be explicitly joined using a Join directive.
  * </b>
  * ⚠⚠⚠
+ * <br>
+ * This can be used in conjunction with {@link JoinProfile}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

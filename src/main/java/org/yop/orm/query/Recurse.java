@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.util.JoinUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
@@ -144,7 +145,16 @@ public class Recurse<T extends Yopable> {
 	 */
 	public Recurse<T> joinAll() {
 		this.joins.clear();
-		IJoin.joinAll(this.target, this.joins);
+		JoinUtil.joinAll(this.target, this.joins);
+		return this;
+	}
+
+	/**
+	 * Add the joins which are targeted by profiles, using {@link org.yop.orm.annotations.JoinProfile} on fields.
+	 * @return the current request, for chaining purpose
+	 */
+	public Recurse<T> joinProfiles(String... profiles) {
+		JoinUtil.joinProfiles(this.target, this.joins, profiles);
 		return this;
 	}
 

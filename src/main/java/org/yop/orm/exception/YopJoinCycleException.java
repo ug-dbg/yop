@@ -1,5 +1,6 @@
 package org.yop.orm.exception;
 
+import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
 import org.yop.orm.util.Reflection;
 
@@ -9,11 +10,11 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * The {@link org.yop.orm.query.AbstractRequest#joinAll()} cannot work correctly with cycles in the fetch graph.
+ * The {@link org.yop.orm.query.AbstractRequest#joinAll()} cuts cycles in the fetch graph.
  * <br>
- * Any cycle should be cut using the {@link org.yop.orm.annotations.YopTransient} or the 'transient' keyword.
+ * Any cycle can be explicitly cut using the {@link org.yop.orm.annotations.YopTransient} or the 'transient' keyword.
  * <br>
- * But the 'joinAll' method must be able to throw an exception with as much details about the cycle as possible.
+ * The 'joinAll' method uses this exception (with as much details as possible) when cutting cycles.
  */
 @SuppressWarnings("unused")
 public class YopJoinCycleException extends YopRuntimeException {
@@ -31,7 +32,7 @@ public class YopJoinCycleException extends YopRuntimeException {
 	 * Add joins that were processed before the cycle was detected. They will be printed in {@link #getMessage()}.
 	 * @param processedJoins the processed joins that were successfully processed
 	 */
-	public void addProcessedJoins(Collection<IJoin> processedJoins) {
+	public <T extends Yopable> void addProcessedJoins(Collection<IJoin<T, ? extends Yopable>> processedJoins) {
 		this.processedJoins.addAll(processedJoins);
 	}
 

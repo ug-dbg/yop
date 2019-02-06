@@ -3,19 +3,23 @@ package org.yop.orm.query;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopInvalidJoinException;
-import org.yop.orm.exception.YopJoinCycleException;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.JoinClause;
+import org.yop.orm.util.JoinUtil;
 import org.yop.orm.util.MessageUtil;
-import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -37,7 +41,10 @@ import java.util.function.Function;
  * @param <From> the source type
  * @param <To>   the target type
  */
+@SuppressWarnings("unused")
 public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAble {
+
+	Logger logger = LoggerFactory.getLogger(IJoin.class);
 
 	String FIELD = "field";
 
@@ -151,46 +158,25 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	}
 
 	/**
-	 * Join all relation fields from the source class.
-	 * @param source the source class, where fields will be searched
-	 * @param joins  the target joins collection
-	 * @param <T> the source type
+	 * Print the current join into the {@link IJoin} logger.
+	 * @param from the source class for this join
 	 */
-	static <T extends Yopable> void joinAll(Class<T> source, Collection<IJoin<T, ?  extends Yopable>> joins) {
-		joinAll(source, joins, new HashSet<>());
+	default void print(Class<From> from) {
+		logger.info(from.getName());
+		List<String> lines = new ArrayList<>();
+		JoinUtil.printJoin("", from, this, true, lines);
+		lines.forEach(logger::info);
 	}
 
 	/**
-	 * Join all relation fields from the source class.
-	 * @param source the source class, where fields will be searched
-	 * @param joins  the target joins collection
-	 * @param <T> the source type
+	 * Create a new {@link IJoin} for the given field for the From → To type relation.
+	 * @param field the field on which the join relies
+	 * @param <From> the source type
+	 * @param <To>   the target type
+	 * @return a new IJoin instance for the given field. The instance is actually a {@link FieldJoin}.
 	 */
-	static <T extends Yopable> void joinAll(
-		Class<T> source,
-		Collection<IJoin<T, ?  extends Yopable>> joins,
-		Set<Field> cycleBreaker) {
-
-		List<Field> fields = ORMUtil.nonTransientJoinedFields(source);
-
-		for (Field field : fields) {
-			if (cycleBreaker.contains(field)) {
-				throw new YopJoinCycleException(field);
-			}
-			cycleBreaker.add(field);
-
-			IJoin<T, Yopable> join = new FieldJoin<>(field);
-			joins.add(join);
-
-			Class<Yopable> newTarget = join.getTarget(field);
-
-			try {
-				joinAll(newTarget, join.getJoins(), cycleBreaker);
-			} catch (YopJoinCycleException e) {
-				e.addProcessedJoins((Collection) joins);
-				throw e;
-			}
-		}
+	static <From extends Yopable, To extends Yopable> IJoin<From, To> onField(Field field) {
+		return new FieldJoin<>(field);
 	}
 
 	/**
@@ -211,6 +197,23 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 			JsonArray out = new JsonArray();
 			this.forEach(j -> out.add(j.toJSON(j.to((Context) context))));
 			return out;
+		}
+
+		/**
+		 * Print the current joins into the {@link IJoin} logger.
+		 * @param from the source class for these joins.
+		 */
+		public void print(Class<From> from) {
+			logger.info(from.getName());
+			List<String> lines = new ArrayList<>();
+			for (int i = 0; i < this.size() - 1; i++) {
+				JoinUtil.printJoin("", from, this.get(i), false, lines);
+			}
+
+			if (this.size() > 0) {
+				JoinUtil.printJoin("", from, this.get(this.size() - 1), true, lines);
+			}
+			lines.forEach(logger::info);
 		}
 
 		/**
