@@ -4,6 +4,7 @@ import com.google.gson.*;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
+import org.yop.orm.util.JoinUtil;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -177,7 +178,7 @@ public class JSON<T extends Yopable> {
 	 */
 	public JSON<T> joinAll() {
 		this.joins.clear();
-		IJoin.joinAll(this.target, this.joins);
+		JoinUtil.joinAll(this.target, this.joins);
 		return this;
 	}
 
@@ -202,7 +203,7 @@ public class JSON<T extends Yopable> {
 	 */
 	public JSON<T> joinIDsAll() {
 		this.joinIDs.clear();
-		IJoin.joinAll(this.target, this.joinIDs);
+		JoinUtil.joinAll(this.target, this.joinIDs);
 		return this;
 	}
 

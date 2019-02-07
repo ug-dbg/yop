@@ -128,6 +128,7 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 	 * <br>
 	 * This is useful for queries where parameters values are IDs that are not yet generated.
 	 */
+	@FunctionalInterface
 	public interface DelayedValue {
 		Object getDelayedValue();
 	}

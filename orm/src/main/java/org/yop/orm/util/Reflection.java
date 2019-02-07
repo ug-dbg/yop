@@ -21,6 +21,7 @@ import static org.yop.orm.util.MessageUtil.concat;
  * Utility class for reflection-based method. <br>
  * YOP mostly relies on reflection to get the field values to persist. <br>
  */
+@SuppressWarnings("WeakerAccess")
 public class Reflection {
 
 	private static final Logger logger = LoggerFactory.getLogger(Reflection.class);
@@ -485,12 +486,11 @@ public class Reflection {
 	 * Find the target class of a field which is a collection.
 	 *
 	 * @param field the (collection) field
-	 * @param <S> source type
 	 * @param <T> target type
 	 * @return the field target for the given collection field
 	 */
 	@SuppressWarnings("unchecked")
-	public static <S, T> Class<T> getCollectionTarget(Field field) {
+	public static <T> Class<T> getCollectionTarget(Field field) {
 		return (Class<T>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
 	}
 

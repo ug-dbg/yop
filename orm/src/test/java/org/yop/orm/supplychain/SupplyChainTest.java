@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
-import org.yop.orm.evaluation.In;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.query.*;
@@ -79,7 +78,7 @@ public class SupplyChainTest extends DBMSSwitch {
 			Set<Long> capacities = new TreeSet<>(Arrays.asList(2L, 4L, 6L));
 			Set<Warehouse> warehouses = Select
 				.from(Warehouse.class)
-				.where(new In(Warehouse::getCapacity, capacities))
+				.where(Warehouse::getCapacity, capacities)
 				.execute(connection);
 			Assert.assertEquals(capacities.size(), warehouses.size());
 			Assert.assertEquals(
@@ -90,7 +89,7 @@ public class SupplyChainTest extends DBMSSwitch {
 			Set<String> addresses = new TreeSet<>(Arrays.asList("1 My warehouses avenue", "2 My warehouses avenue"));
 			warehouses = Select
 				.from(Warehouse.class)
-				.where(new In(Warehouse::getAddress, addresses))
+				.where(Warehouse::getAddress, addresses)
 				.execute(connection);
 			Assert.assertEquals(addresses.size(), warehouses.size());
 			Assert.assertEquals(
@@ -233,11 +232,12 @@ public class SupplyChainTest extends DBMSSwitch {
 				.where(Where.naturalId(organisation))
 				.uniqueResult(this.getConnection());
 
-			Recurse
+			Hydrate
 				.from(Organisation.class)
 				.onto(organisation)
 				.join(JoinSet.to(Organisation::getEmployees).join(Join.to(Employee::getOrganisation)))
 				.join(JoinSet.to(Organisation::getWarehouses).join(Join.to(Warehouse::getOwner)))
+				.recurse()
 				.execute(this.getConnection());
 
 			Assert.assertTrue(organisation == organisation.getEmployees().iterator().next().getOrganisation());
@@ -296,7 +296,7 @@ public class SupplyChainTest extends DBMSSwitch {
 			Upsert.from(Order.class).join(Join.to(Order::getPayment)).onto(order).execute(connection);
 
 			// How much was it already ?
-			Set<Customer> meIGuess = Select.from(Customer.class).joinAll().where(Where.naturalId(me)).execute(connection);
+			Set<Customer> meIGuess = Select.from(Customer.class).joinAll().whereNaturalId(me).execute(connection);
 			Assert.assertEquals(1, meIGuess.size());
 			Assert.assertEquals(me, meIGuess.iterator().next());
 			Long myID = me.getId();

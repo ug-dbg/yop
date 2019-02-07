@@ -125,10 +125,11 @@ public class ChinookDataTest extends DBMSSwitch {
 		logger.info("Select genres in [{}] ms", (System.currentTimeMillis() - start));
 
 		start = System.currentTimeMillis();
-		Recurse
+		Hydrate
 			.from(Genre.class)
 			.onto(genres)
 			.join(JoinSet.to(Genre::getTracksOfGenre).join(Join.to(Track::getGenre)))
+			.recurse()
 			.execute(this.getConnection());
 		logger.info("Recurse on genres in [{}] ms", (System.currentTimeMillis() - start));
 
@@ -262,10 +263,11 @@ public class ChinookDataTest extends DBMSSwitch {
 			.from(Employee.class)
 			.execute(this.getConnection());
 		Assert.assertEquals(this.source.employees.size(), employeesFromDB.size());
-		Recurse
+		Hydrate
 			.from(Employee.class)
 			.onto(employeesFromDB)
 			.join(Join.to(Employee::getReportsTo))
+			.recurse()
 			.execute(this.getConnection());
 
 		Map<String, Employee> employeesByMail = employeesFromDB
@@ -294,15 +296,17 @@ public class ChinookDataTest extends DBMSSwitch {
 		jane.setReportsTo(jane);
 		Upsert.from(Employee.class).onto(jane).join(Join.to(Employee::getReportsTo)).execute(this.getConnection());
 		jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(this.getConnection());
-		Recurse
+		Hydrate
 			.from(Employee.class)
 			.onto(jane)
 			.join(Join.to(Employee::getReportsTo))
+			.recurse()
 			.execute(this.getConnection());
-		Recurse
+		Hydrate
 			.from(Employee.class)
 			.onto(employeesFromDB)
 			.join(JoinSet.to(Employee::getReporters))
+			.recurse()
 			.execute(this.getConnection());
 
 		employeesByMail = employeesFromDB
@@ -348,11 +352,12 @@ public class ChinookDataTest extends DBMSSwitch {
 
 		jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(this.getConnection());
 
-		Recurse
+		Hydrate
 			.from(Employee.class)
 			.onto(jane)
 			.join(JoinSet.to(Employee::getReporters))
 			.join(Join.to(Employee::getReportsTo))
+			.recurse()
 			.execute(this.getConnection());
 		Assert.assertTrue(jane.getReporters().contains(andrew));
 	}

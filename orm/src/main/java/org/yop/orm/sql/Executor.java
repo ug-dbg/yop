@@ -119,6 +119,7 @@ public class Executor {
 	/**
 	 * What to do on query {@link Results} ?
 	 */
+	@FunctionalInterface
 	public interface Action<T> {
 		T perform(Results results);
 	}

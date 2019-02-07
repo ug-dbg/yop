@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
+import org.yop.orm.util.JoinUtil;
 import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
@@ -136,6 +137,7 @@ public class Table implements Comparable<Table> {
 	 * @param config the SQL config. Needed for the sql separator to use.
 	 * @return the table objects that can be used to get INSERT queries
 	 */
+	@SuppressWarnings("WeakerAccess")
 	public static Set<Table> findTablesFor(Class<? extends Yopable> clazz, Config config) {
 		Set<Table> tables = new HashSet<>();
 		tables.add(Table.fromClass(clazz, config));
@@ -161,7 +163,7 @@ public class Table implements Comparable<Table> {
 			.collect(Collectors.toList());
 
 		table.columns.addAll(
-			ORMUtil.joinColumnYopableFields(clazz)
+			JoinUtil.joinColumnYopableFields(clazz)
 			.stream()
 			.map(field -> Column.fromJoinColumnField(field, config))
 			.collect(Collectors.toList())
@@ -201,7 +203,7 @@ public class Table implements Comparable<Table> {
 		Class<? extends Yopable> clazz,
 		Set<Table> tables,
 		Config config) {
-		tables.addAll(ORMUtil
+		tables.addAll(JoinUtil
 			.joinTableFields(clazz)
 			.stream()
 			.map(field -> fromRelationField(field, config))

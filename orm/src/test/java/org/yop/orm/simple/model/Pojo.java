@@ -45,9 +45,11 @@ public class Pojo implements Yopable {
 	private List<Other> others = new ArrayList<>();
 
 	@YopTransient
+	@JoinProfile(profiles = "pojo_children_and_parent")
 	@JoinTable(table = "POJO_POJO_relation", sourceColumn = "idPOJO_a", targetColumn = "idPOJO_b")
 	private List<Pojo> children = new ArrayList<>();
 
+	@JoinProfile(profiles = "pojo_children_and_parent")
 	@JoinTable(table = "POJO_POJO_relation", sourceColumn = "idPOJO_b", targetColumn = "idPOJO_a")
 	private transient Pojo parent;
 

@@ -7,6 +7,7 @@ import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Results;
+import org.yop.orm.util.JoinUtil;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
@@ -103,7 +104,7 @@ public class IdMap {
 		IdMap map) {
 
 		map.put(yopable, readId(results, yopable, context));
-		List<Field> fields = ORMUtil.joinedFields(yopable);
+		List<Field> fields = JoinUtil.joinedFields(yopable);
 		String separator = results.getQuery().getConfig().sqlSeparator();
 		for (Field field : fields) {
 			String newContext = context + separator + field.getName() + separator;

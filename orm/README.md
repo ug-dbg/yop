@@ -98,7 +98,7 @@ Of course you will still be allowed to have cycles in your java objects data gra
 * you will have to cut them using 'transient' and CRUD them explicitly
 * you will have to *think* your data as sets of acyclic graphs when you want to CRUD it to SQL/Json  
   
-And there is a **'Recurse'** API that can recursively fetch cyclic relations using sub-queries. 
+And there is a **recurse** option on the **Hydrate** API that can recursively fetch cyclic relations using sub-queries.
 
 ## Is it reliable ?
 For now, I guess it is not at all :-D  

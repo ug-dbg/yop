@@ -77,12 +77,12 @@ Delete.from(Library.class)
 
 **Hydrate (fetch relation dynamically)** :  
 ```java 
-Hydrate.from(Book.class).onto(booksWithID).fetchSet(Book::getChapters).execute(connection);
+Hydrate.from(Book.class).onto(booksWithID).join(Book::getChapters).execute(connection);
 ```
 
 **Recurse (hydrate relations, recursively)** :   
-```java
-Recurse.from(Employee.class).onto(employeesWithID).join(Join.to(Employee::getManager)).execute(connection);
+```java 
+Hydrate.from(Book.class).onto(booksWithID).join(Book::getChapters).recurse().execute(connection);
 ```
 
 **JSON serialization** :  

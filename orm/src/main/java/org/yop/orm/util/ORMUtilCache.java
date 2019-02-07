@@ -17,7 +17,7 @@ import java.util.Map;
  */
 public class ORMUtilCache {
 
-	/** {@link ORMUtil#joinedFields(Class)} fields for a given class */
+	/** {@link JoinUtil#joinedFields(Class)} fields for a given class */
 	private static final MultiValuedMap<Class, Field> JOINED_FIELDS   = new ArrayListValuedHashMap<>();
 
 	/** Is this field a collection field, a Yopable field or something else ? */
@@ -42,7 +42,7 @@ public class ORMUtilCache {
 	 */
 	static Collection<Field> getJoinedFields(Class clazz) {
 		if (! JOINED_FIELDS.containsKey(clazz)) {
-			JOINED_FIELDS.putAll(clazz, ORMUtil.joinedFields(clazz));
+			JOINED_FIELDS.putAll(clazz, JoinUtil.joinedFields(clazz));
 		}
 		return JOINED_FIELDS.get(clazz);
 	}

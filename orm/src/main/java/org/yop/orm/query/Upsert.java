@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.Table;
-import org.yop.orm.evaluation.Comparison;
-import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.evaluation.NaturalKey;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopSerializableQueryException;
@@ -19,7 +17,10 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.model.YopableEquals;
 import org.yop.orm.model.Yopables;
 import org.yop.orm.query.relation.Relation;
-import org.yop.orm.sql.*;
+import org.yop.orm.sql.Config;
+import org.yop.orm.sql.Executor;
+import org.yop.orm.sql.Query;
+import org.yop.orm.sql.SQLPart;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
@@ -39,7 +40,6 @@ import java.util.stream.Collectors;
  * Upsert.from(Organisation.class).checkNaturalID().onto(organisation).joinAll().execute(connection);
  * }
  * </pre>
- * <b>Implementation note : </b> Upsert does have a {@link #where} clause. It is useless and unused (for now ?).
  *
  * @param <T> the type to upsert.
  */
@@ -50,7 +50,7 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 	/** Elements to save/update */
 	protected final Yopables<T> elements = new Yopables<>(this.joins);
 
-	protected final List<Field> targetFields = new ArrayList<>();
+	private final List<Field> targetFields = new ArrayList<>();
 
 	/** If set to true, any insert will do a preliminary SELECT query to find any entry whose natural key matches */
 	protected boolean checkNaturalID = false;
@@ -64,31 +64,6 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 	 */
 	protected Upsert(Class<T> target) {
 		super(Context.root(target));
-	}
-
-	/**
-	 * Where clauses are useless and unused (for now ?) in Upsert.
-	 */
-	@Override
-	public Where<T> where() {
-		return super.where();
-	}
-
-	/**
-	 * Where clauses are useless and unused (for now ?) in Upsert.
-	 */
-	@Override
-	public Upsert<T> where(Evaluation evaluation) {
-		return super.where(evaluation);
-	}
-
-
-	/**
-	 * Where clauses are useless and unused (for now ?) in Upsert.
-	 */
-	@Override
-	public Upsert<T> or(Comparison... compare) {
-		return super.or(compare);
 	}
 
 	/**
@@ -422,7 +397,7 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 	 * Get the table name for the current context (read {@link Table} annotation.
 	 * @return the table name for the current context
 	 */
-	protected String getTableName() {
+	private String getTableName() {
 		return ORMUtil.getTableQualifiedName(this.getTarget());
 	}
 
@@ -442,7 +417,7 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 	 * @param insert  true if values are for an insert query.
 	 * @return the columns to select and their SQL part parameter.
 	 */
-	protected Map<String, SQLPart> valuePerColumn(T element, Config config, boolean insert) {
+	private Map<String, SQLPart> valuePerColumn(T element, Config config, boolean insert) {
 		List<Field> fields = Reflection.getFields(this.getTarget(), Column.class);
 		Field idField = ORMUtil.getIdField(this.getTarget());
 		Map<String, SQLPart> out = new HashMap<>();

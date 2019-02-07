@@ -12,6 +12,8 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * A very basic cache mechanism.
@@ -127,7 +129,11 @@ public class FirstLevelCache {
 		}
 
 		if (! this.associationsCache.get(collectionField).containsKey(source.getId())) {
-			this.associationsCache.get(collectionField).put(source.getId(), new HashMap<>());
+			Collection<Yopable> children = (Collection) Reflection.readField(collectionField, source);
+			this.associationsCache.get(collectionField).put(
+				source.getId(),
+				children.stream().collect(Collectors.toMap(Yopable::getId, Function.identity()))
+			);
 		}
 
 		Map<Long, Yopable> fieldValueAsMap = this.associationsCache.get(collectionField).get(source.getId());

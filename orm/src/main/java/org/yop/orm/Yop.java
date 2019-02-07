@@ -17,7 +17,6 @@ import java.util.function.Function;
  *     <li>{@link Upsert} and {@link BatchUpsert}</li>
  *     <li>{@link Delete}</li>
  *     <li>{@link Hydrate}</li>
- *     <li>{@link Recurse}</li>
  *     <li>{@link JSON}</li>
  * </ul>
  * You will also find static methods to YOP join directives ({@link IJoin} implementations):
@@ -89,16 +88,6 @@ public class Yop {
 	 */
 	public static <What extends Yopable> Hydrate<What> hydrate(Class<What> what) {
 		return Hydrate.from(what);
-	}
-
-	/**
-	 * Shortcut to {@link Recurse}.
-	 * @param what the target {@link Yopable} annotated class
-	 * @param <What> the target type
-	 * @return a {@link Recurse} directive.
-	 */
-	public static <What extends Yopable> Recurse<What> recurse(Class<What> what) {
-		return Recurse.from(what);
 	}
 
 	/**
