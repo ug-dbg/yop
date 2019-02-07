@@ -9,7 +9,6 @@
  *     <li>{@link org.yop.orm.query.Upsert} and {@link org.yop.orm.query.batch.BatchUpsert}</li>
  *     <li>{@link org.yop.orm.query.Delete}</li>
  *     <li>{@link org.yop.orm.query.Hydrate}</li>
- *     <li>{@link org.yop.orm.query.Recurse}</li>
  * </ul>
  * They share a common logic that must (should :-D) enable you to inline declare clauses :
  * <ul>

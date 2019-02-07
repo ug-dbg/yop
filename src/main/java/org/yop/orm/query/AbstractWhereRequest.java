@@ -1,11 +1,9 @@
 package org.yop.orm.query;
 
-import org.yop.orm.evaluation.Comparison;
-import org.yop.orm.evaluation.Evaluation;
-import org.yop.orm.evaluation.In;
-import org.yop.orm.evaluation.Operator;
+import org.yop.orm.evaluation.*;
 import org.yop.orm.model.Yopable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Function;
 
@@ -56,6 +54,28 @@ abstract class AbstractWhereRequest<Request extends AbstractWhereRequest, T exte
 	@SuppressWarnings("unchecked")
 	public Request where(Function<T, ?> getter, Operator op, Comparable ref) {
 		this.where.and(new Comparison(getter, op, ref));
+		return (Request) this;
+	}
+
+	/**
+	 * Create an "ID IN" evaluation, against the given ID values.
+	 * @param ids the expected IDs for the target type.
+	 * @return the current request, for chaining purposes
+	 */
+	@SuppressWarnings("unchecked")
+	public Request whereId(Long... ids) {
+		this.where.and(new IdIn(Arrays.asList(ids)));
+		return (Request) this;
+	}
+
+	/**
+	 * Create an "natural key" evaluation ({@link NaturalKey}, against the given reference.
+	 * @param reference the target object reference
+	 * @return the current request, for chaining purposes
+	 */
+	@SuppressWarnings("unchecked")
+	public Request whereNaturalId(T reference) {
+		this.where.and(new NaturalKey<>(reference));
 		return (Request) this;
 	}
 

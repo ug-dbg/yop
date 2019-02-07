@@ -31,7 +31,7 @@ public class JoinAllTest extends DBMSSwitch {
 			Assert.assertTrue(fromDB.getJopo().getPojo() ==  fromDB);
 
 			fromDB = Select.from(CyclePojo.class).uniqueResult(connection);
-			Recurse.from(CyclePojo.class).onto(fromDB).joinAll().execute(connection);
+			Hydrate.from(CyclePojo.class).onto(fromDB).joinAll().recurse().execute(connection);
 			Assert.assertTrue(fromDB.getParent() == fromDB);
 			Assert.assertTrue(fromDB.getJopo().getPojo() ==  fromDB);
 		}
@@ -66,7 +66,7 @@ public class JoinAllTest extends DBMSSwitch {
 				.from(CyclePojo.class)
 				.join(Join.to(CyclePojo::getJopo).where(Where.compare(CyclePojo.CycleJopo::getString, Operator.EQ, "3")))
 				.uniqueResult(connection);
-			Recurse.from(CyclePojo.class).onto(fromDB).joinAll().execute(connection);
+			Hydrate.from(CyclePojo.class).onto(fromDB).joinAll().recurse().execute(connection);
 			Assert.assertEquals("3", fromDB.getJopo().getString());
 			Assert.assertNotNull(fromDB.getParent());
 			Assert.assertEquals("2", fromDB.getParent().getJopo().getString());

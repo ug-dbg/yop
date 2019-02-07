@@ -92,11 +92,12 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertNotNull(pojo.getParent());
 			Assert.assertEquals(pojo.getParent(), fromDB.getParent());
 
-			Recurse
+			Hydrate
 				.from(Pojo.class)
 				.onto(fromDB)
 				.join(Join.to(Pojo::getParent))
 				.join(JoinSet.to(Pojo::getChildren))
+				.recurse()
 				.execute(connection);
 			Assert.assertTrue(fromDB.getParent().getChildren().get(0) == fromDB);
 			Assert.assertEquals(10, fromDB.getChildren().size());
@@ -706,7 +707,7 @@ public class SimpleTest extends DBMSSwitch {
 				.checkNaturalID()
 				.execute(connection);
 
-			Select<Pojo> select = select(Pojo.class).where(Where.naturalId(newPojo)).joinAll();
+			Select<Pojo> select = select(Pojo.class).whereNaturalId(newPojo).joinAll();
 			Set<Pojo> found = select.execute(connection, Select.Strategy.EXISTS);
 			Assert.assertEquals(1, found.size());
 
@@ -788,12 +789,8 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertEquals(newPojo.getOthers(), fromNaturalID.getOthers());
 			Assert.assertEquals(parent, fromNaturalID.getParent());
 
-			Pojo pojo1 = new Pojo();
-			pojo1.setId(newPojo.getId());
-			pojo1.setVersion(newPojo.getVersion());
-
-			Pojo pojo2 = new Pojo();
-			pojo2.setId(parent.getId());
+			Pojo pojo1 = Select.from(Pojo.class).whereId(newPojo.getId()).uniqueResult(connection);
+			Pojo pojo2 = Select.from(Pojo.class).whereId(parent.getId()).uniqueResult(connection);
 
 			hydrate(Pojo.class)
 				.onto(Arrays.asList(pojo1, pojo2))
@@ -838,7 +835,7 @@ public class SimpleTest extends DBMSSwitch {
 			Select<Pojo> select = select(Pojo.class).where(Where.naturalId(newPojo));
 			Pojo fromNaturalID = select.uniqueResult(connection);
 
-			recurse(Pojo.class).onto(fromNaturalID).joinAll().execute(connection);
+			hydrate(Pojo.class).onto(fromNaturalID).joinAll().recurse().execute(connection);
 			Assert.assertEquals(newPojo.getJopos(), fromNaturalID.getJopos());
 			Assert.assertEquals(1, fromNaturalID.getOthers().size());
 
@@ -855,7 +852,7 @@ public class SimpleTest extends DBMSSwitch {
 				.execute(connection);
 
 			fromNaturalID = select.uniqueResult(connection);
-			recurse(Pojo.class).onto(fromNaturalID).joinAll().join(to(Pojo::getParent)).execute(connection);
+			hydrate(Pojo.class).onto(fromNaturalID).joinAll().join(to(Pojo::getParent)).recurse().execute(connection);
 			Assert.assertEquals(newPojo.getJopos(),  fromNaturalID.getJopos());
 			Assert.assertEquals(newPojo.getOthers(), fromNaturalID.getOthers());
 			Assert.assertEquals(parent, fromNaturalID.getParent());
@@ -863,13 +860,14 @@ public class SimpleTest extends DBMSSwitch {
 			Pojo pojo1 = select(Pojo.class).where(Where.id(newPojo.getId())).uniqueResult(this.getConnection());
 			Pojo pojo2 = select(Pojo.class).where(Where.id(parent.getId())).uniqueResult(this.getConnection());
 
-			recurse(Pojo.class)
+			hydrate(Pojo.class)
 				.onto(Arrays.asList(pojo1, pojo2))
 				.joinAll()
 				.join(to(Pojo::getParent))
 				.join(toSet(Pojo::getChildren))
 				.join(toSet(Pojo::getOthers).join(toSet(Other::getPojos)))
 				.join(toSet(Pojo::getJopos).join(to(Jopo::getPojo)))
+				.recurse()
 				.execute(connection);
 
 			Assert.assertEquals(parent, pojo1.getParent());
@@ -913,11 +911,11 @@ public class SimpleTest extends DBMSSwitch {
 				.join(Pojo::getChildren)
 				.uniqueResult(connection);
 
-			Recurse
-				.from(Pojo.class)
+			hydrate(Pojo.class)
 				.onto(fromDB)
 				.join(Join.to(Pojo::getParent))
 				.join(JoinSet.to(Pojo::getChildren))
+				.recurse()
 				.execute(connection);
 			Assert.assertTrue(fromDB.getParent().getChildren().get(0) == fromDB);
 			Assert.assertEquals(10, fromDB.getChildren().size());

@@ -232,11 +232,12 @@ public class SupplyChainTest extends DBMSSwitch {
 				.where(Where.naturalId(organisation))
 				.uniqueResult(this.getConnection());
 
-			Recurse
+			Hydrate
 				.from(Organisation.class)
 				.onto(organisation)
 				.join(JoinSet.to(Organisation::getEmployees).join(Join.to(Employee::getOrganisation)))
 				.join(JoinSet.to(Organisation::getWarehouses).join(Join.to(Warehouse::getOwner)))
+				.recurse()
 				.execute(this.getConnection());
 
 			Assert.assertTrue(organisation == organisation.getEmployees().iterator().next().getOrganisation());
@@ -295,7 +296,7 @@ public class SupplyChainTest extends DBMSSwitch {
 			Upsert.from(Order.class).join(Join.to(Order::getPayment)).onto(order).execute(connection);
 
 			// How much was it already ?
-			Set<Customer> meIGuess = Select.from(Customer.class).joinAll().where(Where.naturalId(me)).execute(connection);
+			Set<Customer> meIGuess = Select.from(Customer.class).joinAll().whereNaturalId(me).execute(connection);
 			Assert.assertEquals(1, meIGuess.size());
 			Assert.assertEquals(me, meIGuess.iterator().next());
 			Long myID = me.getId();
