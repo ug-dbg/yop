@@ -111,7 +111,7 @@ public class Mapper {
 			return fromCache;
 		}
 
-		List<Field> fields = Reflection.getFields(element.getClass(), Column.class);
+		List<Field> fields = ORMUtil.getFields(element.getClass(), Column.class);
 		for (Field field : fields) {
 			try {
 				setFieldValue(field, element, context, results);

@@ -5,8 +5,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.annotations.YopTransient;
-import org.yop.orm.exception.YopRuntimeException;
+import org.yop.orm.exception.ReflectionException;
 import sun.reflect.ReflectionFactory;
 
 import java.lang.annotation.Annotation;
@@ -43,7 +42,7 @@ public class Reflection {
 	 * @param classLoaders the class loaders to use. First match returns. Use {@link Class#forName(String)} if no match.
 	 * @param <T> the target type
 	 * @return the class name
-	 * @throws YopRuntimeException instead of {@link ClassNotFoundException}
+	 * @throws ReflectionException instead of {@link ClassNotFoundException}
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> Class<T> forName(String name, ClassLoader... classLoaders) {
@@ -57,7 +56,7 @@ public class Reflection {
 			}
 			return (Class<T>) Class.forName(name);
 		} catch (ClassNotFoundException e) {
-			throw new YopRuntimeException("Could not find class for name [" + name + "]", e);
+			throw new ReflectionException("Could not find class for name [" + name + "]", e);
 		}
 	}
 
@@ -113,6 +112,54 @@ public class Reflection {
 	}
 
 	/**
+	 * Get all the non synthetic fields of a class. <br>
+	 * Also retrieve the non synthetic fields from superclasses.
+	 * @param type the target class
+	 * @return the field list
+	 */
+	public static List<Field> getFields(Class type) {
+		List<Field> result = new ArrayList<>();
+
+		Class<?> i = type;
+		while (i != null && i != Object.class) {
+			for (Field field : ReflectionCache.getDeclaredFields(i)) {
+				if (!field.isSynthetic()) {
+					field.setAccessible(true);
+					result.add(field);
+				}
+			}
+			i = i.getSuperclass();
+		}
+
+		return result;
+	}
+
+	/**
+	 * Get all non synthetic fields of a class, with a given annotation. <br>
+	 * Also retrieve non synthetic fields from superclasses.
+	 * @param type           the class
+	 * @param withAnnotation the annotation the field must declare to be eligible
+	 * @return the field list
+	 */
+	public static List<Field> getFields(Class type, Class<? extends Annotation> withAnnotation) {
+		List<Field> result = new ArrayList<>();
+
+		Class<?> i = type;
+		while (i != null && i != Object.class) {
+			for (Field field : ReflectionCache.getDeclaredFields(i)) {
+
+				if (!field.isSynthetic() && field.isAnnotationPresent(withAnnotation)) {
+					field.setAccessible(true);
+					result.add(field);
+				}
+			}
+			i = i.getSuperclass();
+		}
+
+		return result;
+	}
+
+	/**
 	 * A 'toString' method for logging a field with its source class.
 	 * <br>
 	 * e.g : Field from SomeClass → com.package.SomeClass#fieldName
@@ -130,13 +177,13 @@ public class Reflection {
 	 * @param field the field to read
 	 * @param onto  the target object where to read the field
 	 * @return the field value
-	 * @throws YopRuntimeException if the field could not be read for any reason.
+	 * @throws ReflectionException if the field could not be read for any reason.
 	 */
 	public static Object readField(Field field, Object onto) {
 		try {
 			return field.get(onto);
 		} catch (IllegalAccessException | RuntimeException e) {
-			throw new YopRuntimeException(
+			throw new ReflectionException(
 				"Could not read [" + Reflection.fieldToString(field) + "] on [" + onto + "]",
 				e
 			);
@@ -150,83 +197,21 @@ public class Reflection {
 	 * @param fieldName the name of the field to read
 	 * @param onto      the target object where to read the field
 	 * @return the field value
-	 * @throws YopRuntimeException if the field could not be read or does not exist.
+	 * @throws ReflectionException if the field could not be read or does not exist.
 	 */
 	public static Object readField(String fieldName, Object onto) {
 		try {
 			Field field = get(onto.getClass(), fieldName);
 			if (field == null) {
-				throw new YopRuntimeException("No field [" + fieldName + "] in [" + onto.getClass().getName() + "]");
+				throw new ReflectionException("No field [" + fieldName + "] in [" + onto.getClass().getName() + "]");
 			}
 			return field.get(onto);
 		} catch (IllegalAccessException | RuntimeException e) {
-			throw new YopRuntimeException(
+			throw new ReflectionException(
 				"Could not read [" + fieldName + "] on [" + onto + "]",
 				e
 			);
 		}
-	}
-
-	/**
-	 * Get all the non synthetic fields of a class. <br>
-	 * Also retrieve the non transient and non synthetic fields from superclasses.
-	 * @param type         the class
-	 * @param nonTransient true to exclude transient fields
-	 * @return the field list
-	 */
-	public static List<Field> getFields(Class type, boolean nonTransient) {
-		List<Field> result = new ArrayList<>();
-
-		Class<?> i = type;
-		while (i != null && i != Object.class) {
-			for (Field field : ReflectionCache.getDeclaredFields(i)) {
-				if (!field.isSynthetic() && (isNotTransient(field) || !nonTransient)) {
-					field.setAccessible(true);
-					result.add(field);
-				}
-			}
-			i = i.getSuperclass();
-		}
-
-		return result;
-	}
-
-	/**
-	 * Get all the non transient and non synthetic fields of a class, with a given annotation. <br>
-	 * Also retrieve the non transient and non synthetic fields from superclasses.
-	 * @param type           the class
-	 * @param withAnnotation the annotation the field must declare to be eligible
-	 * @return the field list
-	 */
-	public static List<Field> getFields(Class type, Class<? extends Annotation> withAnnotation) {
-		return getFields(type, withAnnotation, true);
-	}
-
-	/**
-	 * Get all non synthetic fields of a class, with a given annotation. <br>
-	 * Also retrieve non synthetic fields from superclasses.
-	 * @param type           the class
-	 * @param withAnnotation the annotation the field must declare to be eligible
-	 * @param nonTransient   if true, transient fields are excluded
-	 * @return the field list
-	 */
-	public static List<Field> getFields(Class type, Class<? extends Annotation> withAnnotation, boolean nonTransient) {
-		List<Field> result = new ArrayList<>();
-
-		Class<?> i = type;
-		while (i != null && i != Object.class) {
-			for (Field field : ReflectionCache.getDeclaredFields(i)) {
-
-				if (!field.isSynthetic() && (isNotTransient(field) || !nonTransient)
-				&& field.isAnnotationPresent(withAnnotation)) {
-					field.setAccessible(true);
-					result.add(field);
-				}
-			}
-			i = i.getSuperclass();
-		}
-
-		return result;
 	}
 
 	/**
@@ -257,13 +242,13 @@ public class Reflection {
 	 * @param field the field to set
 	 * @param onto  the target instance
 	 * @param value the field value to set
-	 * @throws YopRuntimeException exception with context, if any exception (Illegal Access or Runtime) occurs.
+	 * @throws ReflectionException exception with context, if any exception (Illegal Access or Runtime) occurs.
 	 */
 	public static void set(Field field, Object onto, Object value) {
 		try {
 			field.set(onto, value);
 		} catch (IllegalAccessException | RuntimeException e) {
-			throw new YopRuntimeException(
+			throw new ReflectionException(
 				"Unable to set " +
 				"field [" + field.getDeclaringClass() + "#" + field.getName() + "] " +
 				"value [" + value + "] " +
@@ -280,13 +265,13 @@ public class Reflection {
 	 * @param field the field to set
 	 * @param from the source instance
 	 * @param onto the target instance
-	 * @throws YopRuntimeException exception with context, if any exception (Illegal Access or Runtime) occurs.
+	 * @throws ReflectionException exception with context, if any exception (Illegal Access or Runtime) occurs.
 	 */
 	public static void setFrom(Field field, Object from, Object onto) {
 		try {
 			set(field, onto, Reflection.readField(field, from));
 		} catch (RuntimeException e) {
-			throw new YopRuntimeException(
+			throw new ReflectionException(
 				"Unable to set " +
 				"field [" + field.getDeclaringClass() + "#" + field.getName() + "] " +
 				"from [" + from + "] " +
@@ -306,7 +291,7 @@ public class Reflection {
 	public static Type get1ArgParameter(Field field){
 		Type genericType = field.getGenericType();
 		if (! (genericType instanceof ParameterizedType)) {
-			throw new YopRuntimeException(concat(
+			throw new ReflectionException(concat(
 				"Field [", fieldToString(field), "] is not generic. Unsupported."
 			));
 		}
@@ -315,7 +300,7 @@ public class Reflection {
 		Type[] typeParameter = type.getActualTypeArguments();
 
 		if(typeParameter.length != 1){
-			throw new YopRuntimeException(concat(
+			throw new ReflectionException(concat(
 				"Field [", fieldToString(field), "] has [", typeParameter.length, "] parameters. Unsupported."
 			));
 		}
@@ -323,15 +308,6 @@ public class Reflection {
 			typeParameter[0] instanceof ParameterizedType
 			? ((ParameterizedType)typeParameter[0]).getRawType()
 			: typeParameter[0];
-	}
-
-	/**
-	 * Check if a field has the transient keyword or a {@link YopTransient} annotation. <br>
-	 * @param field the field to check
-	 * @return false if either the transient keyword or the YopTransient annotation is set
-	 */
-	public static boolean isNotTransient(Field field){
-		return !Modifier.isTransient(field.getModifiers()) && !field.isAnnotationPresent(YopTransient.class);
 	}
 
 	/**
@@ -346,7 +322,7 @@ public class Reflection {
 			c.setAccessible(true);
 			return c.newInstance();
 		} catch (Exception e) {
-			throw new YopRuntimeException(
+			throw new ReflectionException(
 				"Unable to create instance of [" + clazz + "]. Does it have a no-arg constructor?",
 				e
 			);
@@ -362,12 +338,12 @@ public class Reflection {
 	 * @param <T> the class type
 	 * @param <R> the field type
 	 * @return the field found.
-	 * @throws YopRuntimeException if no field matches the getter
+	 * @throws ReflectionException if no field matches the getter
 	 */
 	public static <T, R> Field findField(Class<T> clazz, Function<T, R> getter) {
 		Class<?> fieldType = null;
 		try {
-			List<Field> fields = getFields(clazz, false);
+			List<Field> fields = getFields(clazz);
 			T instance = newInstanceNoArgs(clazz);
 
 			for (Field field : fields) {
@@ -386,13 +362,13 @@ public class Reflection {
 			}
 
 		} catch (RuntimeException e) {
-			throw new YopRuntimeException(
+			throw new ReflectionException(
 				"Unable to find field from [" + clazz + "] " +
 				"for the given accessors ! Last field type was [" + fieldType + "]",
 				e
 			);
 		}
-		throw new YopRuntimeException("Unable to find field from [" + clazz + "] for the given accessors !");
+		throw new ReflectionException("Unable to find field from [" + clazz + "] for the given accessors !");
 	}
 
 	/**
@@ -406,7 +382,7 @@ public class Reflection {
 	 * @param <T> the type holding the setter
 	 * @param <R> the target type
 	 * @return true if the getter actually returned the field value, twice
-	 * @throws YopRuntimeException could not read the field
+	 * @throws ReflectionException could not read the field
 	 */
 	private static <T, R> boolean primitiveCheck(
 		Field field,
@@ -432,11 +408,11 @@ public class Reflection {
 	 * @param <T> the class type
 	 * @param <R> the field type
 	 * @return the field found.
-	 * @throws YopRuntimeException if no field matches the getter
+	 * @throws ReflectionException if no field matches the getter
 	 */
 	public static <T, R> Field findField(Class<T> clazz, BiConsumer<T, R> setter) {
 		try {
-			List<Field> fields = getFields(clazz, false);
+			List<Field> fields = getFields(clazz);
 			T instance = newInstanceNoArgs(clazz);
 
 			for (Field field : fields) {
@@ -461,9 +437,9 @@ public class Reflection {
 			}
 
 		} catch (RuntimeException e) {
-			throw new YopRuntimeException("Unable to find field from [" + clazz + "] for the given accessors !", e);
+			throw new ReflectionException("Unable to find field from [" + clazz + "] for the given accessors !", e);
 		}
-		throw new YopRuntimeException("Unable to find field from [" + clazz + "] for the given accessors !");
+		throw new ReflectionException("Unable to find field from [" + clazz + "] for the given accessors !");
 	}
 
 	/**
@@ -578,8 +554,8 @@ public class Reflection {
 	 * @param clazz the class of the type to instantiate
 	 * @param <T> the type to instantiate
 	 * @return a new instance of the type T
-	 * @throws YopRuntimeException fake primitive or Wrapper
-	 * @throws YopRuntimeException Unsafe was not able to instantiate the type T.
+	 * @throws ReflectionException fake primitive or Wrapper
+	 * @throws ReflectionException Unsafe was not able to instantiate the type T.
 	 */
 	@SuppressWarnings("unchecked")
 	private static <T> T newInstanceUnsafe(Class<T> clazz) {
@@ -625,7 +601,7 @@ public class Reflection {
 		if(float.class.equals(unwrapped))   {return TEST_FLOAT  + salt;}
 		if(double.class.equals(unwrapped))  {return TEST_DOUBLE + salt;}
 
-		throw new YopRuntimeException("Primitive class [" + primitive.getName() + "] is not really primitive !");
+		throw new ReflectionException("Primitive class [" + primitive.getName() + "] is not really primitive !");
 	}
 
 	/**

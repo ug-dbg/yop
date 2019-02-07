@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.JoinTable;
-import org.yop.orm.exception.YopRuntimeException;
+import org.yop.orm.exception.ReflectionException;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Pojo;
 import org.yop.orm.util.ORMUtil;
@@ -53,14 +53,14 @@ public class ReflectionTest {
 		Assert.assertEquals("null", fieldAsString);
 	}
 
-	@Test(expected = YopRuntimeException.class)
+	@Test(expected = ReflectionException.class)
 	public void test_setField_bad_type() {
 		Field idField = ORMUtil.getIdField(Pojo.class);
 		Pojo target = new Pojo();
 		Reflection.set(idField, target, 12);
 	}
 
-	@Test(expected = YopRuntimeException.class)
+	@Test(expected = ReflectionException.class)
 	public void test_setField_field_not_accessible() {
 		Field idField = ORMUtil.getIdField(Pojo.class);
 		idField.setAccessible(false);
@@ -68,7 +68,7 @@ public class ReflectionTest {
 		Reflection.set(idField, target, 12L);
 	}
 
-	@Test(expected = YopRuntimeException.class)
+	@Test(expected = ReflectionException.class)
 	public void test_setFieldFrom_field_not_accessible() {
 		Field idField = ORMUtil.getIdField(Pojo.class);
 		idField.setAccessible(false);
@@ -84,15 +84,15 @@ public class ReflectionTest {
 		Assert.assertEquals(Jopo.class, argParameter);
 	}
 
-	@Test(expected = YopRuntimeException.class)
+	@Test(expected = ReflectionException.class)
 	public void test_get1ArgParameter_no_arg_field() {
 		Field field = Reflection.getFields(Pojo.class, Column.class).get(0);
 		Reflection.get1ArgParameter(field);
 	}
 
-	@Test(expected = YopRuntimeException.class)
+	@Test(expected = ReflectionException.class)
 	public void test_get1ArgParameter_several_args_field() {
-		Field field = Reflection.getFields(Local.class, false).get(0);
+		Field field = Reflection.getFields(Local.class).get(0);
 		Reflection.get1ArgParameter(field);
 	}
 
@@ -102,7 +102,7 @@ public class ReflectionTest {
 		Assert.assertEquals("org.yop.orm.reflection.ReflectionTest$Local#map", Reflection.fieldToString(field));
 	}
 
-	@Test(expected = YopRuntimeException.class)
+	@Test(expected = ReflectionException.class)
 	public void test_findField_bad_getter() {
 		Reflection.findField(Local.class, Local::getMap_Bad);
 	}
@@ -113,7 +113,7 @@ public class ReflectionTest {
 		Assert.assertEquals("org.yop.orm.reflection.ReflectionTest$Local#map", Reflection.fieldToString(field));
 	}
 
-	@Test(expected = YopRuntimeException.class)
+	@Test(expected = ReflectionException.class)
 	public void test_findField_with_bad_setter() {
 		Reflection.findField(Local.class, Local::setMap_Bad);
 	}
@@ -163,7 +163,7 @@ public class ReflectionTest {
 		Assert.assertTrue(map == Reflection.readField("map", local));
 	}
 
-	@Test (expected = YopRuntimeException.class)
+	@Test (expected = ReflectionException.class)
 	public void test_readFieldFromInvalidFieldName() {
 		Reflection.readField("mapWithBadName", new Local());
 	}
