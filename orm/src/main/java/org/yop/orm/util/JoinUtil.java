@@ -15,8 +15,6 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.yop.orm.util.Reflection.isNotTransient;
-
 /**
  * A collection of utility methods to deal with joins !
  * <br>
@@ -51,7 +49,7 @@ public class JoinUtil {
 	 * @return the matching fields
 	 */
 	public static List<Field> joinTableFields(Class clazz) {
-		return Reflection.getFields(clazz, JoinTable.class, false);
+		return ORMUtil.getFields(clazz, JoinTable.class, false);
 	}
 
 	/**
@@ -60,7 +58,7 @@ public class JoinUtil {
 	 * @return the matching fields
 	 */
 	public static List<Field> nonTransientJoinTableFields(Class clazz) {
-		return Reflection.getFields(clazz, JoinTable.class, true);
+		return ORMUtil.getFields(clazz, JoinTable.class, true);
 	}
 
 	/**
@@ -69,7 +67,7 @@ public class JoinUtil {
 	 * @return the matching fields
 	 */
 	public static List<Field> joinColumnFields(Class clazz) {
-		return Reflection.getFields(clazz, JoinColumn.class, false);
+		return ORMUtil.getFields(clazz, JoinColumn.class, false);
 	}
 
 	/**
@@ -78,7 +76,7 @@ public class JoinUtil {
 	 * @return the matching fields
 	 */
 	public static List<Field> joinColumnYopableFields(Class clazz) {
-		return Reflection.getFields(clazz, JoinColumn.class, false)
+		return ORMUtil.getFields(clazz, JoinColumn.class, false)
 			.stream()
 			.filter(f -> Yopable.class.isAssignableFrom(f.getType()))
 			.collect(Collectors.toList());
@@ -90,7 +88,7 @@ public class JoinUtil {
 	 * @return the matching fields
 	 */
 	public static List<Field> nonTransientJoinColumnFields(Class clazz) {
-		return Reflection.getFields(clazz, JoinColumn.class, true);
+		return ORMUtil.getFields(clazz, JoinColumn.class, true);
 	}
 
 	public static List<String> joinProfiles(Field field) {
@@ -142,7 +140,7 @@ public class JoinUtil {
 
 		for (Field field : fields) {
 			if (profiles.length == 0) {
-				if (! isNotTransient(field)) {
+				if (! ORMUtil.isNotTransient(field)) {
 					continue;
 				}
 			} else if (! CollectionUtils.containsAny(joinProfiles(field), profiles)) {
@@ -195,7 +193,7 @@ public class JoinUtil {
 			name += " - profiles: " + Arrays.toString(field.getAnnotation(JoinProfile.class).profiles());
 		}
 
-		JoinLine line = isNotTransient(field) ? JoinLine.DEFAULT: JoinLine.TRANSIENT;
+		JoinLine line = ORMUtil.isNotTransient(field) ? JoinLine.DEFAULT: JoinLine.TRANSIENT;
 		into.add(prefix + (isTail ? line.tail : line.notTail) + name);
 
 		for (int i = 0; i < children.size() - 1; i++) {

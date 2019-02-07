@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.NaturalId;
-import org.yop.orm.exception.YopRuntimeException;
+import org.yop.orm.exception.ReflectionException;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -18,13 +18,13 @@ public class YopableTest {
 		Assert.assertEquals(17L, (long) yopable.getId());
 	}
 
-	@Test(expected = YopRuntimeException.class)
+	@Test(expected = ReflectionException.class)
 	public void test_set_id_not_accessible(){
 		NonAccessibleIdYopable yopable = new NonAccessibleIdYopable();
 		yopable.setId(17L);
 	}
 
-	@Test(expected = YopRuntimeException.class)
+	@Test(expected = ReflectionException.class)
 	public void test_get_id_not_accessible(){
 		NonAccessibleIdYopable yopable = new NonAccessibleIdYopable();
 		yopable.getId();
@@ -69,7 +69,7 @@ public class YopableTest {
 		Assert.assertFalse(yopable.equals(other));
 	}
 
-	@Test(expected = YopRuntimeException.class)
+	@Test(expected = ReflectionException.class)
 	public void test_equals_not_accessible_id() {
 		NonAccessibleIdYopable yopable = new NonAccessibleIdYopable();
 		yopable.setEmail("foo@bar.com");
@@ -86,7 +86,7 @@ public class YopableTest {
 		Assert.assertTrue(yopable.equals(other));
 	}
 
-	@Test(expected = YopRuntimeException.class)
+	@Test(expected = ReflectionException.class)
 	public void test_equals_not_accessible_natural_id() {
 		NonAccessibleNaturalIdYopable yopable = new NonAccessibleNaturalIdYopable();
 		yopable.setEmail("foo@bar.com");
@@ -116,7 +116,7 @@ public class YopableTest {
 		Assert.assertEquals(-1505031309, Yopable.hashCode(yopable));
 	}
 
-	@Test(expected = YopRuntimeException.class)
+	@Test(expected = ReflectionException.class)
 	public void test_hashcode_not_accessible() {
 		NonAccessibleNaturalIdYopable yopable = new NonAccessibleNaturalIdYopable();
 		yopable.setEmail("foo@bar.com");

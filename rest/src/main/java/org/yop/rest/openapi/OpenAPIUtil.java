@@ -174,7 +174,7 @@ public class OpenAPIUtil {
 	private static Schema<?> forResource(Class<? extends Yopable> clazz) {
 		if (Yopable.class.isAssignableFrom(clazz)) {
 			Schema<?> schema = new Schema<>().properties(new HashMap<>());
-			List<Field> fields = Reflection.getFields(clazz, true);
+			List<Field> fields = ORMUtil.getFields(clazz, true);
 			for (Field field : fields) {
 				Schema property;
 				if (ORMUtil.isCollection(field)) {

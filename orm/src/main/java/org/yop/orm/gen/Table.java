@@ -156,7 +156,7 @@ public class Table implements Comparable<Table> {
 		table.schema = ORMUtil.getSchemaName(clazz);
 		table.name   = ORMUtil.getTableName(clazz);
 
-		table.columns = Reflection
+		table.columns = ORMUtil
 			.getFields(clazz, org.yop.orm.annotations.Column.class)
 			.stream()
 			.map(field -> Column.fromField(field, config))

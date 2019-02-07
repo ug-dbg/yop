@@ -136,7 +136,7 @@ public class Context<T extends Yopable> {
 		Set<SQLColumn> columns = new HashSet<>();
 		String path = this.getPath(config);
 		Field idField = ORMUtil.getIdField(this.target);
-		for (Field field : Reflection.getFields(this.target, Column.class)) {
+		for (Field field : ORMUtil.getFields(this.target, Column.class)) {
 			String name = field.getAnnotation(Column.class).name();
 			columns.add(new SQLColumn(
 				name,

@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
+import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
@@ -69,7 +70,7 @@ public interface JsonAble {
 	 */
 	default <T extends Yopable> JsonElement toJSON(Context<T> context) {
 		JsonObject out = new JsonObject();
-		List<Field> fields = Reflection.getFields(this.getClass(), true);
+		List<Field> fields = ORMUtil.getFields(this.getClass(), true);
 
 		for (Field field : fields) {
 			if (java.lang.reflect.Modifier.isStatic(field.getModifiers())) {

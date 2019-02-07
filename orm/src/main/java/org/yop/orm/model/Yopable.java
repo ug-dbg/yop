@@ -82,7 +82,7 @@ public interface Yopable {
 	 * @return the natural ID fields
 	 */
 	default Collection<Field> getNaturalId() {
-		return Reflection.getFields(this.getClass(), NaturalId.class);
+		return ORMUtil.getFields(this.getClass(), NaturalId.class);
 	}
 
 	/**

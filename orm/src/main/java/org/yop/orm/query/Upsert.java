@@ -418,7 +418,7 @@ public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> imp
 	 * @return the columns to select and their SQL part parameter.
 	 */
 	private Map<String, SQLPart> valuePerColumn(T element, Config config, boolean insert) {
-		List<Field> fields = Reflection.getFields(this.getTarget(), Column.class);
+		List<Field> fields = ORMUtil.getFields(this.getTarget(), Column.class);
 		Field idField = ORMUtil.getIdField(this.getTarget());
 		Map<String, SQLPart> out = new HashMap<>();
 

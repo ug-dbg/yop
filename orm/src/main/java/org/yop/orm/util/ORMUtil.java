@@ -14,11 +14,12 @@ import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.transform.ITransformer;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
-
-import static org.yop.orm.util.Reflection.isNotTransient;
+import java.util.stream.Collectors;
 
 /**
  * Some utility methods to read ORM annotations, find ID field, column type...
@@ -188,7 +189,7 @@ public class ORMUtil {
 	 * @throws YopMappingException no Yop compatible ID field found or several ones.
 	 */
 	public static <T extends Yopable> Field getIdField(Class<T> clazz) {
-		List<Field> idFields = Reflection.getFields(clazz, Id.class);
+		List<Field> idFields = getFields(clazz, Id.class);
 		if(idFields.size() == 0) {
 			logger.trace("No @Id field on [{}]. Assuming 'id'", clazz.getName());
 			Field field = Reflection.get(clazz, "id");
@@ -217,6 +218,48 @@ public class ORMUtil {
 	@SuppressWarnings("unchecked")
 	public static boolean isIdField(Field field) {
 		return getIdField((Class)field.getDeclaringClass()) == field;
+	}
+
+	/**
+	 * Get all the non synthetic fields of a class. <br>
+	 * Also retrieve the non transient and non synthetic fields from superclasses.
+	 * @param type         the class
+	 * @param nonTransient true to exclude transient fields
+	 * @return the field list
+	 */
+	public static List<Field> getFields(Class type, boolean nonTransient) {
+		return Reflection
+			.getFields(type)
+			.stream()
+			.filter(field -> (isNotTransient(field) || !nonTransient))
+			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Get all the non transient and non synthetic fields of a class, with a given annotation. <br>
+	 * Also retrieve the non transient and non synthetic fields from superclasses.
+	 * @param type           the class
+	 * @param withAnnotation the annotation the field must declare to be eligible
+	 * @return the field list
+	 */
+	public static List<Field> getFields(Class type, Class<? extends Annotation> withAnnotation) {
+		return getFields(type, withAnnotation, true);
+	}
+
+	/**
+	 * Get all non synthetic fields of a class, with a given annotation. <br>
+	 * Also retrieve non synthetic fields from superclasses.
+	 * @param type           the class
+	 * @param withAnnotation the annotation the field must declare to be eligible
+	 * @param nonTransient   if true, transient fields are excluded
+	 * @return the field list
+	 */
+	public static List<Field> getFields(Class type, Class<? extends Annotation> withAnnotation, boolean nonTransient) {
+		return Reflection
+			.getFields(type, withAnnotation)
+			.stream()
+			.filter(field -> (isNotTransient(field) || !nonTransient))
+			.collect(Collectors.toList());
 	}
 
 	/**
@@ -309,7 +352,7 @@ public class ORMUtil {
 	 */
 	public static List<Field> getNaturalKeyFields(Class clazz){
 		List<Field> fields = new ArrayList<>();
-		for(Field field : Reflection.getFields(clazz, true)){
+		for(Field field : getFields(clazz, true)){
 			if(field.isAnnotationPresent(NaturalId.class) && isNotTransient(field)){
 				fields.add(field);
 				field.setAccessible(true);
@@ -405,6 +448,15 @@ public class ORMUtil {
 			return seq;
 		}
 		return "";
+	}
+
+	/**
+	 * Check if a field has the transient keyword or a {@link YopTransient} annotation. <br>
+	 * @param field the field to check
+	 * @return false if either the transient keyword or the YopTransient annotation is set
+	 */
+	public static boolean isNotTransient(Field field){
+		return !Modifier.isTransient(field.getModifiers()) && !field.isAnnotationPresent(YopTransient.class);
 	}
 
 	/**
