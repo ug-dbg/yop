@@ -4,7 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 
 import java.lang.reflect.Method;
 import java.sql.Timestamp;

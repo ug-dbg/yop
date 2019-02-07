@@ -6,7 +6,7 @@ import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.HashSet;

@@ -3,7 +3,7 @@ package org.yop.orm.reflection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 import sun.reflect.ConstructorAccessor;
 import sun.reflect.FieldAccessor;
 import sun.reflect.ReflectionFactory;

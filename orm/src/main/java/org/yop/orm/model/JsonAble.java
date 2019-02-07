@@ -7,7 +7,7 @@ import com.google.gson.JsonPrimitive;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;

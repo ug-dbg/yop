@@ -17,6 +17,7 @@
 	</description>
 
 	<modules>
+		<module>reflection</module>
 		<module>orm</module>
 		<module>rest</module>
 		<module>swaggerui</module>

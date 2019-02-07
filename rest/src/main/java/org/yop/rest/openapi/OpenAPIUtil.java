@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.util.ORMUtil;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 import org.yop.rest.annotations.Header;
 import org.yop.rest.annotations.PathParam;
 import org.yop.rest.annotations.RequestParam;

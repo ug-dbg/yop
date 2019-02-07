@@ -7,7 +7,7 @@ import org.yop.orm.sql.Config;
 import org.yop.orm.util.JoinUtil;
 import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.ORMUtil;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 import org.yop.orm.sql.dialect.IDialect;
 
 import javax.annotation.Nonnull;

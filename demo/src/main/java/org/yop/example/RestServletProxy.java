@@ -8,7 +8,7 @@ import org.yop.orm.gen.Prepare;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.ORMUtil;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 import org.yop.rest.annotations.Rest;
 import org.yop.rest.servlet.OpenAPIServlet;
 import org.yop.rest.servlet.YopRestServlet;

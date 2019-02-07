@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.json.JSON;
 import org.yop.orm.sql.adapter.IConnection;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 import org.yop.rest.openapi.OpenAPIUtil;
 
 import java.util.ArrayList;

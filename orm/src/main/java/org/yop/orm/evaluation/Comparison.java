@@ -8,7 +8,7 @@ import org.yop.orm.query.Context;
 import org.yop.orm.query.IJoin;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.SQLPart;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.function.Function;

@@ -13,7 +13,7 @@ import org.yop.orm.query.Where;
 import org.yop.orm.simple.model.*;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.adapter.IConnection;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 
 import java.sql.SQLException;
 import java.time.Instant;

@@ -1,11 +1,10 @@
-package org.yop.orm.util;
+package org.yop.reflection;
 
 import com.google.common.primitives.Primitives;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.exception.ReflectionException;
 import sun.reflect.ReflectionFactory;
 
 import java.lang.annotation.Annotation;
@@ -13,8 +12,6 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-
-import static org.yop.orm.util.MessageUtil.concat;
 
 /**
  * Utility class for reflection-based method. <br>
@@ -663,5 +660,18 @@ public class Reflection {
 			logger.trace("Could not find constructor [{}]([{}])", on.getName(), withParameter.getName(), e);
 		}
 		return null;
+	}
+
+	/**
+	 * Concat objects as Strings using an underlying StringBuilder. <br>
+	 * @param objects the strings to concat.
+	 * @return the resulting string.
+	 */
+	private static String concat(Object... objects){
+		StringBuilder builder = new StringBuilder();
+		for(Object o : objects){
+			builder.append(String.valueOf(o));
+		}
+		return builder.toString();
 	}
 }

@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.*;

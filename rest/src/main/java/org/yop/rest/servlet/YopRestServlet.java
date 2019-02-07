@@ -10,7 +10,7 @@ import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 import org.yop.rest.annotations.Rest;
 import org.yop.rest.exception.*;
 

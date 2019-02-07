@@ -1,4 +1,4 @@
-package org.yop.orm.util;
+package org.yop.reflection;
 
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;

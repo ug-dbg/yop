@@ -11,7 +11,7 @@ import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 
 import java.util.*;
 import java.util.stream.Collectors;

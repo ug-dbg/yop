@@ -2,7 +2,7 @@ package org.yop.orm.transform;
 
 import org.yop.orm.annotations.Column;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 
 import java.util.HashMap;
 import java.util.Map;

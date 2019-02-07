@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.NaturalId;
-import org.yop.orm.exception.ReflectionException;
+import org.yop.reflection.ReflectionException;
 
 import java.lang.reflect.Field;
 import java.util.Collection;

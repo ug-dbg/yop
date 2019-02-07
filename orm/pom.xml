@@ -43,6 +43,12 @@
 
 	<!-- Small is beautiful :-) -->
 	<dependencies>
+		<dependency>
+			<groupId>org.y-op</groupId>
+			<artifactId>reflection</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
 		<!--
 			YOP uses the org.reflections library to :
 			- Find all the Yopable objects in a package when you want to generates Tables

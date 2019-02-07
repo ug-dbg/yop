@@ -2,7 +2,7 @@ package org.yop.orm.exception;
 
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

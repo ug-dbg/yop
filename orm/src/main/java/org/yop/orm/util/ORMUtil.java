@@ -13,6 +13,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.transform.ITransformer;
+import org.yop.reflection.Reflection;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
