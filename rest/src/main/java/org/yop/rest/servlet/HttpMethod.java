@@ -12,6 +12,7 @@ import org.apache.http.entity.ContentType;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yop.ioc.Singleton;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.json.JSON;
 import org.yop.orm.sql.adapter.IConnection;
@@ -375,7 +376,7 @@ public interface HttpMethod {
 			if (Modifier.isStatic(method.getModifiers())) {
 				out = method.invoke(null, parameters);
 			} else {
-				out = method.invoke(restRequest.getRestResource(), parameters);
+				out = method.invoke(Singleton.of(restRequest.getRestResource()).get(), parameters);
 			}
 			return ExecutionOutput.forOutput(out);
 		} catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
