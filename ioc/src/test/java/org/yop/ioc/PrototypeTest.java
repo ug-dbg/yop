@@ -4,28 +4,29 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.yop.ioc.model.*;
+import org.yop.reflection.Reflection;
 import org.yop.reflection.ReflectionException;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class SingletonTest {
+public class PrototypeTest {
 
 	@Before
 	public void setUp() {
-		Singleton.register(InterfaceA.class, ServiceA.class);
-		Singleton.register(InterfaceB.class, ServiceB.class);
-		Singleton.register(InterfaceC.class, ServiceC.class);
+		Singleton.register(InterfaceA.class, ServiceA.class, -1);
+		Singleton.register(InterfaceB.class, ServiceB.class, 1);
+		Singleton.register(InterfaceC.class, ServiceC.class, 1);
 
-		Singleton.register(Interface.class, () -> "lambda");
+		Singleton.register(Interface.class, () -> "lambda1", () -> "lambda2", () -> "lambda3");
 	}
 
 	@Test
-	public void testSingletonFromClassRegistration() {
+	public void testPrototypeFromClassRegistration() {
 		String fromA = Singleton.of(InterfaceA.class).get().all();
 		String fromB = Singleton.of(InterfaceB.class).get().all();
 		String fromC = Singleton.of(InterfaceC.class).get().all();
@@ -35,31 +36,32 @@ public class SingletonTest {
 	}
 
 	@Test
-	public void testSingletonFromInstanceRegistration() {
-		Assert.assertEquals("lambda", Singleton.of(Interface.class).get().all());
+	public void testPrototypeFromInstanceRegistration() {
+		Assert.assertTrue(Singleton.of(Interface.class).get().all().startsWith("lambda"));
 	}
 
 	@Test
-	public void testSingletonFromExplicitClass() {
+	public void testPrototypeFromExplicitClass() {
 		Assert.assertEquals(new ServiceA().all(), Singleton.of(ServiceA.class).get().all());
 	}
 
 	@Test
-	public void testSingletonFromOverriddenInstanceRegistration() {
+	public void testPrototypeFromOverriddenInstanceRegistration() {
 		Singleton.register(Interface.class, new ServiceA());
 		Assert.assertEquals(new ServiceA().all(), Singleton.of(Interface.class).get().all());
 	}
 
 	@Test(expected = ReflectionException.class)
-	public void testSingletonFromInterfaceRegistration() {
+	public void testPrototypeFromInterfaceRegistration() {
 		Singleton.register(Interface.class, InterfaceB.class);
 		Singleton.of(Interface.class).get().all();
 	}
 
 	@Test
-	public void testSingletonFromMultiThreads() throws InterruptedException {
+	public void testPrototypeFromMultiThreads() throws InterruptedException {
+		Singleton.register(Interface.class, ServiceA.class, -1);
 		ExecutorService executor = Executors.newFixedThreadPool(10);
-		List<Interface> instances = Collections.synchronizedList(new ArrayList<>());
+		Set<Interface> instances = Collections.synchronizedSet(new HashSet<>());
 		Runnable task = () -> {
 			Interface instance = Singleton.of(Interface.class).get();
 			instances.add(instance);
@@ -69,12 +71,17 @@ public class SingletonTest {
 		}
 		executor.awaitTermination(100, TimeUnit.MILLISECONDS);
 		Assert.assertEquals(10, instances.size());
-		Interface ref = instances.iterator().next();
+
+		// ServiceA is prototype for 'Interface' but 1 ServiceB and 1 ServiceC.
+		Set<Interface> bs = new HashSet<>();
+		Set<Interface> cs = new HashSet<>();
 		for (Interface instance : instances) {
-			if(instance != ref) {
-				Assert.fail("different instances [" + instance + "] and [" + ref + "]");
-			}
+			Assert.assertTrue(instance instanceof ServiceA);
+			bs.add((Interface) ((Singleton) Reflection.readField("b", instance)).get());
+			cs.add((Interface) ((Singleton) Reflection.readField("c", instance)).get());
 		}
+		Assert.assertEquals(1, bs.size());
+		Assert.assertEquals(1, cs.size());
 	}
 
 }
