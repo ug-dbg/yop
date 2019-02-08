@@ -18,6 +18,7 @@
 
 	<modules>
 		<module>reflection</module>
+		<module>ioc</module>
 		<module>orm</module>
 		<module>rest</module>
 		<module>swaggerui</module>
