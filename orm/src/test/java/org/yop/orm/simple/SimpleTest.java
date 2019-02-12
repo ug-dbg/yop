@@ -20,7 +20,7 @@ import org.yop.orm.sql.Query;
 import org.yop.orm.sql.SimpleQuery;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.JoinUtil;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
