@@ -46,6 +46,8 @@ class Get implements HttpMethod {
 			select.page(restRequest.offset(), restRequest.limit());
 		}
 
+		select.joinProfiles(restRequest.profiles().toArray(new String[0]));
+
 		if (restRequest.getId() != null) {
 			select.where(new IdIn(Collections.singletonList(restRequest.getId())));
 			Yopable uniqueResult = select.uniqueResult(connection);
@@ -78,6 +80,7 @@ class Get implements HttpMethod {
 		get.setParameters(new ArrayList<>());
 		get.getParameters().add(HttpMethod.joinAllParameter(resource));
 		get.getParameters().add(HttpMethod.joinIDsParameter(resource));
+		get.getParameters().add(HttpMethod.joinProfilesParameter(yopable));
 		get.getParameters().add(HttpMethod.countParameter(resource));
 		get.getParameters().add(HttpMethod.pagingOffsetParameter(resource));
 		get.getParameters().add(HttpMethod.pagingLimitParameter(resource));

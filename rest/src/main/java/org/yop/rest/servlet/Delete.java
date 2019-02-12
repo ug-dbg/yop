@@ -46,12 +46,14 @@ public class Delete implements HttpMethod {
 		if (restRequest.getId() != null) {
 			delete.where(new IdIn(Collections.singletonList(restRequest.getId())));
 		}
+
+		delete.joinProfiles(restRequest.profiles().toArray(new String[0]));
 		delete.executeQueries(connection);
 		return ExecutionOutput.forOutput("[]");
 	}
 
 	@Override
-	public Operation openAPIDefaultModel(Class yopable) {
+	public Operation openAPIDefaultModel(Class<? extends Yopable> yopable) {
 		String resource = OpenAPIUtil.getResourceName(yopable);
 		Operation delete = new Operation();
 		delete.setSummary("Do delete operation on [" + resource + "]. If not ID provided, delete all entries !");
@@ -59,6 +61,7 @@ public class Delete implements HttpMethod {
 		delete.setParameters(new ArrayList<>());
 		delete.getParameters().add(HttpMethod.joinAllParameter(resource));
 		delete.getParameters().add(HttpMethod.joinIDsParameter(resource));
+		delete.getParameters().add(HttpMethod.joinProfilesParameter(yopable));
 
 		ApiResponse responseItem = new ApiResponse();
 		responseItem.setDescription("Empty json array. To return the deleted objects, please override me.");

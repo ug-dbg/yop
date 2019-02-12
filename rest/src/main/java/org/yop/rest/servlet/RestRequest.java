@@ -285,6 +285,14 @@ class RestRequest {
 	}
 
 	/**
+	 * Get all the joinProfile parameter values.
+	 * @return all the profile values from the {@link HttpMethod#PARAM_JOIN_PROFILE} parameters.
+	 */
+	Set<String> profiles() {
+		return new HashSet<>(this.parameters.get(HttpMethod.PARAM_JOIN_PROFILE));
+	}
+
+	/**
 	 * Does this request has a 'paging' directive in its headers ?
 	 * @return true if there is either a {@link HttpMethod#PARAM_OFFSET} or a {@link HttpMethod#PARAM_LIMIT} header
 	 */

@@ -77,6 +77,7 @@ public class Upsert implements HttpMethod {
 			if (restRequest.joinIDs()) {
 				logger.warn("Should check related IDs to join! Not implemented yet!");
 			}
+			upsert.joinProfiles(restRequest.profiles().toArray(new String[0]));
 			upsert.execute(connection);
 		}
 		return ExecutionOutput.forOutput(output);
@@ -95,6 +96,7 @@ public class Upsert implements HttpMethod {
 		upsert.setParameters(new ArrayList<>());
 		upsert.getParameters().add(HttpMethod.joinAllParameter(resource));
 		upsert.getParameters().add(HttpMethod.joinIDsParameter(resource));
+		upsert.getParameters().add(HttpMethod.joinProfilesParameter(yopable));
 		upsert.getParameters().add(HttpMethod.checkNaturalIDParameter(resource));
 		upsert.getParameters().add(HttpMethod.partialParameter(resource));
 		upsert.requestBody(new RequestBody().content(new Content().addMediaType(

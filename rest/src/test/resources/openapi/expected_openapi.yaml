@@ -45,6 +45,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Pojo]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "count"
         in: "header"
         description: "Set the total number of results in your query on [Pojo]."
@@ -131,6 +142,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Pojo]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "checkNaturalID"
         in: "query"
         description: "Check natural ID when inserting [Pojo] elements. Do update if\
@@ -309,6 +331,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Pojo]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       responses:
         200:
           description: "Empty json array. To return the deleted objects, please override\
@@ -444,6 +477,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Pojo]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "count"
         in: "header"
         description: "Set the total number of results in your query on [Pojo]."
@@ -536,6 +580,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Pojo]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "id"
         in: "path"
         description: "[Pojo] ID"
@@ -686,6 +741,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Profile]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "count"
         in: "header"
         description: "Set the total number of results in your query on [Profile]."
@@ -772,6 +838,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Profile]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "checkNaturalID"
         in: "query"
         description: "Check natural ID when inserting [Profile] elements. Do update\
@@ -946,6 +1023,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Profile]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       responses:
         200:
           description: "Empty json array. To return the deleted objects, please override\
@@ -1081,6 +1169,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Profile]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "count"
         in: "header"
         description: "Set the total number of results in your query on [Profile]."
@@ -1173,6 +1272,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Profile]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "id"
         in: "path"
         description: "[Profile] ID"
@@ -1323,6 +1433,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Action]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "count"
         in: "header"
         description: "Set the total number of results in your query on [Action]."
@@ -1409,6 +1530,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Action]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "checkNaturalID"
         in: "query"
         description: "Check natural ID when inserting [Action] elements. Do update\
@@ -1581,6 +1713,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Action]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       responses:
         200:
           description: "Empty json array. To return the deleted objects, please override\
@@ -1716,6 +1859,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Action]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "count"
         in: "header"
         description: "Set the total number of results in your query on [Action]."
@@ -1808,6 +1962,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [Action]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "id"
         in: "path"
         description: "[Action] ID"
@@ -1958,6 +2123,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [User]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "count"
         in: "header"
         description: "Set the total number of results in your query on [User]."
@@ -2044,6 +2220,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [User]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "checkNaturalID"
         in: "query"
         description: "Check natural ID when inserting [User] elements. Do update if\
@@ -2305,6 +2492,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [User]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "count"
         in: "header"
         description: "Set the total number of results in your query on [User]."
@@ -2397,6 +2595,17 @@ paths:
         required: false
         schema:
           type: "boolean"
+      - name: "joinProfile"
+        in: "query"
+        description: "A profile to join for the operation on [User]."
+        required: false
+        schema:
+          minItems: 0
+          type: "array"
+          description: "A collection of join profiles"
+          items:
+            type: "string"
+            enum: []
       - name: "id"
         in: "path"
         description: "[User] ID"

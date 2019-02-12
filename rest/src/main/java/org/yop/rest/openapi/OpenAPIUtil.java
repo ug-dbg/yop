@@ -106,6 +106,22 @@ public class OpenAPIUtil {
 	}
 
 	/**
+	 * Return a new Schema for the given item values and with the given description.
+	 * @param description the schema description
+	 * @param values      the item values
+	 * @return a new Schema instance
+	 */
+	@SuppressWarnings("unchecked")
+	public static Schema forValues(String description, String... values) {
+		ArraySchema schema = new ArraySchema();
+		schema.setDescription(description);
+		schema.setMinItems(0);
+		schema.setItems(JSON_SCHEMAS.get(String.class).toSchema());
+		schema.getItems().setEnum(Arrays.asList(values));
+		return schema;
+	}
+
+	/**
 	 * Generate an OpenAPI model from the given Yopables.
 	 * <br>
 	 * Both default behavior (GET/POST/PUT/HEAD/DELETE) and custom (custom @Rest methods) are inserted in the model.

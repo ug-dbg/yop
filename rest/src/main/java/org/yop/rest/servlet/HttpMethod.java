@@ -17,6 +17,8 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.json.JSON;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.TransformUtil;
+import org.yop.reflection.Reflection;
+import org.yop.rest.annotations.JoinProfiles;
 import org.yop.rest.exception.YopNoResourceException;
 import org.yop.rest.exception.YopResourceInvocationException;
 import org.yop.rest.openapi.OpenAPIUtil;
@@ -63,6 +65,9 @@ public interface HttpMethod {
 
 	/** HTTP 'checkNaturalID' parameter : when inserting, check if the Natural Key already exists. */
 	String PARAM_CHECK_NK = "checkNaturalID";
+
+	/** HTTP 'joinProfile' parameter : a profile to join when executing a CRUD operation. */
+	String PARAM_JOIN_PROFILE = "joinProfile";
 
 	/** HTTP 'count' parameter : return the total number of results in the output headers. */
 	String PARAM_COUNT = "count";
@@ -154,6 +159,27 @@ public interface HttpMethod {
 			.required(false)
 			.schema(new Schema().type("boolean"))
 			.description("Check natural ID when inserting [" + forResource + "] elements. Do update if possible.");
+	}
+
+	/**
+	 * Create a {@link #PARAM_JOIN_PROFILE}' OpenAPI parameter for a given resource.
+	 * <br>
+	 * Available profiles for the resource will be read from any {@link JoinProfiles} annotation.
+	 * @param yopable the target resource.
+	 * @return the OpenAPI 'joinProfile' parameter
+	 */
+	static io.swagger.oas.models.parameters.Parameter joinProfilesParameter(Class<? extends Yopable> yopable) {
+		JoinProfiles annotation = Reflection.getAnnotation(yopable, JoinProfiles.class);
+		String[] profiles = new String[0];
+		if (annotation != null) {
+			profiles = annotation.names();
+		}
+		return new io.swagger.oas.models.parameters.Parameter()
+			.name(PARAM_JOIN_PROFILE)
+			.in("query")
+			.required(false)
+			.schema(OpenAPIUtil.forValues("A collection of join profiles", profiles))
+			.description("A profile to join for the operation on [" + OpenAPIUtil.getResourceName(yopable) + "].");
 	}
 
 	/**
@@ -423,6 +449,7 @@ public interface HttpMethod {
 			if (restRequest.joinAll()) {
 				json.joinAll();
 			}
+			json.joinProfiles(restRequest.profiles().toArray(new String[0]));
 			return json.toJSON();
 		}
 
