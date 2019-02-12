@@ -20,6 +20,7 @@ import org.yop.orm.sql.Query;
 import org.yop.orm.sql.SimpleQuery;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.JoinUtil;
+import org.yop.orm.util.Reflection;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -55,6 +56,23 @@ public class SimpleTest extends DBMSSwitch {
 		joins = new IJoin.Joins<>();
 		JoinUtil.joinProfiles(Pojo.class, joins, "pojo_profile1", "pojo_children_and_parent");
 		joins.print(Pojo.class);
+	}
+
+	@Test
+	public void testJoinNoProfile() {
+		List<String> profiles = JoinUtil.joinProfiles(Reflection.get(Pojo.class, "children"));
+		Assert.assertEquals(1, profiles.size());
+
+		IJoin.Joins<Pojo> joins = new IJoin.Joins<>();
+		JoinUtil.joinProfiles(Pojo.class, joins);
+		Assert.assertEquals(2, joins.size());
+
+		joins = new IJoin.Joins<>();
+		JoinUtil.joinProfiles(Pojo.class, joins, "this profile does not exist");
+		Assert.assertEquals(0, joins.size());
+
+		Select<Pojo> select = Select.from(Pojo.class).joinProfiles();
+		Assert.assertEquals(0, ((Collection)Reflection.readField("joins", select)).size());
 	}
 
 	@Test
@@ -133,12 +151,12 @@ public class SimpleTest extends DBMSSwitch {
 			extra.setSuperExtra(superExtra);
 
 			upsert(Pojo.class)
-					.onto(newPojo)
-					.join(toSet(Pojo::getJopos))
-					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
-					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
-					.checkNaturalID()
-					.execute(connection);
+				.onto(newPojo)
+				.join(toSet(Pojo::getJopos))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+				.checkNaturalID()
+				.execute(connection);
 
 			Collection<Pojo> fromSelectWithBadJoinWhere = Select
 				.from(Pojo.class)
@@ -157,11 +175,11 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertEquals(0, fromSelectWithBadJoinWhere.size());
 
 			Pojo found = Select
-					.from(Pojo.class)
-					.join(toSet(Pojo::getJopos).where(new Comparison(Jopo::getId, Operator.GE, 1L)))
-					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
-					.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
-					.uniqueResult(connection);
+				.from(Pojo.class)
+				.join(toSet(Pojo::getJopos).where(new Comparison(Jopo::getId, Operator.GE, 1L)))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+				.uniqueResult(connection);
 			Assert.assertTrue(!found.getOthers().isEmpty());
 			Assert.assertTrue(found.getOthers().iterator().next().getExtra().getOther() != null);
 			Assert.assertTrue(found.getOthers().iterator().next().getExtra().getSuperExtra() != null);

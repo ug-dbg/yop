@@ -91,8 +91,13 @@ public class JoinUtil {
 		return ORMUtil.getFields(clazz, JoinColumn.class, true);
 	}
 
+	/**
+	 * Read all the {@link JoinProfile} profiles annotated on this field.
+	 * @param field the field to read (can be null)
+	 * @return the join profiles annotated for the field
+	 */
 	public static List<String> joinProfiles(Field field) {
-		if (field.isAnnotationPresent(JoinProfile.class)) {
+		if (field != null && field.isAnnotationPresent(JoinProfile.class)) {
 			return Arrays.asList(field.getAnnotation(JoinProfile.class).profiles());
 		}
 		return new ArrayList<>(0);
