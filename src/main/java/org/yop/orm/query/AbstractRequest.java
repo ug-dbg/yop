@@ -149,7 +149,10 @@ abstract class AbstractRequest<Request extends AbstractRequest, T extends Yopabl
 	 */
 	@SuppressWarnings("unchecked")
 	public Request joinProfiles(String... profiles) {
-		JoinUtil.joinProfiles(this.context.getTarget(), this.joins, profiles);
+		if (profiles.length > 0) {
+			JoinUtil.joinProfiles(this.context.getTarget(), this.joins, profiles);
+		}
+
 		return (Request) this;
 	}
 
