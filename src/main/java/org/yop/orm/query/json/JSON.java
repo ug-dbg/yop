@@ -183,6 +183,18 @@ public class JSON<T extends Yopable> {
 	}
 
 	/**
+	 * Add the joins which are targeted by profiles, using {@link org.yop.orm.annotations.JoinProfile} on fields.
+	 * @return the current request, for chaining purpose
+	 */
+	@SuppressWarnings({"unchecked", "unused"})
+	public JSON<T> joinProfiles(String... profiles) {
+		if (profiles.length > 0) {
+			JoinUtil.joinProfiles(this.target, this.joins, profiles);
+		}
+		return this;
+	}
+
+	/**
 	 * Add a relation - to another Yopable type whose IDs are set to be serialized.
 	 * @param join the join clause
 	 * @param <R> the target join type
