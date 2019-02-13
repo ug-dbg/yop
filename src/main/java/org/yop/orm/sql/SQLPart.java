@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 public class SQLPart implements CharSequence {
 
 	/** e.g. {:parameter_name} */
-	private static final Pattern REPLACEMENT_PATTERN = Pattern.compile("\\{:[a-z_]+}");
+	private static final Pattern REPLACEMENT_PATTERN = Pattern.compile("\\{:[a-z_]+\\}");
 	private static final String PARAM = "?";
 
 	private String sql;
