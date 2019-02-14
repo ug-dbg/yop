@@ -1,6 +1,7 @@
 package org.yop.reflection;
 
 import com.google.common.primitives.Primitives;
+import com.google.common.reflect.TypeToken;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
@@ -100,6 +101,11 @@ public class Reflection {
 			Class<?> superClass = target.getSuperclass();
 			allMethods.addAll(getMethods(superClass));
 		}
+
+		if (target.getInterfaces() != null) {
+			Class<?>[] interfaces = target.getInterfaces();
+			Arrays.stream(interfaces).forEach(superInterface -> allMethods.addAll(getMethods(superInterface)));
+		}
 		allMethods.addAll(Arrays.asList(declaredMethods));
 		allMethods.addAll(Arrays.asList(methods));
 		return allMethods;
@@ -120,6 +126,12 @@ public class Reflection {
 				return (A) i.getAnnotation(annotation);
 			}
 			i = i.getSuperclass();
+		}
+		Set<TypeToken> typeTokens = TypeToken.of(target).getTypes().interfaces();
+		for (TypeToken typeToken : typeTokens) {
+			if (typeToken.getRawType().isAnnotationPresent(annotation)) {
+				return (A) typeToken.getRawType().getAnnotation(annotation);
+			}
 		}
 		return null;
 	}
@@ -334,7 +346,7 @@ public class Reflection {
 			Constructor<T> c = clazz.getDeclaredConstructor();
 			c.setAccessible(true);
 			return c.newInstance();
-		} catch (Exception e) {
+		} catch (RuntimeException | ReflectiveOperationException e) {
 			throw new ReflectionException(
 				"Unable to create instance of [" + clazz + "]. Does it have a no-arg constructor?",
 				e
