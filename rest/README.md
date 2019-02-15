@@ -1,6 +1,20 @@
-# YOP - REST !
+# YOP !
+[![Build Status](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/badge/icon)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/)
+[![Coverage](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/ws/rest/target/jacoco.svg)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/lastBuild/jacoco)
 
-**Unrestful REST for YOP !**  
+Unrestful REST for YOP !
+
+## Maven
+Yop is available on Maven central :  
+```xml
+<dependency>
+    <groupId>org.y-op</groupId>
+    <artifactId>yop-rest</artifactId>
+    <version>0.9.0</version>
+</dependency>
+```    
+
+## About
 
 This module simply defines an HttpServlet that will scan the @Rest annotated Yopables.
 For each one of them, the Servlet will answer the configured path.

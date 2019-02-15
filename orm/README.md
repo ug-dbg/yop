@@ -1,8 +1,18 @@
 # YOP ! 
-[![Build Status](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/badge/icon)](http://jenkins.y-op.org/job/yop-test-MySQL/)
-[![Coverage](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/ws/target/jacoco.svg)](http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco)
+[![Build Status](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/badge/icon)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/)
+[![Coverage](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/ws/orm/target/jacoco.svg)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/lastBuild/jacoco)
   
 The 'Hit & Run' Object-Relational-Mapping tool :-) 
+
+## Maven
+Yop is available on Maven central : 
+```xml
+<dependency>
+    <groupId>org.y-op</groupId>
+    <artifactId>yop-orm</artifactId>
+    <version>0.9.0</version>
+</dependency>
+```
 
 ## What is YOP ?
 An ORM tool to build/execute/map SQL requests onto java objects.
@@ -47,7 +57,6 @@ Select
  .from(Library.class)    
  .join(Library::getAuthors, Author::getBooks, Book::getChapters)    
  .join(Library::getEmployees)  
- .checkNaturalID()  
  .execute(connection);
   ```
 
@@ -65,14 +74,6 @@ See the [yop-android-poc](https://github.com/ug-dbg/yop-android-poc) for an infa
 
 
 ## What does it look like ?
-Yop is available on Maven central : 
-```xml
-<dependency>
-    <groupId>org.y-op</groupId>
-    <artifactId>yop</artifactId>
-    <version>0.7.0</version>
-</dependency>
-```
 
 * You annotate your persistent objects using a limited set of annotations
 * You use the transient keyword to indicate cycles in your data graphs

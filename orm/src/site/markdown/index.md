@@ -103,7 +103,6 @@ Select
  .from(Library.class)    
  .join(Library::getAuthors, Author::getBooks, Book::getChapters)    
  .join(Library::getEmployees)  
- .checkNaturalID()  
  .execute(connection);
 ```  
   
