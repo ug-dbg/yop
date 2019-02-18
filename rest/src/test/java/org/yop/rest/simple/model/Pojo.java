@@ -9,7 +9,7 @@ import org.yop.orm.evaluation.Operator;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Select;
 import org.yop.orm.query.Where;
-import org.yop.orm.query.json.JSON;
+import org.yop.orm.query.serialize.json.JSON;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.annotations.*;
 

@@ -2,7 +2,7 @@ package org.yop.orm.simple.model;
 
 import org.yop.orm.annotations.*;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.json.annotations.YopJSONTransient;
+import org.yop.orm.query.serialize.json.annotations.YopJSONTransient;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

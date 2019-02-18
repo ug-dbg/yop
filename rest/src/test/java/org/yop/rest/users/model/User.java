@@ -4,7 +4,7 @@ import org.apache.http.Header;
 import org.apache.http.NameValuePair;
 import org.yop.orm.annotations.*;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.json.annotations.YopJSONTransient;
+import org.yop.orm.query.serialize.json.annotations.YopJSONTransient;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.annotations.Content;
 import org.yop.rest.annotations.RequestPath;

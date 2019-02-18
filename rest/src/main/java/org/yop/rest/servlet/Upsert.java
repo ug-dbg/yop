@@ -13,7 +13,7 @@ import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.json.JSON;
+import org.yop.orm.query.serialize.json.JSON;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.reflection.Reflection;
 import org.yop.rest.openapi.OpenAPIUtil;

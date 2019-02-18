@@ -1,11 +1,11 @@
-package org.yop.orm.query.json;
+package org.yop.orm.query.serialize.json;
 
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.JsonSerializationContext;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.json.annotations.YopJSONTransient;
+import org.yop.orm.query.serialize.json.annotations.YopJSONTransient;
 
 import java.lang.reflect.Type;
 

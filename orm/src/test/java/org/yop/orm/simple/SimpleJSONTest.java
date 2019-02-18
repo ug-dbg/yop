@@ -7,7 +7,7 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import org.yop.orm.DBMSSwitch;
 import org.yop.orm.query.Join;
 import org.yop.orm.query.JoinSet;
-import org.yop.orm.query.json.JSON;
+import org.yop.orm.query.serialize.json.JSON;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
 import org.yop.orm.simple.model.Pojo;

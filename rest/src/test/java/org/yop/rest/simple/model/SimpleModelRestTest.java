@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.query.*;
-import org.yop.orm.query.json.JSON;
+import org.yop.orm.query.serialize.json.JSON;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
 import org.yop.orm.simple.model.Pojo;

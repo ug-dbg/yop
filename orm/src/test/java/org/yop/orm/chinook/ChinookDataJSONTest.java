@@ -14,7 +14,7 @@ import org.yop.orm.chinook.model.*;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.query.Join;
 import org.yop.orm.query.JoinSet;
-import org.yop.orm.query.json.JSON;
+import org.yop.orm.query.serialize.json.JSON;
 
 import javax.xml.bind.JAXBException;
 import java.io.IOException;

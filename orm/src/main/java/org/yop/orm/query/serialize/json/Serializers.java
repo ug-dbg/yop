@@ -1,4 +1,4 @@
-package org.yop.orm.query.json;
+package org.yop.orm.query.serialize.json;
 
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
