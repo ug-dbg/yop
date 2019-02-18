@@ -1,4 +1,4 @@
-package org.yop.orm.query.json;
+package org.yop.orm.query.serialize.json;
 
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;

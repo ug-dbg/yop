@@ -1,9 +1,10 @@
-package org.yop.orm.query.json;
+package org.yop.orm.query.serialize.json;
 
 import com.google.gson.*;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.IJoin;
+import org.yop.orm.query.serialize.Serialize;
 import org.yop.orm.util.JoinUtil;
 
 import java.lang.reflect.Field;
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
  * You can set some custom {@link JsonSerializer} using {@link #register(Type, JsonSerializer)}.
  * @param <T> the target Yopable type to serialize to JSON.
  */
-public class JSON<T extends Yopable> {
+public class JSON<T extends Yopable> implements Serialize<JSON, T> {
 
 	/** When adding related object ids ({@link #joinIDs(IJoin)}), the property name is suffixed using this constant */
 	private static final String ID_SUFFIX = "#id";
@@ -127,66 +128,38 @@ public class JSON<T extends Yopable> {
 		return this;
 	}
 
-	/**
-	 * Add an element to be serialized
-	 * @param element the element to be serialized
-	 * @return the current JSON directive, for chaining purposes
-	 */
+	@Override
 	public JSON<T> onto(T element) {
 		this.elements.add(element);
 		return this;
 	}
 
-	/**
-	 * Add several elements to be serialized
-	 * @param elements the elements to be serialized
-	 * @return the current JSON directive, for chaining purposes
-	 */
+	@Override
 	public JSON<T> onto(Collection<T> elements) {
 		this.elements.addAll(elements);
 		return this;
 	}
 
-	/**
-	 * Add a relation - to another Yopable type - to be serialized.
-	 * @param join the join clause
-	 * @param <R> the target join type
-	 * @return the current SELECT request, for chaining purpose
-	 */
+	@Override
 	public <R extends Yopable> JSON<T> join(IJoin<T, R> join) {
 		this.joins.add(join);
 		return this;
 	}
 
-	/**
-	 * Add relations - to others Yopable types - to be serialized.
-	 * @param joins the join clauses
-	 * @return the current SELECT request, for chaining purpose
-	 */
+	@Override
 	public JSON<T> join(Collection<IJoin<T, ?>> joins) {
 		this.joins.addAll(joins);
 		return this;
 	}
 
-	/**
-	 * Serialize the whole data graph. Stop on transient fields.
-	 * <br>
-	 * <b>⚠⚠⚠ There must be no cycle in the data graph model ! ⚠⚠⚠</b>
-	 * <br><br>
-	 * <b>⚠⚠⚠ Any join previously set is cleared ! Please add join clause on transient relation after this ! ⚠⚠⚠</b>
-	 * @return the current JSON directive, for chaining purpose
-	 */
+	@Override
 	public JSON<T> joinAll() {
 		this.joins.clear();
 		JoinUtil.joinAll(this.target, this.joins);
 		return this;
 	}
 
-	/**
-	 * Add the joins which are targeted by profiles, using {@link org.yop.orm.annotations.JoinProfile} on fields.
-	 * @return the current request, for chaining purpose
-	 */
-	@SuppressWarnings({"unchecked", "unused"})
+	@Override
 	public JSON<T> joinProfiles(String... profiles) {
 		if (profiles.length > 0) {
 			JoinUtil.joinProfiles(this.target, this.joins, profiles);
@@ -194,25 +167,19 @@ public class JSON<T extends Yopable> {
 		return this;
 	}
 
-	/**
-	 * Add a relation - to another Yopable type whose IDs are set to be serialized.
-	 * @param join the join clause
-	 * @param <R> the target join type
-	 * @return the current SELECT request, for chaining purpose
-	 */
+	@Override
 	public <R extends Yopable> JSON<T> joinIDs(IJoin<T, R> join) {
 		this.joinIDs.add(join);
 		return this;
 	}
 
-	/**
-	 * Serialize IDs from relations on the whole data graph. Stop on transient fields.
-	 * <br>
-	 * <b>⚠⚠⚠ There must be no cycle in the data graph model ! ⚠⚠⚠</b>
-	 * <br><br>
-	 * <b>⚠⚠⚠ Any join previously set is cleared ! Please add join clause on transient relation after this ! ⚠⚠⚠</b>
-	 * @return the current JSON directive, for chaining purpose
-	 */
+	@Override
+	public JSON<T> joinIDs(Collection<IJoin<T, ?>> joins) {
+		this.joinIDs.addAll(joins);
+		return this;
+	}
+
+	@Override
 	public JSON<T> joinIDsAll() {
 		this.joinIDs.clear();
 		JoinUtil.joinAll(this.target, this.joinIDs);
@@ -268,6 +235,11 @@ public class JSON<T extends Yopable> {
 		return this.gson.instance().toJsonTree(
 			this.elements.stream().map(e -> YopableForJSON.create(e, this)).collect(Collectors.toList())
 		);
+	}
+
+	@Override
+	public String execute() {
+		return this.toJSON();
 	}
 
 	/**
