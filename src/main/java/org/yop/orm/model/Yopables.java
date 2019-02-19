@@ -30,7 +30,7 @@ public class Yopables<T extends Yopable> extends ArrayList<T> implements JsonAbl
 	@Override
 	@SuppressWarnings("unchecked")
 	public <U extends Yopable> void fromJSON(Context<U> context, JsonElement elements, Config config) {
-		this.addAll(JSON.from((Class) context.getTarget(), elements.getAsJsonArray()));
+		this.addAll(JSON.deserialize((Class) context.getTarget(), elements.getAsJsonArray()));
 	}
 
 	@Override
