@@ -4,12 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.swagger.oas.models.Operation;
-import io.swagger.oas.models.media.ArraySchema;
-import io.swagger.oas.models.media.Content;
-import io.swagger.oas.models.media.MediaType;
-import io.swagger.oas.models.parameters.RequestBody;
 import io.swagger.oas.models.responses.ApiResponses;
-import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
@@ -102,10 +97,8 @@ public class Upsert implements HttpMethod {
 		upsert.getParameters().add(HttpMethod.joinProfilesParameter(yopable));
 		upsert.getParameters().add(HttpMethod.checkNaturalIDParameter(resource));
 		upsert.getParameters().add(HttpMethod.partialParameter(resource));
-		upsert.requestBody(new RequestBody().content(new Content().addMediaType(
-			ContentType.APPLICATION_JSON.getMimeType(),
-			new MediaType().schema(new ArraySchema().items(OpenAPIUtil.refSchema(yopable)))))
-		);
+
+		upsert.requestBody(HttpMethod.requestBody(yopable));
 
 		upsert.getResponses().addApiResponse(String.valueOf(SC_OK),                    HttpMethod.http200(yopable));
 		upsert.getResponses().addApiResponse(String.valueOf(SC_BAD_REQUEST),           HttpMethod.http400());

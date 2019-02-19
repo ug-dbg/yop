@@ -2,8 +2,10 @@ package org.yop.rest.servlet;
 
 import io.swagger.oas.models.Operation;
 import io.swagger.oas.models.media.ArraySchema;
+import io.swagger.oas.models.media.Content;
 import io.swagger.oas.models.media.MediaType;
 import io.swagger.oas.models.media.Schema;
+import io.swagger.oas.models.parameters.RequestBody;
 import io.swagger.oas.models.responses.ApiResponse;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
@@ -22,6 +24,7 @@ import org.yop.rest.annotations.JoinProfiles;
 import org.yop.rest.exception.YopNoResourceException;
 import org.yop.rest.exception.YopResourceInvocationException;
 import org.yop.rest.openapi.OpenAPIUtil;
+import org.yop.rest.serialize.Deserializers;
 import org.yop.rest.serialize.Serializers;
 
 import javax.servlet.http.HttpServletRequest;
@@ -327,6 +330,18 @@ public interface HttpMethod {
 	 */
 	static ApiResponse http500() {
 		return httpError("Internal server error");
+	}
+
+	/**
+	 * Create an OpenAPI documentation {@link RequestBody} as an array of the target (Yopable).
+	 * @param target the target class
+	 * @return the OpenAPI request body
+	 */
+	static RequestBody requestBody(Class target) {
+		Content content = new Content();
+		MediaType mediaType = new MediaType().schema(new ArraySchema().items(OpenAPIUtil.refSchema(target)));
+		Deserializers.SUPPORTED.forEach(mimeType -> content.addMediaType(mimeType, mediaType));
+		return new RequestBody().content(content);
 	}
 
 	/**
