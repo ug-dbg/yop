@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.ioc.Singleton;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.serialize.json.JSON;
+import org.yop.orm.query.serialize.Serialize;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.TransformUtil;
 import org.yop.reflection.Reflection;
@@ -22,6 +22,7 @@ import org.yop.rest.annotations.JoinProfiles;
 import org.yop.rest.exception.YopNoResourceException;
 import org.yop.rest.exception.YopResourceInvocationException;
 import org.yop.rest.openapi.OpenAPIUtil;
+import org.yop.rest.serialize.Serializers;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -425,32 +426,30 @@ public interface HttpMethod {
 	 */
 	@SuppressWarnings("unchecked")
 	default String serialize(Object what, RestRequest restRequest) {
-		if (! restRequest.accept(ContentType.APPLICATION_JSON)) {
-			logger.warn("For now, we just serialize to JSON. Sorry about that!");
-		}
-
 		if (what instanceof Yopable || what instanceof Collection) {
-			JSON<Yopable> json = JSON.from(restRequest.getRestResource());
+			String outputContentType = restRequest.accept(Serializers.SUPPORTED);
+			Serialize serializer = Serializers.getFor(restRequest.getRestResource(), outputContentType);
+
 			if (what instanceof Yopable) {
-				json.onto((Yopable) what);
+				serializer.onto((Yopable) what);
 			} else {
-				json.onto((Collection<Yopable>) what);
+				serializer.onto((Collection<Yopable>) what);
 				if (restRequest.joinIDs()) {
-					json.joinIDsAll();
+					serializer.joinIDsAll();
 				}
 				if (restRequest.joinAll()) {
-					json.joinAll();
+					serializer.joinAll();
 				}
 			}
 
 			if (restRequest.joinIDs()) {
-				json.joinIDsAll();
+				serializer.joinIDsAll();
 			}
 			if (restRequest.joinAll()) {
-				json.joinAll();
+				serializer.joinAll();
 			}
-			json.joinProfiles(restRequest.profiles().toArray(new String[0]));
-			return json.toJSON();
+			serializer.joinProfiles(restRequest.profiles().toArray(new String[0]));
+			return serializer.execute();
 		}
 
 		return Objects.toString(what);

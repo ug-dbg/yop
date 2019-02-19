@@ -1,7 +1,5 @@
 package org.yop.rest.servlet;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.io.IOUtils;
@@ -16,11 +14,12 @@ import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.serialize.json.JSON;
 import org.yop.reflection.Reflection;
 import org.yop.rest.annotations.Rest;
 import org.yop.rest.exception.YopBadContentException;
 import org.yop.rest.exception.YopNoResourceException;
+import org.yop.rest.serialize.Deserializers;
+import org.yop.rest.serialize.MIMEParse;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -55,6 +54,7 @@ class RestRequest {
 	private String method;
 	private String accept;
 
+	private String contentType;
 	private String content;
 
 	private MultiValuedMap<String, String> parameters = new ArrayListValuedHashMap<>();
@@ -83,6 +83,11 @@ class RestRequest {
 		resourcePath = StringUtils.removeStart(resourcePath, servletPath);
 		resourcePath = StringUtils.removeStart(resourcePath, "/");
 		resourcePath = StringUtils.removeEnd(resourcePath, "/");
+
+		this.contentType = StringUtils.defaultIfBlank(
+			MIMEParse.bestMatch(Deserializers.SUPPORTED, req.getHeader("Content-Type")),
+			ContentType.APPLICATION_JSON.getMimeType()
+		);
 
 		try {
 			this.content = IOUtils.toString(req.getInputStream());
@@ -167,13 +172,15 @@ class RestRequest {
 	}
 
 	/**
-	 * Does the given content type is acceptable for this request ?
-	 * @param contentType the content type to check
-	 * @return true if {@link #accept} contains the given content type mime code.
+	 * What is the best match for the 'Accept' content type among the supported mime types ?
+	 * @param supported the supported mime types
+	 * @return the supported types' best match, or an empty string.
 	 */
-	boolean accept(ContentType contentType) {
-		// laziest.implementation.ever
-		return StringUtils.containsIgnoreCase(this.accept, contentType.getMimeType());
+	String accept(Collection<String> supported) {
+		return MIMEParse.bestMatch(
+			supported,
+			StringUtils.defaultIfBlank(this.accept, ContentType.APPLICATION_JSON.getMimeType())
+		);
 	}
 
 	/**
@@ -389,14 +396,14 @@ class RestRequest {
 	}
 
 	/**
-	 * Read the input JSON from the request and deserialize it to a collection of {@link Yopable} using {@link JSON}.
+	 * Read the input from the request and deserialize it to a collection of {@link Yopable}
+	 * using a {@link org.yop.orm.query.serialize.Serialize}.
 	 * @return a collection of Yopable from the incoming request
-	 * @throws YopBadContentException Could not parse the input content as JSON array
+	 * @throws YopBadContentException Could not parse the input content
 	 */
 	Collection<Yopable> contentAsYopables() {
 		try {
-			JsonElement objects = new JsonParser().parse(this.content);
-			return JSON.deserialize(this.restResource, objects.getAsJsonArray());
+			return Deserializers.getFor(this.contentType).deserialize(this.getRestResource(), this.content);
 		} catch (RuntimeException e) {
 			throw new YopBadContentException(
 				"Unable to parse JSON array [" + StringUtils.abbreviate(this.content, 50) + "]",
@@ -406,14 +413,18 @@ class RestRequest {
 	}
 
 	/**
-	 * Read the input JSON from the request and deserialize it to a {@link Yopable} using {@link JSON}.
+	 * Read the input from the request and deserialize it to a {@link Yopable}
+	 * using a {@link org.yop.orm.query.serialize.Serialize}.
 	 * @return a Yopable instance from the incoming request
 	 * @throws YopBadContentException Could not parse the input content as JSON object
 	 */
 	Yopable contentAsYopable() {
 		try {
-			JsonElement object = new JsonParser().parse(this.content);
-			return JSON.deserialize(this.restResource, object.getAsJsonObject());
+			return Deserializers
+				.getFor(this.contentType)
+				.deserialize(this.getRestResource(), this.content)
+				.iterator()
+				.next();
 		} catch (RuntimeException e) {
 			throw new YopBadContentException(
 				"Unable to parse JSON object [" + StringUtils.abbreviate(this.content, 50) + "]",

@@ -13,14 +13,14 @@ import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.serialize.json.JSON;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.reflection.Reflection;
 import org.yop.rest.openapi.OpenAPIUtil;
+import org.yop.rest.serialize.PartialDeserializers;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
+import java.util.Set;
 
 import static javax.servlet.http.HttpServletResponse.*;
 
@@ -55,11 +55,14 @@ public class Upsert implements HttpMethod {
 
 		if (restRequest.isPartial()) {
 			for (JsonElement element : new JsonParser().parse(restRequest.getContent()).getAsJsonArray()) {
+				JsonObject jsonObject = element.getAsJsonObject();
 				org.yop.orm.query.Upsert<Yopable> upsert = org.yop.orm.query.Upsert.from(target);
-				partial(upsert, element.getAsJsonObject());
-				Yopable yopable = JSON.deserialize(target, element.getAsJsonObject());
-				upsert.onto(yopable);
-				output.add(yopable);
+				PartialDeserializers.Partial partial = PartialDeserializers
+					.getFor(restRequest.getContent())
+					.deserialize(target, jsonObject);
+				partial(upsert, partial.getKeys());
+				upsert.onto(partial.getObject());
+				output.add(partial.getObject());
 				upserts.add(upsert);
 			}
 		} else {
@@ -116,13 +119,9 @@ public class Upsert implements HttpMethod {
 	/**
 	 * Set the fields to be updated in the {@link org.yop.orm.query.Upsert} query.
 	 * @param upsert the upsert query
-	 * @param source the source object. Its attributes will be used to find the target fields for update.
+	 * @param keys   The 'partial' attributes. Will be used to find the target fields for update.
 	 */
-	private static void partial(org.yop.orm.query.Upsert<Yopable> upsert, JsonObject source) {
-		for (Map.Entry<String, JsonElement> field : source.entrySet()) {
-			if (source.get(field.getKey()).isJsonPrimitive()) {
-				upsert.onFields(t -> Reflection.readField(field.getKey(), t));
-			}
-		}
+	private static void partial(org.yop.orm.query.Upsert<Yopable> upsert, Set<String> keys) {
+		keys.forEach(attribute -> upsert.onFields(t -> Reflection.readField(attribute, t)));
 	}
 }
