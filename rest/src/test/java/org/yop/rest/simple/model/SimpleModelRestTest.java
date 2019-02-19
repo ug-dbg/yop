@@ -276,7 +276,7 @@ public class SimpleModelRestTest extends RestServletTest {
 			Response response = doRequest(httpclient, httpPost);
 			Assert.assertEquals(200, response.statusCode);
 			Assert.assertEquals(1, new JSONArray(response.content).length());
-			Collection<Pojo> out = JSON.from(Pojo.class, new JsonParser().parse(response.content).getAsJsonArray());
+			Collection<Pojo> out = JSON.deserialize(Pojo.class, new JsonParser().parse(response.content));
 			Pojo fromREST = out.iterator().next();
 			Assert.assertEquals(newPojo.getVersion(), fromREST.getVersion());
 			Assert.assertEquals(1, fromREST.getJopos().size());

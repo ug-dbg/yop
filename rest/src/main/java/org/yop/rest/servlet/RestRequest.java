@@ -396,7 +396,7 @@ class RestRequest {
 	Collection<Yopable> contentAsYopables() {
 		try {
 			JsonElement objects = new JsonParser().parse(this.content);
-			return JSON.from(this.restResource, objects.getAsJsonArray());
+			return JSON.deserialize(this.restResource, objects.getAsJsonArray());
 		} catch (RuntimeException e) {
 			throw new YopBadContentException(
 				"Unable to parse JSON array [" + StringUtils.abbreviate(this.content, 50) + "]",
@@ -413,7 +413,7 @@ class RestRequest {
 	Yopable contentAsYopable() {
 		try {
 			JsonElement object = new JsonParser().parse(this.content);
-			return JSON.from(this.restResource, object.getAsJsonObject());
+			return JSON.deserialize(this.restResource, object.getAsJsonObject());
 		} catch (RuntimeException e) {
 			throw new YopBadContentException(
 				"Unable to parse JSON object [" + StringUtils.abbreviate(this.content, 50) + "]",

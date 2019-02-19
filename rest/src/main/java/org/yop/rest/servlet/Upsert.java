@@ -57,7 +57,7 @@ public class Upsert implements HttpMethod {
 			for (JsonElement element : new JsonParser().parse(restRequest.getContent()).getAsJsonArray()) {
 				org.yop.orm.query.Upsert<Yopable> upsert = org.yop.orm.query.Upsert.from(target);
 				partial(upsert, element.getAsJsonObject());
-				Yopable yopable = JSON.from(target, element.getAsJsonObject());
+				Yopable yopable = JSON.deserialize(target, element.getAsJsonObject());
 				upsert.onto(yopable);
 				output.add(yopable);
 				upserts.add(upsert);
