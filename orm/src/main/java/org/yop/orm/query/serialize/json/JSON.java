@@ -89,7 +89,7 @@ public class JSON<T extends Yopable> implements Serialize<JSON, T> {
 	 * @param <T> the target type
 	 * @return a collection of T which are the deserialized elements
 	 */
-	public static <T extends Yopable> Collection<T> from(Class<T> target, JsonArray elements) {
+	public static <T extends Yopable> Collection<T> deserialize(Class<T> target, JsonArray elements) {
 		GsonInstance instance = new GsonInstance().defaultDeserializers();
 		instance.customBuilder(new GsonBuilder().excludeFieldsWithModifiers(Modifier.STATIC));
 		Gson gson = instance.instance();
@@ -108,12 +108,27 @@ public class JSON<T extends Yopable> implements Serialize<JSON, T> {
 	 * @return an instance of T that is the element, deserialized as T.
 	 */
 
-	public static <T extends Yopable> T from(Class<T> target, JsonObject element) {
+	public static <T extends Yopable> T deserialize(Class<T> target, JsonObject element) {
 		GsonInstance instance = new GsonInstance()
 			.defaultDeserializers()
 			.customBuilder(new GsonBuilder().excludeFieldsWithModifiers(Modifier.STATIC));
 		Gson gson = instance.instance();
 		return gson.fromJson(element, target);
+	}
+
+	/**
+	 * Deserialize a JSON element of a serialized Yopable.
+	 * @param target   the target type of the Yopable
+	 * @param element  the JSON object/array serialized Yopable
+	 * @param <T> the target type
+	 * @return  a collection of T which are the deserialized elements
+	 */
+	public static <T extends Yopable> Collection<T> deserialize(Class<T> target, JsonElement element) {
+		if (element.isJsonArray()) {
+			return JSON.deserialize(target, element.getAsJsonArray());
+		} else {
+			return Collections.singletonList(JSON.deserialize(target, element.getAsJsonObject()));
+		}
 	}
 
 	/**
