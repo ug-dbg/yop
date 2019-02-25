@@ -44,7 +44,6 @@ public class ChinookDataJSONTest {
 		String json = JSON
 			.from(Artist.class)
 			.joinAll()
-			.joinIDsAll()
 			.toJSON(source.artists.get(1));
 		String expected = IOUtils.toString(
 			this.getClass().getResourceAsStream("/chinook/json/test_single_artist_to_json_expected.json")
@@ -56,9 +55,8 @@ public class ChinookDataJSONTest {
 	public void test_single_artist_to_json_pretty_print() throws IOException {
 		String json = JSON
 			.from(Artist.class)
-			.withBuilder(new GsonBuilder().setPrettyPrinting().disableHtmlEscaping())
+			.withBuilder(new GsonBuilder().setPrettyPrinting())
 			.joinAll()
-			.joinIDsAll()
 			.toJSON(source.artists.get(1));
 		String expected = IOUtils.toString(
 			this.getClass().getResourceAsStream("/chinook/json/test_single_artist_to_json_expected.json")
@@ -71,7 +69,6 @@ public class ChinookDataJSONTest {
 		String json = JSON
 			.from(Artist.class)
 			.joinAll()
-			.joinIDsAll()
 			.onto(source.artists.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -85,7 +82,6 @@ public class ChinookDataJSONTest {
 		String json = JSON
 			.from(Album.class)
 			.join((JoinSet.to(Album::getTracks)))
-			.joinIDs(JoinSet.to(Album::getTracks).join(Join.to(Track::getGenre)))
 			.onto(source.albums.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -99,7 +95,6 @@ public class ChinookDataJSONTest {
 		String json = JSON
 			.from(Genre.class)
 			.join((JoinSet.to(Genre::getTracksOfGenre)))
-			.joinIDs((JoinSet.to(Genre::getTracksOfGenre).join(Join.to(Track::getAlbum))))
 			.onto(source.genres.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -125,8 +120,8 @@ public class ChinookDataJSONTest {
 	public void test_invoice_lines_to_json() throws IOException, JSONException {
 		String json = JSON
 			.from(InvoiceLine.class)
-			.joinIDs(Join.to(InvoiceLine::getInvoice))
-			.joinIDs(Join.to(InvoiceLine::getTrack))
+			.join(Join.to(InvoiceLine::getInvoice))
+			.join(Join.to(InvoiceLine::getTrack))
 			.onto(source.invoiceLines.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -139,7 +134,7 @@ public class ChinookDataJSONTest {
 	public void test_media_types_to_json() throws IOException, JSONException {
 		String json = JSON
 			.from(MediaType.class)
-			.joinIDs(JoinSet.to(MediaType::getTracksOfType))
+			.join(JoinSet.to(MediaType::getTracksOfType))
 			.onto(source.mediaTypes.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -152,8 +147,7 @@ public class ChinookDataJSONTest {
 	public void test_playlists_to_json() throws IOException, JSONException {
 		String json = JSON
 			.from(Playlist.class)
-			.joinAll()
-			.joinIDs(JoinSet.to(Playlist::getTracks).join(Join.to(Track::getAlbum)))
+			.join(JoinSet.to(Playlist::getTracks).join(Join.to(Track::getAlbum)))
 			.onto(source.playlists.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -167,8 +161,8 @@ public class ChinookDataJSONTest {
 		String json = JSON
 			.from(Employee.class)
 			.joinAll()
-			.joinIDs(Join.to(Employee::getReportsTo))
-			.joinIDs(JoinSet.to(Employee::getReporters))
+			.join(Join.to(Employee::getReportsTo))
+			.join(JoinSet.to(Employee::getReporters))
 			.onto(source.employees.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -182,7 +176,7 @@ public class ChinookDataJSONTest {
 		String json = JSON
 			.from(Customer.class)
 			.join(JoinSet.to(Customer::getInvoices).join(JoinSet.to(Invoice::getLines)))
-			.joinIDs(JoinSet.to(Customer::getInvoices).join(JoinSet.to(Invoice::getLines).join(Join.to(InvoiceLine::getTrack))))
+			.join(JoinSet.to(Customer::getInvoices).join(JoinSet.to(Invoice::getLines).join(Join.to(InvoiceLine::getTrack))))
 			.onto(source.customers.values())
 			.toJSON();
 		String expected = IOUtils.toString(

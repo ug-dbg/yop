@@ -22,17 +22,14 @@ import java.util.stream.Collectors;
  * <br>
  * You can set the join relations you want to be serialized : {@link #join(IJoin)}.
  * <br>
- * You can also add {@link #ID_SUFFIX} suffixed keys in the generated JSON
- * for the related objects IDs : {@link #joinIDs(IJoin)}.
- * <br>
  * Example :
  * <pre>
  * {@code
  * JSON
  *   .from(Pojo.class)
  *   .joinAll()
- *   .joinIDs(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
- *   .joinIDs(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
+ *   .join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
+ *   .join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
  *   .onto(pojo)
  *   .toJSON();
  * }
@@ -42,10 +39,8 @@ import java.util.stream.Collectors;
  * You can set some custom {@link JsonSerializer} using {@link #register(Type, JsonSerializer)}.
  * @param <T> the target Yopable type to serialize to JSON.
  */
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class JSON<T extends Yopable> implements Serialize<JSON, T> {
-
-	/** When adding related object ids ({@link #joinIDs(IJoin)}), the property name is suffixed using this constant */
-	private static final String ID_SUFFIX = "#id";
 
 	private final GsonInstance gson = new GsonInstance();
 
@@ -57,9 +52,6 @@ public class JSON<T extends Yopable> implements Serialize<JSON, T> {
 
 	/** Join clauses */
 	final Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
-
-	/** Join IDs clauses */
-	final Collection<IJoin<T, ? extends Yopable>> joinIDs = new ArrayList<>();
 
 	final Map<IJoin, Field> fieldCache = new HashMap<>();
 
@@ -107,7 +99,6 @@ public class JSON<T extends Yopable> implements Serialize<JSON, T> {
 	 * @param <T> the target type
 	 * @return an instance of T that is the element, deserialized as T.
 	 */
-
 	public static <T extends Yopable> T deserialize(Class<T> target, JsonObject element) {
 		GsonInstance instance = new GsonInstance()
 			.defaultDeserializers()
@@ -182,25 +173,6 @@ public class JSON<T extends Yopable> implements Serialize<JSON, T> {
 		return this;
 	}
 
-	@Override
-	public <R extends Yopable> JSON<T> joinIDs(IJoin<T, R> join) {
-		this.joinIDs.add(join);
-		return this;
-	}
-
-	@Override
-	public JSON<T> joinIDs(Collection<IJoin<T, ?>> joins) {
-		this.joinIDs.addAll(joins);
-		return this;
-	}
-
-	@Override
-	public JSON<T> joinIDsAll() {
-		this.joinIDs.clear();
-		JoinUtil.joinAll(this.target, this.joinIDs);
-		return this;
-	}
-
 	/**
 	 * Register a new serializer for a given type.
 	 * See {@link GsonBuilder#registerTypeAdapter(Type, Object)}.
@@ -258,7 +230,7 @@ public class JSON<T extends Yopable> implements Serialize<JSON, T> {
 	}
 
 	/**
-	 * A custom serializer that can follow the {@link #joins} and {@link #joinIDs} directives.
+	 * A custom serializer that can follow the {@link #joins} directives.
 	 * <br>
 	 * Use with {@link YopableStrategy}.
 	 */
@@ -272,12 +244,6 @@ public class JSON<T extends Yopable> implements Serialize<JSON, T> {
 		 * Serialize the current object {@link YopableForJSON#subject} using {@link Gson} and {@link YopableStrategy}.
 		 * No {@link JoinTable} field gets serialized.
 		 * <br>
-		 * For each joinID directive in {@link #joinIDs} :
-		 * <ul>
-		 *     <li>find the target field and values</li>
-		 *     <li>append a new property with {@link #ID_SUFFIX} suffix</li>
-		 *     <li>Fill this property with the IDs of the target field values</li>
-		 * </ul>
 		 * For each join directive in {@link #joins} :
 		 * <ul>
 		 *     <li>find the target field, type and values</li>
@@ -292,22 +258,11 @@ public class JSON<T extends Yopable> implements Serialize<JSON, T> {
 			// Serialize the given element to JSON. The YopableStrategy excludes @JoinTable properties
 			JsonElement element = JSON.this.gson.instance().toJsonTree(src.getSubject());
 
-			// For each joinIDs IJoin relation, get the related objects IDs and add them as '[property]#ids'.
-			Map<Field, Collection<IJoin>> nextJoinIDs = new HashMap<>();
-			for (IJoin join : src.getJoinIDs()) {
-				Field field = src.getField(join);
-				element.getAsJsonObject().add(field.getName() + ID_SUFFIX, context.serialize(src.nextIds(join)));
-				nextJoinIDs.put(field, join.getJoins());
-			}
-
 			// For each join IJoin relation, serialize using the context.
 			// This should recursively call the current method
 			for (IJoin join : src.getJoins()) {
 				Field field = src.getField(join);
-				element.getAsJsonObject().add(
-					field.getName(),
-					context.serialize(src.next(join, nextJoinIDs.getOrDefault(field, Collections.EMPTY_LIST)))
-				);
+				element.getAsJsonObject().add(field.getName(), context.serialize(src.next(join)));
 			}
 
 			return element;

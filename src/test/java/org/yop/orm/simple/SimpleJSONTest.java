@@ -23,7 +23,7 @@ import static org.yop.orm.Yop.*;
 public class SimpleJSONTest {
 
 	@Test
-	public void testJSON_1st_level_ids() throws IOException, JSONException {
+	public void testJSON_1st_level() throws IOException, JSONException {
 		String password = "ThisIsMyPasswordYouFool";
 
 		Pojo pojo = new Pojo();
@@ -46,17 +46,18 @@ public class SimpleJSONTest {
 		pojo.getOthers().add(other);
 
 		String json = json(Pojo.class)
-			.joinIDsAll()
+			.joinAll()
 			.onto(pojo)
+			.register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"))
 			.toJSON();
 		String expected = IOUtils.toString(
-			this.getClass().getResourceAsStream("/simple/json/testJSON_1st_level_ids_expected.json")
+			this.getClass().getResourceAsStream("/simple/json/testJSON_1st_level_expected.json")
 		);
 		JSONAssert.assertEquals("", expected, json, true);
 	}
 
 	@Test
-	public void testJSON_2nd_level_ids() throws IOException, JSONException {
+	public void testJSON_2nd_level() throws IOException, JSONException {
 		Pojo pojo = new Pojo();
 		pojo.setId(1L);
 		pojo.setVersion(1337);
@@ -82,13 +83,13 @@ public class SimpleJSONTest {
 
 		String json = json(Pojo.class)
 			.joinAll()
-			.joinIDs(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
-			.joinIDs(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
+			.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
+			.join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
 			.register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"))
 			.onto(Collections.singleton(pojo))
 			.toJSON();
 		String expected = IOUtils.toString(
-			this.getClass().getResourceAsStream("/simple/json/testJSON_2nd_level_ids_expected.json")
+			this.getClass().getResourceAsStream("/simple/json/testJSON_2nd_level_expected.json")
 		);
 		JSONAssert.assertEquals("", expected, json, true);
 	}

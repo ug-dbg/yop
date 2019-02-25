@@ -54,9 +54,6 @@ public class XML<T extends Yopable> implements Serialize<XML, T> {
 	/** Join clauses */
 	private final Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
 
-	/** Join IDs clauses */
-	private final Collection<IJoin<T, ? extends Yopable>> joinIDs = new ArrayList<>();
-
 	/** The Xstream serializer instance */
 	private final XStream xstream = new XStream();
 
@@ -148,20 +145,8 @@ public class XML<T extends Yopable> implements Serialize<XML, T> {
 	}
 
 	@Override
-	public <R extends Yopable> XML<T> joinIDs(IJoin<T, R> join) {
-		this.joinIDs.add(join);
-		return this;
-	}
-
-	@Override
 	public XML<T> join(Collection<IJoin<T, ?>> joins) {
 		this.joins.addAll(joins);
-		return this;
-	}
-
-	@Override
-	public XML<T> joinIDs(Collection<IJoin<T, ?>> joins) {
-		this.joinIDs.addAll(joins);
 		return this;
 	}
 
@@ -169,13 +154,6 @@ public class XML<T extends Yopable> implements Serialize<XML, T> {
 	public XML<T> joinAll() {
 		this.joins.clear();
 		JoinUtil.joinAll(this.target, this.joins);
-		return this;
-	}
-
-	@Override
-	public XML<T> joinIDsAll() {
-		this.joinIDs.clear();
-		JoinUtil.joinAll(this.target, this.joinIDs);
 		return this;
 	}
 
