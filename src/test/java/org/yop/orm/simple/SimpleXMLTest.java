@@ -126,7 +126,7 @@ public class SimpleXMLTest {
 		String xml = XML.from(Pojo.class)
 			.joinAll()
 			.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
-			.join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
+			.join(Pojo::getOthers, Other::getPojos)
 			.onto(Collections.singleton(pojo))
 			.execute();
 		System.out.println(xml);

@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to search for.
  */
-public class Select<T extends Yopable> extends AbstractWhereRequest<Select<T>, T> implements JsonAble {
+public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implements JsonAble {
 
 	private static final Logger logger = LoggerFactory.getLogger(Select.class);
 
@@ -178,7 +178,7 @@ public class Select<T extends Yopable> extends AbstractWhereRequest<Select<T>, T
 	/**
 	 * Set a cache to use.
 	 * <br>
-	 * This was created for the {@link Recurse} queries where we would like to keep the same cache when recursing.
+	 * This was created for {@link Hydrate#recurse()} where we would like to keep the same cache when recursing.
 	 * @param cache the cache object to use
 	 * @return the current SELECT request, for chaining purpose
 	 */

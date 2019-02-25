@@ -36,6 +36,6 @@ public class Yopables<T extends Yopable> extends ArrayList<T> implements JsonAbl
 	@Override
 	@SuppressWarnings("unchecked")
 	public <U extends Yopable> JsonElement toJSON(Context<U> context) {
-		return JSON.from(context.getTarget()).onto((Collection) this).join(this.joins).toJSONTree();
+		return ((JSON) JSON.from(context.getTarget()).onto((Collection) this).join(this.joins)).toJSONTree();
 	}
 }

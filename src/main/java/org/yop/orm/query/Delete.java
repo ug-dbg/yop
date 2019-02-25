@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to delete.
  */
-public class Delete<T extends Yopable> extends AbstractWhereRequest<Delete<T>, T> implements JsonAble {
+public class Delete<T extends Yopable> extends WhereRequest<Delete<T>, T> implements JsonAble {
 
 	private Delete(Class<T> target) {
 		super(Context.root(target));

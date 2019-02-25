@@ -8,11 +8,11 @@ import java.util.Collection;
 import java.util.function.Function;
 
 /**
- * An abstract request with a {@link Where} clause.
+ * An SQL request with a {@link Where} clause.
  * @param <Request> the request type (e.g. Select, Delete)
  * @param <T> the request target type
  */
-abstract class AbstractWhereRequest<Request extends AbstractWhereRequest, T extends Yopable> extends AbstractRequest<Request, T> {
+abstract class WhereRequest<Request extends WhereRequest, T extends Yopable> extends SQLRequest<Request, T> {
 
 	/** Where clauses */
 	protected Where<T> where = new Where<>();
@@ -21,7 +21,7 @@ abstract class AbstractWhereRequest<Request extends AbstractWhereRequest, T exte
 	 * Default constructor : final field {@link #context} must be initialized.
 	 * @param context the context of the request
 	 */
-	AbstractWhereRequest(Context<T> context) {
+	WhereRequest(Context<T> context) {
 		super(context);
 	}
 

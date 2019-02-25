@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to upsert.
  */
-public class Upsert<T extends Yopable> extends AbstractRequest<Upsert<T>, T> implements JsonAble {
+public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implements JsonAble {
 
 	private static final Logger logger = LoggerFactory.getLogger(Upsert.class);
 

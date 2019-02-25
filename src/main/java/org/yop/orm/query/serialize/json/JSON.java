@@ -3,9 +3,10 @@ package org.yop.orm.query.serialize.json;
 import com.google.gson.*;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.AbstractRequest;
+import org.yop.orm.query.Context;
 import org.yop.orm.query.IJoin;
 import org.yop.orm.query.serialize.Serialize;
-import org.yop.orm.util.JoinUtil;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -40,18 +41,12 @@ import java.util.stream.Collectors;
  * @param <T> the target Yopable type to serialize to JSON.
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class JSON<T extends Yopable> implements Serialize<JSON, T> {
+public class JSON<T extends Yopable> extends AbstractRequest<JSON<T>, T> implements Serialize<JSON, T> {
 
 	private final GsonInstance gson = new GsonInstance();
 
-	/** The target Yopable class to serialize to JSON */
-	private Class<T> target;
-
 	/** The Yopable elements to serialize */
 	private List<T> elements = new ArrayList<>();
-
-	/** Join clauses */
-	final Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
 
 	final Map<IJoin, Field> fieldCache = new HashMap<>();
 
@@ -60,7 +55,7 @@ public class JSON<T extends Yopable> implements Serialize<JSON, T> {
 	 * @param target the target class to json-ify
 	 */
 	private JSON(Class<T> target) {
-		this.target = target;
+		super(Context.root(target));
 		this.gson.defaultExclusionStrategy().defaultSerializers().register(YopableForJSON.class, new Serializer());
 	}
 
@@ -123,6 +118,14 @@ public class JSON<T extends Yopable> implements Serialize<JSON, T> {
 	}
 
 	/**
+	 * Get the {@link #joins} of this JSON serialization request.
+	 * @return the joins for the current request
+	 */
+	IJoin.Joins<T> getJoins() {
+		return this.joins;
+	}
+
+	/**
 	 * Provide the JSON directive with your own GSON builder.
 	 * <br>
 	 * {@link YopableStrategy} and custom serializers will be set on this builder first.
@@ -143,33 +146,6 @@ public class JSON<T extends Yopable> implements Serialize<JSON, T> {
 	@Override
 	public JSON<T> onto(Collection<T> elements) {
 		this.elements.addAll(elements);
-		return this;
-	}
-
-	@Override
-	public <R extends Yopable> JSON<T> join(IJoin<T, R> join) {
-		this.joins.add(join);
-		return this;
-	}
-
-	@Override
-	public JSON<T> join(Collection<IJoin<T, ?>> joins) {
-		this.joins.addAll(joins);
-		return this;
-	}
-
-	@Override
-	public JSON<T> joinAll() {
-		this.joins.clear();
-		JoinUtil.joinAll(this.target, this.joins);
-		return this;
-	}
-
-	@Override
-	public JSON<T> joinProfiles(String... profiles) {
-		if (profiles.length > 0) {
-			JoinUtil.joinProfiles(this.target, this.joins, profiles);
-		}
 		return this;
 	}
 

@@ -64,7 +64,7 @@ class YopableForJSON {
 	 */
 	@SuppressWarnings("unchecked")
 	static YopableForJSON create(Yopable on, JSON using) {
-		return new YopableForJSON(on, new ArrayList<IJoin>(using.joins), using.fieldCache);
+		return new YopableForJSON(on, new ArrayList<IJoin>(using.getJoins()), using.fieldCache);
 	}
 
 	/**

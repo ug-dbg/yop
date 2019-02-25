@@ -4,9 +4,10 @@ import com.thoughtworks.xstream.XStream;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.AbstractRequest;
+import org.yop.orm.query.Context;
 import org.yop.orm.query.IJoin;
 import org.yop.orm.query.serialize.Serialize;
-import org.yop.orm.util.JoinUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,16 +44,10 @@ import java.util.regex.Pattern;
  * @param <T> the target Yopable type to serialize to XML.
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
-public class XML<T extends Yopable> implements Serialize<XML, T> {
-
-	/** The target Yopable class to serialize to JSON */
-	private Class<T> target;
+public class XML<T extends Yopable> extends AbstractRequest<XML<T>, T> implements Serialize<XML, T> {
 
 	/** The Yopable elements to serialize */
 	private Yopables<T> elements = new Yopables<>();
-
-	/** Join clauses */
-	private final Collection<IJoin<T, ? extends Yopable>> joins = new ArrayList<>();
 
 	/** The Xstream serializer instance */
 	private final XStream xstream = new XStream();
@@ -62,7 +57,7 @@ public class XML<T extends Yopable> implements Serialize<XML, T> {
 	 * @param target the serialization target class
 	 */
 	private XML(Class<T> target) {
-		this.target = target;
+		super(Context.root(target));
 		XStream.setupDefaultSecurity(this.xstream);
 		this.xstream.alias("list", Yopables.class);
 		this.xstream.addImplicitCollection(Yopables.class, "yopables");
@@ -139,35 +134,8 @@ public class XML<T extends Yopable> implements Serialize<XML, T> {
 	}
 
 	@Override
-	public <R extends Yopable> XML<T> join(IJoin<T, R> join) {
-		this.joins.add(join);
-		return this;
-	}
-
-	@Override
-	public XML<T> join(Collection<IJoin<T, ?>> joins) {
-		this.joins.addAll(joins);
-		return this;
-	}
-
-	@Override
-	public XML<T> joinAll() {
-		this.joins.clear();
-		JoinUtil.joinAll(this.target, this.joins);
-		return this;
-	}
-
-	@Override
-	public XML<T> joinProfiles(String... profiles) {
-		if (profiles.length > 0) {
-			JoinUtil.joinProfiles(this.target, this.joins, profiles);
-		}
-		return this;
-	}
-
-	@Override
 	public String execute() {
-		this.xstream.registerConverter(new YopXMLConverter<>(this.xstream.getMapper(), this.target, this.joins));
+		this.xstream.registerConverter(new YopXMLConverter<>(this.xstream.getMapper(), this.getTarget(), this.joins));
 		return this.xstream.toXML(this.elements);
 	}
 

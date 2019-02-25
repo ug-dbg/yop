@@ -2,20 +2,19 @@ package org.yop.orm.query;
 
 import org.yop.orm.exception.YopInvalidJoinException;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.serialize.json.JSON;
-import org.yop.orm.sql.Config;
-import org.yop.orm.sql.JoinClause;
 import org.yop.orm.util.JoinUtil;
 
-import java.util.Set;
+import java.util.Collection;
 import java.util.function.Function;
 
 /**
- * A request that have join clauses relative to a context (e.g. Select, Delete, Upsert...).
- * @param <Request> the request type (e.g. Select, Upsert, Delete...)
+ * A request that have join clauses relative to a context (e.g. SQL query or Serialize query).
+ * <br>
+ * This class should contain all the <i>join</i> methods implementations.
+ * @param <Request> the request type (e.g. Select, Upsert, Delete, JSON, XML...)
  * @param <T> the request target type
  */
-abstract class AbstractRequest<Request extends AbstractRequest, T extends Yopable> {
+public abstract class AbstractRequest<Request extends AbstractRequest, T extends Yopable> {
 
 	/** Root context : target class and SQL path **/
 	protected final Context<T> context;
@@ -27,7 +26,7 @@ abstract class AbstractRequest<Request extends AbstractRequest, T extends Yopabl
 	 * Default constructor : final field {@link #context} must be initialized.
 	 * @param context the context of the request
 	 */
-	AbstractRequest(Context<T> context) {
+	public AbstractRequest(Context<T> context) {
 		this.context = context;
 	}
 
@@ -48,6 +47,17 @@ abstract class AbstractRequest<Request extends AbstractRequest, T extends Yopabl
 	@SuppressWarnings("unchecked")
 	public <R extends Yopable> Request join(IJoin<T, R> join) {
 		this.joins.add(join);
+		return (Request) this;
+	}
+
+	/**
+	 * Add relations - to others Yopable types.
+	 * @param joins the join clauses
+	 * @return the current directive, for chaining purpose
+	 */
+	@SuppressWarnings("unchecked")
+	public Request join(Collection<IJoin<T, ?>> joins) {
+		this.joins.addAll(joins);
 		return (Request) this;
 	}
 
@@ -157,41 +167,14 @@ abstract class AbstractRequest<Request extends AbstractRequest, T extends Yopabl
 	}
 
 	/**
-	 * Turn this query into a JSON query, with the same {@link #joins}.
+	 * Turn this query into another {@link AbstractRequest} query, with the same {@link #joins}.
 	 * <br>
 	 * <b>The joins clauses are not duplicated when creating the JSON query !</b>
-	 * @return a {@link JSON} query with this {@link Select} joins parameters
+	 * @param request the target request
+	 * @return the target request query with the current request joins parameters
 	 */
-	public JSON<T> toJSONQuery() {
-		JSON<T> json = JSON.from(this.context.getTarget());
-		this.joins.forEach(json::join);
-		return json;
-	}
-
-	/**
-	 * Find all the columns to select (search in current target type and join clauses if required)
-	 * @param addJoinClauseColumns true to add the columns from the join clauses
-	 * @param config               the SQL config (sql separator, use batch inserts...)
-	 * @return the columns to select
-	 */
-	protected Set<Context.SQLColumn> columns(boolean addJoinClauseColumns, Config config) {
-		Set<Context.SQLColumn> columns = this.context.getColumns(config);
-
-		if (addJoinClauseColumns) {
-			for (IJoin<T, ? extends Yopable> join : this.joins) {
-				columns.addAll(join.columns(this.context, true, config));
-			}
-		}
-		return columns;
-	}
-
-	/**
-	 * Create the SQL join clause.
-	 * @param evaluate true to add the where clauses to the join clauses
-	 * @param config   the SQL config (sql separator, use batch inserts...)
-	 * @return the SQL join clause
-	 */
-	protected JoinClause.JoinClauses toSQLJoin(boolean evaluate, Config config) {
-		return AbstractJoin.toSQLJoin(this.joins, this.context, evaluate, config);
+	public <OtherRequest extends AbstractRequest<OtherRequest, T>> OtherRequest to(OtherRequest request) {
+		this.joins.forEach(request::join);
+		return request;
 	}
 }

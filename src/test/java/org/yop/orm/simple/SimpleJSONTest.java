@@ -5,7 +5,6 @@ import org.apache.commons.io.IOUtils;
 import org.json.JSONException;
 import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
-import org.yop.orm.query.Join;
 import org.yop.orm.query.JoinSet;
 import org.yop.orm.query.serialize.json.JSON;
 import org.yop.orm.simple.model.Jopo;
@@ -18,7 +17,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
 
-import static org.yop.orm.Yop.*;
+import static org.yop.orm.Yop.json;
+import static org.yop.orm.Yop.select;
 
 public class SimpleJSONTest {
 
@@ -83,7 +83,7 @@ public class SimpleJSONTest {
 
 		String json = json(Pojo.class)
 			.joinAll()
-			.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
+			.join(Pojo::getJopos, Jopo::getPojo)
 			.join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
 			.register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"))
 			.onto(Collections.singleton(pojo))
@@ -116,7 +116,7 @@ public class SimpleJSONTest {
 
 		JSON<Pojo> jsonQuery = select(Pojo.class)
 			.joinAll()
-			.toJSONQuery()
+			.to(JSON.from(Pojo.class))
 			.register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"));
 		String json = jsonQuery.toJSON(pojo);
 		String expected = IOUtils.toString(
