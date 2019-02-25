@@ -9,7 +9,6 @@ import java.util.Collection;
  * Serialization interface.
  * <ul>
  *     <li>join</li>
- *     <li>join IDs</li>
  *     <li>set target elements</li>
  *     <li>execute</li>
  * </ul>
