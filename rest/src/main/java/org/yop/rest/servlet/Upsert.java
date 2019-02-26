@@ -1,8 +1,5 @@
 package org.yop.rest.servlet;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import io.swagger.oas.models.Operation;
 import io.swagger.oas.models.responses.ApiResponses;
 import org.yop.orm.model.Yopable;
@@ -14,6 +11,7 @@ import org.yop.rest.serialize.PartialDeserializers;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import static javax.servlet.http.HttpServletResponse.*;
@@ -40,18 +38,18 @@ public class Upsert implements HttpMethod {
 	 */
 	@Override
 	public ExecutionOutput executeDefault(RestRequest restRequest, IConnection connection) {
-		// The yopables to insert (i.e id is null) will have their id set after Upsert#execute.
+		// The yopables to insert (i.e. id is null) will have their id set after Upsert#execute.
 		Collection<Yopable> output = new ArrayList<>();
 		Class<Yopable> target = restRequest.getRestResource();
 		Collection<org.yop.orm.query.Upsert<Yopable>> upserts = new ArrayList<>();
 
 		if (restRequest.isPartial()) {
-			for (JsonElement element : new JsonParser().parse(restRequest.getContent()).getAsJsonArray()) {
-				JsonObject jsonObject = element.getAsJsonObject();
+			List<PartialDeserializers.Partial> objects = PartialDeserializers
+				.getFor(restRequest.accept(Deserializers.SUPPORTED))
+				.deserialize(target, restRequest.getContent());
+
+			for (PartialDeserializers.Partial partial : objects) {
 				org.yop.orm.query.Upsert<Yopable> upsert = org.yop.orm.query.Upsert.from(target);
-				PartialDeserializers.Partial partial = PartialDeserializers
-					.getFor(restRequest.accept(Deserializers.SUPPORTED))
-					.deserialize(target, jsonObject);
 				partial(upsert, partial.getKeys());
 				upsert.onto(partial.getObject());
 				output.add(partial.getObject());

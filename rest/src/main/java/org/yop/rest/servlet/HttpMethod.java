@@ -1,9 +1,6 @@
 package org.yop.rest.servlet;
 
 import io.swagger.oas.models.Operation;
-import io.swagger.oas.models.media.ArraySchema;
-import io.swagger.oas.models.media.Content;
-import io.swagger.oas.models.media.MediaType;
 import io.swagger.oas.models.media.Schema;
 import io.swagger.oas.models.parameters.RequestBody;
 import io.swagger.oas.models.responses.ApiResponse;
@@ -250,11 +247,7 @@ public interface HttpMethod {
 	static ApiResponse httpError(String description) {
 		ApiResponse responseItem = new ApiResponse();
 		responseItem.setDescription(description);
-		responseItem.setContent(new io.swagger.oas.models.media.Content());
-		responseItem.getContent().addMediaType(
-			ContentType.APPLICATION_JSON.getMimeType(),
-			new MediaType().schema(errorJSONSchema())
-		);
+		responseItem.setContent(OpenAPIUtil.contentFor(errorJSONSchema(), Serializers.SUPPORTED));
 		return responseItem;
 	}
 
@@ -264,14 +257,10 @@ public interface HttpMethod {
 	 * @param yopable the Yopable resource
 	 * @return a new {@link ApiResponse} with a resource description and referenced Schema.
 	 */
-	static ApiResponse http200(Class yopable) {
+	static ApiResponse http200(Class<? extends Yopable> yopable) {
 		ApiResponse responseItem = new ApiResponse();
 		responseItem.setDescription("A set of [" + OpenAPIUtil.getResourceName(yopable) + "]");
-		responseItem.setContent(new io.swagger.oas.models.media.Content());
-		responseItem.getContent().addMediaType(
-			ContentType.APPLICATION_JSON.getMimeType(),
-			new MediaType().schema(new ArraySchema().items(OpenAPIUtil.refSchema(yopable)))
-		);
+		responseItem.setContent(OpenAPIUtil.contentFor(OpenAPIUtil.refArraySchema(yopable), Serializers.SUPPORTED));
 		return responseItem;
 	}
 
@@ -320,11 +309,11 @@ public interface HttpMethod {
 	 * @param target the target class
 	 * @return the OpenAPI request body
 	 */
-	static RequestBody requestBody(Class target) {
-		Content content = new Content();
-		MediaType mediaType = new MediaType().schema(new ArraySchema().items(OpenAPIUtil.refSchema(target)));
-		Deserializers.SUPPORTED.forEach(mimeType -> content.addMediaType(mimeType, mediaType));
-		return new RequestBody().content(content);
+	static RequestBody requestBody(Class<? extends Yopable> target) {
+		return new RequestBody().content(OpenAPIUtil.contentFor(
+			OpenAPIUtil.refArraySchema(target),
+			Deserializers.SUPPORTED
+		));
 	}
 
 	/**

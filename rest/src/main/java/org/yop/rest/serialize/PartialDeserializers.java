@@ -1,14 +1,17 @@
 package org.yop.rest.serialize;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.http.entity.ContentType;
+import org.w3c.dom.Element;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.serialize.json.JSON;
+import org.yop.orm.query.serialize.xml.XML;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +31,7 @@ public class PartialDeserializers {
 	@SuppressWarnings("unchecked")
 	private static final Map<String, Deserializer> DESERIALIZERS = new HashMap<String, Deserializer>() {{
 		this.put(ContentType.APPLICATION_JSON.getMimeType(), Partial::fromJSON);
+		this.put(ContentType.APPLICATION_XML.getMimeType(),  Partial::fromXML);
 	}};
 
 	/**
@@ -42,12 +46,12 @@ public class PartialDeserializers {
 	@FunctionalInterface
 	public interface Deserializer {
 		/**
-		 * Deserialize the given JSON object as the target class.
-		 * @param target  the target class
-		 * @param content the JSON object
-		 * @return a 'partial' object : the deserialized target object and the attributes from the input json.
+		 * Deserialize the given content as the target class and keep a reference to the keys for each object.
+		 * @param target   the target class
+		 * @param objects  the serialized objects
+		 * @return 'partial' objects : the deserialized target objects and the attributes of each one from the input.
 		 */
-		Partial deserialize(Class target, JsonObject content);
+		List<Partial> deserialize(Class target, String objects);
 	}
 
 	/**
@@ -65,16 +69,41 @@ public class PartialDeserializers {
 			return this.keys;
 		}
 
-		private static Partial fromJSON(Class<Yopable> target, JsonObject jsonObject) {
-			Partial partial = new Partial();
-			partial.object = JSON.deserialize(target, jsonObject);
-			partial.keys = jsonObject
-				.entrySet()
-				.stream()
-				.filter(entry -> entry.getValue().isJsonPrimitive())
-				.map(Map.Entry::getKey)
-				.collect(Collectors.toSet());
-			return partial;
+		private static List<Partial> fromJSON(Class<Yopable> target, String content) {
+			List<Partial> out = new ArrayList<>();
+			JsonArray objects = new JsonParser().parse(content).getAsJsonArray();
+
+			for (JsonElement object : objects) {
+				if (! object.isJsonObject()) {
+					continue;
+				}
+				Partial partial = new Partial();
+				partial.object = JSON.deserialize(target, (JsonObject) object);
+				partial.keys = ((JsonObject) object)
+					.entrySet()
+					.stream()
+					.filter(entry -> entry.getValue().isJsonPrimitive())
+					.map(Map.Entry::getKey)
+					.collect(Collectors.toSet());
+				out.add(partial);
+			}
+			return out;
+		}
+
+		private static List<Partial> fromXML(Class<Yopable> target, String content) {
+			List<Partial> out = new ArrayList<>();
+			List<Element> elements = XML.getFirstLevelElements(content, StandardCharsets.UTF_8);
+
+			for (Element element : elements) {
+				Partial partial = new Partial();
+				partial.object = XML.deserialize(element, target);
+
+				for (int i = 0; i < element.getAttributes().getLength(); i++) {
+					partial.keys.add(element.getAttributes().item(i).getNodeName());
+				}
+				out.add(partial);
+			}
+			return out;
 		}
 	}
 }

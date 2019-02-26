@@ -75,12 +75,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of Pojo"
+                items:
+                  $ref: "#/components/schemas/Pojo"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Pojo"
                 items:
                   $ref: "#/components/schemas/Pojo"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -93,10 +105,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -109,10 +131,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -160,6 +192,13 @@ paths:
           application/json:
             schema:
               type: "array"
+              description: "Array of Pojo"
+              items:
+                $ref: "#/components/schemas/Pojo"
+          application/xml:
+            schema:
+              type: "array"
+              description: "Array of Pojo"
               items:
                 $ref: "#/components/schemas/Pojo"
       responses:
@@ -169,12 +208,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of Pojo"
+                items:
+                  $ref: "#/components/schemas/Pojo"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Pojo"
                 items:
                   $ref: "#/components/schemas/Pojo"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -187,10 +238,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -203,10 +264,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -259,12 +330,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of Pojo"
+                items:
+                  $ref: "#/components/schemas/Pojo"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Pojo"
                 items:
                   $ref: "#/components/schemas/Pojo"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -277,10 +360,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -293,10 +386,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -329,11 +432,19 @@ paths:
           description: "Empty json array. To return the deleted objects, please override\
             \ me."
           content:
-            application/json: {}
+            application/json:
+              schema: {}
+            application/xml:
+              schema: {}
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -346,10 +457,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -362,10 +483,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -408,10 +539,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         401:
           description: "Unauthorized"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -424,6 +565,11 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         404:
           description: "Resource not found"
           content:
@@ -432,10 +578,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -496,12 +652,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of Pojo"
+                items:
+                  $ref: "#/components/schemas/Pojo"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Pojo"
                 items:
                   $ref: "#/components/schemas/Pojo"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -514,10 +682,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -530,10 +708,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -573,11 +761,19 @@ paths:
           description: "Empty json array. To return the deleted objects, please override\
             \ me."
           content:
-            application/json: {}
+            application/json:
+              schema: {}
+            application/xml:
+              schema: {}
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -590,10 +786,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -606,10 +812,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -659,10 +875,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         401:
           description: "Unauthorized"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -675,6 +901,11 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         404:
           description: "Resource not found"
           content:
@@ -683,10 +914,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -741,12 +982,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of Profile"
+                items:
+                  $ref: "#/components/schemas/Profile"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Profile"
                 items:
                   $ref: "#/components/schemas/Profile"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -759,10 +1012,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -775,10 +1038,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -826,6 +1099,13 @@ paths:
           application/json:
             schema:
               type: "array"
+              description: "Array of Profile"
+              items:
+                $ref: "#/components/schemas/Profile"
+          application/xml:
+            schema:
+              type: "array"
+              description: "Array of Profile"
               items:
                 $ref: "#/components/schemas/Profile"
       responses:
@@ -835,12 +1115,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of Profile"
+                items:
+                  $ref: "#/components/schemas/Profile"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Profile"
                 items:
                   $ref: "#/components/schemas/Profile"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -853,10 +1145,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -869,10 +1171,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -921,12 +1233,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of Profile"
+                items:
+                  $ref: "#/components/schemas/Profile"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Profile"
                 items:
                   $ref: "#/components/schemas/Profile"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -939,10 +1263,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -955,10 +1289,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -991,11 +1335,19 @@ paths:
           description: "Empty json array. To return the deleted objects, please override\
             \ me."
           content:
-            application/json: {}
+            application/json:
+              schema: {}
+            application/xml:
+              schema: {}
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1008,10 +1360,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1024,10 +1386,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1070,10 +1442,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         401:
           description: "Unauthorized"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1086,6 +1468,11 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         404:
           description: "Resource not found"
           content:
@@ -1094,10 +1481,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1158,12 +1555,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of Profile"
+                items:
+                  $ref: "#/components/schemas/Profile"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Profile"
                 items:
                   $ref: "#/components/schemas/Profile"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1176,10 +1585,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1192,10 +1611,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1235,11 +1664,19 @@ paths:
           description: "Empty json array. To return the deleted objects, please override\
             \ me."
           content:
-            application/json: {}
+            application/json:
+              schema: {}
+            application/xml:
+              schema: {}
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1252,10 +1689,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1268,10 +1715,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1321,10 +1778,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         401:
           description: "Unauthorized"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1337,6 +1804,11 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         404:
           description: "Resource not found"
           content:
@@ -1345,10 +1817,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1403,12 +1885,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of Action"
+                items:
+                  $ref: "#/components/schemas/Action"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Action"
                 items:
                   $ref: "#/components/schemas/Action"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1421,10 +1915,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1437,10 +1941,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1488,6 +2002,13 @@ paths:
           application/json:
             schema:
               type: "array"
+              description: "Array of Action"
+              items:
+                $ref: "#/components/schemas/Action"
+          application/xml:
+            schema:
+              type: "array"
+              description: "Array of Action"
               items:
                 $ref: "#/components/schemas/Action"
       responses:
@@ -1497,12 +2018,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of Action"
+                items:
+                  $ref: "#/components/schemas/Action"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Action"
                 items:
                   $ref: "#/components/schemas/Action"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1515,10 +2048,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1531,10 +2074,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1581,12 +2134,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of Action"
+                items:
+                  $ref: "#/components/schemas/Action"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Action"
                 items:
                   $ref: "#/components/schemas/Action"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1599,10 +2164,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1615,10 +2190,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1651,11 +2236,19 @@ paths:
           description: "Empty json array. To return the deleted objects, please override\
             \ me."
           content:
-            application/json: {}
+            application/json:
+              schema: {}
+            application/xml:
+              schema: {}
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1668,10 +2261,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1684,10 +2287,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1730,10 +2343,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         401:
           description: "Unauthorized"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1746,6 +2369,11 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         404:
           description: "Resource not found"
           content:
@@ -1754,10 +2382,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1818,12 +2456,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of Action"
+                items:
+                  $ref: "#/components/schemas/Action"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Action"
                 items:
                   $ref: "#/components/schemas/Action"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1836,10 +2486,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1852,10 +2512,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1895,11 +2565,19 @@ paths:
           description: "Empty json array. To return the deleted objects, please override\
             \ me."
           content:
-            application/json: {}
+            application/json:
+              schema: {}
+            application/xml:
+              schema: {}
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1912,10 +2590,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1928,10 +2616,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1981,10 +2679,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         401:
           description: "Unauthorized"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -1997,6 +2705,11 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         404:
           description: "Resource not found"
           content:
@@ -2005,10 +2718,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2063,12 +2786,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of User"
+                items:
+                  $ref: "#/components/schemas/User"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of User"
                 items:
                   $ref: "#/components/schemas/User"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2081,10 +2816,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2097,10 +2842,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2148,6 +2903,13 @@ paths:
           application/json:
             schema:
               type: "array"
+              description: "Array of User"
+              items:
+                $ref: "#/components/schemas/User"
+          application/xml:
+            schema:
+              type: "array"
+              description: "Array of User"
               items:
                 $ref: "#/components/schemas/User"
       responses:
@@ -2157,12 +2919,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of User"
+                items:
+                  $ref: "#/components/schemas/User"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of User"
                 items:
                   $ref: "#/components/schemas/User"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2175,10 +2949,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2191,10 +2975,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2245,12 +3039,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of User"
+                items:
+                  $ref: "#/components/schemas/User"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of User"
                 items:
                   $ref: "#/components/schemas/User"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2263,10 +3069,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2279,10 +3095,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2300,7 +3126,90 @@ paths:
           application/json:
             schema:
               type: "object"
-      responses: {}
+          application/xml:
+            schema:
+              type: "object"
+      responses:
+        200:
+          description: "A set of [User]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                description: "Array of User"
+                items:
+                  $ref: "#/components/schemas/User"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of User"
+                items:
+                  $ref: "#/components/schemas/User"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
     head:
       tags:
       - "User"
@@ -2339,10 +3248,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         401:
           description: "Unauthorized"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2355,6 +3274,11 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         404:
           description: "Resource not found"
           content:
@@ -2363,10 +3287,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2427,12 +3361,24 @@ paths:
             application/json:
               schema:
                 type: "array"
+                description: "Array of User"
+                items:
+                  $ref: "#/components/schemas/User"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of User"
                 items:
                   $ref: "#/components/schemas/User"
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2445,10 +3391,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2461,10 +3417,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2504,11 +3470,19 @@ paths:
           description: "Empty json array. To return the deleted objects, please override\
             \ me."
           content:
-            application/json: {}
+            application/json:
+              schema: {}
+            application/xml:
+              schema: {}
         400:
           description: "Bad request"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2521,10 +3495,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         403:
           description: "Forbidden"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2537,10 +3521,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2590,10 +3584,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         401:
           description: "Unauthorized"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2606,6 +3610,11 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         404:
           description: "Resource not found"
           content:
@@ -2614,10 +3623,20 @@ paths:
                 properties:
                   error:
                     type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
         500:
           description: "Internal server error"
           content:
             application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
               schema:
                 properties:
                   error:
@@ -2635,7 +3654,87 @@ paths:
         required: true
         schema:
           type: "string"
-      responses: {}
+      responses:
+        200:
+          description: "A set of [Pojo]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                description: "Array of Pojo"
+                items:
+                  $ref: "#/components/schemas/Pojo"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Pojo"
+                items:
+                  $ref: "#/components/schemas/Pojo"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
 components:
   schemas:
     Pojo:
@@ -2646,6 +3745,7 @@ components:
           nullable: true
         jopos:
           type: "array"
+          description: "Array of Jopo"
           items:
             properties:
               name:
@@ -2687,6 +3787,7 @@ components:
           nullable: true
         others:
           type: "array"
+          description: "Array of Other"
           items:
             properties:
               extra:
@@ -2720,6 +3821,7 @@ components:
       properties:
         actionsForProfile:
           type: "array"
+          description: "Array of Action"
           items:
             properties:
               name:
@@ -2769,10 +3871,12 @@ components:
           nullable: true
         profiles:
           type: "array"
+          description: "Array of Profile"
           items:
             properties:
               actionsForProfile:
                 type: "array"
+                description: "Array of Action"
                 items:
                   properties:
                     name:

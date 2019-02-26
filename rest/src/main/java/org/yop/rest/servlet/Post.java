@@ -103,6 +103,7 @@ public class Post implements HttpMethod {
 			new Schema().$ref(YopSchemas.UPSERT)
 		));
 
+		// YOP custom query ONLY supports JSON format for now.
 		post.requestBody(new RequestBody().description("YOP custom query").content(new Content().addMediaType(
 			ContentType.APPLICATION_JSON.getMimeType(),
 			new MediaType().schema(queries).example(example(yopable))))

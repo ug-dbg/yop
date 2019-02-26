@@ -1,15 +1,14 @@
 package org.yop.rest.servlet;
 
 import io.swagger.oas.models.Operation;
-import io.swagger.oas.models.media.Content;
-import io.swagger.oas.models.media.MediaType;
+import io.swagger.oas.models.media.Schema;
 import io.swagger.oas.models.responses.ApiResponse;
 import io.swagger.oas.models.responses.ApiResponses;
-import org.apache.http.entity.ContentType;
 import org.yop.orm.evaluation.IdIn;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.openapi.OpenAPIUtil;
+import org.yop.rest.serialize.Serializers;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -64,8 +63,7 @@ public class Delete implements HttpMethod {
 
 		ApiResponse responseItem = new ApiResponse();
 		responseItem.setDescription("Empty json array. To return the deleted objects, please override me.");
-		responseItem.setContent(new Content());
-		responseItem.getContent().addMediaType(ContentType.APPLICATION_JSON.getMimeType(), new MediaType());
+		responseItem.content(OpenAPIUtil.contentFor(new Schema<>(), Serializers.SUPPORTED));
 		delete.getResponses().addApiResponse(String.valueOf(HttpServletResponse.SC_OK), responseItem);
 		delete.getResponses().addApiResponse(String.valueOf(SC_BAD_REQUEST),           HttpMethod.http400());
 		delete.getResponses().addApiResponse(String.valueOf(SC_UNAUTHORIZED),          HttpMethod.http401());

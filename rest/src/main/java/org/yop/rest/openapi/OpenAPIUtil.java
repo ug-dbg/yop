@@ -20,7 +20,6 @@ import io.swagger.oas.models.parameters.RequestBody;
 import io.swagger.oas.models.responses.ApiResponses;
 import io.swagger.oas.models.tags.Tag;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
@@ -32,6 +31,8 @@ import org.yop.rest.annotations.PathParam;
 import org.yop.rest.annotations.RequestParam;
 import org.yop.rest.annotations.Rest;
 import org.yop.rest.exception.YopOpenAPIException;
+import org.yop.rest.serialize.Deserializers;
+import org.yop.rest.serialize.Serializers;
 import org.yop.rest.servlet.HttpMethod;
 
 import java.lang.annotation.Annotation;
@@ -45,6 +46,8 @@ import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static javax.servlet.http.HttpServletResponse.*;
 
 /**
  * An utility class to map @Rest Yopables resources to an OpenAPI description.
@@ -103,6 +106,24 @@ public class OpenAPIUtil {
 	 */
 	public static Schema refSchema(Class clazz) {
 		return new Schema<>().$ref(clazz.getSimpleName());
+	}
+
+	/**
+	 * Generate a new {@link ArraySchema} for the target resource <b>schema reference</b>.
+	 * @param clazz the target resource
+	 * @return a new ArraySchema for the target resource. The resource schema will be linked.
+	 */
+	public static Schema<?> refArraySchema(Class<? extends Yopable> clazz) {
+		return new ArraySchema().items(refSchema(clazz)).description("Array of " + clazz.getSimpleName());
+	}
+
+	/**
+	 * Generate a new {@link ArraySchema} for the target resource as item(s).
+	 * @param clazz the target resource
+	 * @return a new ArraySchema for the target resource. The resource schema will be generated
+	 */
+	private static Schema<?> forResourceArray(Class<? extends Yopable> clazz) {
+		return new ArraySchema().items(forResource(clazz)).description("Array of " + clazz.getSimpleName());
 	}
 
 	/**
@@ -194,7 +215,7 @@ public class OpenAPIUtil {
 			for (Field field : fields) {
 				Schema property;
 				if (ORMUtil.isCollection(field)) {
-					property = new ArraySchema().items(forResource(Reflection.getTarget(field)));
+					property = forResourceArray(Reflection.getTarget(field));
 				} else if (ORMUtil.isYopable(field)) {
 					property = forResource(Reflection.getTarget(field));
 				} else {
@@ -205,10 +226,6 @@ public class OpenAPIUtil {
 			return schema;
 		}
 		return null;
-	}
-
-	private static Schema<?> forResourceArray(Class<? extends Yopable> clazz) {
-		return new ArraySchema().items(forResource(clazz)).description("Array of " + clazz.getSimpleName());
 	}
 
 	/**
@@ -337,7 +354,15 @@ public class OpenAPIUtil {
 				responses.put(
 					responseAnnotation.responseCode(),
 					fromAnnotation(responseAnnotation, io.swagger.oas.models.responses.ApiResponse.class)
+					.content(contentFor(forResourceArray(yopable), Serializers.SUPPORTED))
 				);
+			} else {
+				responses.put(String.valueOf(SC_OK),                    HttpMethod.http200(yopable));
+				responses.put(String.valueOf(SC_BAD_REQUEST),           HttpMethod.http400());
+				responses.put(String.valueOf(SC_UNAUTHORIZED),          HttpMethod.http401());
+				responses.put(String.valueOf(SC_FORBIDDEN),             HttpMethod.http403());
+				responses.put(String.valueOf(SC_NOT_FOUND),             HttpMethod.http404());
+				responses.put(String.valueOf(SC_INTERNAL_SERVER_ERROR), HttpMethod.http500());
 			}
 
 			for (String httpMethod : httpMethods) {
@@ -380,30 +405,27 @@ public class OpenAPIUtil {
 					if (parameter.isAnnotationPresent(org.yop.rest.annotations.Content.class)) {
 						if (operation.getRequestBody() == null) {
 							RequestBody raw = new RequestBody().description("Raw content");
-							operation.requestBody(raw.content(new Content().addMediaType(
-								ContentType.APPLICATION_JSON.getMimeType(),
-								new MediaType().schema(JSON_SCHEMAS.get(Object.class).toSchema())
-							)));
+							operation.requestBody(raw.content(contentFor(
+								JSON_SCHEMAS.get(Object.class).toSchema(),
+								Deserializers.SUPPORTED)
+							));
 						}
 					}
 
 					if (parameter.isAnnotationPresent(org.yop.rest.annotations.BodyInstance.class)) {
 						if (yopable.isAssignableFrom(type)) {
 							RequestBody body = new RequestBody().description(type.getSimpleName());
-							operation.requestBody(body.content(new Content().addMediaType(
-								ContentType.APPLICATION_JSON.getMimeType(),
-								new MediaType().schema(forResource(yopable))
-							)));
+							operation.requestBody(body.content(contentFor(refSchema(yopable), Deserializers.SUPPORTED)));
 						}
 					}
 
 					if (parameter.isAnnotationPresent(org.yop.rest.annotations.BodyInstances.class)) {
 						if (Collection.class.isAssignableFrom(type)) {
 							RequestBody body = new RequestBody().description(type.getSimpleName());
-							operation.requestBody(body.content(new Content().addMediaType(
-								ContentType.APPLICATION_JSON.getMimeType(),
-								new MediaType().schema(forResourceArray(yopable))
-							)));
+							operation.requestBody(body.content(contentFor(
+								refArraySchema(yopable),
+								Deserializers.SUPPORTED)
+							));
 						}
 					}
 
@@ -426,6 +448,18 @@ public class OpenAPIUtil {
 				item.operation(PathItem.HttpMethod.valueOf(StringUtils.upperCase(httpMethod)), operation);
 			}
 		}
+	}
+
+	/**
+	 * Create an OpenAPI content for the given schema and the given content types.
+	 * @param schema                the content schema
+	 * @param supportedContentTypes the supported content-types for this content
+	 * @return a new OpenAPI Content instance for the given schema and supported content types
+	 */
+	public static Content contentFor(Schema schema, Collection<String> supportedContentTypes) {
+		Content content = new Content();
+		supportedContentTypes.forEach(type -> content.addMediaType(type, new MediaType().schema(schema)));
+		return content;
 	}
 
 	/**
