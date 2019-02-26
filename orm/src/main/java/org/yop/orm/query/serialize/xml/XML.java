@@ -1,14 +1,26 @@
 package org.yop.orm.query.serialize.xml;
 
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.xml.DomReader;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
+import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.AbstractRequest;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.IJoin;
 import org.yop.orm.query.serialize.Serialize;
+import org.yop.orm.util.Reflection;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -119,6 +131,59 @@ public class XML<T extends Yopable> extends AbstractRequest<XML<T>, T> implement
 		xml = StringUtils.replaceFirst(xml, "^" + Pattern.quote("<" + rootAlias + ">"), "<list>");
 		xml = StringUtils.replaceFirst(xml, Pattern.quote("</" + rootAlias + ">") + "$", "</list>");
 		return deserialize(xml, target, allowed);
+	}
+
+	/**
+	 * Deserialize a DOM object of T.
+	 * @param object  the serialized element as A DOM element
+	 * @param target  the target class
+	 * @param allowed a collection of classes that are allowed to instantiate. If empty : every class is allowed.
+	 * @param <T> the target type
+	 * @return the deserialized T element from the XML node element
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T extends Yopable> T deserialize(Element object, Class<T> target, Class... allowed) {
+		XStream xstream = new XStream();
+		XStream.setupDefaultSecurity(xstream);
+		if (allowed.length > 0) {
+			xstream.allowTypes(ArrayUtils.addAll(allowed, target));
+		} else {
+			xstream.allowTypesByRegExp(new String[]{".*"});
+		}
+
+		xstream.registerConverter(new YopXMLConverter(xstream.getMapper(), target, new ArrayList<>()));
+		return (T) xstream.unmarshal(new DomReader(object), Reflection.newInstanceNoArgs(target));
+	}
+
+	/**
+	 * Read the first level elements of the root node of the XML input, parsed as DOM.
+	 * @param xml     the input XML
+	 * @param charset the charset to use to parse the XML
+	 * @return a list of DOM Element
+	 */
+	public static List<Element> getFirstLevelElements(String xml, Charset charset) {
+		try {
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			Document document = factory.newDocumentBuilder().parse(new ByteArrayInputStream(xml.getBytes(charset)));
+			return getFirstLevelElements(document.getDocumentElement());
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			throw new YopRuntimeException("DOM parsing error for XML [" + StringUtils.abbreviate(xml, 30) + "]", e);
+		}
+	}
+
+	/**
+	 * Read the first level {@link Element} of the given Element node.
+	 * @param root the DOM element to read
+	 * @return a list of DOM Element
+	 */
+	public static List<Element> getFirstLevelElements(Element root) {
+		List<Element> out = new ArrayList<>();
+		for(int i = 0; i < root.getChildNodes().getLength(); i++) {
+			if (root.getChildNodes().item(i).getNodeType() == Node.ELEMENT_NODE) {
+				out.add((Element) root.getChildNodes().item(i));
+			}
+		}
+		return out;
 	}
 
 	@Override
