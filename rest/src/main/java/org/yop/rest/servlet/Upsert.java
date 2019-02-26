@@ -9,6 +9,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.reflection.Reflection;
 import org.yop.rest.openapi.OpenAPIUtil;
+import org.yop.rest.serialize.Deserializers;
 import org.yop.rest.serialize.PartialDeserializers;
 
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public class Upsert implements HttpMethod {
 				JsonObject jsonObject = element.getAsJsonObject();
 				org.yop.orm.query.Upsert<Yopable> upsert = org.yop.orm.query.Upsert.from(target);
 				PartialDeserializers.Partial partial = PartialDeserializers
-					.getFor(restRequest.getContent())
+					.getFor(restRequest.accept(Deserializers.SUPPORTED))
 					.deserialize(target, jsonObject);
 				partial(upsert, partial.getKeys());
 				upsert.onto(partial.getObject());
