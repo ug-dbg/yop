@@ -14,7 +14,7 @@ import org.yop.orm.query.AbstractRequest;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.IJoin;
 import org.yop.orm.query.serialize.Serialize;
-import org.yop.orm.util.Reflection;
+import org.yop.reflection.Reflection;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
