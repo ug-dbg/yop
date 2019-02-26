@@ -13,13 +13,14 @@ import io.swagger.oas.models.responses.ApiResponses;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.entity.ContentType;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.*;
 import org.yop.orm.query.Delete;
-import org.yop.orm.query.Select;
 import org.yop.orm.query.Upsert;
-import org.yop.orm.query.Where;
+import org.yop.orm.query.serialize.Serialize;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.openapi.OpenAPIUtil;
 import org.yop.rest.openapi.YopSchemas;
+import org.yop.rest.serialize.Serializers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -120,7 +121,7 @@ public class Post implements HttpMethod {
 	 * Execute a {@link Select} query from the REST request.
 	 * @param restRequest the incoming custom query REST request
 	 * @param connection  the underlying connection to use to execute the request
-	 * @return a Set of Yopable, serialized to JSON using {@link Select#toJSONQuery()}
+	 * @return a Set of Yopable, serialized to JSON using {@link Select#to(AbstractRequest)}
 	 * @throws IllegalArgumentException {@link RestRequest#getRestResource()} does not match {@link Select#getTarget()}
 	 */
 	private static ExecutionOutput doSelect(RestRequest restRequest, IConnection connection) {
@@ -140,9 +141,11 @@ public class Post implements HttpMethod {
 			logger.info("Paging headers found. Overriding any paging configuration from JSON select query.");
 			select.page(restRequest.offset(), restRequest.limit());
 		}
-
 		Set<Yopable> results = select.execute(connection);
-		ExecutionOutput output = ExecutionOutput.forOutput(select.toJSONQuery().onto(results).toJSON());
+		String outputContentType = restRequest.accept(Serializers.SUPPORTED);
+		Serialize serializer = Serializers.getFor(restRequest.getRestResource(), outputContentType);
+		select.to((AbstractRequest) serializer);
+		ExecutionOutput output = ExecutionOutput.forOutput(serializer.onto(results).execute());
 		if (restRequest.count()) {
 			output.addHeader(PARAM_COUNT, String.valueOf(select.count(connection)));
 		}

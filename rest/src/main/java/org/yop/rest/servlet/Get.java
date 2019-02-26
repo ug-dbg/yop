@@ -38,7 +38,7 @@ class Get implements HttpMethod {
 	@Override
 	public ExecutionOutput executeDefault(RestRequest restRequest, IConnection connection) {
 		Select<Yopable> select = Select.from(restRequest.getRestResource());
-		if (restRequest.joinAll() || restRequest.joinIDs()) {
+		if (restRequest.joinAll()) {
 			select.joinAll();
 		}
 
@@ -79,7 +79,6 @@ class Get implements HttpMethod {
 		get.setResponses(new ApiResponses());
 		get.setParameters(new ArrayList<>());
 		get.getParameters().add(HttpMethod.joinAllParameter(resource));
-		get.getParameters().add(HttpMethod.joinIDsParameter(resource));
 		get.getParameters().add(HttpMethod.joinProfilesParameter(yopable));
 		get.getParameters().add(HttpMethod.countParameter(resource));
 		get.getParameters().add(HttpMethod.pagingOffsetParameter(resource));

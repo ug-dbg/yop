@@ -64,9 +64,6 @@ public interface HttpMethod {
 	/** HTTP 'joinAll' parameter : join all non transient relation on the resources. */
 	String PARAM_JOIN_ALL = "joinAll";
 
-	/** HTTP 'joinIDs' parameter : add extra properties (#ids suffix) for the non transient related objects. */
-	String PARAM_JOIN_IDS = "joinIDs";
-
 	/** HTTP 'checkNaturalID' parameter : when inserting, check if the Natural Key already exists. */
 	String PARAM_CHECK_NK = "checkNaturalID";
 
@@ -138,21 +135,7 @@ public interface HttpMethod {
 	}
 
 	/**
-	 * Create a {@link #PARAM_JOIN_IDS}' OpenAPI parameter for a given resource.
-	 * @param forResource the resource name (for {@link io.swagger.oas.models.parameters.Parameter#description}.
-	 * @return the OpenAPI 'joinIDs' parameter
-	 */
-	static io.swagger.oas.models.parameters.Parameter joinIDsParameter(String forResource) {
-		return new io.swagger.oas.models.parameters.Parameter()
-			.name(PARAM_JOIN_IDS)
-			.in("query")
-			.required(false)
-			.schema(new Schema().type("boolean"))
-			.description("join all IDs from non transient relations to [" + forResource + "]");
-	}
-
-	/**
-	 * Create a {@link #PARAM_JOIN_IDS}' OpenAPI parameter for a given resource.
+	 * Create a {@link #PARAM_CHECK_NK}' OpenAPI parameter for a given resource.
 	 * @param forResource the resource name (for {@link io.swagger.oas.models.parameters.Parameter#description}.
 	 * @return the OpenAPI 'joinIDs' parameter
 	 */
@@ -449,17 +432,11 @@ public interface HttpMethod {
 				serializer.onto((Yopable) what);
 			} else {
 				serializer.onto((Collection<Yopable>) what);
-				if (restRequest.joinIDs()) {
-					serializer.joinIDsAll();
-				}
 				if (restRequest.joinAll()) {
 					serializer.joinAll();
 				}
 			}
 
-			if (restRequest.joinIDs()) {
-				serializer.joinIDsAll();
-			}
 			if (restRequest.joinAll()) {
 				serializer.joinAll();
 			}

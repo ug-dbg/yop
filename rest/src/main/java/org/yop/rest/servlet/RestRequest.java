@@ -258,16 +258,6 @@ class RestRequest {
 	}
 
 	/**
-	 * Does this request has a 'joinIDs' directive ?
-	 * @return true if there is a 'joinIDs' parameter set to true or with no explicit value
-	 */
-	boolean joinIDs() {
-		return this.parameters.containsMapping(HttpMethod.PARAM_JOIN_IDS, "true")
-			|| this.parameters.containsMapping(HttpMethod.PARAM_JOIN_IDS, null);
-	}
-
-
-	/**
 	 * Does this request has a 'checkNaturalID' directive ?
 	 * @return true if there is a 'checkNaturalID' parameter set to true or with no explicit value
 	 */

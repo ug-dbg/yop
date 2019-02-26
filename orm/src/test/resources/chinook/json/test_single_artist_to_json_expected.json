@@ -1,26 +1,10 @@
 {
   "name": "AC/DC",
   "id": 1,
-  "albums#id": [
-    1,
-    4
-  ],
   "albums": [
     {
       "title": "For Those About To Rock We Salute You",
       "id": 1,
-      "tracks#id": [
-        1,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13,
-        14
-      ],
       "tracks": [
         {
           "name": "For Those About To Rock (We Salute You)",
@@ -29,8 +13,6 @@
           "bytes": 11170334,
           "unitPrice": 0.0,
           "id": 1,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -47,8 +29,6 @@
           "bytes": 6713451,
           "unitPrice": 0.0,
           "id": 6,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -59,14 +39,12 @@
           }
         },
         {
-          "name": "Let's Get It Up",
+          "name": "Let\u0027s Get It Up",
           "composer": "Angus Young, Malcolm Young, Brian Johnson",
           "milliseconds": 233926,
           "bytes": 7636561,
           "unitPrice": 0.0,
           "id": 7,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -83,8 +61,6 @@
           "bytes": 6852860,
           "unitPrice": 0.0,
           "id": 8,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -101,8 +77,6 @@
           "bytes": 6599424,
           "unitPrice": 0.0,
           "id": 9,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -119,8 +93,6 @@
           "bytes": 8611245,
           "unitPrice": 0.0,
           "id": 10,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -137,8 +109,6 @@
           "bytes": 6566314,
           "unitPrice": 0.0,
           "id": 11,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -155,8 +125,6 @@
           "bytes": 8596840,
           "unitPrice": 0.0,
           "id": 12,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -173,8 +141,6 @@
           "bytes": 6706347,
           "unitPrice": 0.0,
           "id": 13,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -191,8 +157,6 @@
           "bytes": 8817038,
           "unitPrice": 0.0,
           "id": 14,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -207,16 +171,6 @@
     {
       "title": "Let There Be Rock",
       "id": 4,
-      "tracks#id": [
-        16,
-        17,
-        18,
-        19,
-        20,
-        21,
-        22,
-        15
-      ],
       "tracks": [
         {
           "name": "Dog Eat Dog",
@@ -225,8 +179,6 @@
           "bytes": 7032162,
           "unitPrice": 0.0,
           "id": 16,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -243,8 +195,6 @@
           "bytes": 12021261,
           "unitPrice": 0.0,
           "id": 17,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -261,8 +211,6 @@
           "bytes": 8776140,
           "unitPrice": 0.0,
           "id": 18,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -279,8 +227,6 @@
           "bytes": 10617116,
           "unitPrice": 0.0,
           "id": 19,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -297,8 +243,6 @@
           "bytes": 12066294,
           "unitPrice": 0.0,
           "id": 20,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -309,14 +253,12 @@
           }
         },
         {
-          "name": "Hell Ain't A Bad Place To Be",
+          "name": "Hell Ain\u0027t A Bad Place To Be",
           "composer": "AC/DC",
           "milliseconds": 254380,
           "bytes": 8331286,
           "unitPrice": 0.0,
           "id": 21,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -333,8 +275,6 @@
           "bytes": 10547154,
           "unitPrice": 0.0,
           "id": 22,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1
@@ -351,8 +291,6 @@
           "bytes": 10847611,
           "unitPrice": 0.0,
           "id": 15,
-          "mediaType#id": 1,
-          "genre#id": 1,
           "mediaType": {
             "name": "MPEG audio file",
             "id": 1

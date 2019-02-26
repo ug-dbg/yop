@@ -73,7 +73,7 @@ import java.util.stream.Collectors;
  * Then it will recursively do the same onto her reporters and manager.
  * @param <T> the target type
  */
-public class Hydrate<T extends Yopable> extends AbstractRequest<Hydrate<T>, T>{
+public class Hydrate<T extends Yopable> extends SQLRequest<Hydrate<T>, T>{
 
 	private static final Logger logger = LoggerFactory.getLogger(Hydrate.class);
 

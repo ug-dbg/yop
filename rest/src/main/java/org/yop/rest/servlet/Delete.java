@@ -39,7 +39,7 @@ public class Delete implements HttpMethod {
 	@Override
 	public ExecutionOutput executeDefault(RestRequest restRequest, IConnection connection) {
 		org.yop.orm.query.Delete<Yopable> delete = org.yop.orm.query.Delete.from(restRequest.getRestResource());
-		if (restRequest.joinAll() || restRequest.joinIDs()) {
+		if (restRequest.joinAll()) {
 			delete.joinAll();
 		}
 
@@ -60,7 +60,6 @@ public class Delete implements HttpMethod {
 		delete.setResponses(new ApiResponses());
 		delete.setParameters(new ArrayList<>());
 		delete.getParameters().add(HttpMethod.joinAllParameter(resource));
-		delete.getParameters().add(HttpMethod.joinIDsParameter(resource));
 		delete.getParameters().add(HttpMethod.joinProfilesParameter(yopable));
 
 		ApiResponse responseItem = new ApiResponse();

@@ -5,8 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.swagger.oas.models.Operation;
 import io.swagger.oas.models.responses.ApiResponses;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.reflection.Reflection;
@@ -25,8 +23,6 @@ import static javax.servlet.http.HttpServletResponse.*;
  * It does an {@link org.yop.orm.query.Upsert} on the request entities.
  */
 public class Upsert implements HttpMethod {
-
-	private static final Logger logger = LoggerFactory.getLogger(Upsert.class);
 
 	/** The HTTP method name : UPSERT */
 	public static final String UPSERT = "UPSERT";
@@ -72,9 +68,6 @@ public class Upsert implements HttpMethod {
 			if (restRequest.checkNaturalID()) {
 				upsert.checkNaturalID();
 			}
-			if (restRequest.joinIDs()) {
-				logger.warn("Should check related IDs to join! Not implemented yet!");
-			}
 			upsert.joinProfiles(restRequest.profiles().toArray(new String[0]));
 			upsert.execute(connection);
 		}
@@ -93,7 +86,6 @@ public class Upsert implements HttpMethod {
 		upsert.setResponses(new ApiResponses());
 		upsert.setParameters(new ArrayList<>());
 		upsert.getParameters().add(HttpMethod.joinAllParameter(resource));
-		upsert.getParameters().add(HttpMethod.joinIDsParameter(resource));
 		upsert.getParameters().add(HttpMethod.joinProfilesParameter(yopable));
 		upsert.getParameters().add(HttpMethod.checkNaturalIDParameter(resource));
 		upsert.getParameters().add(HttpMethod.partialParameter(resource));

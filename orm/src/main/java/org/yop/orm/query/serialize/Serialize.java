@@ -9,7 +9,6 @@ import java.util.Collection;
  * Serialization interface.
  * <ul>
  *     <li>join</li>
- *     <li>join IDs</li>
  *     <li>set target elements</li>
  *     <li>execute</li>
  * </ul>
@@ -42,14 +41,6 @@ public interface Serialize<Request extends Serialize, T extends Yopable> {
 	<R extends Yopable> Request join(IJoin<T, R> join);
 
 	/**
-	 * Add a relation - to another Yopable type whose IDs are set to be serialized.
-	 * @param join the join clause
-	 * @param <R> the target join type
-	 * @return the current request, for chaining purpose
-	 */
-	<R extends Yopable> Request joinIDs(IJoin<T, R> join);
-
-	/**
 	 * Add relations - to others Yopable types - to be serialized.
 	 * @param joins the join clauses
 	 * @return the current directive, for chaining purpose
@@ -57,24 +48,10 @@ public interface Serialize<Request extends Serialize, T extends Yopable> {
 	Request join(Collection<IJoin<T, ?>> joins);
 
 	/**
-	 * Add relations - to other Yopable types whose IDs are set to be serialized.
-	 * @param joins the join clauses
-	 * @return the current request, for chaining purpose
-	 */
-	@SuppressWarnings({"unused"})
-	Request joinIDs(Collection<IJoin<T, ?>> joins) ;
-
-	/**
 	 * Serialize the whole data graph. Stop on transient fields and 'cycling' fields.
 	 * @return the current directive, for chaining purpose
 	 */
 	Request joinAll();
-
-	/**
-	 * Serialize IDs from relations on the whole data graph. Stop on transient fields and 'cycling' fields.
-	 * @return the current directive, for chaining purpose
-	 */
-	Request joinIDsAll();
 
 	/**
 	 * Add the joins which are targeted by profiles, using {@link org.yop.orm.annotations.JoinProfile} on fields.

@@ -1,12 +1,11 @@
 package org.yop.orm.simple;
 
-import com.google.gson.JsonPrimitive;
-import org.json.JSONException;
+import com.thoughtworks.xstream.converters.ConversionException;
+import org.junit.Assert;
 import org.junit.Test;
-import org.skyscreamer.jsonassert.JSONAssert;
-import org.yop.orm.DBMSSwitch;
+import org.yop.orm.query.Join;
 import org.yop.orm.query.JoinSet;
-import org.yop.orm.query.serialize.json.JSON;
+import org.yop.orm.query.serialize.xml.XML;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
 import org.yop.orm.simple.model.Pojo;
@@ -14,15 +13,13 @@ import org.yop.orm.simple.model.Pojo;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collection;
 import java.util.Collections;
 
-import static org.yop.orm.Yop.json;
-import static org.yop.orm.Yop.select;
-
-public class SimpleJSONTest {
+public class SimpleXMLTest {
 
 	@Test
-	public void testJSON_1st_level() throws JSONException {
+	public void testXML_1st_level_ids() {
 		String password = "ThisIsMyPasswordYouFool";
 
 		Pojo pojo = new Pojo();
@@ -44,17 +41,24 @@ public class SimpleJSONTest {
 		other.setName("other name :)");
 		pojo.getOthers().add(other);
 
-		String json = json(Pojo.class)
+		String xml = XML.from(Pojo.class)
 			.joinAll()
 			.onto(pojo)
-			.register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"))
-			.toJSON();
-		String expected = DBMSSwitch.classpathResource("/simple/json/testJSON_1st_level_expected.json");
-		JSONAssert.assertEquals("", expected, json, true);
+			.rootAlias("pojos")
+			.execute();
+		System.out.println(xml);
+
+		Collection<Pojo> pojos = XML.deserialize(xml, Pojo.class, "pojos");
+		Assert.assertEquals(1, pojos.size());
+
+		Pojo deserialized = pojos.iterator().next();
+		Assert.assertEquals(deserialized, pojo);
+		Assert.assertEquals(deserialized.getJopos(), pojo.getJopos());
+		Assert.assertEquals(deserialized.getOthers(), pojo.getOthers());
 	}
 
 	@Test
-	public void testJSON_2nd_level() throws JSONException {
+	public void testXML_2nd_level() {
 		Pojo pojo = new Pojo();
 		pojo.setId(1L);
 		pojo.setVersion(1337);
@@ -78,19 +82,24 @@ public class SimpleJSONTest {
 		anotherPojo.setId(2L);
 		other.getPojos().add(anotherPojo);
 
-		String json = json(Pojo.class)
+		String xml = XML.from(Pojo.class)
 			.joinAll()
-			.join(Pojo::getJopos, Jopo::getPojo)
+			.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
 			.join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
-			.register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"))
 			.onto(Collections.singleton(pojo))
-			.toJSON();
-		String expected = DBMSSwitch.classpathResource("/simple/json/testJSON_2nd_level_expected.json");
-		JSONAssert.assertEquals("", expected, json, true);
+			.execute();
+		System.out.println(xml);
+
+		Collection<Pojo> pojos = XML.deserialize(xml, Pojo.class, "pojos", Pojo.class, Jopo.class, Other.class);
+		Pojo deserialized = pojos.iterator().next();
+		Assert.assertEquals(deserialized, pojo);
+		Assert.assertNotNull(deserialized.getJopos());
+		Assert.assertEquals(1, deserialized.getJopos().size());
+		Assert.assertTrue(deserialized == deserialized.getJopos().iterator().next().getPojo());
 	}
 
-	@Test
-	public void testSelect_to_JSON() throws JSONException {
+	@Test(expected = ConversionException.class)
+	public void testXML_2nd_level_unallowed_class() {
 		Pojo pojo = new Pojo();
 		pojo.setId(1L);
 		pojo.setVersion(1337);
@@ -107,14 +116,22 @@ public class SimpleJSONTest {
 		other.setId(111L);
 		other.setTimestamp(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
 		other.setName("other name :)");
+		other.getPojos().add(pojo);
 		pojo.getOthers().add(other);
 
-		JSON<Pojo> jsonQuery = select(Pojo.class)
+		Pojo anotherPojo = new Pojo();
+		anotherPojo.setId(2L);
+		other.getPojos().add(anotherPojo);
+
+		String xml = XML.from(Pojo.class)
 			.joinAll()
-			.to(JSON.from(Pojo.class))
-			.register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"));
-		String json = jsonQuery.toJSON(pojo);
-		String expected = DBMSSwitch.classpathResource("/simple/json/testSelect_to_JSON_expected.json");
-		JSONAssert.assertEquals("", expected, json, true);
+			.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
+			.join(Pojo::getOthers, Other::getPojos)
+			.onto(Collections.singleton(pojo))
+			.execute();
+		System.out.println(xml);
+
+		// Don't allow 'Other' class → it should raise a ForbiddenClassException and then a ConversionException.
+		XML.deserialize(xml, Pojo.class, "pojos", Pojo.class, Jopo.class);
 	}
 }

@@ -1,0 +1,21 @@
+[
+  {
+    "id": 1,
+    "version": 1337,
+    "active": true,
+    "type": "FOO",
+    "jopos": [
+      {
+        "id": 11,
+        "name": "jopo From code !"
+      }
+    ],
+    "others": [
+      {
+        "id": 111,
+        "name": "other name :)",
+        "timestamp": "2000-01-01T00:00:00.000"
+      }
+    ]
+  }
+]
