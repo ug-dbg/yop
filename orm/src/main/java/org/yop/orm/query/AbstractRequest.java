@@ -39,6 +39,16 @@ public abstract class AbstractRequest<Request extends AbstractRequest, T extends
 	}
 
 	/**
+	 * Get the joins for this request.
+	 * <br>
+	 * N.B. This can be an implementation for org.yop.orm.query.serialize.Serialize#getJoins()
+	 * @return {@link #joins}
+	 */
+	public IJoin.Joins<T> getJoins() {
+		return this.joins;
+	}
+
+	/**
 	 * Join to a new type.
 	 * @param join the join clause
 	 * @param <R> the target join type

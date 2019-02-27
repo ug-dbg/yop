@@ -61,6 +61,12 @@ public interface Serialize<Request extends Serialize, T extends Yopable> {
 	Request joinProfiles(String... profiles);
 
 	/**
+	 * Get the current joins of this serialize request.
+	 * @return the current joins. Might be a copy of these joins.
+	 */
+	Collection<IJoin<T, ?>> getJoins();
+
+	/**
 	 * Execute the current serialization directive.
 	 * @return the target object(s), serialized into string
 	 */

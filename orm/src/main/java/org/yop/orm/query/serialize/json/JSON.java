@@ -118,14 +118,6 @@ public class JSON<T extends Yopable> extends AbstractRequest<JSON<T>, T> impleme
 	}
 
 	/**
-	 * Get the {@link #joins} of this JSON serialization request.
-	 * @return the joins for the current request
-	 */
-	IJoin.Joins<T> getJoins() {
-		return this.joins;
-	}
-
-	/**
 	 * Provide the JSON directive with your own GSON builder.
 	 * <br>
 	 * {@link YopableStrategy} and custom serializers will be set on this builder first.
