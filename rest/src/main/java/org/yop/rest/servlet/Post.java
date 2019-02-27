@@ -16,7 +16,6 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.*;
 import org.yop.orm.query.Delete;
 import org.yop.orm.query.Upsert;
-import org.yop.orm.query.serialize.Serialize;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.openapi.OpenAPIUtil;
 import org.yop.rest.openapi.YopSchemas;
@@ -144,9 +143,15 @@ public class Post implements HttpMethod {
 		}
 		Set<Yopable> results = select.execute(connection);
 		String outputContentType = restRequest.accept(Serializers.SUPPORTED);
-		Serialize serializer = Serializers.getFor(restRequest.getRestResource(), outputContentType);
-		select.to((AbstractRequest) serializer);
-		ExecutionOutput output = ExecutionOutput.forOutput(serializer.onto(results).execute());
+
+		@SuppressWarnings("unchecked")
+		String serialized = Serializers
+			.getFor(restRequest.getRestResource(), outputContentType)
+			.join(select.getJoins())
+			.onto(results)
+			.execute();
+
+		ExecutionOutput output = ExecutionOutput.forOutput(serialized);
 		if (restRequest.count()) {
 			output.addHeader(PARAM_COUNT, String.valueOf(select.count(connection)));
 		}
