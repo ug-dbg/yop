@@ -122,6 +122,7 @@ Yop has been (poorly) unit tested on :
 - PostgreSQL (9.5)   
 - Oracle (XE 11g)  
 - MS-SQL (2017)  
+- IBM Db2 (Docker Hub image ibmcom/db2express-c)
   
   
   
