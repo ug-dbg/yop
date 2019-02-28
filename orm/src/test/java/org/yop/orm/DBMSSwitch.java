@@ -96,6 +96,7 @@ public abstract class DBMSSwitch {
 			case "postgres" :  return Prepare.getPostgresConnection();
 			case "oracle" :    return Prepare.getOracleConnection();
 			case "mssql" :     return Prepare.getMSSQLConnection();
+			case "db2" :       return Prepare.getDb2Connection();
 			case "sqlite" :
 			default: return Prepare.getConnection(this.db);
 		}
@@ -127,6 +128,7 @@ public abstract class DBMSSwitch {
 			case "postgres" :  Prepare.preparePostgres(names); break;
 			case "oracle" :    Prepare.prepareOracle(names);   break;
 			case "mssql" :     Prepare.prepareMSSQL(names);    break;
+			case "db2" :       Prepare.prepareDb2(names);      break;
 			case "sqlite" :
 			default: this.db = Prepare.createSQLiteDatabase(SimpleTest.class.getName(), classLoader, names);
 		}

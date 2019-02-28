@@ -142,6 +142,13 @@
 			<scope>compile</scope>
 			<optional>true</optional>
 		</dependency>
+		<dependency>
+			<groupId>com.ibm.db2.jcc</groupId>
+			<artifactId>db2jcc</artifactId>
+			<version>db2jcc4</version>
+			<scope>compile</scope>
+			<optional>true</optional>
+		</dependency>
 
 		<!-- Oracle test dependencies. Oracle drivers are not very accessible. -->
 		<!--

@@ -41,6 +41,7 @@ public class Config {
 	public static final String SQL_USE_BATCH_INS_PROPERTY   = "yop.sql.batch_inserts";
 	public static final String SQL_DEFAULT_SEQ              = "yop.sql.default_sequence";
 	public static final String SQL_PAGING_METHOD            = "yop.sql.paging_method";
+	public static final String SQL_NULL_IN_NK               = "yop.sql.null_in_nk";
 
 	private final Map<String, String> config = new HashMap<>();
 	private IDialect dialect = IDialect.defaultDialect();
@@ -132,6 +133,18 @@ public class Config {
 		return this.config.containsKey(SQL_USE_BATCH_INS_PROPERTY)
 			? "true".equals(this.config.get(SQL_USE_BATCH_INS_PROPERTY))
 			: this.dialect.useBatchInserts();
+	}
+
+	/**
+	 * Some DBMS do not support null values in unique constraints.
+	 * <br>
+	 * This can override {@link IDialect#nullInNK()}
+	 * @return true if YOP can set unique constraints on nullable columns
+	 */
+	public boolean nullInNK() {
+		return this.config.containsKey(SQL_NULL_IN_NK)
+			? "true".equals(this.config.get(SQL_NULL_IN_NK))
+			: this.dialect.nullInNK();
 	}
 
 	/** Max number of parameters in a query */

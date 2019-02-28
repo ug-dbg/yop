@@ -23,6 +23,7 @@ import org.yop.rest.serialize.Serializers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 
 import static javax.servlet.http.HttpServletResponse.*;
@@ -147,7 +148,7 @@ public class Post implements HttpMethod {
 		@SuppressWarnings("unchecked")
 		String serialized = Serializers
 			.getFor(restRequest.getRestResource(), outputContentType)
-			.join(select.getJoins())
+			.join((Collection) select.getJoins())
 			.onto(results)
 			.execute();
 

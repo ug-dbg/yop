@@ -61,6 +61,7 @@ public class JDBCConnection implements IConnection {
 	 */
 	@Override
 	public void close() throws SQLException {
+		this.config.getDialect().onClose(this);
 		this.connection.close();
 	}
 
@@ -101,7 +102,7 @@ public class JDBCConnection implements IConnection {
 							+ "It should not be here. This is probably a bug !"
 						);
 					}
-					statement.setObject(i + 1, parameter.getValue());
+					query.getConfig().getDialect().setParameter(statement, i + 1, parameter);
 				}
 
 				// Well, this is embarrassing.

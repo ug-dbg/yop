@@ -230,7 +230,7 @@ public class SupplyChainTest extends DBMSSwitch {
 			organisation = Select
 				.from(Organisation.class)
 				.where(Where.naturalId(organisation))
-				.uniqueResult(this.getConnection());
+				.uniqueResult(connection);
 
 			Hydrate
 				.from(Organisation.class)
@@ -238,7 +238,7 @@ public class SupplyChainTest extends DBMSSwitch {
 				.join(JoinSet.to(Organisation::getEmployees).join(Join.to(Employee::getOrganisation)))
 				.join(JoinSet.to(Organisation::getWarehouses).join(Join.to(Warehouse::getOwner)))
 				.recurse()
-				.execute(this.getConnection());
+				.execute(connection);
 
 			Assert.assertTrue(organisation == organisation.getEmployees().iterator().next().getOrganisation());
 			Assert.assertTrue(organisation == organisation.getWarehouses().iterator().next().getOwner());

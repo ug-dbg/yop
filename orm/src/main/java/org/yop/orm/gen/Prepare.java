@@ -38,6 +38,7 @@ public class Prepare {
 	private static final String POSTGRES_ADDRESS = DBMS_HOST + ":"  + DBMS_PORT + "/" + DBMS_DB;
 	private static final String ORACLE_ADDRESS   = DBMS_HOST + ":"  + DBMS_PORT + "/" + DBMS_DB;
 	private static final String MSSQL_ADDRESS    = DBMS_HOST + "\\" + DBMS_DB   + ":" + DBMS_PORT;
+	private static final String DB2_ADDRESS      = DBMS_HOST + ":"  + DBMS_PORT + "/" + DBMS_DB;
 
 	/**
 	 * Create an SQLite database with the given name and for the given package name.
@@ -229,6 +230,40 @@ public class Prepare {
 	}
 
 	/**
+	 * Get a {@link #DB2_ADDRESS} IBM Db2 connection to database.
+	 * <br>
+	 * {@link com.ibm.db2.jcc.DB2Driver} should be in the classpath.
+	 * @return the Db2 connection
+	 * @throws ClassNotFoundException {@link com.ibm.db2.jcc.DB2Driver} not found
+	 * @throws SQLException SQL error opening connection
+	 */
+	public static IConnection getDb2Connection() throws ClassNotFoundException, SQLException {
+		Class.forName("com.ibm.db2.jcc.DB2Driver");
+		String connectionString = "jdbc:db2://" + DB2_ADDRESS;
+		Connection connection = DriverManager.getConnection(connectionString, DBMS_USER, DBMS_PWD);
+		connection.setAutoCommit(false);
+		Config config = new Config().initFromSystemProperties().setDialect(Db2.INSTANCE);
+		return new JDBCConnection(connection).withConfig(config);
+	}
+
+	/**
+	 * Prepare the local Db2 database for tests.
+	 * <br><b>⚠⚠⚠  i.e. DROP AND RE-CREATE EVERY TABLE THAT MATCHES THE GIVEN PACKAGE PREFIX! ⚠⚠⚠ </b>
+	 * <br>
+	 * {@link com.ibm.db2.jcc.DB2Driver} should be in the classpath.
+	 * @param packageNames the package names to scan for Yopable objects
+	 * @throws ClassNotFoundException {@link com.ibm.db2.jcc.DB2Driver} not found
+	 * @throws SQLException SQL error opening connection
+	 */
+	public static void prepareDb2(String... packageNames) throws SQLException, ClassNotFoundException {
+		try (IConnection connection = getDb2Connection()) {
+			for (String name : packageNames) {
+				prepare(name, connection, Prepare.class.getClassLoader());
+			}
+		}
+	}
+
+	/**
 	 * Generate the DB scripts for a given package for all {@link Dialect}. Do not execute anything.
 	 * <br>
 	 * Let's face it : this is just to improve code coverage.
@@ -241,7 +276,8 @@ public class Prepare {
 			MySQL.INSTANCE,
 			Postgres.INSTANCE,
 			MSSQL.INSTANCE,
-			Oracle.INSTANCE
+			Oracle.INSTANCE,
+			Db2.INSTANCE
 		);
 		ormTypes.forEach(dialect -> ORMUtil.generateScript(packageName, config, Prepare.class.getClassLoader()));
 	}
