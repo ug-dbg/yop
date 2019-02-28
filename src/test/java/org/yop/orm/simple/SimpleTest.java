@@ -875,8 +875,8 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertEquals(newPojo.getOthers(), fromNaturalID.getOthers());
 			Assert.assertEquals(parent, fromNaturalID.getParent());
 
-			Pojo pojo1 = select(Pojo.class).where(Where.id(newPojo.getId())).uniqueResult(this.getConnection());
-			Pojo pojo2 = select(Pojo.class).where(Where.id(parent.getId())).uniqueResult(this.getConnection());
+			Pojo pojo1 = select(Pojo.class).where(Where.id(newPojo.getId())).uniqueResult(connection);
+			Pojo pojo2 = select(Pojo.class).where(Where.id(parent.getId())).uniqueResult(connection);
 
 			hydrate(Pojo.class)
 				.onto(Arrays.asList(pojo1, pojo2))
@@ -951,12 +951,14 @@ public class SimpleTest extends DBMSSwitch {
 		// BigInteger does not work very well with MS-SQL when precision > 20.
 		// I don't really want to know why. Sue me.
 		pojo.setaVeryLongInteger(new BigInteger("1234567890123456780"));
-		pojo.setaVeryLongFloat(new BigDecimal("123.456465665685454949454484964654"));
+		pojo.setaVeryLongFloat(new BigDecimal("123.45646566568545494945448496"));
 
-		upsert(Pojo.class).onto(pojo).execute(this.getConnection());
+		try (IConnection connection = this.getConnection()) {
+			upsert(Pojo.class).onto(pojo).execute(connection);
 
-		Pojo pojoFromDB = select(Pojo.class).where(Where.naturalId(pojo)).uniqueResult(this.getConnection());
-		Assert.assertEquals(pojo.getaVeryLongInteger(), pojoFromDB.getaVeryLongInteger());
-		Assert.assertEquals(pojo.getaVeryLongFloat(),   pojoFromDB.getaVeryLongFloat());
+			Pojo pojoFromDB = select(Pojo.class).where(Where.naturalId(pojo)).uniqueResult(connection);
+			Assert.assertEquals(pojo.getaVeryLongInteger(), pojoFromDB.getaVeryLongInteger());
+			Assert.assertEquals(pojo.getaVeryLongFloat(), pojoFromDB.getaVeryLongFloat());
+		}
 	}
 }

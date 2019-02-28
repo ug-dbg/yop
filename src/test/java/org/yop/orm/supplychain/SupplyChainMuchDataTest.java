@@ -93,7 +93,6 @@ public class SupplyChainMuchDataTest extends DBMSSwitch {
 	@Test
 	public void testCRUD() throws SQLException, ClassNotFoundException {
 		try (IConnection connection = this.getConnection()) {
-			connection.setAutoCommit(true);
 			this.createData(connection, "Foo");
 			this.createData(connection, "Bar");
 

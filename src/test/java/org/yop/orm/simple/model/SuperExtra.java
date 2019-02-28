@@ -116,7 +116,7 @@ public class SuperExtra implements Yopable {
 		return that != null
 			&& Objects.equals(this.size,       that.size)
 			&& Objects.equals(this.comment,    that.comment)
-			&& Objects.equals(this.bigDecimal, that.bigDecimal)
+			&& Objects.compare(this.bigDecimal, that.bigDecimal, Comparator.naturalOrder()) == 0
 			&& acceptable(this.localDate,     that.localDate)
 			&& acceptable(this.localDateTime, that.localDateTime, l -> l.truncatedTo(ChronoUnit.SECONDS))
 			&& acceptable(this.localTime,     that.localTime,     LocalTime::toSecondOfDay)

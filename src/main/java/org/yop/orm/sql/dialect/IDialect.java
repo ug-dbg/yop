@@ -5,10 +5,14 @@ import org.yop.orm.gen.Column;
 import org.yop.orm.gen.ForeignKey;
 import org.yop.orm.gen.Table;
 import org.yop.orm.query.Paging;
+import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.SQLPart;
+import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.MessageUtil;
 
 import java.sql.JDBCType;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -90,6 +94,15 @@ public interface IDialect {
 	}
 
 	/**
+	 * Some DBMS does not support NULL in unique constraints
+	 * (or only one NULL, but I'm not willing to tune dialects that finely).
+	 * @return default value : true
+	 */
+	default boolean nullInNK() {
+		return true;
+	}
+
+	/**
 	 * The maximum amount of JDBC parameters this dialect supports.
 	 * <br>
 	 * This is mostly used when deleting by ID.
@@ -106,6 +119,29 @@ public interface IDialect {
 	default Paging.Method pagingMethod() {
 		return Paging.Method.TWO_QUERIES;
 	}
+
+	/**
+	 * Set the value of a parameter in a statement.
+	 * <br>
+	 * Override this if your JDBC driver does not fully support {@link PreparedStatement#setObject(int, Object)}.
+	 * @param statement the SQL statement
+	 * @param index     the parameter index <b>1-based</b> (first is 1, second is 2...)
+	 * @param parameter the parameter to set
+	 * @throws SQLException see {@link PreparedStatement#setObject(int, Object)}
+	 */
+	default void setParameter(
+		PreparedStatement statement,
+		int index,
+		Parameters.Parameter parameter)
+		throws SQLException {
+		statement.setObject(index, parameter.getValue());
+	}
+
+	/**
+	 * Implement to do something before the connection is closed.
+	 * @param connection the connection adapter
+	 */
+	default void onClose(IConnection connection) {}
 
 	/**
 	 * Create a default dialect implementation, with "VARCHAR" default type.
@@ -143,8 +179,8 @@ public interface IDialect {
 		boolean autoincrement = column.getPk() != null && column.getPk().isAutoincrement();
 
 		return column.getName()
-			+ " " + this.type(column)
-			+ (column.isNotNull() ? " NOT NULL " : "")
+			+ " " + this.type(column) + " "
+			+ (column.isNotNull() || (column.isNaturalKey() && ! this.nullInNK()) ? " NOT NULL " : "")
 			+ (autoincrement ? this.autoIncrementKeyWord() : "");
 	}
 

@@ -351,6 +351,12 @@
 			<version>7.0.0.jre8</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.ibm.db2.jcc</groupId>
+			<artifactId>db2jcc</artifactId>
+			<version>db2jcc4</version>
+			<scope>test</scope>
+		</dependency>
 
 		<!-- Oracle test dependencies. Oracle drivers are not very accessible. -->
 		<!--

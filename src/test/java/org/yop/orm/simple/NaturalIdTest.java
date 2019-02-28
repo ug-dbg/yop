@@ -53,12 +53,14 @@ public class NaturalIdTest extends DBMSSwitch {
 			Upsert.from(Pojo.class).onto(pojo).execute(connection);
 			Assert.assertEquals(Pojo.Type.FOO, Select.from(Pojo.class).uniqueResult(connection).getType());
 
-			pojo.setVersion(null);
-			Upsert.from(Pojo.class).onto(pojo).execute(connection);
+			if (connection.config().nullInNK()) {
+				pojo.setVersion(null);
+				Upsert.from(Pojo.class).onto(pojo).execute(connection);
 
-			Pojo result = Select.from(Pojo.class).where(Where.naturalId(pojo)).uniqueResult(connection);
-			Assert.assertNull(result.getVersion());
-			Assert.assertEquals(pojo, result);
+				Pojo result = Select.from(Pojo.class).where(Where.naturalId(pojo)).uniqueResult(connection);
+				Assert.assertNull(result.getVersion());
+				Assert.assertEquals(pojo, result);
+			}
 		}
 	}
 
@@ -163,12 +165,14 @@ public class NaturalIdTest extends DBMSSwitch {
 			Upsert.from(Pojo.class).onto(pojo).execute(connection);
 			Assert.assertEquals(Pojo.Type.FOO, Select.from(Pojo.class).uniqueResult(connection).getType());
 
-			pojo.setVersion(null);
-			Upsert.from(Pojo.class).onto(pojo).execute(connection);
+			if (connection.config().nullInNK()) {
+				pojo.setVersion(null);
+				Upsert.from(Pojo.class).onto(pojo).execute(connection);
 
-			Delete.from(Pojo.class).where(Where.naturalId(pojo)).executeQueries(connection);
-			Pojo result = Select.from(Pojo.class).where(Where.naturalId(pojo)).uniqueResult(connection);
-			Assert.assertNull(result);
+				Delete.from(Pojo.class).where(Where.naturalId(pojo)).executeQueries(connection);
+				Pojo result = Select.from(Pojo.class).where(Where.naturalId(pojo)).uniqueResult(connection);
+				Assert.assertNull(result);
+			}
 		}
 	}
 }
