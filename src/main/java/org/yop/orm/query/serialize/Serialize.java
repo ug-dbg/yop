@@ -1,7 +1,7 @@
 package org.yop.orm.query.serialize;
 
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.IJoin;
+import org.yop.orm.query.join.IJoin;
 
 import java.util.Collection;
 

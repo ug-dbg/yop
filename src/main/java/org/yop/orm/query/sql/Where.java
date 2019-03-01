@@ -1,8 +1,9 @@
-package org.yop.orm.query;
+package org.yop.orm.query.sql;
 
 import org.yop.orm.evaluation.*;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.SQLPart;
 

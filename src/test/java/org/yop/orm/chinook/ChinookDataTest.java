@@ -14,7 +14,7 @@ import org.yop.orm.chinook.model.Genre;
 import org.yop.orm.chinook.model.Track;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.query.*;
+import org.yop.orm.query.sql.*;
 import org.yop.orm.query.batch.BatchUpsert;
 import org.yop.orm.sql.adapter.IConnection;
 

@@ -43,7 +43,7 @@ public class Context<T extends Yopable> {
 	 * Please use {@link #to(Class, Field)} or {@link #root(Class)}.
 	 * @param target the context target class
 	 */
-	private Context(Class<T> target) {
+	protected Context(Class<T> target) {
 		this.parent = null;
 		this.relationToParent = "";
 		this.target = target;
@@ -234,29 +234,9 @@ public class Context<T extends Yopable> {
 	}
 
 	/**
-	 * A Fake context, where you can set a predetermined path.
-	 * <br>
-	 * I am not very proud of this.
-	 * @param <T> the target type
-	 */
-	static class FakeContext<T extends Yopable> extends Context<T> {
-		private final String fakePath;
-
-		FakeContext(Context<T> context, String fakePath) {
-			super(context.getTarget());
-			this.fakePath = fakePath;
-		}
-
-		@Override
-		public String getPath(Config config) {
-			return this.fakePath;
-		}
-	}
-
-	/**
 	 * Convenience class to store an SQL column (qualified ID and alias)
 	 */
-	static class SQLColumn {
+	public static class SQLColumn {
 		private final String name;
 		private final String qualifiedId;
 		private final String alias;

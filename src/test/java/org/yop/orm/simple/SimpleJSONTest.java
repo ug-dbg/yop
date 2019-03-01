@@ -5,7 +5,7 @@ import org.apache.commons.io.IOUtils;
 import org.json.JSONException;
 import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
-import org.yop.orm.query.Join;
+import org.yop.orm.query.join.Join;
 import org.yop.orm.query.serialize.json.JSON;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;

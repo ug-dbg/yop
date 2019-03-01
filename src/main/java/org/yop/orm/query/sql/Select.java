@@ -1,4 +1,4 @@
-package org.yop.orm.query;
+package org.yop.orm.query.sql;
 
 import com.google.common.base.Joiner;
 import com.google.gson.JsonObject;
@@ -12,6 +12,8 @@ import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.Context;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.Reflection;
@@ -202,7 +204,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * <ul>
 	 *     <li>Find the matching T ids</li>
 	 *     <li>
-	 *         If paging is activated and config is set to {@link org.yop.orm.query.Paging.Method#TWO_QUERIES} :
+	 *         If paging is activated and config is set to {@link org.yop.orm.query.sql.Paging.Method#TWO_QUERIES} :
 	 *         filter the matching ids.
 	 *     </li>
 	 *     <li>Fetch the data</li>

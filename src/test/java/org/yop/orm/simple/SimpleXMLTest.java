@@ -4,7 +4,7 @@ import com.thoughtworks.xstream.converters.ConversionException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.w3c.dom.Element;
-import org.yop.orm.query.SQLJoin;
+import org.yop.orm.query.sql.SQLJoin;
 import org.yop.orm.query.serialize.xml.XML;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;

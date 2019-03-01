@@ -1,7 +1,8 @@
-package org.yop.orm.query;
+package org.yop.orm.query.join;
 
 import com.google.gson.JsonObject;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
@@ -18,9 +19,7 @@ import java.util.Collections;
  * @param <From> the source type
  * @param <To>   the target type
  */
-class FieldJoin<From extends Yopable, To extends Yopable> extends SQLJoin<From, To> {
-
-	private Field field;
+class FieldJoin<From extends Yopable, To extends Yopable> extends Join<From, To> {
 
 	private FieldJoin() {}
 
@@ -29,7 +28,9 @@ class FieldJoin<From extends Yopable, To extends Yopable> extends SQLJoin<From, 
 	 * @param field  the field to use for the join
 	 */
 	FieldJoin(Field field) {
+		this();
 		this.field = field;
+		this.getter = from -> Reflection.readField(this.field, from);
 	}
 
 	@Override
@@ -79,8 +80,7 @@ class FieldJoin<From extends Yopable, To extends Yopable> extends SQLJoin<From, 
 		JsonObject element,
 		Config config) {
 
-		FieldJoin join = new FieldJoin();
-		join.field = Reflection.get(context.getTarget(), element.get(FIELD).getAsString());
+		FieldJoin join = new FieldJoin(Reflection.get(context.getTarget(), element.get(FIELD).getAsString()));
 		join.fromJSON(join.to(context), element, config);
 		return (FieldJoin) join;
 	}

@@ -1,6 +1,7 @@
-package org.yop.orm.query;
+package org.yop.orm.query.join;
 
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.Context;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
@@ -29,6 +30,20 @@ public class Join<From extends Yopable, To extends Yopable> implements IJoin<Fro
 
 	/** Sub-join clauses */
 	protected final Joins<To> joins = new Joins<>();
+
+	/** No-arg constructor. Please use copy-constructor or static methods */
+	protected Join() {}
+
+	/**
+	 * Copy constructor.
+	 * @param original the Join to copy for this new instance
+	 */
+	protected Join(Join<From, To> original) {
+		this();
+		this.field = original.field;
+		this.getter = original.getter == null ? from -> Reflection.readField(this.field, from) : original.getter;
+		this.joins.addAll(original.joins);
+	}
 
 	@Override
 	public <Next extends Yopable> IJoin<From, To> join(IJoin<To, Next> join) {

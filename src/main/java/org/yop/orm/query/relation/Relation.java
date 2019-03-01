@@ -4,7 +4,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.IJoin;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Query;
 

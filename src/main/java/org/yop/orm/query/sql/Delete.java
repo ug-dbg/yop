@@ -1,4 +1,4 @@
-package org.yop.orm.query;
+package org.yop.orm.query.sql;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -9,6 +9,8 @@ import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.Context;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.Reflection;
@@ -190,7 +192,7 @@ public class Delete<T extends Yopable> extends WhereRequest<Delete<T>, T> implem
 		// (This was to deal with SQLite. I am not very proud of this.)
 		String columnsClause = "";
 		String asClause = "";
-		Context<T> context = new Context.FakeContext<>(root, root.getTableName());
+		Context<T> context = new FakeContext<>(root, root.getTableName());
 		if (tables.size() > 1) {
 			columnsClause = Joiner.on(", ").join(tables.stream().map(t -> t + ".*").collect(Collectors.toSet()));
 			asClause = " as " + root.getPath(config);

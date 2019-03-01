@@ -3,8 +3,8 @@ package org.yop.orm.simple;
 import org.junit.Assert;
 import org.junit.Test;
 import org.yop.orm.DBMSSwitch;
-import org.yop.orm.query.SQLJoin;
-import org.yop.orm.query.Where;
+import org.yop.orm.query.sql.SQLJoin;
+import org.yop.orm.query.sql.Where;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Pojo;
 import org.yop.orm.sql.adapter.IConnection;
@@ -17,7 +17,7 @@ import static org.yop.orm.Yop.select;
 import static org.yop.orm.Yop.upsert;
 
 /**
- * Test the {@link org.yop.orm.query.Select#count(IConnection)} operation on the 'simple' data objects.
+ * Test the {@link org.yop.orm.query.sql.Select#count(IConnection)} operation on the 'simple' data objects.
  */
 public class CountTest extends DBMSSwitch {
 

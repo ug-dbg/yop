@@ -12,7 +12,8 @@ import org.yop.orm.evaluation.Path;
 import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.*;
+import org.yop.orm.query.Context;
+import org.yop.orm.query.sql.*;
 import org.yop.orm.simple.model.*;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
@@ -363,7 +364,7 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
+			if (o == null || this.getClass() != o.getClass()) return false;
 			PojoWithManyFields that = (PojoWithManyFields) o;
 			return
 				this.booleanField == that.booleanField

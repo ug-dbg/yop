@@ -1,4 +1,4 @@
-package org.yop.orm.query;
+package org.yop.orm.query.sql;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -8,6 +8,9 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.Context;
+import org.yop.orm.query.join.IJoin;
+import org.yop.orm.query.join.Join;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.JoinClause;
 import org.yop.orm.sql.Parameters;
@@ -29,6 +32,18 @@ import java.util.function.Function;
 public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From, To> {
 
 	private static final Logger logger = LoggerFactory.getLogger(SQLJoin.class);
+
+	private SQLJoin() {
+		super();
+	}
+
+	/**
+	 * Copy constructor. See {@link Join#Join(Join)}.
+	 * @param original the join to copy for this new instance
+	 */
+	private SQLJoin(Join<From, To> original) {
+		super(original);
+	}
 
 	public enum JoinType {
 		JOIN(" join "), INNER_JOIN(" inner join "), LEFT_JOIN(" left join ");
@@ -181,15 +196,11 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 		if (join instanceof SQLJoin) {
 			return (SQLJoin<From, To>) join;
 		}
-		SQLJoin<From, To> out = new SQLJoin<>();
 		if (join instanceof Join) {
-			out.field = ((Join) join).field;
-			out.getter = ((Join) join).getter;
-			out.joins.addAll(((Join) join).joins);
+			return new SQLJoin<>((Join) join);
 		} else {
 			throw new IllegalArgumentException("Unsupported IJoin implementation [" + join.getClass() + "]");
 		}
-		return out;
 	}
 
 	/**

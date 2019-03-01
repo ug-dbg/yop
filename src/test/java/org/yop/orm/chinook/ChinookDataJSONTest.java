@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.chinook.model.*;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.query.SQLJoin;
+import org.yop.orm.query.sql.SQLJoin;
 import org.yop.orm.query.serialize.json.JSON;
 
 import javax.xml.bind.JAXBException;

@@ -8,7 +8,7 @@ import com.thoughtworks.xstream.converters.reflection.ReflectionConverter;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.mapper.Mapper;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.IJoin;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.query.serialize.xml.annotations.YopXMLTransient;
 import org.yop.orm.util.Reflection;
 

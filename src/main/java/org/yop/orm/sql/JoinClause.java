@@ -1,7 +1,6 @@
 package org.yop.orm.sql;
 
 import org.yop.orm.query.Context;
-import org.yop.orm.query.IJoin;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -19,7 +18,7 @@ public class JoinClause implements Comparable<JoinClause> {
 	/** The context of the join clause */
 	private final Context<?> context;
 
-	/** The join clause parameters (see : {@link IJoin#where()}) */
+	/** The join clause parameters (see : {@link org.yop.orm.query.sql.SQLJoin#where()}) */
 	private final Parameters parameters;
 
 	/**

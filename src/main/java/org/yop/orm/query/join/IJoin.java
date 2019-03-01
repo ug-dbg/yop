@@ -1,4 +1,4 @@
-package org.yop.orm.query;
+package org.yop.orm.query.join;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopInvalidJoinException;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.JoinUtil;
 import org.yop.orm.util.MessageUtil;
@@ -30,7 +31,7 @@ import java.util.function.Function;
  * There are 2 join clause implementations :
  * <ul>
  *     <li>{@link Join}</li>
- *     <li>{@link SQLJoin} : a join designed for SQL queries that can have a WHERE clause</li>
+ *     <li>{@link org.yop.orm.query.sql.SQLJoin} : a join designed for SQL queries that can have a WHERE clause</li>
  * </ul>
  * <br>
  * You can concatenate join clauses :
@@ -181,7 +182,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 		 * @throws YopInvalidJoinException if the path is invalid
 		 */
 		@SuppressWarnings("unchecked")
-		void join(Context<From> context, Function... joins) {
+		public void join(Context<From> context, Function... joins) {
 			if (joins.length == 0) {
 				return;
 			}

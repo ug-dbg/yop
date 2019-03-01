@@ -1,9 +1,10 @@
 package org.yop.orm;
 
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.*;
 import org.yop.orm.query.batch.BatchUpsert;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.query.serialize.json.JSON;
+import org.yop.orm.query.sql.*;
 
 import java.util.Collection;
 import java.util.function.Function;

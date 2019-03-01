@@ -1,9 +1,11 @@
-package org.yop.orm.query;
+package org.yop.orm.query.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.Context;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.Reflection;
 

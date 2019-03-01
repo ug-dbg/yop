@@ -1,4 +1,4 @@
-package org.yop.orm.query;
+package org.yop.orm.query.sql;
 
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
@@ -16,6 +16,8 @@ import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.model.YopableEquals;
 import org.yop.orm.model.Yopables;
+import org.yop.orm.query.Context;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.query.relation.Relation;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Executor;

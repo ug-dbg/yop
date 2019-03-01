@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.yop.orm.DBMSSwitch;
 import org.yop.orm.evaluation.Operator;
-import org.yop.orm.query.*;
+import org.yop.orm.query.sql.*;
 import org.yop.orm.simple.model.CyclePojo;
 import org.yop.orm.sql.adapter.IConnection;
 

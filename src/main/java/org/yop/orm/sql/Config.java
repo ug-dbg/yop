@@ -1,6 +1,6 @@
 package org.yop.orm.sql;
 
-import org.yop.orm.query.Paging;
+import org.yop.orm.query.sql.Paging;
 import org.yop.orm.sql.dialect.IDialect;
 
 import java.lang.reflect.Field;
@@ -169,7 +169,7 @@ public class Config {
 
 	/**
 	 * The paging method to use.
-	 * Fallback is {@link org.yop.orm.query.Paging.Method#TWO_QUERIES}, which should always work.
+	 * Fallback is {@link org.yop.orm.query.sql.Paging.Method#TWO_QUERIES}, which should always work.
 	 * @return the paging method to use
 	 */
 	public Paging.Method getPagingMethod() {

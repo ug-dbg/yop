@@ -2,7 +2,7 @@ package org.yop.orm.sql.dialect;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.query.Paging;
+import org.yop.orm.query.sql.Paging;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.adapter.IConnection;
 

@@ -5,7 +5,7 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.AbstractRequest;
 import org.yop.orm.query.Context;
-import org.yop.orm.query.IJoin;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.query.serialize.Serialize;
 
 import java.lang.reflect.Field;

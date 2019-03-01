@@ -5,7 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
-import org.yop.orm.query.IJoin;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.SQLPart;
 import org.yop.orm.util.Reflection;
@@ -20,7 +20,7 @@ import java.util.function.Function;
  * For instance 'EntityA→relation→EntityB→name='foo'.
  * <br>
  * The comparison reference can be a {@link Path},
- * as long as it matches a declared {@link org.yop.orm.query.Select#join(IJoin)} clause.
+ * as long as it matches a declared {@link org.yop.orm.query.AbstractRequest#join(IJoin)} clause.
  */
 public class Comparison implements Evaluation {
 
