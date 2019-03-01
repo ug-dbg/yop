@@ -46,7 +46,7 @@ public class Comparison implements Evaluation {
 	 * Default constructor : gimme all I need !
 	 * <br><br>
 	 * The reference can be a {@link Path},
-	 * as long as it matches a declared {@link org.yop.orm.query.Select#join(IJoin)} clause.
+	 * as long as it matches a declared {@link org.yop.orm.query.AbstractRequest#join(IJoin)} clause.
 	 * <br>
 	 * @param getter the field getter. {@link Reflection#findField(Class, Function)} will be used to find {@link #field}
 	 * @param op     the comparison operator
