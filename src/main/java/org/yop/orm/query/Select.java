@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  * Select
  *   .from(Pojo.class)
  *   .joinAll()
- *   .join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
+ *   .join(SQLJoin.toN(Pojo::getOthers).join(SQLJoin.toN(Other::getPojos)))
  *   .where(Where.naturalId(reference))
  *   .execute(connection);
  * }

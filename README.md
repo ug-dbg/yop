@@ -20,8 +20,8 @@ Examples :
 Upsert   
 .from(Library.class)  
 .onto(library)  
-.join(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))    
-.join(JoinSet.to(Library::getEmployees))  
+.join(SQLJoin.toN(Library::getBooks).join(SQLJoin.to(Book::getAuthor)))    
+.join(SQLJoin.toN(Library::getEmployees))  
 .checkNaturalID()  
 .execute(connection);  
 ```
@@ -29,7 +29,7 @@ Upsert
 ```
 Collection<Book> booksFromDB = Select
 .from(Book.class)
-.join(Join.to(Book::getAuthor).where(Where.compare(Author::getName, Operator.LIKE, "%Roger%")))
+.join(SQLJoin.to(Book::getAuthor).where(Where.compare(Author::getName, Operator.LIKE, "%Roger%")))
 .execute(connection)
 ```  
   

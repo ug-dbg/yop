@@ -5,7 +5,7 @@ import org.apache.commons.io.IOUtils;
 import org.json.JSONException;
 import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
-import org.yop.orm.query.JoinSet;
+import org.yop.orm.query.Join;
 import org.yop.orm.query.serialize.json.JSON;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
@@ -84,7 +84,7 @@ public class SimpleJSONTest {
 		String json = json(Pojo.class)
 			.joinAll()
 			.join(Pojo::getJopos, Jopo::getPojo)
-			.join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
+			.join(Join.toN(Pojo::getOthers).join(Join.toN(Other::getPojos)))
 			.register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"))
 			.onto(Collections.singleton(pojo))
 			.toJSON();

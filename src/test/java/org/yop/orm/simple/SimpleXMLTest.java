@@ -4,8 +4,7 @@ import com.thoughtworks.xstream.converters.ConversionException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.w3c.dom.Element;
-import org.yop.orm.query.Join;
-import org.yop.orm.query.JoinSet;
+import org.yop.orm.query.SQLJoin;
 import org.yop.orm.query.serialize.xml.XML;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
@@ -124,8 +123,8 @@ public class SimpleXMLTest {
 
 		String xml = XML.from(Pojo.class)
 			.joinAll()
-			.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
-			.join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
+			.join(SQLJoin.toN(Pojo::getJopos).join(SQLJoin.to(Jopo::getPojo)))
+			.join(SQLJoin.toN(Pojo::getOthers).join(SQLJoin.toN(Other::getPojos)))
 			.onto(Collections.singleton(pojo))
 			.execute();
 
@@ -164,7 +163,7 @@ public class SimpleXMLTest {
 
 		String xml = XML.from(Pojo.class)
 			.joinAll()
-			.join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
+			.join(SQLJoin.toN(Pojo::getJopos).join(SQLJoin.to(Jopo::getPojo)))
 			.join(Pojo::getOthers, Other::getPojos)
 			.onto(Collections.singleton(pojo))
 			.execute();

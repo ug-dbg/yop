@@ -5,12 +5,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopInvalidJoinException;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
-import org.yop.orm.sql.JoinClause;
 import org.yop.orm.util.JoinUtil;
 import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.Reflection;
@@ -19,24 +17,25 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 
 /**
- * A join clause.
- * [From class / From table] → [relation field / relation table] → [Target class / Target table]
+ * A join relation between 2 {@link Yopable} types.
+ * <br><br>
  * <br>
- * The join clause is referenced by the getter method.
+ * The join is referenced by the getter method.
  * <br>
- * Because of cardinality management there are 2 join clause implementations :
+ * A join can have subjoins : {@link #getJoins()}
+ * <br>
+ * There are 2 join clause implementations :
  * <ul>
  *     <li>{@link Join}</li>
- *     <li>{@link JoinSet}</li>
+ *     <li>{@link SQLJoin} : a join designed for SQL queries that can have a WHERE clause</li>
  * </ul>
  * <br>
  * You can concatenate join clauses :
  * <pre>
- * {@code JoinSet.to(Genre::getTracksOfGenre).join(Join.to(Track::getAlbum).join(Join.to(Album::getArtist)))}
+ * {@code Join.toN(Genre::getTracksOfGenre).join(SQLJoin.to(Track::getAlbum).join(SQLJoin.to(Album::getArtist)))}
  * </pre>
  * @param <From> the source type
  * @param <To>   the target type
@@ -88,36 +87,6 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	<Next extends Yopable> IJoin<From, To> join(IJoin<To, Next> join);
 
 	/**
-	 * Get the join clause where clause
-	 * @return the current join clause where clause
-	 */
-	Where<To> where();
-
-	/**
-	 * Add a where clause to the current join clause.
-	 * @param evaluation the comparison clause
-	 * @return tje current join clause for chaining purposes
-	 */
-	IJoin<From, To> where(Evaluation evaluation);
-
-	/**
-	 * Append the SQL join clause(s) from the current instance into the target map.
-	 * @param joinClauses        the target join clauses map
-	 * @param context            the context from which the SQL clause must be built.
-	 * @param includeWhereClause true to include the where clauses evaluation
-	 * @param config             the SQL config (sql separator, use batch inserts...)
-	 */
-	void toSQL(JoinClause.JoinClauses joinClauses, Context<From> context, boolean includeWhereClause, Config config);
-
-	/**
-	 * Return the join table alias from the given context
-	 * @param context the context from which the alias is built.
-	 * @param config  the SQL config (sql separator, use batch inserts...)
-	 * @return the join table alias for the given context
-	 */
-	String joinTableAlias(Context<From> context, Config config);
-
-	/**
 	 * Get the field this join is related to, given the source class.
 	 * @param from the source
 	 * @return the found field
@@ -137,25 +106,6 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	 * @return the related targets
 	 */
 	Collection<To> getTarget(From from);
-
-	/**
-	 * Find all the columns to select (search in current target type and sub-join clauses if required)
-	 * @param context              the context (columns are deduced using {@link Context#getColumns(Config)}.
-	 * @param addJoinClauseColumns true to add the columns from the sub-join clauses
-	 * @param config               the SQL config (sql separator, use batch inserts...)
-	 * @return the columns to select
-	 */
-	default Set<Context.SQLColumn> columns(Context<From> context, boolean addJoinClauseColumns, Config config) {
-		Context<To> to = this.to(context);
-		Set<Context.SQLColumn> columns = to.getColumns(config);
-
-		if (addJoinClauseColumns) {
-			for (IJoin<To, ? extends Yopable> join : this.getJoins()) {
-				columns.addAll(join.columns(to, true, config));
-			}
-		}
-		return columns;
-	}
 
 	/**
 	 * Print the current join into the {@link IJoin} logger.

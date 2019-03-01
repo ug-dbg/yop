@@ -64,7 +64,7 @@ public class JoinAllTest extends DBMSSwitch {
 
 			CyclePojo fromDB = Select
 				.from(CyclePojo.class)
-				.join(Join.to(CyclePojo::getJopo).where(Where.compare(CyclePojo.CycleJopo::getString, Operator.EQ, "3")))
+				.join(SQLJoin.to(CyclePojo::getJopo).where(Where.compare(CyclePojo.CycleJopo::getString, Operator.EQ, "3")))
 				.uniqueResult(connection);
 			Hydrate.from(CyclePojo.class).onto(fromDB).joinAll().recurse().execute(connection);
 			Assert.assertEquals("3", fromDB.getJopo().getString());

@@ -29,8 +29,8 @@ import java.util.stream.Collectors;
  * JSON
  *   .from(Pojo.class)
  *   .joinAll()
- *   .join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
- *   .join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
+ *   .join(Join.toN(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
+ *   .join(Join.toN(Pojo::getOthers).join(Join.toN(Other::getPojos)))
  *   .onto(pojo)
  *   .toJSON();
  * }

@@ -10,16 +10,47 @@ import java.util.Collections;
 import java.util.function.Function;
 
 /**
- * A join clause from a {@link Yopable} to another.
+ * Simple IJoin implementation, not SQL coupled.
+ * <br>
+ * This can be <ul>
+ *     <li>From → (1) To relation : {@link #to(Function)}</li>
+ *     <li>From → (N) To relation : {@link #toN(Function)}</li>
+ * </ul>
  * @param <From> the source type
  * @param <To>   the target type
  */
-public class Join<From extends Yopable, To extends Yopable> extends AbstractJoin<From, To> {
+public class Join<From extends Yopable, To extends Yopable> implements IJoin<From, To> {
 
 	/** The field getter (From → field and getter → To) */
-	protected Function<From, To> getter;
+	protected Function<From, ?> getter;
 
-	private Field field;
+	/** The relation field. Will be set from the getter. See {@link #getField(Class)}. */
+	protected Field field;
+
+	/** Sub-join clauses */
+	protected final Joins<To> joins = new Joins<>();
+
+	@Override
+	public <Next extends Yopable> IJoin<From, To> join(IJoin<To, Next> join) {
+		this.joins.add(join);
+		return this;
+	}
+
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + "{From → To}";
+	}
+
+	@Override
+	public Context<To> to(Context<From> from) {
+		Field field = this.getField(from.getTarget());
+		return from.to(this.getTarget(field), field);
+	}
+
+	@Override
+	public Joins<To> getJoins() {
+		return this.joins;
+	}
 
 	@Override
 	public Field getField(Class<From> from) {
@@ -30,36 +61,44 @@ public class Join<From extends Yopable, To extends Yopable> extends AbstractJoin
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public Class<To> getTarget(Field field) {
-		return (Class<To>) field.getType();
+		return Reflection.getTarget(field);
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public Collection<To> getTarget(From from) {
-		To to = this.getter.apply(from);
-		return to == null ? new ArrayList<>(0) : Collections.singletonList(to);
-	}
-
-	@Override
-	public String toString() {
-		if (this.field == null) {
-			return super.toString();
+		Object value = this.getter.apply(from);
+		if (value == null) {
+			return new ArrayList<>(0);
 		}
-		return this.getClass().getSimpleName()
-			+ "{"
-			+ this.field.getDeclaringClass().getSimpleName()
-			+ "→" + this.field.getName()
-			+ "→" + this.getTarget(this.field).getSimpleName()
-			+ "}";
+		if (value instanceof Collection) {
+			return (Collection<To>) value;
+		}
+		return Collections.singletonList((To) value);
 	}
 
 	/**
-	 * Create a new Join clause, context-less
+	 * Create a new Join clause to a collection.
 	 * @param getter the getter which holds the relation
 	 * @param <From> the source type
 	 * @param <To>   the target type
-	 * @return a new Join clause, that can be added to a SELECT clause or as a sub-join clause
+	 * @return a new Join clause to From → (N) To
+	 */
+	public static <From extends Yopable, To extends Yopable> Join<From, To> toN(
+		Function<From, ? extends Collection<To>> getter) {
+
+		Join<From, To> to = new Join<>();
+		to.getter = getter;
+		return to;
+	}
+
+	/**
+	 * Create a new Join clause to a single other Yopable.
+	 * @param getter the getter which holds the relation
+	 * @param <From> the source type
+	 * @param <To>   the target type
+	 * @return a new Join clause to From → (1) To
 	 */
 	public static <From extends Yopable, To extends Yopable> IJoin<From, To> to(Function<From, To> getter) {
 		Join<From, To> to = new Join<>();

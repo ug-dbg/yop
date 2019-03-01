@@ -3,7 +3,7 @@ package org.yop.orm.simple;
 import org.junit.Assert;
 import org.junit.Test;
 import org.yop.orm.DBMSSwitch;
-import org.yop.orm.query.JoinSet;
+import org.yop.orm.query.SQLJoin;
 import org.yop.orm.query.Where;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Pojo;
@@ -77,7 +77,7 @@ public class CountTest extends DBMSSwitch {
 			upsert(Pojo.class).onto(pojos).execute(connection);
 
 			long count = select(Pojo.class)
-				.join(JoinSet.to(Pojo::getJopos).where(Where.isNotNull(Jopo::getId)))
+				.join(SQLJoin.toN(Pojo::getJopos).where(Where.isNotNull(Jopo::getId)))
 				.count(connection);
 			Assert.assertEquals(0, count);
 
@@ -95,10 +95,10 @@ public class CountTest extends DBMSSwitch {
 					pojo.setActive(false);
 				}
 			}
-			upsert(Pojo.class).onto(pojos).join(JoinSet.to(Pojo::getJopos)).execute(connection);
+			upsert(Pojo.class).onto(pojos).join(SQLJoin.toN(Pojo::getJopos)).execute(connection);
 
 			count = select(Pojo.class)
-				.join(JoinSet.to(Pojo::getJopos).where(Where.isNotNull(Jopo::getId)))
+				.join(SQLJoin.toN(Pojo::getJopos).where(Where.isNotNull(Jopo::getId)))
 				.count(connection);
 			Assert.assertEquals(201/3, count);
 		}

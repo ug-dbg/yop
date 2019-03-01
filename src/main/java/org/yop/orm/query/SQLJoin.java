@@ -16,15 +16,19 @@ import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.Set;
+import java.util.function.Function;
 
 /**
- * Common API between the different IJoin implementations.
+ * An IJoin implementation targeted for SQL.
+ * <br>
+ * This is a {@link Join} with an extra {@link #where()} clause and some SQL oriented methods.
  * @param <From> the source type
  * @param <To>   the target type
  */
-abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements IJoin<From, To> {
+public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From, To> {
 
-	private static final Logger logger = LoggerFactory.getLogger(AbstractJoin.class);
+	private static final Logger logger = LoggerFactory.getLogger(SQLJoin.class);
 
 	public enum JoinType {
 		JOIN(" join "), INNER_JOIN(" inner join "), LEFT_JOIN(" left join ");
@@ -39,26 +43,32 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	/** The where clause on the target class */
 	protected final Where<To> where = new Where<>();
 
-	/** Sub-join clauses */
-	private final Joins<To> joins = new Joins<>();
-
-	@Override
-	public Joins<To> getJoins() {
-		return this.joins;
-	}
-
-	@Override
+	/**
+	 * Get the join clause where clause
+	 * @return the current join clause where clause
+	 */
 	public Where<To> where() {
 		return this.where;
 	}
 
-	@Override
+	/**
+	 * Add a where clause to the current join clause.
+	 * @param evaluation the comparison clause
+	 * @return tje current join clause for chaining purposes
+	 */
 	public IJoin<From, To> where(Evaluation evaluation) {
 		this.where.and(evaluation);
 		return this;
 	}
 
-	@Override
+	/**
+	 * Append the SQL join clause(s) from the current instance into the target map.
+	 * @param joinClauses        the target join clauses map
+	 * @param parent             the context from which the SQL clause must be built.
+	 * @param includeWhereClause true to include the where clauses evaluation
+	 * @param config             the SQL config (sql separator, use batch inserts...)
+	 */
+	@SuppressWarnings("unchecked")
 	public void toSQL(
 		JoinClause.JoinClauses joinClauses,
 		Context<From> parent,
@@ -67,7 +77,7 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 
 		Class<From> from = parent.getTarget();
 		Field field = this.getField(from);
-		Context<To> to = this.to(parent, field);
+		Context<To> to = this.to(parent);
 
 		Parameters parameters = new Parameters();
 		String joinClause = toSQLJoin(this.joinType(), parent, to, field, config);
@@ -81,33 +91,42 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 			joinClauses.put(to, new JoinClause(joinClause, to, parameters));
 		}
 
-		this.joins.forEach(join -> join.toSQL(joinClauses, to, includeWhereClause, config));
+		this.joins
+			.stream()
+			.map(j -> SQLJoin.toSQLJoin((Join<To, ?>) j))
+			.forEach(join -> join.toSQL(joinClauses, to, includeWhereClause, config));
 	}
 
-	@Override
+	/**
+	 * Return the join table alias from the given context
+	 * @param context the context from which the alias is built.
+	 * @param config  the SQL config (sql separator, use batch inserts...)
+	 * @return the join table alias for the given context
+	 */
 	public String joinTableAlias(Context<From> context, Config config) {
 		Field field = this.getField(context.getTarget());
 		return context.getPath(config) + config.sqlSeparator() + field.getName();
 	}
 
-	@Override
-	public <Next extends Yopable> IJoin<From, To> join(IJoin<To, Next> join) {
-		this.joins.add(join);
-		return this;
-	}
+	/**
+	 * Find all the columns to select (search in current target type and sub-join clauses if required)
+	 * @param context              the context (columns are deduced using {@link Context#getColumns(Config)}.
+	 * @param addJoinClauseColumns true to add the columns from the sub-join clauses
+	 * @param config               the SQL config (sql separator, use batch inserts...)
+	 * @return the columns to select
+	 */
+	public Set<Context.SQLColumn> columns(Context<From> context, boolean addJoinClauseColumns, Config config) {
+		Context<To> to = this.to(context);
+		Set<Context.SQLColumn> columns = to.getColumns(config);
 
-	@Override
-	public String toString() {
-		return this.getClass().getSimpleName() + "{From → To}";
-	}
-
-	@Override
-	public Context<To> to(Context<From> from) {
-		return this.to(from, this.getField(from.getTarget()));
-	}
-
-	protected Context<To> to(Context<From> from, Field field) {
-		return from.to(this.getTarget(field), field);
+		if (addJoinClauseColumns) {
+			for (IJoin<To, ? extends Yopable> join : this.getJoins()) {
+				@SuppressWarnings("unchecked")
+				SQLJoin<To, ? extends Yopable> sqlJoin = SQLJoin.toSQLJoin(join);
+				columns.addAll(sqlJoin.columns(to, true, config));
+			}
+		}
+		return columns;
 	}
 
 	/**
@@ -127,13 +146,61 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 	}
 
 	/**
+	 * Create a new Join clause to a collection.
+	 * @param getter the getter which holds the relation
+	 * @param <From> the source type
+	 * @param <To>   the target type
+	 * @return a new Join clause to From → (N) To
+	 */
+	public static <From extends Yopable, To extends Yopable> SQLJoin<From, To> toN(
+		Function<From, ? extends Collection<To>> getter) {
+
+		SQLJoin<From, To> to = new SQLJoin<>();
+		to.getter = getter;
+		return to;
+	}
+
+	/**
+	 * Create a new Join clause to a single other Yopable.
+	 * @param getter the getter which holds the relation
+	 * @param <From> the source type
+	 * @param <To>   the target type
+	 * @return a new Join clause to From → (1) To
+	 */
+	public static <From extends Yopable, To extends Yopable> SQLJoin<From, To> to(Function<From, To> getter) {
+		SQLJoin<From, To> to = new SQLJoin<>();
+		to.getter = getter;
+		return to;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <From extends Yopable, To extends Yopable> SQLJoin<From, To> toSQLJoin(IJoin<From, To> join) {
+		if (join == null) {
+			return null;
+		}
+		if (join instanceof SQLJoin) {
+			return (SQLJoin<From, To>) join;
+		}
+		SQLJoin<From, To> out = new SQLJoin<>();
+		if (join instanceof Join) {
+			out.field = ((Join) join).field;
+			out.getter = ((Join) join).getter;
+			out.joins.addAll(((Join) join).joins);
+		} else {
+			throw new IllegalArgumentException("Unsupported IJoin implementation [" + join.getClass() + "]");
+		}
+		return out;
+	}
+
+	/**
 	 * Create the SQL join clause (for SELECT or DELETE statement).
 	 * @param joins      the join clauses
 	 * @param context    the current context
-	 * @param evaluate   true to add {@link IJoin#where()} clauses evaluations
+	 * @param evaluate   true to add {@link SQLJoin#where()} clauses evaluations
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL join clauses
 	 */
+	@SuppressWarnings("unchecked")
 	static <T extends Yopable> JoinClause.JoinClauses toSQLJoin(
 		Collection<IJoin<T, ? extends Yopable>> joins,
 		Context<T> context,
@@ -141,7 +208,10 @@ abstract class AbstractJoin<From extends Yopable, To extends Yopable> implements
 		Config config) {
 
 		JoinClause.JoinClauses joinClauses = new JoinClause.JoinClauses();
-		joins.forEach(j -> j.toSQL(joinClauses, context, evaluate, config));
+		joins
+			.stream()
+			.map(j -> SQLJoin.toSQLJoin((Join<T, ?>) j))
+			.forEach(j -> j.toSQL(joinClauses, context, evaluate, config));
 		return joinClauses;
 	}
 

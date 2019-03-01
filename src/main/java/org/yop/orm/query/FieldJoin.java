@@ -18,7 +18,7 @@ import java.util.Collections;
  * @param <From> the source type
  * @param <To>   the target type
  */
-class FieldJoin<From extends Yopable, To extends Yopable> extends AbstractJoin<From, To> {
+class FieldJoin<From extends Yopable, To extends Yopable> extends SQLJoin<From, To> {
 
 	private Field field;
 

@@ -19,8 +19,8 @@ Here are some API examples :
 Upsert   
  .from(Library.class)  
  .onto(library)  
- .join(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))    
- .join(JoinSet.to(Library::getEmployees))  
+ .join(SQLJoin.toN(Library::getBooks).join(SQLJoin.to(Book::getAuthor)))    
+ .join(SQLJoin.toN(Library::getEmployees))  
  .checkNaturalID()  
  .execute(connection);
 ```
@@ -29,8 +29,8 @@ Upsert
 ```java
 Select
  .from(Library.class)
- .join(JoinSet.to(Library::getBooks))
- .join(JoinSet.to(Library::getEmployees).where(
+ .join(SQLJoin.toN(Library::getBooks))
+ .join(SQLJoin.toN(Library::getEmployees).where(
     Where.compare(
         Employee::getName, 
         Operator.EQ, 
@@ -44,8 +44,8 @@ Select
 Select
  .from(Library.class)
  .page(10L, 5L)
- .join(JoinSet.to(Library::getBooks))
- .join(JoinSet.to(Library::getEmployees).where(
+ .join(SQLJoin.toN(Library::getBooks))
+ .join(SQLJoin.toN(Library::getEmployees).where(
     Where.compare(
         Employee::getName, 
         Operator.EQ, 
@@ -58,8 +58,8 @@ Select
 ```java
 Select
  .from(Library.class)
- .join(JoinSet.to(Library::getBooks))
- .join(JoinSet.to(Library::getEmployees).where(
+ .join(SQLJoin.toN(Library::getBooks))
+ .join(SQLJoin.toN(Library::getEmployees).where(
     Where.compare(
         Employee::getName, 
         Operator.EQ, 
@@ -71,7 +71,7 @@ Select
 **Delete** :   
 ```java
 Delete.from(Library.class)
- .join(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))
+ .join(SQLJoin.toN(Library::getBooks).join(SQLJoin.to(Book::getAuthor)))
  .executeQueries(connection);
 ```
 
@@ -89,8 +89,8 @@ Hydrate.from(Book.class).onto(booksWithID).join(Book::getChapters).recurse().exe
 ```java
 JSON.from(Library.class)
  .joinAll()
- .joinIDs(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))
- .joinIDs(JoinSet.to(Library::getEmployees).join(JoinSet.to(Employee::getProfiles)))
+ .joinIDs(SQLJoin.toN(Library::getBooks).join(SQLJoin.to(Book::getAuthor)))
+ .joinIDs(SQLJoin.toN(Library::getEmployees).join(SQLJoin.toN(Employee::getProfiles)))
  .register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"))
  .onto(library)
  .toJSON();

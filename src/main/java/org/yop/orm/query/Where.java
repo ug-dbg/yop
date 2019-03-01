@@ -32,8 +32,8 @@ import java.util.stream.Collectors;
  * Path<Pojo, String> jopoName = Path.pathSet(Pojo::getJopos).to(Jopo::getName);
  * Set<Pojo> matches = Select
  *  .from(Pojo.class)
- *  .join(JoinSet.to(Pojo::getJopos))
- *  .join(JoinSet.to(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
+ *  .join(SQLJoin.toN(Pojo::getJopos))
+ *  .join(SQLJoin.toN(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
  *  .execute(connection);
  * }
  * </pre>
@@ -49,7 +49,7 @@ public class Where<T extends Yopable> implements JsonAble {
 	 * Default constructor.
 	 * Should be instantiated from the {@link org.yop.orm.query} package only !
 	 * <br>
-	 * Use the {@link Select#where()} or {@link Join#where()} to get the {@link Where} instance you need !
+	 * Use the {@link Select#where()} or {@link SQLJoin#where()} to get the {@link Where} instance you need !
 	 */
 	Where() {}
 

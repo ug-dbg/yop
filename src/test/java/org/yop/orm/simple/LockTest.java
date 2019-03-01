@@ -64,7 +64,7 @@ public class LockTest extends DBMSSwitch {
 		try (IConnection connection = this.getConnection()) {
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
+				.join(toN(Pojo::getJopos))
 				.join(Pojo::getOthers, Other::getExtra, Extra::getOther)
 				.join(Pojo::getOthers, Other::getExtra, Extra::getSuperExtra)
 				.checkNaturalID()

@@ -32,7 +32,9 @@ abstract class SQLRequest<Request extends AbstractRequest, T extends Yopable> ex
 
 		if (addJoinClauseColumns) {
 			for (IJoin<T, ? extends Yopable> join : this.joins) {
-				columns.addAll(join.columns(this.context, true, config));
+				@SuppressWarnings("unchecked")
+				SQLJoin<T, ? extends Yopable> sqlJoin = SQLJoin.toSQLJoin(join);
+				columns.addAll(sqlJoin.columns(this.context, true, config));
 			}
 		}
 		return columns;
@@ -45,6 +47,6 @@ abstract class SQLRequest<Request extends AbstractRequest, T extends Yopable> ex
 	 * @return the SQL join clause
 	 */
 	protected JoinClause.JoinClauses toSQLJoin(boolean evaluate, Config config) {
-		return AbstractJoin.toSQLJoin(this.joins, this.context, evaluate, config);
+		return SQLJoin.toSQLJoin(this.joins, this.context, evaluate, config);
 	}
 }

@@ -49,8 +49,8 @@ public class SimpleTest extends DBMSSwitch {
 	public void testPrintJoins() {
 		IJoin.Joins<Pojo> joins = new IJoin.Joins<>();
 		JoinUtil.joinAll(Pojo.class, joins);
-		joins.add(Join.to(Pojo::getParent));
-		joins.add(JoinSet.to(Pojo::getChildren));
+		joins.add(SQLJoin.to(Pojo::getParent));
+		joins.add(Join.toN(Pojo::getChildren));
 		joins.print(Pojo.class);
 
 		joins = new IJoin.Joins<>();
@@ -113,8 +113,8 @@ public class SimpleTest extends DBMSSwitch {
 			Hydrate
 				.from(Pojo.class)
 				.onto(fromDB)
-				.join(Join.to(Pojo::getParent))
-				.join(JoinSet.to(Pojo::getChildren))
+				.join(SQLJoin.to(Pojo::getParent))
+				.join(Join.toN(Pojo::getChildren))
 				.recurse()
 				.execute(connection);
 			Assert.assertTrue(fromDB.getParent().getChildren().get(0) == fromDB);
@@ -152,33 +152,33 @@ public class SimpleTest extends DBMSSwitch {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
 				.checkNaturalID()
 				.execute(connection);
 
 			Collection<Pojo> fromSelectWithBadJoinWhere = Select
 				.from(Pojo.class)
-				.join(toSet(Pojo::getJopos).where(new Comparison(Jopo::getId, Operator.GE, 2L)))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+				.join(toN(Pojo::getJopos).where(new Comparison(Jopo::getId, Operator.GE, 2L)))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
 				.execute(connection, Select.Strategy.EXISTS);
 			Assert.assertEquals(0, fromSelectWithBadJoinWhere.size());
 
 			fromSelectWithBadJoinWhere = Select
 				.from(Pojo.class)
-				.join(toSet(Pojo::getJopos).where(new Comparison(Jopo::getId, Operator.GE, 2L)))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+				.join(toN(Pojo::getJopos).where(new Comparison(Jopo::getId, Operator.GE, 2L)))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
 				.execute(connection, Select.Strategy.IN);
 			Assert.assertEquals(0, fromSelectWithBadJoinWhere.size());
 
 			Pojo found = Select
 				.from(Pojo.class)
-				.join(toSet(Pojo::getJopos).where(new Comparison(Jopo::getId, Operator.GE, 1L)))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+				.join(toN(Pojo::getJopos).where(new Comparison(Jopo::getId, Operator.GE, 1L)))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
 				.uniqueResult(connection);
 			Assert.assertTrue(!found.getOthers().isEmpty());
 			Assert.assertTrue(found.getOthers().iterator().next().getExtra().getOther() != null);
@@ -237,7 +237,7 @@ public class SimpleTest extends DBMSSwitch {
 
 				pojos.add(newPojo);
 			}
-			upsert(Pojo.class).onto(pojos).join(toSet(Pojo::getJopos)).execute(connection);
+			upsert(Pojo.class).onto(pojos).join(toN(Pojo::getJopos)).execute(connection);
 
 			Select<Pojo> selectWithPaging = Select.from(Pojo.class).joinAll().page(87L, 10L);
 			Set<Pojo> out = selectWithPaging.executeWithTwoQueries(connection);
@@ -282,21 +282,21 @@ public class SimpleTest extends DBMSSwitch {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers))
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers))
 				.checkNaturalID()
 				.execute(connection);
 
 			Path<Pojo, String> jopoName = Path.pathSet(Pojo::getJopos).to(Jopo::getName);
 			Set<Pojo> matches = select(Pojo.class)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
 				.execute(connection);
 			Assert.assertEquals(1, matches.size());
 
 			matches = select(Pojo.class)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).where(Where.compare(Other::getName, Operator.NE, jopoName)))
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).where(Where.compare(Other::getName, Operator.NE, jopoName)))
 				.execute(connection);
 			Assert.assertEquals(0, matches.size());
 		}
@@ -308,7 +308,7 @@ public class SimpleTest extends DBMSSwitch {
 			// Path to Jopo does not match a declared join !
 			Path<Pojo, String> jopoName = Path.pathSet(Pojo::getJopos).to(Jopo::getName);
 			select(Pojo.class)
-				.join(toSet(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
+				.join(toN(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
 				.execute(connection);
 		}
 	}
@@ -399,8 +399,8 @@ public class SimpleTest extends DBMSSwitch {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+				.join(Join.toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra)
 					.join(to(Extra::getOther))
 					.join(to(Extra::getSuperExtra))
 				))
@@ -410,7 +410,7 @@ public class SimpleTest extends DBMSSwitch {
 			Set<Pojo> found = select(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
 				.joinAll()
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra)
 					.join(to(Extra::getOther))
 					.join(to(Extra::getSuperExtra))
 				))
@@ -425,7 +425,7 @@ public class SimpleTest extends DBMSSwitch {
 			Set<Pojo> foundWith2Queries = select(Pojo.class)
 				.where(new Comparison(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
 				.joinAll()
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getOther))))
 				.executeWithTwoQueries(connection);
 			Assert.assertEquals(found, foundWith2Queries);
 			foundPojo = foundWith2Queries.iterator().next();
@@ -466,7 +466,7 @@ public class SimpleTest extends DBMSSwitch {
 			Assert.assertEquals(newPojo.getJopos().iterator().next(), newPojoFromSelect.getJopos().iterator().next());
 
 			delete(Pojo.class)
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
 				.executeQueries(connection);
 
 			Set<Pojo> afterDelete = select(Pojo.class).joinAll().execute(connection);
@@ -522,8 +522,8 @@ public class SimpleTest extends DBMSSwitch {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra)
 					.join(to(Extra::getOther))
 					.join(to(Extra::getSuperExtra))
 				))
@@ -533,7 +533,7 @@ public class SimpleTest extends DBMSSwitch {
 			Set<Pojo> found = select(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
 				.joinAll()
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra)
 					.join(to(Extra::getOther))
 					.join(to(Extra::getSuperExtra))
 				))
@@ -548,7 +548,7 @@ public class SimpleTest extends DBMSSwitch {
 			Set<Pojo> foundWithIN = select(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
 				.joinAll()
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra)
 					.join(to(Extra::getOther))
 					.join(to(Extra::getSuperExtra))
 				))
@@ -582,7 +582,7 @@ public class SimpleTest extends DBMSSwitch {
 			upsert(SuperExtra.class).onto(superExtra).joinAll().execute(connection);
 
 			Set<Extra> extras = select(Extra.class)
-				.join(to(Extra::getSuperExtra).join(toSet(SuperExtra::getExtras)))
+				.join(to(Extra::getSuperExtra).join(toN(SuperExtra::getExtras)))
 				.execute(connection);
 			Assert.assertEquals(2, extras.size());
 			for (Extra extraFromDB : extras) {
@@ -593,7 +593,7 @@ public class SimpleTest extends DBMSSwitch {
 			upsert(SuperExtra.class).onto(superExtra).execute(connection);
 
 			extras = select(Extra.class)
-				.join(to(Extra::getSuperExtra).join(toSet(SuperExtra::getExtras)))
+				.join(to(Extra::getSuperExtra).join(toN(SuperExtra::getExtras)))
 				.execute(connection);
 			for (Extra extraFromDB : extras) {
 				Assert.assertTrue(superExtra.acceptable(extraFromDB.getSuperExtra()));
@@ -661,10 +661,10 @@ public class SimpleTest extends DBMSSwitch {
 
 			// Stupid joins that should make some column/table aliases length > 64 characters
 			Set<Pojo> found = select(Pojo.class)
-				.join(toSet(Pojo::getJopos)
-					.join(to(Jopo::getPojo).join(toSet(Pojo::getJopos).join(to(Jopo::getPojo)
-						.join(toSet(Pojo::getJopos)
-							.join(to(Jopo::getPojo).join(toSet(Pojo::getJopos))))
+				.join(toN(Pojo::getJopos)
+					.join(to(Jopo::getPojo).join(toN(Pojo::getJopos).join(to(Jopo::getPojo)
+						.join(toN(Pojo::getJopos)
+							.join(to(Jopo::getPojo).join(toN(Pojo::getJopos))))
 					)))
 				)
 				.execute(connection);
@@ -720,8 +720,8 @@ public class SimpleTest extends DBMSSwitch {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers))
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers))
 				.checkNaturalID()
 				.execute(connection);
 
@@ -765,8 +765,8 @@ public class SimpleTest extends DBMSSwitch {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers))
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers))
 				.checkNaturalID()
 				.execute(connection);
 
@@ -845,8 +845,8 @@ public class SimpleTest extends DBMSSwitch {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers))
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers))
 				.checkNaturalID()
 				.execute(connection);
 
@@ -882,9 +882,9 @@ public class SimpleTest extends DBMSSwitch {
 				.onto(Arrays.asList(pojo1, pojo2))
 				.joinAll()
 				.join(to(Pojo::getParent))
-				.join(toSet(Pojo::getChildren))
-				.join(toSet(Pojo::getOthers).join(toSet(Other::getPojos)))
-				.join(toSet(Pojo::getJopos).join(to(Jopo::getPojo)))
+				.join(toN(Pojo::getChildren))
+				.join(toN(Pojo::getOthers).join(toN(Other::getPojos)))
+				.join(toN(Pojo::getJopos).join(to(Jopo::getPojo)))
 				.recurse()
 				.execute(connection);
 
@@ -931,8 +931,8 @@ public class SimpleTest extends DBMSSwitch {
 
 			hydrate(Pojo.class)
 				.onto(fromDB)
-				.join(Join.to(Pojo::getParent))
-				.join(JoinSet.to(Pojo::getChildren))
+				.join(SQLJoin.to(Pojo::getParent))
+				.join(Join.toN(Pojo::getChildren))
 				.recurse()
 				.execute(connection);
 			Assert.assertTrue(fromDB.getParent().getChildren().get(0) == fromDB);

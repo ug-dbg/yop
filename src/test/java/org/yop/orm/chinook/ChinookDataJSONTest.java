@@ -11,8 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.chinook.model.*;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.query.Join;
-import org.yop.orm.query.JoinSet;
+import org.yop.orm.query.SQLJoin;
 import org.yop.orm.query.serialize.json.JSON;
 
 import javax.xml.bind.JAXBException;
@@ -81,7 +80,7 @@ public class ChinookDataJSONTest {
 	public void test_albums_to_json() throws IOException, JSONException {
 		String json = JSON
 			.from(Album.class)
-			.join((JoinSet.to(Album::getTracks)))
+			.join((SQLJoin.toN(Album::getTracks)))
 			.onto(source.albums.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -94,7 +93,7 @@ public class ChinookDataJSONTest {
 	public void test_genres_to_json() throws IOException, JSONException {
 		String json = JSON
 			.from(Genre.class)
-			.join((JoinSet.to(Genre::getTracksOfGenre)))
+			.join((SQLJoin.toN(Genre::getTracksOfGenre)))
 			.onto(source.genres.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -107,7 +106,7 @@ public class ChinookDataJSONTest {
 	public void test_invoices_to_json() throws IOException, JSONException {
 		String json = JSON
 			.from(Invoice.class)
-			.join(JoinSet.to(Invoice::getLines))
+			.join(SQLJoin.toN(Invoice::getLines))
 			.onto(source.invoices.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -120,8 +119,8 @@ public class ChinookDataJSONTest {
 	public void test_invoice_lines_to_json() throws IOException, JSONException {
 		String json = JSON
 			.from(InvoiceLine.class)
-			.join(Join.to(InvoiceLine::getInvoice))
-			.join(Join.to(InvoiceLine::getTrack))
+			.join(SQLJoin.to(InvoiceLine::getInvoice))
+			.join(SQLJoin.to(InvoiceLine::getTrack))
 			.onto(source.invoiceLines.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -134,7 +133,7 @@ public class ChinookDataJSONTest {
 	public void test_media_types_to_json() throws IOException, JSONException {
 		String json = JSON
 			.from(MediaType.class)
-			.join(JoinSet.to(MediaType::getTracksOfType))
+			.join(SQLJoin.toN(MediaType::getTracksOfType))
 			.onto(source.mediaTypes.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -147,7 +146,7 @@ public class ChinookDataJSONTest {
 	public void test_playlists_to_json() throws IOException, JSONException {
 		String json = JSON
 			.from(Playlist.class)
-			.join(JoinSet.to(Playlist::getTracks).join(Join.to(Track::getAlbum)))
+			.join(SQLJoin.toN(Playlist::getTracks).join(SQLJoin.to(Track::getAlbum)))
 			.onto(source.playlists.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -161,8 +160,8 @@ public class ChinookDataJSONTest {
 		String json = JSON
 			.from(Employee.class)
 			.joinAll()
-			.join(Join.to(Employee::getReportsTo))
-			.join(JoinSet.to(Employee::getReporters))
+			.join(SQLJoin.to(Employee::getReportsTo))
+			.join(SQLJoin.toN(Employee::getReporters))
 			.onto(source.employees.values())
 			.toJSON();
 		String expected = IOUtils.toString(
@@ -175,8 +174,8 @@ public class ChinookDataJSONTest {
 	public void test_customers_to_json() throws IOException, JSONException {
 		String json = JSON
 			.from(Customer.class)
-			.join(JoinSet.to(Customer::getInvoices).join(JoinSet.to(Invoice::getLines)))
-			.join(JoinSet.to(Customer::getInvoices).join(JoinSet.to(Invoice::getLines).join(Join.to(InvoiceLine::getTrack))))
+			.join(SQLJoin.toN(Customer::getInvoices).join(SQLJoin.toN(Invoice::getLines)))
+			.join(SQLJoin.toN(Customer::getInvoices).join(SQLJoin.toN(Invoice::getLines).join(SQLJoin.to(InvoiceLine::getTrack))))
 			.onto(source.customers.values())
 			.toJSON();
 		String expected = IOUtils.toString(

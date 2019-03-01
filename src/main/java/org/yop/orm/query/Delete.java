@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  * Delete
  *  .from(Genre.class)
  *  .where(Where.compare(Genre::getName, Operator.LIKE, "%Vegetarian progressive grindcore%"))
- *  .join(JoinSet.to(Genre::getTracksOfGenre))
+ *  .join(SQLJoin.toN(Genre::getTracksOfGenre))
  *  .executeQueries(this.getConnection());
  * }
  * </pre>
@@ -216,9 +216,9 @@ public class Delete<T extends Yopable> extends WhereRequest<Delete<T>, T> implem
 	 */
 	@SuppressWarnings("unchecked")
 	private static void joinTables(IJoin join, Context context, Set<String> tables, Config config) {
-		tables.add(join.joinTableAlias(context, config));
+		tables.add(SQLJoin.toSQLJoin(join).joinTableAlias(context, config));
 		for (Object subJoin : join.getJoins()) {
-			joinTables(((IJoin)subJoin), join.to(context), tables, config);
+			joinTables(((IJoin) subJoin), join.to(context), tables, config);
 		}
 	}
 }
