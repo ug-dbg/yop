@@ -3,7 +3,6 @@ package org.yop.orm.map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Results;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
@@ -33,17 +32,6 @@ public class FirstLevelCache {
 	/** Association cache : for a given collection field, then a Yopable ID → a map of associated objects, by ID */
 	private final Map<Field, Map<Comparable, Map<Comparable, Yopable>>> associationsCache = new HashMap<>();
 
-	/** We need to store the SQL config to get the SQL separator to use (for instance to build context) */
-	private final Config config;
-
-	/**
-	 * Default constructor. SQL Config is required to get the SQL separator to use.
-	 * @param config the SQL config. Needed for the sql separator to use.
-	 */
-	public FirstLevelCache(Config config) {
-		this.config = config;
-	}
-
 	/**
 	 * Try to hit the cache.
 	 * <br>
@@ -56,18 +44,7 @@ public class FirstLevelCache {
 	 * @throws org.yop.orm.exception.YopSQLException an error occurred reading the resultset
 	 */
 	public <T extends Yopable> T tryCache(Results results, Class<T> clazz, String context) {
-		String idShortened = results.getQuery().getShortened(
-			context + this.config.sqlSeparator() + ORMUtil.getIdColumn(clazz)
-		);
-
-		// FIXME : Quick fix → ID can be not Long (e.g. Integer). Check out Mapper.setFieldValue.
-		Comparable id;
-		if (Long.class.isAssignableFrom(ORMUtil.getIdField(clazz).getType())) {
-			id = results.getCursor().getLong(idShortened);
-		} else {
-			id = (Comparable) results.getCursor().getObject(idShortened);
-		}
-
+		Comparable id = (Comparable) Mapper.read(results, ORMUtil.getIdField(clazz), context);
 		if(this.has(clazz, id)) {
 			return this.get(clazz, id);
 		}
@@ -131,7 +108,6 @@ public class FirstLevelCache {
 	 */
 	@SuppressWarnings("unchecked")
 	public <T extends Yopable> T getOrDefault(Field collectionField, Yopable source, T target) {
-
 		if (! this.associationsCache.containsKey(collectionField)) {
 			this.associationsCache.put(collectionField, new HashMap<>());
 		}

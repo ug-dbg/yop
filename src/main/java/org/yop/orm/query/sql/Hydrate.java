@@ -181,7 +181,7 @@ public class Hydrate<T extends Yopable> extends SQLRequest<Hydrate<T>, T>{
 			logger.warn("Hydrate on no relation. Are you sure you did not forget using #join() ?");
 			return;
 		}
-		this.recurse(connection, new FirstLevelCache(connection.config()), new ArrayList<>(), strategy);
+		this.recurse(connection, new FirstLevelCache(), new ArrayList<>(), strategy);
 	}
 
 	/**

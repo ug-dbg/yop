@@ -149,7 +149,7 @@ public class PojoBadTransformer implements Yopable {
 		}
 
 		@Override
-		public BigInteger fromSQL(Object fromJDBC, Class<?> into) {
+		public BigInteger fromSQL(Object fromJDBC, Class into) {
 			return null;
 		}
 	}

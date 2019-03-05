@@ -38,7 +38,7 @@ public interface ITransformer<What> {
 	 * @param into     the target field type
 	 * @return the transformed value
 	 */
-	What fromSQL(Object fromJDBC, Class<?> into);
+	What fromSQL(Object fromJDBC, Class into);
 
 	/**
 	 * Find the singleton instance of the given transformer class.

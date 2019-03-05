@@ -224,7 +224,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 			connection,
 			query,
 			this.context.getTarget(),
-			this.cache == null ? new FirstLevelCache(connection.config()) : this.cache
+			this.cache == null ? new FirstLevelCache() : this.cache
 		);
 		ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toList());
 
@@ -242,7 +242,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 			connection,
 			query,
 			this.context.getTarget(),
-			this.cache == null ? new FirstLevelCache(connection.config()) : this.cache
+			this.cache == null ? new FirstLevelCache() : this.cache
 		);
 	}
 
@@ -280,7 +280,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 			connection,
 			new SimpleQuery(request, Query.Type.SELECT, connection.config()),
 			this.context.getTarget(),
-			this.cache == null ? new FirstLevelCache(connection.config()) : this.cache
+			this.cache == null ? new FirstLevelCache() : this.cache
 		);
 	}
 

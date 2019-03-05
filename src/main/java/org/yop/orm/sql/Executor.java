@@ -37,7 +37,7 @@ public class Executor {
 	 * @throws YopSQLException an SQL error occurred.
 	 */
 	public static <T extends Yopable> Set<T> executeSelectQuery(IConnection connection, Query query, Class<T> target) {
-		return executeSelectQuery(connection, query, target, new FirstLevelCache(connection.config()));
+		return executeSelectQuery(connection, query, target, new FirstLevelCache());
 	}
 
 	/**
