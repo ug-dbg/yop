@@ -4,8 +4,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.yop.orm.DBMSSwitch;
 import org.yop.orm.evaluation.Operator;
-import org.yop.orm.query.Select;
-import org.yop.orm.query.Where;
+import org.yop.orm.query.sql.Select;
+import org.yop.orm.query.sql.Where;
 import org.yop.orm.simple.model.withschema.*;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Query;
@@ -65,8 +65,8 @@ public class SimpleWithSchemaTest extends DBMSSwitch {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra)
 					.join(to(Extra::getOther))
 					.join(to(Extra::getSuperExtra))
 				))
@@ -76,7 +76,7 @@ public class SimpleWithSchemaTest extends DBMSSwitch {
 			Set<Pojo> found = select(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
 				.joinAll()
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra)
 					.join(to(Extra::getOther))
 					.join(to(Extra::getSuperExtra))
 				))
@@ -91,7 +91,7 @@ public class SimpleWithSchemaTest extends DBMSSwitch {
 			Set<Pojo> foundWith2Queries = select(Pojo.class)
 				.where(Where.compare(Pojo::getVersion, Operator.EQ, newPojo.getVersion()))
 				.joinAll()
-				.join(toSet(Pojo::getOthers).join(
+				.join(toN(Pojo::getOthers).join(
 					to(Other::getExtra).join(to(Extra::getOther))
 				))
 				.executeWithTwoQueries(connection);
@@ -134,7 +134,7 @@ public class SimpleWithSchemaTest extends DBMSSwitch {
 			Assert.assertEquals(newPojo.getJopos().iterator().next(), newPojoFromSelect.getJopos().iterator().next());
 
 			delete(Pojo.class)
-				.join(toSet(Pojo::getOthers).join(
+				.join(toN(Pojo::getOthers).join(
 					to(Other::getExtra).join(to(Extra::getSuperExtra))
 				))
 				.executeQueries(connection);

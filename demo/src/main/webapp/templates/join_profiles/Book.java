@@ -4,7 +4,7 @@ import java.util.*;
 import org.yop.orm.evaluation.*;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.annotations.*;
-import org.yop.orm.query.*;
+import org.yop.orm.query.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.annotations.*;
 

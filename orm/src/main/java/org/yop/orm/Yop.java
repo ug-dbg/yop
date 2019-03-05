@@ -1,9 +1,10 @@
 package org.yop.orm;
 
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.*;
 import org.yop.orm.query.batch.BatchUpsert;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.query.serialize.json.JSON;
+import org.yop.orm.query.sql.*;
 
 import java.util.Collection;
 import java.util.function.Function;
@@ -21,8 +22,8 @@ import java.util.function.Function;
  * </ul>
  * You will also find static methods to YOP join directives ({@link IJoin} implementations):
  * <ul>
- *     <li>to a single {@link Yopable} → {@link Join} : {@link #to(Function)}</li>
- *     <li>to a collection of {@link Yopable} → {@link JoinSet} : {@link #toSet(Function)}</li>
+ *     <li>to a single {@link Yopable} → {@link SQLJoin} : {@link #to(Function)}</li>
+ *     <li>to a collection of {@link Yopable} → {@link SQLJoin} : {@link #toN(Function)}</li>
  * </ul>
  * Consider this class an API <i>vade mecum</i>.
  */
@@ -101,30 +102,30 @@ public class Yop {
 	}
 
 	/**
-	 * Shortcut to {@link Join}.
+	 * Shortcut to {@link SQLJoin}.
 	 * <br>
 	 * This is the {@link IJoin} implementation for 1 → 1 or N → 1 relationships,
 	 * i.e. when the target class is a {@link Yopable} and not a {@link Collection} of {@link Yopable}.
 	 * @param getter the relation field getter
 	 * @param <From> the relation source type
 	 * @param <To>   the relation target type
-	 * @return an {@link IJoin} relation for the given getter
+	 * @return an {@link SQLJoin} relation for the given getter
 	 */
-	public static <From extends Yopable, To extends Yopable> IJoin<From, To> to(Function<From, To> getter) {
-		return Join.to(getter);
+	public static <From extends Yopable, To extends Yopable> SQLJoin<From, To> to(Function<From, To> getter) {
+		return SQLJoin.to(getter);
 	}
 
 	/**
-	 * Shortcut to {@link JoinSet}.
+	 * Shortcut to {@link SQLJoin}.
 	 * <br>
 	 * This is the {@link IJoin} implementation for 1 → N or N → N relationships,
 	 * i.e. when the target class is a {@link Collection} of {@link Yopable} and not a single {@link Yopable}.
 	 * @param getter the relation field getter
 	 * @param <From> the relation source type
 	 * @param <To>   the relation target type
-	 * @return an {@link IJoin} relation for the given getter
+	 * @return an {@link SQLJoin} relation for the given getter
 	 */
-	public static <From extends Yopable, To extends Yopable> IJoin<From, To> toSet(Function<From, Collection<To>> getter) {
-		return JoinSet.to(getter);
+	public static <From extends Yopable, To extends Yopable> SQLJoin<From, To> toN(Function<From, Collection<To>> getter) {
+		return SQLJoin.toN(getter);
 	}
 }

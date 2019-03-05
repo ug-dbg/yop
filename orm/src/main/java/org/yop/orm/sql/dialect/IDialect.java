@@ -4,7 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.gen.Column;
 import org.yop.orm.gen.ForeignKey;
 import org.yop.orm.gen.Table;
-import org.yop.orm.query.Paging;
+import org.yop.orm.query.sql.Paging;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.SQLPart;
 import org.yop.orm.sql.adapter.IConnection;
@@ -114,7 +114,7 @@ public interface IDialect {
 
 	/**
 	 * The paging method of this dialect. See {@link Paging}.
-	 * @return default value : {@link org.yop.orm.query.Paging.Method#TWO_QUERIES}
+	 * @return default value : {@link org.yop.orm.query.sql.Paging.Method#TWO_QUERIES}
 	 */
 	default Paging.Method pagingMethod() {
 		return Paging.Method.TWO_QUERIES;
@@ -442,7 +442,7 @@ public interface IDialect {
 	 * Generate a JOIN clause using {@link SQL#DEFAULT_JOIN_ON_PATTERN}.
 	 * <br>
 	 * e.g. left join join_table joined_table_alias on join_column_a = root_table_alias.column_a
-	 * @param joinType   the join type to use (see {@link org.yop.orm.query.AbstractJoin.JoinType#sql})
+	 * @param joinType   the join type to use (see {@link org.yop.orm.query.sql.SQLJoin.JoinType#sql})
 	 * @param table      the table name
 	 * @param tableAlias the table alias
 	 * @param left       the left side of the "on" clause

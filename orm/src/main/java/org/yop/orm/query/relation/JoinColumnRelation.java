@@ -3,7 +3,7 @@ package org.yop.orm.query.relation;
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.IJoin;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.*;
 import org.yop.orm.util.ORMUtil;
 

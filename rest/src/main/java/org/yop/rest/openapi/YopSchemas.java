@@ -4,11 +4,11 @@ import io.swagger.oas.models.media.ArraySchema;
 import io.swagger.oas.models.media.ComposedSchema;
 import io.swagger.oas.models.media.Schema;
 import org.yop.orm.evaluation.*;
-import org.yop.orm.query.IJoin;
-import org.yop.orm.query.Where;
-import org.yop.orm.query.Select;
-import org.yop.orm.query.Upsert;
-import org.yop.orm.query.Delete;
+import org.yop.orm.query.join.IJoin;
+import org.yop.orm.query.sql.Select;
+import org.yop.orm.query.sql.Upsert;
+import org.yop.orm.query.sql.Delete;
+import org.yop.orm.query.sql.Where;
 
 import java.util.Arrays;
 import java.util.Collections;

@@ -2,7 +2,7 @@ package org.yop.orm.model;
 
 import com.google.gson.JsonElement;
 import org.yop.orm.query.Context;
-import org.yop.orm.query.IJoin;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.query.serialize.json.JSON;
 import org.yop.orm.sql.Config;
 

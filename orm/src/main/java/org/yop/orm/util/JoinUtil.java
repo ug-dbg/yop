@@ -5,11 +5,11 @@ import org.apache.commons.collections4.ListUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.JoinColumn;
-import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.JoinProfile;
+import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.exception.YopJoinCycleException;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.IJoin;
+import org.yop.orm.query.join.IJoin;
 
 import java.lang.reflect.Field;
 import java.util.*;

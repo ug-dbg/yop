@@ -16,8 +16,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.evaluation.Operator;
-import org.yop.orm.query.*;
 import org.yop.orm.query.serialize.json.JSON;
+import org.yop.orm.query.sql.*;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
 import org.yop.orm.simple.model.Pojo;
@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.yop.orm.Yop.toSet;
+import static org.yop.orm.Yop.toN;
 import static org.yop.orm.Yop.upsert;
 
 /**
@@ -102,8 +102,8 @@ public class SimpleModelRestTest extends RestServletTest {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers))
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers))
 				.checkNaturalID()
 				.execute(connection);
 
@@ -236,8 +236,8 @@ public class SimpleModelRestTest extends RestServletTest {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers))
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers))
 				.checkNaturalID()
 				.execute(connection);
 
@@ -248,8 +248,8 @@ public class SimpleModelRestTest extends RestServletTest {
 		String jsonQuery = Select
 			.from(org.yop.rest.simple.model.Pojo.class)
 			.where(Where.compare(Pojo::getType, Operator.EQ, Pojo.Type.FOO))
-			.join(JoinSet.to(Pojo::getJopos))
-			.join(JoinSet.to(Pojo::getOthers))
+			.join(SQLJoin.toN(Pojo::getJopos))
+			.join(SQLJoin.toN(Pojo::getOthers))
 			.toJSON()
 			.toString();
 
@@ -357,8 +357,8 @@ public class SimpleModelRestTest extends RestServletTest {
 
 			upsert(Pojo.class)
 				.onto(pojos)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers))
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers))
 				.checkNaturalID()
 				.execute(connection);
 

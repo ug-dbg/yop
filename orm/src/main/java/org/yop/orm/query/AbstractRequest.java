@@ -2,6 +2,7 @@ package org.yop.orm.query;
 
 import org.yop.orm.exception.YopInvalidJoinException;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.util.JoinUtil;
 
 import java.util.Collection;

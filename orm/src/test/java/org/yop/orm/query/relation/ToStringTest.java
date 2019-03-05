@@ -4,8 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
-import org.yop.orm.query.Join;
-import org.yop.orm.query.JoinSet;
+import org.yop.orm.query.sql.SQLJoin;
 import org.yop.orm.simple.model.Extra;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
@@ -21,7 +20,7 @@ public class ToStringTest {
 
 		JoinColumnRelation<Pojo, Jopo> relation = new JoinColumnRelation<>(
 			Lists.newArrayList(pojo),
-			JoinSet.to(Pojo::getJopos)
+			SQLJoin.toN(Pojo::getJopos)
 		);
 		Assert.assertNotNull(relation);
 	}
@@ -34,7 +33,7 @@ public class ToStringTest {
 
 		JoinTableRelation<Other, Extra> relation = new JoinTableRelation<>(
 			Lists.newArrayList(other),
-			Join.to(Other::getExtra)
+			SQLJoin.to(Other::getExtra)
 		);
 		Assert.assertNotNull(relation);
 	}
@@ -47,13 +46,13 @@ public class ToStringTest {
 
 		JoinColumnRelation<Other, Extra> emptyRelation = new JoinColumnRelation<>(
 			Lists.newArrayList(),
-			Join.to(Other::getExtra)
+			SQLJoin.to(Other::getExtra)
 		);
 		Assert.assertTrue(emptyRelation.toString().contains("From(?)→To(?)"));
 
 		JoinColumnRelation<Other, Extra> relation = new JoinColumnRelation<>(
 			Lists.newArrayList(other),
-			Join.to(Other::getExtra)
+			SQLJoin.to(Other::getExtra)
 		);
 		Assert.assertNotNull(relation);
 		String toString = relation.toString();
@@ -75,7 +74,7 @@ public class ToStringTest {
 
 		JoinTableRelation<Pojo, Jopo> relation = new JoinTableRelation<>(
 			Lists.newArrayList(pojo),
-			JoinSet.to(Pojo::getJopos)
+			SQLJoin.toN(Pojo::getJopos)
 		);
 
 		Assert.assertNotNull(relation);

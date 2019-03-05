@@ -4,7 +4,7 @@ import java.util.*;
 import org.yop.orm.evaluation.*;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.annotations.*;
-import org.yop.orm.query.*;
+import org.yop.orm.query.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.annotations.*;
 
@@ -78,7 +78,7 @@ public class Book implements Yopable {
 		@RequestParam(name = "joinAll") Boolean joinAll) {
 		Select<Book> select = Select
 			.from(Book.class)
-			.join(JoinSet.to(Book::getAuthors))
+			.join(Book::getAuthors)
 			.where(Where.compare(
 				Book::getPurchaseDate,
 				Operator.LT,

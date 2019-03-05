@@ -2,8 +2,8 @@ package org.yop.rest.servlet;
 
 import org.apache.commons.codec.digest.Crypt;
 import org.yop.orm.evaluation.Operator;
-import org.yop.orm.query.Select;
-import org.yop.orm.query.Where;
+import org.yop.orm.query.sql.Select;
+import org.yop.orm.query.sql.Where;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.exception.YopNoAuthException;
 import org.yop.rest.users.model.User;

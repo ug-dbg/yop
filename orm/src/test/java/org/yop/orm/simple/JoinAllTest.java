@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.yop.orm.DBMSSwitch;
 import org.yop.orm.evaluation.Operator;
-import org.yop.orm.query.*;
+import org.yop.orm.query.sql.*;
 import org.yop.orm.simple.model.CyclePojo;
 import org.yop.orm.sql.adapter.IConnection;
 
@@ -64,7 +64,7 @@ public class JoinAllTest extends DBMSSwitch {
 
 			CyclePojo fromDB = Select
 				.from(CyclePojo.class)
-				.join(Join.to(CyclePojo::getJopo).where(Where.compare(CyclePojo.CycleJopo::getString, Operator.EQ, "3")))
+				.join(SQLJoin.to(CyclePojo::getJopo).where(Where.compare(CyclePojo.CycleJopo::getString, Operator.EQ, "3")))
 				.uniqueResult(connection);
 			Hydrate.from(CyclePojo.class).onto(fromDB).joinAll().recurse().execute(connection);
 			Assert.assertEquals("3", fromDB.getJopo().getString());

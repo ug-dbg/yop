@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.exception.YopSQLException;
-import org.yop.orm.query.*;
+import org.yop.orm.query.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.supplychain.model.*;
 
@@ -100,7 +100,7 @@ public class SupplyChainTest extends DBMSSwitch {
 			// Fetch a transient relation ! (Warehouse → Organisation)
 			organisations = Select
 				.from(Organisation.class)
-				.join(JoinSet.to(Organisation::getWarehouses).join(Join.to(Warehouse::getOwner)))
+				.join(SQLJoin.toN(Organisation::getWarehouses).join(SQLJoin.to(Warehouse::getOwner)))
 				.execute(connection);
 			Assert.assertEquals(1, organisations.size());
 			Assert.assertEquals(organisation, organisations.iterator().next());
@@ -112,7 +112,7 @@ public class SupplyChainTest extends DBMSSwitch {
 			organisation.getWarehouses().remove(0);
 			Upsert.from(Organisation.class).checkNaturalID().onto(organisation).joinAll().execute(connection);
 			organisations = Select.from(Organisation.class)
-				.join(JoinSet.to(Organisation::getWarehouses).join(Join.to(Warehouse::getOwner)))
+				.join(SQLJoin.toN(Organisation::getWarehouses).join(SQLJoin.to(Warehouse::getOwner)))
 				.execute(connection);
 			Assert.assertEquals(1, organisations.size());
 			Assert.assertEquals(organisation, organisations.iterator().next());
@@ -136,7 +136,7 @@ public class SupplyChainTest extends DBMSSwitch {
 			warehouses = Select
 				.from(Warehouse.class)
 				.where(Where.compare(Warehouse::getAddress, Operator.LIKE, "%Yolo%"))
-				.join(Join.to(Warehouse::getOwner))
+				.join(SQLJoin.to(Warehouse::getOwner))
 				.execute(connection);
 			Assert.assertEquals(1, warehouses.size());
 			Assert.assertEquals(warehouse, warehouses.iterator().next());
@@ -146,13 +146,13 @@ public class SupplyChainTest extends DBMSSwitch {
 			warehouses = Select
 				.from(Warehouse.class)
 				.where(Where.compare(Warehouse::getOwner, Operator.EQ, organisation.getId()))
-				.join(Join.to(Warehouse::getOwner))
+				.join(SQLJoin.to(Warehouse::getOwner))
 				.execute(connection);
 			Assert.assertEquals(1, warehouses.size());
 
 			Select<Warehouse> select = Select
 				.from(Warehouse.class)
-				.join(Join.to(Warehouse::getOwner).where(Where.naturalId(organisation)));
+				.join(SQLJoin.to(Warehouse::getOwner).where(Where.naturalId(organisation)));
 			warehouses = select.execute(connection);
 			Assert.assertEquals(1, warehouses.size());
 
@@ -235,8 +235,8 @@ public class SupplyChainTest extends DBMSSwitch {
 			Hydrate
 				.from(Organisation.class)
 				.onto(organisation)
-				.join(JoinSet.to(Organisation::getEmployees).join(Join.to(Employee::getOrganisation)))
-				.join(JoinSet.to(Organisation::getWarehouses).join(Join.to(Warehouse::getOwner)))
+				.join(SQLJoin.toN(Organisation::getEmployees).join(SQLJoin.to(Employee::getOrganisation)))
+				.join(SQLJoin.toN(Organisation::getWarehouses).join(SQLJoin.to(Warehouse::getOwner)))
 				.recurse()
 				.execute(connection);
 
@@ -247,7 +247,7 @@ public class SupplyChainTest extends DBMSSwitch {
 			Set<Product> products = Select
 				.from(Product.class)
 				.joinAll()
-				.join(Join.to(Product::getReference).where(Where.naturalId(pickleReference)))
+				.join(SQLJoin.to(Product::getReference).where(Where.naturalId(pickleReference)))
 				.execute(connection);
 			Assert.assertEquals(1, products.size());
 
@@ -277,14 +277,14 @@ public class SupplyChainTest extends DBMSSwitch {
 			order.setOrderTimeStamp(LocalDateTime.now());
 
 			try {
-				Upsert.from(Order.class).joinAll().join(Join.to(Order::getCustomer)).onto(order).execute(connection);
+				Upsert.from(Order.class).joinAll().join(SQLJoin.to(Order::getCustomer)).onto(order).execute(connection);
 				logger.warn("Order#orderTimeStamp is marked not null! Is this MySQL with strict mode OFF ?");
 			} catch (YopSQLException e) {
 				logger.trace("Exception on inserting an Order with null orderTimeStamp. That's OK !", e);
 			}
 
 			order.setOrderTimeStamp(LocalDateTime.now());
-			Upsert.from(Order.class).joinAll().join(Join.to(Order::getCustomer)).onto(order).execute(connection);
+			Upsert.from(Order.class).joinAll().join(SQLJoin.to(Order::getCustomer)).onto(order).execute(connection);
 			Assert.assertNotNull(order.getId());
 
 			// Oh well, I have to pay, I guess
@@ -293,7 +293,7 @@ public class SupplyChainTest extends DBMSSwitch {
 			payment.setWhen(LocalDateTime.now());
 			payment.setMethod(Payment.Method.MONOPOLY_MONEY);
 			order.setPayment(payment);
-			Upsert.from(Order.class).join(Join.to(Order::getPayment)).onto(order).execute(connection);
+			Upsert.from(Order.class).join(SQLJoin.to(Order::getPayment)).onto(order).execute(connection);
 
 			// How much was it already ?
 			Set<Customer> meIGuess = Select.from(Customer.class).joinAll().whereNaturalId(me).execute(connection);

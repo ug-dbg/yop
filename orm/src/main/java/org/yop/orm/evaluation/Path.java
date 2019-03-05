@@ -30,8 +30,8 @@ import java.util.function.Function;
  * Path<Pojo, String> jopoName = Path.toSet(Pojo.class, Pojo::getJopos).andTo(Jopo::getName);
  * Set<Pojo> matches = Select
  * 	.from(Pojo.class)
- * 	.join(JoinSet.to(Pojo::getJopos))
- * 	.join(JoinSet.to(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
+ * 	.join(SQLJoin.toN(Pojo::getJopos))
+ * 	.join(SQLJoin.toN(Pojo::getOthers).where(Where.compare(Other::getName, Operator.EQ, jopoName)))
  * 	.execute(connection);
  * }
  * </pre>

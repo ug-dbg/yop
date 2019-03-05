@@ -1,21 +1,18 @@
 /**
- * Query management : you'll find all you need here to CRUD your Yopable objects.
+ * Query management : you'll find all you need here to create queries on {@link org.yop.orm.model.Yopable} objects.
  * <br>
- * Yop aims at providing a way to build requests that look like SQL and takes advantage of method references.
- * <br><br>
- * If you are reading this, you will start with the CRUD query builders :
+ * {@link org.yop.orm.query.AbstractRequest} is the root class for all queries.
+ * <br>
+ * A query should have :
  * <ul>
- *     <li>{@link org.yop.orm.query.Select}</li>
- *     <li>{@link org.yop.orm.query.Upsert} and {@link org.yop.orm.query.batch.BatchUpsert}</li>
- *     <li>{@link org.yop.orm.query.Delete}</li>
- *     <li>{@link org.yop.orm.query.Hydrate}</li>
+ *     <li>A {@link org.yop.orm.query.Context}, i.e. a link to the target class</li>
+ *     <li>Joins. See {@link org.yop.orm.query.AbstractRequest#joins} and {@link org.yop.orm.query.join.IJoin}</li>
  * </ul>
- * They share a common logic that must (should :-D) enable you to inline declare clauses :
+ * <br>
+ * There are :
  * <ul>
- *     <li>from</li>
- *     <li>join</li>
- *     <li>where</li>
- *     <li>onto</li>
+ *     <li>SQL queries : e.g. {@link org.yop.orm.query.sql.Select}, {@link org.yop.orm.query.sql.Upsert}</li>
+ *     <li>Serialize queries : e.g. {@link org.yop.orm.query.serialize.json.JSON}</li>
  * </ul>
  */
 package org.yop.orm.query;

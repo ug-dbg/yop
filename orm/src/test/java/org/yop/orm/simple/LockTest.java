@@ -7,9 +7,9 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.DBMSSwitch;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.Select;
-import org.yop.orm.query.Upsert;
-import org.yop.orm.query.Where;
+import org.yop.orm.query.sql.Select;
+import org.yop.orm.query.sql.Upsert;
+import org.yop.orm.query.sql.Where;
 import org.yop.orm.simple.model.*;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.adapter.IConnection;
@@ -64,7 +64,7 @@ public class LockTest extends DBMSSwitch {
 		try (IConnection connection = this.getConnection()) {
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
+				.join(toN(Pojo::getJopos))
 				.join(Pojo::getOthers, Other::getExtra, Extra::getOther)
 				.join(Pojo::getOthers, Other::getExtra, Extra::getSuperExtra)
 				.checkNaturalID()

@@ -4,7 +4,7 @@ import io.swagger.oas.models.Operation;
 import io.swagger.oas.models.responses.ApiResponses;
 import org.yop.orm.evaluation.IdIn;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.Select;
+import org.yop.orm.query.sql.Select;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.exception.YopNoResultException;
 import org.yop.rest.openapi.OpenAPIUtil;
@@ -18,7 +18,7 @@ import static javax.servlet.http.HttpServletResponse.*;
 /**
  * HTTP GET method implementation.
  * <br>
- * It simply executes a {@link org.yop.orm.query.Select} operation.
+ * It simply executes a {@link org.yop.orm.query.sql.Select} operation.
  */
 class Get implements HttpMethod {
 
@@ -27,7 +27,7 @@ class Get implements HttpMethod {
 	Get(){}
 
 	/**
-	 * Execute the "get" operation using a {@link org.yop.orm.query.Select} query.
+	 * Execute the "get" operation using a {@link org.yop.orm.query.sql.Select} query.
 	 * <br>
 	 * Read the joinAll & joinIDs parameters.
 	 * @param restRequest the incoming request

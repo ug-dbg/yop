@@ -4,7 +4,9 @@ import java.util.*;
 import org.yop.orm.evaluation.*;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.annotations.*;
-import org.yop.orm.query.*;
+import org.yop.orm.query.AbstractRequest;
+import org.yop.orm.query.serialize.json.JSON;
+import org.yop.orm.query.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.annotations.*;
 
@@ -162,7 +164,7 @@ class Author implements Yopable {
 	 * We add an explicit join for [Author→Book], on demand.
 	 * <br>
 	 * Since a parameter controls the fetch graph, we need to to the serialization in the very method.
-	 * → We use {@link Select#toJSONQuery()} to use the same joins in the serialization.
+	 * → We use {@link Select#to(AbstractRequest)} to use the same joins in the serialization.
 	 * @param connection the underlying connection, will be provided by the servlet
 	 * @param name       the name of the author(s) to find, configured here as a path parameter. Will be used as %name%.
 	 * @param fetchBooks true to fetch the books from the author(s)
@@ -179,13 +181,13 @@ class Author implements Yopable {
 			.from(Author.class)
 			.where(Where.compare(Author::getName, Operator.LIKE, nameCriteria));
 		if (fetchBooks) {
-			select.join(JoinSet.to(Author::getBooks));
+			select.join(Author::getBooks);
 		}
 		Collection<Author> authors = select.execute(connection);
 
 		// We must do the serialization here : Yop REST does not know the explicit joins to apply.
 		// Select.toJSONQuery creates a JSON query with joins from the Select query.
-		return select.toJSONQuery().onto(authors).toJSON();
+		return select.to(JSON.from(Author.class)).onto(authors).toJSON();
 	}
 
 }

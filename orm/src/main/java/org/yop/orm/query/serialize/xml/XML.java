@@ -12,7 +12,7 @@ import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.AbstractRequest;
 import org.yop.orm.query.Context;
-import org.yop.orm.query.IJoin;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.query.serialize.Serialize;
 import org.yop.reflection.Reflection;
 
@@ -38,8 +38,8 @@ import java.util.regex.Pattern;
  * {@code
  * XML
  *   .from(Pojo.class)
- *   .join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
- *   .join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
+ *   .join(Join.toN(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
+ *   .join(Join.toN(Pojo::getOthers).join(Join.toN(Other::getPojos)))
  *   .onto(pojo)
  *   .execute();
  * }

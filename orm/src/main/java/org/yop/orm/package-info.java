@@ -11,8 +11,8 @@
  *  Upsert
  *   .from(Pojo.class)
  *   .onto(newPojo)
- *   .join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
- *   .join(JoinSet.to(Pojo::getOthers))
+ *   .join(SQLJoin.toN(Pojo::getJopos).join(SQLJoin.to(Jopo::getPojo)))
+ *   .join(SQLJoin.toN(Pojo::getOthers))
  *   .checkNaturalID()
  *   .execute(connection);
  * }

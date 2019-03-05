@@ -14,7 +14,7 @@ import org.yop.orm.chinook.model.Genre;
 import org.yop.orm.chinook.model.Track;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.query.*;
+import org.yop.orm.query.sql.*;
 import org.yop.orm.query.batch.BatchUpsert;
 import org.yop.orm.sql.adapter.IConnection;
 
@@ -61,7 +61,7 @@ public class ChinookDataTest extends DBMSSwitch {
 			BatchUpsert
 				.from(Employee.class)
 				.onto(this.source.employees.values())
-				.join(Join.to(Employee::getReportsTo))
+				.join(SQLJoin.to(Employee::getReportsTo))
 				.execute(connection);
 			logger.info("Batch upsert Employees in [" + (System.currentTimeMillis() - start + "] ms"));
 		} catch (JAXBException e) {
@@ -132,7 +132,7 @@ public class ChinookDataTest extends DBMSSwitch {
 			Hydrate
 				.from(Genre.class)
 				.onto(genres)
-				.join(JoinSet.to(Genre::getTracksOfGenre).join(Join.to(Track::getGenre)))
+				.join(SQLJoin.toN(Genre::getTracksOfGenre).join(SQLJoin.to(Track::getGenre)))
 				.recurse()
 				.execute(connection);
 			logger.info("Recurse on genres in [{}] ms", (System.currentTimeMillis() - start));
@@ -160,12 +160,12 @@ public class ChinookDataTest extends DBMSSwitch {
 			Delete
 				.from(Genre.class)
 				.where(Where.compare(Genre::getName, Operator.LIKE, "%/%"))
-				.join(JoinSet.to(Genre::getTracksOfGenre))
+				.join(SQLJoin.toN(Genre::getTracksOfGenre))
 				.executeQueries(connection);
 			logger.info("Deleted '/' genres in [{}] ms", (System.currentTimeMillis() - start));
 
 			start = System.currentTimeMillis();
-			Set<Track> tracks = Select.from(Track.class).join(Join.to(Track::getGenre)).execute(connection);
+			Set<Track> tracks = Select.from(Track.class).join(SQLJoin.to(Track::getGenre)).execute(connection);
 			logger.info("Found left tracks for non '/' genres in [{}] ms", (System.currentTimeMillis() - start));
 
 			Assert.assertTrue(tracks.size() == this.source.tracks.size() - slashed);
@@ -182,7 +182,7 @@ public class ChinookDataTest extends DBMSSwitch {
 			// Employee data check : fetch 'reports to'
 			Set<Employee> employeesFromDB = Select
 				.from(Employee.class)
-				.join(Join.to(Employee::getReportsTo))
+				.join(SQLJoin.to(Employee::getReportsTo))
 				.execute(connection);
 			Assert.assertEquals(this.source.employees.size(), employeesFromDB.size());
 
@@ -198,7 +198,7 @@ public class ChinookDataTest extends DBMSSwitch {
 			// Employee data check : fetch 'reporters'
 			employeesFromDB = Select
 				.from(Employee.class)
-				.join(JoinSet.to(Employee::getReporters))
+				.join(SQLJoin.toN(Employee::getReporters))
 				.execute(connection);
 			Assert.assertEquals(this.source.employees.size(), employeesFromDB.size());
 
@@ -278,7 +278,7 @@ public class ChinookDataTest extends DBMSSwitch {
 			Hydrate
 				.from(Employee.class)
 				.onto(employeesFromDB)
-				.join(Join.to(Employee::getReportsTo))
+				.join(SQLJoin.to(Employee::getReportsTo))
 				.recurse()
 				.execute(connection);
 
@@ -308,18 +308,18 @@ public class ChinookDataTest extends DBMSSwitch {
 			// Update, fetch, recurse and check
 			Employee jane = employeesByMail.get("jane@chinookcorp.com");
 			jane.setReportsTo(jane);
-			Upsert.from(Employee.class).onto(jane).join(Join.to(Employee::getReportsTo)).execute(connection);
+			Upsert.from(Employee.class).onto(jane).join(SQLJoin.to(Employee::getReportsTo)).execute(connection);
 			jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(connection);
 			Hydrate
 				.from(Employee.class)
 				.onto(jane)
-				.join(Join.to(Employee::getReportsTo))
+				.join(SQLJoin.to(Employee::getReportsTo))
 				.recurse()
 				.execute(connection);
 			Hydrate
 				.from(Employee.class)
 				.onto(employeesFromDB)
-				.join(JoinSet.to(Employee::getReporters))
+				.join(SQLJoin.toN(Employee::getReporters))
 				.recurse()
 				.execute(connection);
 
@@ -356,21 +356,21 @@ public class ChinookDataTest extends DBMSSwitch {
 
 			Employee jane = employeesByMail.get("jane@chinookcorp.com");
 			jane.setReportsTo(jane);
-			Upsert.from(Employee.class).onto(jane).join(Join.to(Employee::getReportsTo)).execute(connection);
+			Upsert.from(Employee.class).onto(jane).join(SQLJoin.to(Employee::getReportsTo)).execute(connection);
 			jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(connection);
 
 			// A weird cycle : andrew (CEO, top guy) reports to jane
 			Employee andrew = employeesByMail.get("andrew@chinookcorp.com");
 			andrew.setReportsTo(jane);
-			Upsert.from(Employee.class).onto(andrew).join(Join.to(Employee::getReportsTo)).execute(connection);
+			Upsert.from(Employee.class).onto(andrew).join(SQLJoin.to(Employee::getReportsTo)).execute(connection);
 
 			jane = Select.from(Employee.class).where(Where.naturalId(jane)).uniqueResult(connection);
 
 			Hydrate
 				.from(Employee.class)
 				.onto(jane)
-				.join(JoinSet.to(Employee::getReporters))
-				.join(Join.to(Employee::getReportsTo))
+				.join(SQLJoin.toN(Employee::getReporters))
+				.join(SQLJoin.to(Employee::getReportsTo))
 				.recurse()
 				.execute(connection);
 			Assert.assertTrue(jane.getReporters().contains(andrew));

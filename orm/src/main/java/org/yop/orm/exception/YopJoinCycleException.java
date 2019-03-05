@@ -1,7 +1,7 @@
 package org.yop.orm.exception;
 
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.IJoin;
+import org.yop.orm.query.join.IJoin;
 import org.yop.reflection.Reflection;
 
 import java.lang.reflect.Field;

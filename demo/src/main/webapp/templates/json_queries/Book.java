@@ -4,7 +4,7 @@ import java.util.*;
 import org.yop.orm.evaluation.*;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.annotations.*;
-import org.yop.orm.query.*;
+import org.yop.orm.query.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.annotations.*;
 
@@ -140,7 +140,7 @@ public class Book implements Yopable {
 		Author roger = new Author("Roger", LocalDate.of(1977, 7, 7));
 		return Select
 			.from(Book.class)
-			.join(JoinSet.to(Book::getAuthors).where(Where.naturalId(roger)))
+			.join(SQLJoin.toN(Book::getAuthors).where(Where.naturalId(roger)))
 			.toJSON()
 			.toString();
 	}
@@ -179,7 +179,7 @@ public class Book implements Yopable {
 	public static String booksPathRef() {
 		return Select
 			.from(Book.class)
-			.join(JoinSet.to(Book::getAuthors))
+			.join(Book::getAuthors)
 			.where(Where.compare(
 				Book::getPurchaseDate,
 				Operator.LT,

@@ -5,7 +5,7 @@ import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.AbstractRequest;
 import org.yop.orm.query.Context;
-import org.yop.orm.query.IJoin;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.query.serialize.Serialize;
 
 import java.lang.reflect.Field;
@@ -29,8 +29,8 @@ import java.util.stream.Collectors;
  * JSON
  *   .from(Pojo.class)
  *   .joinAll()
- *   .join(JoinSet.to(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
- *   .join(JoinSet.to(Pojo::getOthers).join(JoinSet.to(Other::getPojos)))
+ *   .join(Join.toN(Pojo::getJopos).join(Join.to(Jopo::getPojo)))
+ *   .join(Join.toN(Pojo::getOthers).join(Join.toN(Other::getPojos)))
  *   .onto(pojo)
  *   .toJSON();
  * }

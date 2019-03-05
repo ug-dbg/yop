@@ -2,7 +2,7 @@ package org.yop.orm.query.relation;
 
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.IJoin;
+import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.*;
 import org.yop.orm.util.ORMUtil;
 

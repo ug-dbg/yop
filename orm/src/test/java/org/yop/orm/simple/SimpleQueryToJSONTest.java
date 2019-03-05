@@ -12,7 +12,8 @@ import org.yop.orm.evaluation.Path;
 import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.query.*;
+import org.yop.orm.query.Context;
+import org.yop.orm.query.sql.*;
 import org.yop.orm.simple.model.*;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
@@ -69,8 +70,8 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra)
 					.join(to(Extra::getOther))
 					.join(to(Extra::getSuperExtra))
 				))
@@ -83,8 +84,8 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 					Where.compare(Pojo::getVersion, Operator.EQ, 10564337),
 					new In(Pojo::getType, Arrays.asList(Pojo.Type.FOO, Pojo.Type.BAR))
 				))
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).where(Where.compare(Other::getName, Operator.NE, jopoName)));
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).where(Where.compare(Other::getName, Operator.NE, jopoName)));
 
 			Set<Pojo> found_ref = select.execute(connection);
 
@@ -96,8 +97,8 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 
 			select = select(Pojo.class)
 				.where(Where.naturalId(newPojo))
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).where(Where.compare(Other::getName, Operator.NE, jopoName)));
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).where(Where.compare(Other::getName, Operator.NE, jopoName)));
 
 			selectJSON = select.toJSON();
 			selectFromJSON = Select.fromJSON(selectJSON.toString(), connection.config());
@@ -136,8 +137,8 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra)
 					.join(to(Extra::getOther))
 					.join(to(Extra::getSuperExtra))
 				))
@@ -145,8 +146,8 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 				.execute(connection);
 
 			Select<Pojo> select = select(Pojo.class)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).where(Where.naturalId(other)));
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).where(Where.naturalId(other)));
 
 			Set<Pojo> found_ref = select.execute(connection);
 
@@ -187,8 +188,8 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra)
 					.join(to(Extra::getOther))
 					.join(to(Extra::getSuperExtra))
 				))
@@ -196,8 +197,8 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 				.execute(connection);
 
 			Select<Pojo> select = select(Pojo.class)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).where(Where.id(other.getId())));
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).where(Where.id(other.getId())));
 
 			Set<Pojo> found_ref = select.execute(connection);
 
@@ -243,16 +244,16 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 
 			Upsert<Pojo> upsert = upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
 				.checkNaturalID();
 			JsonObject upsertJSON = upsert.toJSON();
 			Upsert upsertFromJsON = Upsert.fromJSON(upsertJSON.toString(), connection.config());
 			upsertFromJsON.execute(connection);
 
 			Pojo fromDB = Select.from(Pojo.class)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))))
 				.uniqueResult(connection);
 			Assert.assertEquals(newPojo, fromDB);
 			Assert.assertTrue(!fromDB.getOthers().isEmpty());
@@ -297,8 +298,8 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 
 			upsert(Pojo.class)
 				.onto(newPojo)
-				.join(toSet(Pojo::getJopos))
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra)
+				.join(toN(Pojo::getJopos))
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra)
 					.join(to(Extra::getOther))
 					.join(to(Extra::getSuperExtra))
 				))
@@ -306,7 +307,7 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 				.execute(connection);
 
 			Delete<Pojo> delete = delete(Pojo.class)
-				.join(toSet(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))));
+				.join(toN(Pojo::getOthers).join(to(Other::getExtra).join(to(Extra::getSuperExtra))));
 			JsonObject deleteJSON = delete.toJSON();
 			delete = Delete.fromJSON(deleteJSON.toString(), connection.config());
 			delete.executeQueries(connection);
@@ -363,7 +364,7 @@ public class SimpleQueryToJSONTest extends DBMSSwitch {
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
+			if (o == null || this.getClass() != o.getClass()) return false;
 			PojoWithManyFields that = (PojoWithManyFields) o;
 			return
 				this.booleanField == that.booleanField

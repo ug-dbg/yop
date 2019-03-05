@@ -30,8 +30,8 @@ Examples :
 Upsert   
 .from(Library.class)  
 .onto(library)  
-.join(JoinSet.to(Library::getBooks).join(Join.to(Book::getAuthor)))    
-.join(JoinSet.to(Library::getEmployees))  
+.join(SQLJoin.toN(Library::getBooks).join(SQLJoin.to(Book::getAuthor)))    
+.join(SQLJoin.toN(Library::getEmployees))  
 .checkNaturalID()  
 .execute(connection);  
 ```
@@ -39,7 +39,7 @@ Upsert
 ```
 Collection<Book> booksFromDB = Select
 .from(Book.class)
-.join(Join.to(Book::getAuthor).where(Where.compare(Author::getName, Operator.LIKE, "%Roger%")))
+.join(SQLJoin.to(Book::getAuthor).where(Where.compare(Author::getName, Operator.LIKE, "%Roger%")))
 .execute(connection)
 ```  
   
@@ -80,7 +80,7 @@ See the [yop-android-poc](https://github.com/ug-dbg/yop-android-poc) for an infa
 * You use an SQL-like java API whose syntax looks like :
 ```
 Select.from(myClass).where(MyClass::GetFieldName()).joinAll().execute(connection);
-Upsert.from(myClass).onto(instance).checkNaturalKey().join(Join.to(MyClass::getRelation())).execute(connection);
+Upsert.from(myClass).onto(instance).checkNaturalKey().join(SQLJoin.to(MyClass::getRelation())).execute(connection);
 ```
 
 → The API aims at inlining requests as much as possible.  

@@ -19,7 +19,7 @@ import static javax.servlet.http.HttpServletResponse.*;
 /**
  * HTTP DELETE method implementation.
  * <br>
- * It simply executes a {@link org.yop.orm.query.Delete} operation.
+ * It simply executes a {@link org.yop.orm.query.sql.Delete} operation.
  */
 public class Delete implements HttpMethod {
 
@@ -28,7 +28,7 @@ public class Delete implements HttpMethod {
 	private Delete(){}
 
 	/**
-	 * Execute the delete operation using a {@link org.yop.orm.query.Delete} query.
+	 * Execute the delete operation using a {@link org.yop.orm.query.sql.Delete} query.
 	 * <br>
 	 * Read the joinAll & joinIDs parameters. Returns an empty json array as string.
 	 * @param restRequest the incoming request
@@ -37,7 +37,7 @@ public class Delete implements HttpMethod {
 	 */
 	@Override
 	public ExecutionOutput executeDefault(RestRequest restRequest, IConnection connection) {
-		org.yop.orm.query.Delete<Yopable> delete = org.yop.orm.query.Delete.from(restRequest.getRestResource());
+		org.yop.orm.query.sql.Delete<Yopable> delete = org.yop.orm.query.sql.Delete.from(restRequest.getRestResource());
 		if (restRequest.joinAll()) {
 			delete.joinAll();
 		}
