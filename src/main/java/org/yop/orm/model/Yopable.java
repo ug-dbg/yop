@@ -3,6 +3,7 @@ package org.yop.orm.model;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.NaturalId;
+import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
@@ -11,8 +12,8 @@ import java.util.Collection;
 
 /**
  * Interface Yop (persistent) objects must implement. <br>
- * It relies on a long ID. <br>
- * A yopable must provide an ID field that is a Long/long. It can either be :
+ * It relies on an ID. <br>
+ * A yopable must provide an ID field that is a {@link Comparable}. It can either be :
  * <ul>
  *     <li>named 'id'</li>
  *     <li>annotated with {@link org.yop.orm.annotations.Id}</li>
@@ -29,26 +30,41 @@ public interface Yopable {
 	/**
 	 * Get the current object ID.
 	 * <br>
-	 * A yopable must have a 'Long' id field. It can be named 'id' or not.
+	 * A yopable must have a {@link Comparable} id field. It can be named 'id' or not.
 	 * If not, it must be {@link org.yop.orm.annotations.Id} annotated.
 	 * <br>
 	 * Overriding this method to return explicitly the ID value can result in huge performance gain.
 	 * @return the id field value
 	 */
-	default Long getId() {
-		return (Long) Reflection.readField(this.getIdField(), this);
+	default Comparable getId() {
+		return (Comparable) Reflection.readField(this.getIdField(), this);
+	}
+
+	/**
+	 * Mostly, Yopable objects should have a Long ID.
+	 * <br>
+	 * You can override this method instead of {@link #setId(Comparable)} so you don't have to cast the id parameter.
+	 * @param id the Long id value for the current instance.
+	 */
+	default void setId(Long id) {
+		if (!Long.class.isAssignableFrom(this.getIdField().getType())) {
+			throw new YopMappingException(
+				"Using [" + id + "] to set a non Long ID field [" + Reflection.fieldToString(this.getIdField()) + "]"
+			);
+		}
+		this.setId((Comparable) id);
 	}
 
 	/**
 	 * Set the current object ID.
 	 * <br>
-	 * A yopable must have a 'Long' id field. It can be named 'id' or not.
+	 * A yopable must have a {@link Comparable} id field. It can be named 'id' or not.
 	 * If not, it must be {@link org.yop.orm.annotations.Id} annotated.
 	 * <br>
 	 * Overriding this method to set explicitly the ID value can result in huge performance gain.
 	 * @param id the id field value
 	 */
-	default void setId(Long id) {
+	default void setId(Comparable id) {
 		Reflection.set(this.getIdField(), this, id);
 	}
 

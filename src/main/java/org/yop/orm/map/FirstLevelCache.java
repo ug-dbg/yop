@@ -28,10 +28,10 @@ public class FirstLevelCache {
 	private static final Logger logger = LoggerFactory.getLogger(FirstLevelCache.class);
 
 	/** The {@link Yopable} objects cache map. Cache key for an object is : [class, id] */
-	private final Map<Class<? extends Yopable>, Map<Long, Yopable>> cache = new HashMap<>();
+	private final Map<Class<? extends Yopable>, Map<Comparable, Yopable>> cache = new HashMap<>();
 
 	/** Association cache : for a given collection field, then a Yopable ID → a map of associated objects, by ID */
-	private final Map<Field, Map<Long, Map<Long, Yopable>>> associationsCache = new HashMap<>();
+	private final Map<Field, Map<Comparable, Map<Comparable, Yopable>>> associationsCache = new HashMap<>();
 
 	/** We need to store the SQL config to get the SQL separator to use (for instance to build context) */
 	private final Config config;
@@ -59,7 +59,15 @@ public class FirstLevelCache {
 		String idShortened = results.getQuery().getShortened(
 			context + this.config.sqlSeparator() + ORMUtil.getIdColumn(clazz)
 		);
-		long id = results.getCursor().getLong(idShortened);
+
+		// FIXME : Quick fix → ID can be not Long (e.g. Integer). Check out Mapper.setFieldValue.
+		Comparable id;
+		if (Long.class.isAssignableFrom(ORMUtil.getIdField(clazz).getType())) {
+			id = results.getCursor().getLong(idShortened);
+		} else {
+			id = (Comparable) results.getCursor().getObject(idShortened);
+		}
+
 		if(this.has(clazz, id)) {
 			return this.get(clazz, id);
 		}
@@ -72,7 +80,7 @@ public class FirstLevelCache {
 	 * @param id    the object ID
 	 * @return true if there is a cache entry
 	 */
-	public boolean has(Class<? extends Yopable> clazz, Long id) {
+	public boolean has(Class<? extends Yopable> clazz, Comparable id) {
 		return this.cache.containsKey(clazz) && this.cache.get(clazz).containsKey(id);
 	}
 
@@ -85,7 +93,7 @@ public class FirstLevelCache {
 	 * @throws NullPointerException if there is no cache entry for the element class
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends Yopable> T get(Class<T> clazz, Long id) {
+	public <T extends Yopable> T get(Class<T> clazz, Comparable id) {
 		logger.trace("Cache hit for [{}#{}]", clazz.getName(), id);
 		return (T) this.cache.get(clazz).get(id);
 	}
@@ -136,7 +144,7 @@ public class FirstLevelCache {
 			);
 		}
 
-		Map<Long, Yopable> fieldValueAsMap = this.associationsCache.get(collectionField).get(source.getId());
+		Map<Comparable, Yopable> fieldValueAsMap = this.associationsCache.get(collectionField).get(source.getId());
 		if (! fieldValueAsMap.containsKey(target.getId())) {
 			((Collection) Reflection.readField(collectionField, source)).add(target);
 			fieldValueAsMap.put(target.getId(), target);

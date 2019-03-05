@@ -1,5 +1,6 @@
 package org.yop.orm.evaluation;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -23,7 +24,7 @@ public class IdIn  implements Evaluation {
 	private static final String VALUES = "values";
 
 	/** ID value restriction */
-	private final Collection<Long> values = new HashSet<>();
+	private final Collection<Comparable> values = new HashSet<>();
 
 	private IdIn() {}
 
@@ -31,7 +32,7 @@ public class IdIn  implements Evaluation {
 	 * Default constructor : gimme all the values you have !
 	 * @param values the ID value restriction. Can be empty. Must not be null.
 	 */
-	public IdIn(Collection<Long> values) {
+	public IdIn(Collection<? extends Comparable> values) {
 		this();
 		this.values.addAll(values);
 	}
@@ -61,13 +62,27 @@ public class IdIn  implements Evaluation {
 	public <T extends Yopable> JsonElement toJSON(Context<T> context) {
 		JsonObject json = Evaluation.super.toJSON(context).getAsJsonObject();
 		json.add(VALUES, new JsonArray());
-		this.values.forEach(json.get(VALUES).getAsJsonArray()::add);
+		for (Comparable value : this.values) {
+			if(value instanceof Number) {
+				json.get(VALUES).getAsJsonArray().add((Number) value);
+			} else if(value instanceof Boolean) {
+				json.get(VALUES).getAsJsonArray().add((Boolean) value);
+			} else {
+				json.get(VALUES).getAsJsonArray().add(String.valueOf(value));
+			}
+		}
 		return json;
 	}
 
 	@Override
 	public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element, Config config) {
 		Evaluation.super.toJSON(context);
+		JsonArray values = element.getAsJsonObject().get(VALUES).getAsJsonArray();
+		Gson gson = new Gson();
+		for (JsonElement value : values) {
+			this.values.add((Comparable) gson.fromJson(value, ORMUtil.getIdField(context.getTarget()).getType()));
+		}
+
 		element.getAsJsonObject().get(VALUES).getAsJsonArray().forEach(e -> this.values.add(e.getAsLong()));
 	}
 }

@@ -73,7 +73,7 @@ public class Mapper {
 		FirstLevelCache cache)
 		throws IllegalAccessException {
 
-		Map<Long, T> out = new LinkedHashMap<>();
+		Map<Comparable, T> out = new LinkedHashMap<>();
 		while (results.getCursor().next()) {
 			T element = Reflection.newInstanceNoArgs(clazz);
 			element = mapSimpleFields(results, element, context, cache);
@@ -304,7 +304,7 @@ public class Mapper {
 	 * @param <T> the target type
 	 * @return the found element or the input element after it is added in the collection
 	 */
-	private static <T extends Yopable> T searchForSelf(T element, Map<Long, T> elements, FirstLevelCache cache) {
+	private static <T extends Yopable> T searchForSelf(T element, Map<Comparable, T> elements, FirstLevelCache cache) {
 		if(elements.containsKey(element.getId())) {
 			return elements.get(element.getId());
 		}

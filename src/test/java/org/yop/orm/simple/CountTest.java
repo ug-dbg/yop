@@ -82,7 +82,7 @@ public class CountTest extends DBMSSwitch {
 			Assert.assertEquals(0, count);
 
 			for (Pojo pojo : pojos) {
-				if (pojo.getId() % 3 == 0) {
+				if ((long) pojo.getId() % 3 == 0) {
 					pojo.setActive(true);
 					Jopo jopo = new Jopo();
 					jopo.setName("jopo #1 for Pojo #" + pojo.getId());

@@ -49,7 +49,7 @@ public class ErrorsTest extends DBMSSwitch {
 		}
 	}
 
-	@Test(expected = YopMappingException.class)
+	@Test
 	public void test_not_long_id() throws SQLException, ClassNotFoundException {
 		try (IConnection connection = this.getConnection()) {
 			Yop.select(PojoNotLongId.class).execute(connection);

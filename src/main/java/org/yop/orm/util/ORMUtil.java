@@ -189,9 +189,6 @@ public class ORMUtil {
 			throw new YopMappingException("Several @Id fields ! Only one Field of Long type can be @Id !");
 		}
 		Field field = idFields.get(0);
-		if(!Long.class.isAssignableFrom(field.getType())) {
-			throw new YopMappingException("@Id field is not Long compatible !");
-		}
 		field.setAccessible(true);
 		return field;
 	}

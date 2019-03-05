@@ -215,7 +215,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occurred
 	 */
 	public Set<T> executeWithTwoQueries(IConnection connection) {
-		List<Long> ids;
+		List<Comparable> ids;
 
 		SQLPart request = this.toSQLAnswerRequest(connection.config());
 		Query query = new SimpleQuery(request, Query.Type.SELECT, connection.config());
@@ -445,7 +445,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'data' request.
 	 */
-	private SQLPart toSQLDataRequest(Set<Long> ids, Config config) {
+	private SQLPart toSQLDataRequest(Set<Comparable> ids, Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
 		SQLPart whereClause = Where.toSQL(
 			config,

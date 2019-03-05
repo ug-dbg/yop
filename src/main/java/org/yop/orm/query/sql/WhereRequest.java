@@ -64,7 +64,7 @@ abstract class WhereRequest<Request extends WhereRequest, T extends Yopable> ext
 	 * @return the current request, for chaining purposes
 	 */
 	@SuppressWarnings("unchecked")
-	public Request whereId(Long... ids) {
+	public Request whereId(Comparable... ids) {
 		this.where.and(new IdIn(Arrays.asList(ids)));
 		return (Request) this;
 	}

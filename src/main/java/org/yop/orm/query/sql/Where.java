@@ -162,7 +162,7 @@ public class Where<T extends Yopable> implements JsonAble {
 	 * @param ids the expected IDs for the target type.
 	 * @return an 'ID IN (?)' Evaluation object that can be added to the where clause
 	 */
-	public static Evaluation id(Long... ids) {
+	public static Evaluation id(Comparable... ids) {
 		return id(Arrays.asList(ids));
 	}
 
@@ -171,7 +171,7 @@ public class Where<T extends Yopable> implements JsonAble {
 	 * @param ids the expected IDs for the target type.
 	 * @return an 'ID IN (?)' Evaluation object that can be added to the where clause
 	 */
-	public static Evaluation id(Collection<Long> ids) {
+	public static Evaluation id(Collection<? extends Comparable> ids) {
 		return new IdIn(ids);
 	}
 
