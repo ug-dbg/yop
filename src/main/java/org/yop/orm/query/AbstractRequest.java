@@ -27,7 +27,7 @@ public abstract class AbstractRequest<Request extends AbstractRequest, T extends
 	 * Default constructor : final field {@link #context} must be initialized.
 	 * @param context the context of the request
 	 */
-	public AbstractRequest(Context<T> context) {
+	protected AbstractRequest(Context<T> context) {
 		this.context = context;
 	}
 
