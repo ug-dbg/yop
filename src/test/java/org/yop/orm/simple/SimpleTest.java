@@ -54,6 +54,7 @@ public class SimpleTest extends DBMSSwitch {
 		joins.add(SQLJoin.to(Pojo::getParent));
 		joins.add(Join.toN(Pojo::getChildren));
 		joins.print(Pojo.class);
+		joins.print(Pojo.class, logger::info);
 
 		joins = new IJoin.Joins<>();
 		JoinUtil.joinProfiles(Pojo.class, joins, "pojo_profile1", "pojo_children_and_parent");
