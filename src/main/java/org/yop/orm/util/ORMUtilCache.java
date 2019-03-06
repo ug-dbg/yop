@@ -15,7 +15,7 @@ import java.util.Map;
  * <br>
  * Very similar to {@link ReflectionCache} but I would like to keep pure reflection and YOP ORM concepts separated.
  */
-public class ORMUtilCache {
+class ORMUtilCache {
 
 	/** {@link JoinUtil#joinedFields(Class)} fields for a given class */
 	private static final MultiValuedMap<Class, Field> JOINED_FIELDS   = new ArrayListValuedHashMap<>();
