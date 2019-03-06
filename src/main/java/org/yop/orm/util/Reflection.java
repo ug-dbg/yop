@@ -372,7 +372,7 @@ public class Reflection {
 	}
 
 	/**
-	 * Check a primitive field value against a setter, twice, using {@link #primitiveTestValue(Class, int)}
+	 * Check a primitive field value against a setter, twice, using {@link #primitiveTestValue(Class, short)}
 	 * with a salt of 1.
 	 * @param field      the field to check
 	 * @param getter     the getter to use
@@ -392,7 +392,7 @@ public class Reflection {
 		R fieldValue) {
 
 		if(ClassUtils.isPrimitiveOrWrapper(field.getType()) && testValue != null && testValue.equals(fieldValue)) {
-			Object confirmValue = primitiveTestValue(field.getType(), 1);
+			Object confirmValue = primitiveTestValue(field.getType(), (short) 1);
 			set(field, instance, confirmValue);
 			return getter.apply(instance).equals(confirmValue);
 		}
@@ -560,7 +560,7 @@ public class Reflection {
 	@SuppressWarnings("unchecked")
 	private static <T> T newInstanceUnsafe(Class<T> clazz) {
 		if (ClassUtils.isPrimitiveOrWrapper(clazz)) {
-			return (T) primitiveTestValue(clazz, 0);
+			return (T) primitiveTestValue(clazz, (short) 0);
 		}
 
 		Class<? extends T> target = implementationOf(clazz);
@@ -588,18 +588,18 @@ public class Reflection {
 	 * @param salt      the amount to add to the reference test value (e.g. second test)
 	 * @return the test value for the primitive type
 	 */
-	private static Object primitiveTestValue(Class<?> primitive, int salt) {
+	private static Object primitiveTestValue(Class<?> primitive, short salt) {
 		Class<?> unwrapped = primitive.isPrimitive() ? primitive : Primitives.unwrap(primitive);
 		boolean confirm = salt > 0;
 
 		if(boolean.class.equals(unwrapped)) {return confirm != TEST_BOOL;}
-		if(byte.class.equals(unwrapped))    {return TEST_BYTE   + salt;}
-		if(char.class.equals(unwrapped))    {return TEST_CHAR   + salt;}
-		if(short.class.equals(unwrapped))   {return TEST_SHORT  + salt;}
-		if(int.class.equals(unwrapped))     {return TEST_INT    + salt;}
-		if(long.class.equals(unwrapped))    {return TEST_LONG   + salt;}
-		if(float.class.equals(unwrapped))   {return TEST_FLOAT  + salt;}
-		if(double.class.equals(unwrapped))  {return TEST_DOUBLE + salt;}
+		if(byte.class.equals(unwrapped))    {return (byte)  (TEST_BYTE   + salt);}
+		if(char.class.equals(unwrapped))    {return (char)  (TEST_CHAR   + salt);}
+		if(short.class.equals(unwrapped))   {return (short) (TEST_SHORT  + salt);}
+		if(int.class.equals(unwrapped))     {return         (TEST_INT    + salt);}
+		if(long.class.equals(unwrapped))    {return         (TEST_LONG   + salt);}
+		if(float.class.equals(unwrapped))   {return         (TEST_FLOAT  + salt);}
+		if(double.class.equals(unwrapped))  {return         (TEST_DOUBLE + salt);}
 
 		throw new ReflectionException("Primitive class [" + primitive.getName() + "] is not really primitive !");
 	}
