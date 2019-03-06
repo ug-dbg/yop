@@ -1,6 +1,7 @@
 package org.yop.orm.model;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.NaturalId;
 import org.yop.orm.exception.YopMappingException;
@@ -177,5 +178,21 @@ public interface Yopable {
 		}
 
 		return System.identityHashCode(o);
+	}
+
+	/**
+	 * A convenience method you can use if you want to override {@link #toString()}.
+	 * <br>
+	 * It uses a {@link ToStringBuilder} on every non transient and non synthetic field of the class or its superclass.
+	 * @param yopable the object to convert to String
+	 * @return a String representation of the object. "null" if the target object is null.
+	 */
+	static String toString(Yopable yopable) {
+		if (yopable == null) {
+			return "null";
+		}
+		ToStringBuilder builder = new ToStringBuilder(yopable);
+		ORMUtil.getFields(yopable.getClass(), true).forEach(f -> builder.append(Reflection.readField(f, yopable)));
+		return builder.toString();
 	}
 }
