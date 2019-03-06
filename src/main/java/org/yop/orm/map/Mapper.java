@@ -209,7 +209,7 @@ public class Mapper {
 		try {
 			switch (strategy) {
 				case NAME:
-					Reflection.set(enumField, element, Enum.valueOf(enumType, String.valueOf(value)));
+					Reflection.set(enumField, element, Enum.valueOf(enumType, String.valueOf(value).trim()));
 					break;
 				case ORDINAL:
 					// Integer.valueOf(Objects.toString(val)) → ordinal is stored as a string... A bit preposterous !
