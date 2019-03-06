@@ -57,11 +57,6 @@ class YopXMLConverter<Root extends Yopable> extends ReflectionConverter {
 	}
 
 	@Override
-	public void marshal(Object original, HierarchicalStreamWriter writer, MarshallingContext context) {
-		super.marshal(original, writer, context);
-	}
-
-	@Override
 	protected boolean shouldUnmarshalTransientFields() {
 		return true;
 	}
