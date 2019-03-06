@@ -18,6 +18,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -155,7 +156,16 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 		 * @param from the source class for these joins.
 		 */
 		public void print(Class<From> from) {
-			logger.info(from.getName());
+			this.print(from, logger::info);
+		}
+
+		/**
+		 * Print the current joins into the given consumer.
+		 * @param from     the source class for these joins.
+		 * @param consumer an action to execute on each print line
+		 */
+		public void print(Class<From> from, Consumer<String> consumer) {
+			consumer.accept(from.getName());
 			List<String> lines = new ArrayList<>();
 			for (int i = 0; i < this.size() - 1; i++) {
 				JoinUtil.printJoin("", from, this.get(i), false, lines);
@@ -164,7 +174,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 			if (this.size() > 0) {
 				JoinUtil.printJoin("", from, this.get(this.size() - 1), true, lines);
 			}
-			lines.forEach(logger::info);
+			lines.forEach(consumer);
 		}
 
 		/**
