@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * Several GSON {@link JsonSerializer} instances for several types, mostly java.time types.
  */
-public class Serializers {
+class Serializers {
 
 	private static final JsonSerializer<?> TO_STRING = (src, targetType, c) -> new JsonPrimitive(src.toString());
 	private static final JsonSerializer<Time> SQL_TIME = (src, targetType, c) -> new JsonPrimitive(src.getTime());

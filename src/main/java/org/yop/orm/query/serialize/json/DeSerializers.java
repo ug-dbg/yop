@@ -13,7 +13,7 @@ import java.util.function.Function;
 /**
  * Several GSON {@link JsonDeserializer} instances for several types, mostly java.time types.
  */
-public class DeSerializers {
+class DeSerializers {
 
 	private static final JsonDeserializer<LocalDateTime> LOCAL_DATE_TIME = forFunction(LocalDateTime::parse);
 	private static final JsonDeserializer<LocalDate> LOCAL_DATE = forFunction(LocalDate::parse);
