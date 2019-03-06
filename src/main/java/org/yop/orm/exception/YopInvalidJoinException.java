@@ -11,10 +11,14 @@ import java.util.function.Function;
  * <br>
  * e.g. [Library::getBooks, Author::getBooks, String::length]
  * <br>
- * See for instance : {@link org.yop.orm.query.IJoin.Joins#join(Context, Function[])}
+ * See for instance : {@link org.yop.orm.query.join.IJoin.Joins#join(Context, Function[])}
  */
 public class YopInvalidJoinException extends YopRuntimeException {
 	public YopInvalidJoinException(String message) {
 		super(message);
+	}
+
+	public YopInvalidJoinException(String message, Throwable cause) {
+		super(message, cause);
 	}
 }

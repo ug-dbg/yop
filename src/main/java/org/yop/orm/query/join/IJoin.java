@@ -207,7 +207,8 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 					field = Reflection.findField(next, function);
 				} catch (RuntimeException e) {
 					throw new YopInvalidJoinException(
-						"The join path is invalid. Field not found for lambda @[" + path + "]"
+						"The join path is invalid. Field not found for lambda @[" + path + "]",
+						e
 					);
 				}
 
