@@ -57,10 +57,9 @@ See the [yop-android-poc](https://github.com/ug-dbg/yop-android-poc) for an infa
 ## What are the requirements ?
 * **Java 8** (→ method references are a key requirement of YOP)
 * *Sqlite/mysql/postgres/oracle/mssql* database
-* Accepting some *strong and not very casual DB constraints* : 
-  * 1 auto incremented (or with a sequence) ID per class/table
+* For now Yop does not support primary key
 * Using a (very) limited set of mapping annotations and implementing the *Serializable like* Yopable interface. 
-* Identifying cycles in your data graph. Use 'transient' keyword to cut cycles if you need the 'joinAll' clause.
+* Identifying cycles in your data graph.
 * Handling your connections/transactions yourself
 
 
