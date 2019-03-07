@@ -215,7 +215,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occurred
 	 */
 	public Set<T> executeWithTwoQueries(IConnection connection) {
-		List<Long> ids;
+		List<Comparable> ids;
 
 		SQLPart request = this.toSQLAnswerRequest(connection.config());
 		Query query = new SimpleQuery(request, Query.Type.SELECT, connection.config());
@@ -224,7 +224,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 			connection,
 			query,
 			this.context.getTarget(),
-			this.cache == null ? new FirstLevelCache(connection.config()) : this.cache
+			this.cache == null ? new FirstLevelCache() : this.cache
 		);
 		ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toList());
 
@@ -242,7 +242,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 			connection,
 			query,
 			this.context.getTarget(),
-			this.cache == null ? new FirstLevelCache(connection.config()) : this.cache
+			this.cache == null ? new FirstLevelCache() : this.cache
 		);
 	}
 
@@ -280,7 +280,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 			connection,
 			new SimpleQuery(request, Query.Type.SELECT, connection.config()),
 			this.context.getTarget(),
-			this.cache == null ? new FirstLevelCache(connection.config()) : this.cache
+			this.cache == null ? new FirstLevelCache() : this.cache
 		);
 	}
 
@@ -445,7 +445,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'data' request.
 	 */
-	private SQLPart toSQLDataRequest(Set<Long> ids, Config config) {
+	private SQLPart toSQLDataRequest(Set<Comparable> ids, Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
 		SQLPart whereClause = Where.toSQL(
 			config,

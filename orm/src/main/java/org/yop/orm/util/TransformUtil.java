@@ -5,6 +5,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.reflection.Reflection;
+import org.yop.orm.exception.YopMapperException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -49,6 +50,16 @@ public class TransformUtil {
 
 		if (Boolean.class.equals(Primitives.wrap(into))) {
 			return BooleanUtils.toBoolean(String.valueOf(what)) || "1".equals(String.valueOf(what));
+		}
+
+		if (Character.class.equals(Primitives.wrap(into)) && what instanceof String) {
+			if (((String) what).length() != 1) {
+				throw new YopMapperException(
+					"Attempting to set character from String whose length is != 1 : "
+					+ what + "→" + into.getName()
+				);
+			}
+			return ((String) what).charAt(0);
 		}
 
 		if(String.class.equals(into)) {

@@ -119,7 +119,7 @@ public class Paging implements JsonAble {
 	 * @param ids the ids to filter
 	 * @return a new List of ids, a sublist of the ids parameters for the current paging offset and limit.
 	 */
-	List<Long> pageIds(List<Long> ids) {
+	List<Comparable> pageIds(List<Comparable> ids) {
 		int from = this.offset == null ? 0 : this.offset.intValue();
 		int to = this.limit == null ? (ids.size()) : Math.min(ids.size(), from + this.limit.intValue());
 		return from > to ? new ArrayList<>(0) : ids.subList(from, to);

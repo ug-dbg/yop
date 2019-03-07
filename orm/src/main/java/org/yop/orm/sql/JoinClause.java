@@ -33,10 +33,6 @@ public class JoinClause implements Comparable<JoinClause> {
 		this.parameters = parameters;
 	}
 
-	public String getJoinClause() {
-		return this.joinClause;
-	}
-
 	public Context<?> getContext() {
 		return this.context;
 	}
@@ -85,7 +81,7 @@ public class JoinClause implements Comparable<JoinClause> {
 			List<Parameters.Parameter> parameters = new ArrayList<>();
 			StringBuilder sql = new StringBuilder();
 			for (JoinClause joinClause : clauses) {
-				sql.append(joinClause.getJoinClause());
+				sql.append(joinClause.joinClause);
 				parameters.addAll(joinClause.getParameters());
 			}
 

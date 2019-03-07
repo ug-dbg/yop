@@ -21,7 +21,7 @@ public class FallbackTransformer implements ITransformer<Object> {
 	 * @return what transformed into... or not
 	 */
 	@Override
-	public Object fromSQL(Object fromJDBC, Class<?> into) {
+	public Object fromSQL(Object fromJDBC, Class into) {
 		return TransformUtil.transform(fromJDBC, into);
 	}
 

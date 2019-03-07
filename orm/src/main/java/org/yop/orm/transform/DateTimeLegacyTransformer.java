@@ -63,7 +63,7 @@ public class DateTimeLegacyTransformer implements ITransformer<Object> {
 	 * then assign to the target data type.
 	 */
 	@Override
-	public Object fromSQL(Object fromJDBC, Class<?> into) {
+	public Object fromSQL(Object fromJDBC, Class into) {
 		if (fromJDBC instanceof Calendar || fromJDBC instanceof Instant || fromJDBC.getClass() == Date.class) {
 			return fromJDBC;
 		}

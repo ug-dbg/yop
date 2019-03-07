@@ -8,7 +8,6 @@ import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Results;
-import org.yop.orm.sql.adapter.IResultCursor;
 import org.yop.orm.transform.ITransformer;
 import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
@@ -73,7 +72,7 @@ public class Mapper {
 		FirstLevelCache cache)
 		throws IllegalAccessException {
 
-		Map<Long, T> out = new LinkedHashMap<>();
+		Map<Comparable, T> out = new LinkedHashMap<>();
 		while (results.getCursor().next()) {
 			T element = Reflection.newInstanceNoArgs(clazz);
 			element = mapSimpleFields(results, element, context, cache);
@@ -127,6 +126,38 @@ public class Mapper {
 	}
 
 	/**
+	 * Read the current results row for the given field and context.
+	 * <br>
+	 * <b>⚠⚠⚠ This method DOES NOT iterate over the resultset ! ⚠⚠⚠</b>
+	 * @param results the SQL query results
+	 * @param field   the target element field
+	 * @param context the target element context
+	 * @return the value for the field and context, at the current row of the results. Maybe null.
+	 * @throws org.yop.orm.exception.YopSQLException an error occurred reading the resultset
+	 */
+	static Object read(Results results, Field field, String context) {
+		String columnName = field.getAnnotation(Column.class).name();
+		columnName = context + results.getQuery().getConfig().sqlSeparator() + columnName;
+		String shortened = results.getQuery().getShortened(columnName);
+
+		Object rawValue = results.getCursor().getObject(shortened);
+		if (rawValue == null) {
+			return null;
+		}
+
+		Class<?> fieldType = field.getType();
+		ITransformer transformer = ORMUtil.getTransformerFor(field);
+		try {
+			return transformer.fromSQL(results.getCursor().getObject(shortened, fieldType), fieldType);
+		} catch (YopSQLException | AbstractMethodError e) {
+			logger.debug("Error mapping [{}] of type [{}]. Manual fallback.", columnName, fieldType);
+			Object out = transformer.fromSQL(ITransformer.fallbackTransformer().fromSQL(rawValue, fieldType), fieldType);
+			logger.debug("Mapping [{}] of type [{}]. Manual fallback success.", columnName, fieldType);
+			return out;
+		}
+	}
+
+	/**
 	 * Map a given field from a Resultset line for a given context.
 	 * <br>
 	 * If the field @Column defines a {@link ITransformer}, this method uses it.
@@ -143,34 +174,14 @@ public class Mapper {
 	 */
 	@SuppressWarnings("unchecked")
 	private static void setFieldValue(Field field, Yopable element, String context, Results results) {
-		String columnName = field.getAnnotation(Column.class).name();
-		columnName = context + results.getQuery().getConfig().sqlSeparator() + columnName;
-		String shortened = results.getQuery().getShortened(columnName);
-		Class<?> fieldType = field.getType();
-
-		if (results.getCursor().getObject(shortened) != null) {
-			if (fieldType.isEnum()) {
-				setEnumValue(results.getCursor(), field, shortened, element);
+		Object value = read(results, field, context);
+		if (value != null) {
+			if (field.getType().isEnum()) {
+				setEnumValue(field, value, element);
 			} else {
-				ITransformer transformer = ORMUtil.getTransformerFor(field);
-				try {
-					Reflection.set(
-						field,
-						element,
-						transformer.fromSQL(results.getCursor().getObject(shortened, fieldType), fieldType)
-					);
-				} catch (YopSQLException | AbstractMethodError e) {
-					logger.debug("Error mapping [{}] of type [{}]. Manual fallback.", columnName, fieldType);
-					Object object = results.getCursor().getObject(shortened);
-					Reflection.set(
-						field,
-						element,
-						transformer.fromSQL(ITransformer.fallbackTransformer().fromSQL(object, fieldType), fieldType)
-					);
-					logger.debug("Mapping [{}] of type [{}]. Manual fallback success.", columnName, fieldType);
-				}
+				Reflection.set(field, element, value);
 			}
-		} else if (!fieldType.isPrimitive()){
+		} else if (!field.getType().isPrimitive()){
 			Reflection.set(field, element, null);
 		}
 	}
@@ -181,19 +192,14 @@ public class Mapper {
 	 * This method simply search the value of the field in the result set, the enum strategy from @Column
 	 * and set the field value if some data was found in the resultset.
 	 * <br>
-	 * <b>⚠⚠⚠ This method DOES NOT iterate over the resultset ! ⚠⚠⚠</b>
-	 * @param resultSet  the resultset to read
 	 * @param enumField  the enum field. TYPE MUST BE ENUM
-	 * @param columnName the column name to read in the result set
 	 * @param element    the element on which the field must be set
-	 * @throws YopSQLException        Error reading the result set
 	 * @throws YopMapperException Error accessing the enum field on the element
 	 */
 	@SuppressWarnings("unchecked")
-	private static void setEnumValue(IResultCursor resultSet, Field enumField, String columnName, Object element) {
+	private static void setEnumValue(Field enumField, Object value, Yopable element) {
 		Column.EnumStrategy strategy = enumField.getAnnotation(Column.class).enum_strategy();
 		Class<? extends Enum> enumType = (Class<? extends Enum>) enumField.getType();
-		Object value = resultSet.getObject(columnName);
 
 		if(value == null) {
 			Reflection.set(enumField, element, null);
@@ -203,7 +209,7 @@ public class Mapper {
 		try {
 			switch (strategy) {
 				case NAME:
-					Reflection.set(enumField, element, Enum.valueOf(enumType, String.valueOf(value)));
+					Reflection.set(enumField, element, Enum.valueOf(enumType, String.valueOf(value).trim()));
 					break;
 				case ORDINAL:
 					// Integer.valueOf(Objects.toString(val)) → ordinal is stored as a string... A bit preposterous !
@@ -304,7 +310,7 @@ public class Mapper {
 	 * @param <T> the target type
 	 * @return the found element or the input element after it is added in the collection
 	 */
-	private static <T extends Yopable> T searchForSelf(T element, Map<Long, T> elements, FirstLevelCache cache) {
+	private static <T extends Yopable> T searchForSelf(T element, Map<Comparable, T> elements, FirstLevelCache cache) {
 		if(elements.containsKey(element.getId())) {
 			return elements.get(element.getId());
 		}

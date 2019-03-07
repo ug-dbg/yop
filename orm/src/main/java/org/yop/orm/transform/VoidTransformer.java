@@ -29,7 +29,7 @@ public class VoidTransformer implements ITransformer<Object> {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Object fromSQL(Object fromJDBC, Class<?> into) {
+	public Object fromSQL(Object fromJDBC, Class into) {
 		return fromJDBC;
 	}
 }

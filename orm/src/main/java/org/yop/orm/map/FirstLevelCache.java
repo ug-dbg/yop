@@ -3,7 +3,6 @@ package org.yop.orm.map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Results;
 import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
@@ -28,21 +27,10 @@ public class FirstLevelCache {
 	private static final Logger logger = LoggerFactory.getLogger(FirstLevelCache.class);
 
 	/** The {@link Yopable} objects cache map. Cache key for an object is : [class, id] */
-	private final Map<Class<? extends Yopable>, Map<Long, Yopable>> cache = new HashMap<>();
+	private final Map<Class<? extends Yopable>, Map<Comparable, Yopable>> cache = new HashMap<>();
 
 	/** Association cache : for a given collection field, then a Yopable ID → a map of associated objects, by ID */
-	private final Map<Field, Map<Long, Map<Long, Yopable>>> associationsCache = new HashMap<>();
-
-	/** We need to store the SQL config to get the SQL separator to use (for instance to build context) */
-	private final Config config;
-
-	/**
-	 * Default constructor. SQL Config is required to get the SQL separator to use.
-	 * @param config the SQL config. Needed for the sql separator to use.
-	 */
-	public FirstLevelCache(Config config) {
-		this.config = config;
-	}
+	private final Map<Field, Map<Comparable, Map<Comparable, Yopable>>> associationsCache = new HashMap<>();
 
 	/**
 	 * Try to hit the cache.
@@ -56,10 +44,7 @@ public class FirstLevelCache {
 	 * @throws org.yop.orm.exception.YopSQLException an error occurred reading the resultset
 	 */
 	public <T extends Yopable> T tryCache(Results results, Class<T> clazz, String context) {
-		String idShortened = results.getQuery().getShortened(
-			context + this.config.sqlSeparator() + ORMUtil.getIdColumn(clazz)
-		);
-		long id = results.getCursor().getLong(idShortened);
+		Comparable id = (Comparable) Mapper.read(results, ORMUtil.getIdField(clazz), context);
 		if(this.has(clazz, id)) {
 			return this.get(clazz, id);
 		}
@@ -72,7 +57,7 @@ public class FirstLevelCache {
 	 * @param id    the object ID
 	 * @return true if there is a cache entry
 	 */
-	public boolean has(Class<? extends Yopable> clazz, Long id) {
+	public boolean has(Class<? extends Yopable> clazz, Comparable id) {
 		return this.cache.containsKey(clazz) && this.cache.get(clazz).containsKey(id);
 	}
 
@@ -85,7 +70,7 @@ public class FirstLevelCache {
 	 * @throws NullPointerException if there is no cache entry for the element class
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends Yopable> T get(Class<T> clazz, Long id) {
+	public <T extends Yopable> T get(Class<T> clazz, Comparable id) {
 		logger.trace("Cache hit for [{}#{}]", clazz.getName(), id);
 		return (T) this.cache.get(clazz).get(id);
 	}
@@ -123,7 +108,6 @@ public class FirstLevelCache {
 	 */
 	@SuppressWarnings("unchecked")
 	public <T extends Yopable> T getOrDefault(Field collectionField, Yopable source, T target) {
-
 		if (! this.associationsCache.containsKey(collectionField)) {
 			this.associationsCache.put(collectionField, new HashMap<>());
 		}
@@ -136,7 +120,7 @@ public class FirstLevelCache {
 			);
 		}
 
-		Map<Long, Yopable> fieldValueAsMap = this.associationsCache.get(collectionField).get(source.getId());
+		Map<Comparable, Yopable> fieldValueAsMap = this.associationsCache.get(collectionField).get(source.getId());
 		if (! fieldValueAsMap.containsKey(target.getId())) {
 			((Collection) Reflection.readField(collectionField, source)).add(target);
 			fieldValueAsMap.put(target.getId(), target);

@@ -33,7 +33,7 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 
 	private static final Logger logger = LoggerFactory.getLogger(SQLJoin.class);
 
-	private SQLJoin() {
+	protected SQLJoin() {
 		super();
 	}
 

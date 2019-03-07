@@ -5,7 +5,6 @@ import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.converters.reflection.FieldDictionary;
 import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
 import com.thoughtworks.xstream.converters.reflection.ReflectionConverter;
-import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.mapper.Mapper;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.join.IJoin;
@@ -54,11 +53,6 @@ class YopXMLConverter<Root extends Yopable> extends ReflectionConverter {
 	@Override
 	public boolean canConvert(Class type) {
 		return Yopable.class.isAssignableFrom(type);
-	}
-
-	@Override
-	public void marshal(Object original, HierarchicalStreamWriter writer, MarshallingContext context) {
-		super.marshal(original, writer, context);
 	}
 
 	@Override

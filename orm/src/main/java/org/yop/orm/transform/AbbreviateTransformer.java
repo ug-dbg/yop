@@ -38,7 +38,7 @@ public class AbbreviateTransformer implements ITransformer<String> {
 	 * Do nothing, cast to string and return.
 	 */
 	@Override
-	public String fromSQL(Object fromJDBC, Class<?> into) {
+	public String fromSQL(Object fromJDBC, Class into) {
 		return (String) fromJDBC;
 	}
 

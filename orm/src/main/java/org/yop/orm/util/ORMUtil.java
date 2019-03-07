@@ -194,18 +194,15 @@ public class ORMUtil {
 		if(idFields.size() == 0) {
 			logger.trace("No @Id field on [{}]. Assuming 'id'", clazz.getName());
 			Field field = Reflection.get(clazz, "id");
-			if(field != null && Long.class.isAssignableFrom(Primitives.wrap(field.getType()))) {
+			if(field != null && Comparable.class.isAssignableFrom(Primitives.wrap(field.getType()))) {
 				return field;
 			}
-			throw new YopMappingException("No Long ID field in [" + clazz.getName() + "] !");
+			throw new YopMappingException("No Comparable ID field in [" + clazz.getName() + "] !");
 		}
 		if(idFields.size() > 1) {
-			throw new YopMappingException("Several @Id fields ! Only one Field of Long type can be @Id !");
+			throw new YopMappingException("Several @Id fields ! Only one Comparable Field can be @Id !");
 		}
 		Field field = idFields.get(0);
-		if(!Long.class.isAssignableFrom(field.getType())) {
-			throw new YopMappingException("@Id field is not Long compatible !");
-		}
 		field.setAccessible(true);
 		return field;
 	}
