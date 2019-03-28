@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.*;
 import org.yop.orm.exception.YopMappingException;
+import org.yop.orm.model.Alias;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
@@ -18,6 +19,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -166,6 +168,23 @@ public class ORMUtil {
 		return StringUtils.isBlank(schemaName) ? tableName : schemaName + config.dot() + tableName;
 	}
 
+	public static boolean isIdField(Field field) {
+		return getIdFields(field.getDeclaringClass()).contains(field);
+	}
+
+	public static boolean isIdSet(Object element) {
+		return element != null
+			&& ORMUtil
+			.getIdFields(element.getClass())
+			.stream()
+			.map(f -> Reflection.readField(f, element))
+			.anyMatch(Objects::nonNull);
+	}
+
+	public static boolean isAutoIncrement(Field field) {
+		return field != null && field.isAnnotationPresent(Id.class) && field.getAnnotation(Id.class).autoincrement();
+	}
+
 	/**
 	 * Get the ID field for a Yopable class.
 	 * <br>
@@ -176,21 +195,61 @@ public class ORMUtil {
 	 * @throws YopMappingException no Yop compatible ID field found or several ones.
 	 */
 	public static <T extends Yopable> Field getIdField(Class<T> clazz) {
+		List<Field> idFields = getIdFields(clazz);
+		if(idFields.size() > 1) {
+			throw new YopMappingException("Several @Id fields !");
+		}
+		return idFields.get(0);
+	}
+
+	/**
+	 * Get the ID field for a Yopable class.
+	 * <br>
+	 * For now, Yop only supports one single technical Long ID field, that might have (or not) an @Id annotation.
+	 * @param clazz the Yopable class
+	 * @param <T> the yopable type
+	 * @return the ID field, set accessible.
+	 * @throws YopMappingException no Yop compatible ID field found or several ones.
+	 */
+	public static <T> List<Field> getIdFields(Class<T> clazz) {
 		List<Field> idFields = getFields(clazz, Id.class);
 		if(idFields.size() == 0) {
 			logger.trace("No @Id field on [{}]. Assuming 'id'", clazz.getName());
 			Field field = Reflection.get(clazz, "id");
 			if(field != null && Comparable.class.isAssignableFrom(Primitives.wrap(field.getType()))) {
-				return field;
+				return Collections.singletonList(field);
 			}
 			throw new YopMappingException("No Comparable ID field in [" + clazz.getName() + "] !");
 		}
-		if(idFields.size() > 1) {
-			throw new YopMappingException("Several @Id fields ! Only one Comparable Field can be @Id !");
+		idFields.forEach(f -> f.setAccessible(true));
+		return idFields;
+	}
+
+	/**
+	 * Get the column alias for the given field, in a given context.
+	 * @param tableAlias the current table prefix
+	 * @param config     the SQL configuration
+	 * @param field      the field to alias
+	 * @return a map of aliases : Field → SQL column alias for context
+	 */
+	public static <T> Alias<T> alias(String tableAlias, Config config, Field field) {
+		if (field.isAnnotationPresent(Column.class)) {
+			return new Alias<>(field, tableAlias + config.dot() + field.getAnnotation(Column.class).name());
+		} else {
+			return new Alias<>(field, tableAlias + config.dot() + field.getName().toUpperCase());
 		}
-		Field field = idFields.get(0);
-		field.setAccessible(true);
-		return field;
+	}
+
+	/**
+	 * Get the column aliases for the given fields, in a given context.
+	 * @param context the current context
+	 * @param config  the SQL configuration
+	 * @param fields  the fields to alias
+	 * @return a map of aliases : Field → SQL column alias for context
+	 */
+	public static <T> Alias.Aliases<T> aliases(Context context, Config config, Collection<Field> fields) {
+		String prefix = context.tableAlias();
+		return new Alias.Aliases<>(fields.stream().map(f -> ORMUtil.<T>alias(prefix, config, f)).collect(Collectors.toList()));
 	}
 
 	/**
@@ -244,6 +303,20 @@ public class ORMUtil {
 	public static <T extends Yopable> String getIdColumn(Class<T> clazz) {
 		Field field = getIdField(clazz);
 		return field.isAnnotationPresent(Column.class) ? field.getAnnotation(Column.class).name() : "ID";
+	}
+
+	/**
+	 * Get the ID column name for a Yopable
+	 * @param clazz the yopable class
+	 * @param <T> the yopable type
+	 * @return the ID column name or "ID" if the id field has no @Column annotation
+	 */
+	public static <T extends Yopable> String[] getIdColumns(Class<T> clazz) {
+		List<Field> idFields = getIdFields(clazz);
+		return idFields
+			.stream()
+			.map(f -> f.isAnnotationPresent(Column.class) ? f.getAnnotation(Column.class).name() : "ID")
+			.toArray(String[]::new);
 	}
 
 	/**
@@ -351,6 +424,17 @@ public class ORMUtil {
 	 */
 	public static String getIdColumn(Context<? extends Yopable> context, Config config) {
 		return context.getPath(getIdField(context.getTarget()), config);
+	}
+
+	/**
+	 * Create the fully qualified ID column for a given context.
+	 * @param context the target context
+	 * @return the qualified ID column
+	 */
+	public static Map<Field, String> getIdColumns(Context<? extends Yopable> context, Config config) {
+		return getIdFields(context.getTarget())
+			.stream()
+			.collect(Collectors.toMap(Function.identity(), f -> context.getPath(f, config)));
 	}
 
 	/**

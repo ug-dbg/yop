@@ -24,12 +24,6 @@ public class YopableTest {
 		yopable.setId(17L);
 	}
 
-	@Test(expected = ReflectionException.class)
-	public void test_get_id_not_accessible(){
-		NonAccessibleIdYopable yopable = new NonAccessibleIdYopable();
-		yopable.getId();
-	}
-
 	@Test
 	public void test_equals_accessible() {
 		AccessibleYopable yopable = new AccessibleYopable();

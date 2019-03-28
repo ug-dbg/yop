@@ -12,10 +12,7 @@ import org.yop.orm.annotations.Table;
 import org.yop.orm.evaluation.NaturalKey;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopSerializableQueryException;
-import org.yop.orm.model.JsonAble;
-import org.yop.orm.model.Yopable;
-import org.yop.orm.model.YopableEquals;
-import org.yop.orm.model.Yopables;
+import org.yop.orm.model.*;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.query.relation.Relation;
@@ -296,9 +293,21 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 			YopableEquals::new
 		);
 
-		// Assign ID on an element if there is a saved element that matched its natural ID
-		// ⚠⚠⚠ The equals and hashcode methods from YopableEquals are quite important here ! ⚠⚠⚠
-		this.elements.forEach(e -> e.setId(existing.getOrDefault(new YopableEquals(e), e).getId()));
+		List<Query> forceInsert = new ArrayList<>();
+		boolean composite = ID.isComposite(this.getTarget());
+		for (T element : this.elements) {
+			T ref = existing.getOrDefault(new YopableEquals(element), element);
+			if (composite) {
+				if (ref == element) {
+					forceInsert.add(this.toSQLInsert(element, connection.config()));
+				}
+			} else {
+				// Assign ID on an element if there is a saved element that matched its natural ID
+				// ⚠⚠⚠ The equals and hashcode methods from YopableEquals are quite important here ! ⚠⚠⚠
+				element.setId(ref.getId());
+			}
+		}
+		forceInsert.forEach(q -> Executor.executeQuery(connection, q));
 	}
 
 	/**
@@ -339,7 +348,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 
 		for (T element : this.elements) {
 			queries.add(
-				this.toSQL(element, element.getId() == null ? Query.Type.INSERT : Query.Type.UPDATE, config)
+				this.toSQL(element, ORMUtil.isIdSet(element) ? Query.Type.UPDATE : Query.Type.INSERT, config)
 			);
 		}
 
@@ -384,14 +393,18 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 		List<SQLPart> values = new ArrayList<>(this.valuePerColumn(element, config, false).values());
 
 		// UPDATE query : ID column must be set last (WHERE clause, not VALUES)
-		Field idField = ORMUtil.getIdField(element.getClass());
-		String idColumn = ORMUtil.getColumnName(idField);
-		SQLPart whereIdColumn = config.getDialect().equals(
-			idColumn,
-			SQLPart.parameter("idcolumn", element.getId(), idField)
-		);
+		List<Field> idFields = ORMUtil.getIdFields(element.getClass());
 
-		SQLPart sql = config.getDialect().update(this.getTableName(), values, whereIdColumn);
+		List<SQLPart> whereIdColumn = new ArrayList<>();
+		for (Field idField : idFields) {
+			String idColumn = ORMUtil.getColumnName(idField);
+			whereIdColumn.add(config.getDialect().equals(
+				idColumn,
+				SQLPart.parameter("idcolumn" + "_" + idColumn, Reflection.readField(idField, element), idField)
+			));
+		}
+
+		SQLPart sql = config.getDialect().update(this.getTableName(), values, SQLPart.join(" AND ", whereIdColumn));
 		return new SimpleQuery<>(sql, Query.Type.UPDATE, element, config);
 	}
 
@@ -421,7 +434,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 */
 	private Map<String, SQLPart> valuePerColumn(T element, Config config, boolean insert) {
 		List<Field> fields = ORMUtil.getFields(this.getTarget(), Column.class);
-		Field idField = ORMUtil.getIdField(this.getTarget());
+		List<Field> idFields = ORMUtil.getIdFields(this.getTarget());
 		Map<String, SQLPart> out = new HashMap<>();
 
 		for (Field field : fields) {
@@ -432,18 +445,25 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 
 			String columnName = ORMUtil.getColumnName(field);
 			Object value = ORMUtil.readField(field, element);
-			boolean isSequence = config.useSequences() && !ORMUtil.readSequence(idField, config).isEmpty();
+			boolean isSequence =
+				config.useSequences()
+				&& idFields.size() == 1
+				&& !ORMUtil.readSequence(idFields.get(0), config).isEmpty();
+
+			boolean autoIncrement = ORMUtil.isAutoIncrement(field);
 
 			SQLPart column;
-			if(field.equals(idField)) {
-				value = getUpsertIdValue(element, config);
-
+			if(ORMUtil.isIdField(field)) {
 				if (insert && isSequence) {
 					// ID field, insert, sequence → include this column as sequence nextval.
-					column = new SQLPart((String) value);
+					column = new SQLPart((String) getUpsertIdValue(element, config));
 				} else {
-					// ID field, insert, not a sequence → do not include this column : autoincrement.
-					continue;
+					if (! autoIncrement) {
+						column = SQLPart.parameter(columnName, value, field);
+					} else {
+						// ID field, insert, not a sequence → do not include this column : autoincrement.
+						continue;
+					}
 				}
 
 			} else {

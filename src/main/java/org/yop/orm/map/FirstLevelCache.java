@@ -2,9 +2,9 @@ package org.yop.orm.map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yop.orm.model.ID;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Results;
-import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
@@ -44,7 +44,7 @@ public class FirstLevelCache {
 	 * @throws org.yop.orm.exception.YopSQLException an error occurred reading the resultset
 	 */
 	public <T extends Yopable> T tryCache(Results results, Class<T> clazz, String context) {
-		Comparable id = (Comparable) Mapper.read(results, ORMUtil.getIdField(clazz), context);
+		Comparable id = ID.id(clazz, f -> (Comparable) Mapper.read(results, f, context));
 		if(this.has(clazz, id)) {
 			return this.get(clazz, id);
 		}

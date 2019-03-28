@@ -56,14 +56,6 @@ public class ErrorsTest extends DBMSSwitch {
 		}
 	}
 
-	@Test(expected = YopMappingException.class)
-	public void test_several_ids() throws SQLException, ClassNotFoundException {
-		try (IConnection connection = this.getConnection()) {
-			Yop.select(PojoSeveralIds.class).execute(connection);
-		}
-	}
-
-
 	@Test(expected = YopSQLException.class)
 	public void test_table_does_not_exist() throws SQLException, ClassNotFoundException {
 		try (IConnection connection = this.getConnection()) {

@@ -16,6 +16,7 @@ import org.yop.orm.query.Context;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.Reflection;
 
 import java.util.Collection;
@@ -512,13 +513,13 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 
 		return config.getDialect().selectWhereExists(
 			this.lock,
-			this.idAlias(config),
+			ORMUtil.aliases(this.context, config, ORMUtil.getIdFields(this.getTarget())),
 			columns,
 			this.getTableName(),
 			this.context.getPath(config),
 			joinClauses.toSQL(config),
 			joinClauses.toSQLWhere(),
-			subSelect.idAlias(config),
+			ORMUtil.aliases(subSelect.context, config, ORMUtil.getIdFields(this.getTarget())),
 			subSelect.context.getPath(config),
 			subSelectJoinClauses.toSQL(config),
 			Where.toSQL(config, subSelect.toSQLWhere(config), subSelectJoinClauses.toSQLWhere()),

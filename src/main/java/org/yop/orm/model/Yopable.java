@@ -38,7 +38,7 @@ public interface Yopable {
 	 * @return the id field value
 	 */
 	default Comparable getId() {
-		return (Comparable) Reflection.readField(this.getIdField(), this);
+		return ID.id(this);
 	}
 
 	/**

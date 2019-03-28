@@ -4,10 +4,9 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.NaturalId;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
-import org.yop.orm.util.ORMUtil;
 import org.yop.orm.sql.dialect.IDialect;
+import org.yop.orm.util.ORMUtil;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
@@ -125,7 +124,7 @@ public class Column implements Comparable<Column> {
 		);
 		column.notNull = ORMUtil.isColumnNotNullable(field);
 
-		if(field.equals(ORMUtil.getIdField((Class<? extends Yopable>)field.getDeclaringClass()))) {
+		if(ORMUtil.isIdField(field)) {
 			column.pk = new PrimaryKey(
 				!field.isAnnotationPresent(Id.class) || field.getAnnotation(Id.class).autoincrement()
 			);

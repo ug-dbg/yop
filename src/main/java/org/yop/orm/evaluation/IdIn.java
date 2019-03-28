@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.yop.orm.model.ID;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
@@ -11,9 +12,7 @@ import org.yop.orm.sql.SQLPart;
 import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +45,23 @@ public class IdIn  implements Evaluation {
 	public <Y extends Yopable> CharSequence toSQL(Context<Y> context, Config config) {
 		if(this.values.isEmpty()) {
 			return "";
+		}
+
+		if (ID.isComposite(context.getTarget())) {
+			List<SQLPart> equals = new ArrayList<>();
+			Map<Field, String> idColumns = ORMUtil.getIdColumns(context, config);
+			for (Comparable value : this.values) {
+				for (Map.Entry<Field, String> entry : idColumns.entrySet()) {
+					equals.add(new SQLPart(
+						entry.getValue() + "=?",
+						entry.getValue(),
+						((ID)value).get(entry.getKey()),
+						entry.getKey(),
+						false
+					));
+				}
+			}
+			return SQLPart.join(" OR ", equals);
 		}
 
 		String idColumn = ORMUtil.getIdColumn(context, config);

@@ -10,6 +10,7 @@ import org.yop.orm.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -135,14 +136,14 @@ public class Context<T extends Yopable> {
 	public Set<SQLColumn> getColumns(Config config) {
 		Set<SQLColumn> columns = new HashSet<>();
 		String path = this.getPath(config);
-		Field idField = ORMUtil.getIdField(this.target);
+		List<Field> idFields = ORMUtil.getIdFields(this.target);
 		for (Field field : ORMUtil.getFields(this.target, Column.class)) {
 			String name = field.getAnnotation(Column.class).name();
 			columns.add(new SQLColumn(
 				name,
 				path + config.dot() + name,
 				path + config.sqlSeparator() + name,
-				field.equals(idField)
+				idFields.contains(field)
 			));
 		}
 		return columns;

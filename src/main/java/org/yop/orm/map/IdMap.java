@@ -2,6 +2,7 @@ package org.yop.orm.map;
 
 import com.google.common.base.Joiner;
 import org.yop.orm.exception.YopMappingException;
+import org.yop.orm.model.ID;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
@@ -27,14 +28,14 @@ import java.util.stream.Collectors;
 public class IdMap {
 
 	/** The ID map. One class → a collection of IDs */
-	private final Map<Class<? extends Yopable>, Set<Long>> ids = new HashMap<>();
+	private final Map<Class<? extends Yopable>, Set<Comparable>> ids = new HashMap<>();
 
 	/**
 	 * Get the IDs for the given class.
 	 * @param clazz the target class
 	 * @return the IDs this map has for the given class
 	 */
-	public Collection<Long> getIdsForClass(Class<? extends Yopable> clazz) {
+	public Collection<Comparable> getIdsForClass(Class<? extends Yopable> clazz) {
 		return this.ids.getOrDefault(clazz, new HashSet<>());
 	}
 
@@ -42,7 +43,7 @@ public class IdMap {
 	 * Return an entry set of the IDs per class.
 	 * @return the {@link Map#entrySet()}of {@link #ids}
 	 */
-	public Set<Map.Entry<Class<? extends Yopable>, Set<Long>>> entries() {
+	public Set<Map.Entry<Class<? extends Yopable>, Set<Comparable>>> entries() {
 		return this.ids.entrySet();
 	}
 
@@ -62,7 +63,7 @@ public class IdMap {
 	 * @param clazz the target class
 	 * @param id the ID to add
 	 */
-	private void put(Class<? extends Yopable> clazz, Long id) {
+	private void put(Class<? extends Yopable> clazz, Comparable id) {
 		this.ids.putIfAbsent(clazz, new HashSet<>());
 		this.ids.get(clazz).add(id);
 	}
@@ -70,7 +71,7 @@ public class IdMap {
 	/**
 	 * The executor action that can be used to map a specific SQL request resultset into a new instance of IdMap.
 	 * <br>
-	 * See : {@link org.yop.orm.query.Select#toSQLIDsRequest(boolean, Config)}.
+	 * See : {@link org.yop.orm.query.sql.Select#toSQLIDsRequest(boolean, Config)}.
 	 * @param target the root target class (Context will be built from it)
 	 * @param config the SQL config. Needed for the sql separator to use.
 	 * @return the Action that can be given to the {@link Executor}
@@ -140,9 +141,7 @@ public class IdMap {
 	 * @return the ID on the current row, whose column matches [context→columnIDName]
 	 * @throws org.yop.orm.exception.YopSQLException an error occurred reading the resultset
 	 */
-	private static <T extends Yopable> Long readId(Results results, Class<T> target, String context) {
-		String idColumn = ORMUtil.getIdColumn(target);
-		String idColumnContext = context + results.getQuery().getConfig().sqlSeparator() + idColumn;
-		return results.getCursor().getLong(results.getQuery().getShortened(idColumnContext));
+	private static <T extends Yopable> Comparable readId(Results results, Class<T> target, String context) {
+		return ID.id(target, f -> (Comparable) Mapper.read(results, f, context));
 	}
 }

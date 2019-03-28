@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.gen.Column;
 import org.yop.orm.gen.ForeignKey;
 import org.yop.orm.gen.Table;
+import org.yop.orm.model.Alias;
 import org.yop.orm.query.sql.Paging;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.SQLPart;
@@ -159,7 +160,7 @@ public interface IDialect {
 	default String toSQL(Table table) {
 		Collection<String> elements = new ArrayList<>();
 		elements.addAll(table.getColumns().stream().sorted().map(Column::toSQL).collect(Collectors.toList()));
-		elements.addAll(table.getColumns().stream().map(c -> this.toSQLPK(table, c)).collect(Collectors.toList()));
+		elements.add(this.toSQLPK(table, table.getColumns().stream().filter(Column::isPK).toArray(Column[]::new)));
 		elements.addAll(table.getColumns().stream().map(this::toSQLFK).collect(Collectors.toList()));
 		elements.addAll(this.toSQLNK(table));
 
@@ -215,15 +216,19 @@ public interface IDialect {
 
 	/**
 	 * Generate the SQL CREATE query primary key portion
-	 * @param table  the table model
-	 * @param column the column model
+	 * @param table   the table model
+	 * @param columns the primary KEY columns model
 	 * @return the PK query portion. Empty if the column is not a PK.
 	 */
-	default String toSQLPK(Table table, Column column) {
-		if(column.getPk() == null) {
+	default String toSQLPK(Table table, Column... columns) {
+		if(columns.length == 0) {
 			return "";
 		}
-		return MessageFormat.format(PK, table.name() + "_PK", column.getName());
+		return MessageFormat.format(
+			PK,
+			table.name() + "_PK",
+			MessageUtil.join(",", Arrays.stream(columns).map(Column::getName).toArray(String[]::new))
+		);
 	}
 
 	/**
@@ -513,13 +518,13 @@ public interface IDialect {
 	 */
 	default SQLPart selectWhereExists(
 		boolean lock,
-		CharSequence idAlias,
+		Alias.Aliases idAlias,
 		CharSequence columns,
 		CharSequence from,
 		CharSequence as,
 		CharSequence joinClause,
 		CharSequence joinClauseWhere,
-		CharSequence subSelectIdAlias,
+		Alias.Aliases subSelectIdAlias,
 		CharSequence subSelectAs,
 		CharSequence subSelectJoinClause,
 		CharSequence subSelectWhereClause,
@@ -527,13 +532,13 @@ public interface IDialect {
 		CharSequence orderClause,
 		CharSequence... extras) {
 
-		SQLPart subSelect = this.selectDistinct(
+		SQLPart subSelect = this.select(
 			false,
 			subSelectIdAlias,
 			from,
 			subSelectAs,
 			subSelectJoinClause,
-			this.where(subSelectWhereClause, this.equals(idAlias, subSelectIdAlias)),
+			this.where(subSelectWhereClause, idAlias.equals(subSelectIdAlias, (a, b) -> this.equals((CharSequence) a, (CharSequence) b))),
 			pagingClause
 		);
 

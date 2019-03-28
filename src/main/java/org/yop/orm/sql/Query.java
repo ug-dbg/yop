@@ -214,10 +214,11 @@ public abstract class Query {
 
 	/**
 	 * Get the ID column of this query's {@link #target}.
-	 * @return an array of string that contains the target column ID at index 0, or an empty array if target is null.
+	 * @return an array of string with target column ID#1 at index 0, column ID#2 at index 1...
+	 *         or an empty array if target is null.
 	 */
 	public String[] getIdColumn() {
-		return this.target == null ? new String[0] : new String[] {ORMUtil.getIdColumn(this.target)};
+		return this.target == null ? new String[0] : ORMUtil.getIdColumns(this.target);
 	}
 
 	/**

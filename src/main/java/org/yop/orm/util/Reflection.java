@@ -60,6 +60,14 @@ public class Reflection {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <T> Class<T> classOf(T object) {
+		if (object == null) {
+			return null;
+		}
+		return (Class<T>) object.getClass();
+	}
+
 	/**
 	 * Read the package name of a class. Never return null.
 	 * @param clazz the class whose package is to read

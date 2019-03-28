@@ -154,14 +154,14 @@ public class Delete<T extends Yopable> extends WhereRequest<Delete<T>, T> implem
 		IdMap idMap = select.executeForIds(connection);
 		List<Query> queries = new ArrayList<>();
 
-		for (Map.Entry<Class<? extends Yopable>, Set<Long>> entry : idMap.entries()) {
+		for (Map.Entry<Class<? extends Yopable>, Set<Comparable>> entry : idMap.entries()) {
 
 			// Create some 'delete by ID' batches, due to some DBMS limitations.
-			List<List<Long>> batches = Lists.partition(
+			List<List<Comparable>> batches = Lists.partition(
 				new ArrayList<>(entry.getValue()),
 				connection.config().maxParams()
 			);
-			for (List<Long> batch : batches) {
+			for (List<Comparable> batch : batches) {
 				SQLPart sql = Delete.from(entry.getKey()).where(Where.id(batch)).toSQL(connection.config());
 				queries.add(new SimpleQuery(sql, Query.Type.DELETE, connection.config()));
 			}
