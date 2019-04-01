@@ -274,11 +274,13 @@ public class ORMUtil {
 	/**
 	 * Read the column name for a given field, using @Column annotation
 	 * @param columnField the field to read
-	 * @return {@link Column#name()} or {@link Class#getName()} in upper case if no specified name on @Column.
+	 * @return {@link Column#name()} or the upper case field name if no @Column or no specified name on @Column.
 	 */
 	public static String getColumnName(Field columnField) {
 		Column annotation = columnField.getAnnotation(Column.class);
-		return StringUtils.isEmpty(annotation.name()) ? columnField.getName().toUpperCase() : annotation.name();
+		return annotation == null || StringUtils.isEmpty(annotation.name())
+			? columnField.getName().toUpperCase()
+			: annotation.name();
 	}
 
 	/**

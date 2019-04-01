@@ -84,7 +84,7 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 	 * @param config             the SQL config (sql separator, use batch inserts...)
 	 */
 	@SuppressWarnings("unchecked")
-	public void toSQL(
+	private void toSQL(
 		JoinClause.JoinClauses joinClauses,
 		Context<From> parent,
 		boolean includeWhereClause,
@@ -118,28 +118,25 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 	 * @param config  the SQL config (sql separator, use batch inserts...)
 	 * @return the join table alias for the given context
 	 */
-	public String joinTableAlias(Context<From> context, Config config) {
+	String joinTableAlias(Context<From> context, Config config) {
 		Field field = this.getField(context.getTarget());
 		return context.getPath(config) + config.sqlSeparator() + field.getName();
 	}
 
 	/**
 	 * Find all the columns to select (search in current target type and sub-join clauses if required)
-	 * @param context              the context (columns are deduced using {@link Context#getColumns(Config)}.
-	 * @param addJoinClauseColumns true to add the columns from the sub-join clauses
+	 * @param context              the context (columns are deduced using {@link SQLColumn#columns(Context, Config)}.
 	 * @param config               the SQL config (sql separator, use batch inserts...)
 	 * @return the columns to select
 	 */
-	public Set<Context.SQLColumn> columns(Context<From> context, boolean addJoinClauseColumns, Config config) {
+	Set<SQLColumn> columns(Context<From> context, Config config) {
 		Context<To> to = this.to(context);
-		Set<Context.SQLColumn> columns = to.getColumns(config);
+		Set<SQLColumn> columns = SQLColumn.columns(to, config);
 
-		if (addJoinClauseColumns) {
-			for (IJoin<To, ? extends Yopable> join : this.getJoins()) {
-				@SuppressWarnings("unchecked")
-				SQLJoin<To, ? extends Yopable> sqlJoin = SQLJoin.toSQLJoin(join);
-				columns.addAll(sqlJoin.columns(to, true, config));
-			}
+		for (IJoin<To, ? extends Yopable> join : this.getJoins()) {
+			@SuppressWarnings("unchecked")
+			SQLJoin<To, ? extends Yopable> sqlJoin = SQLJoin.toSQLJoin(join);
+			columns.addAll(sqlJoin.columns(to, config));
 		}
 		return columns;
 	}
@@ -189,7 +186,7 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <From extends Yopable, To extends Yopable> SQLJoin<From, To> toSQLJoin(IJoin<From, To> join) {
+	static <From extends Yopable, To extends Yopable> SQLJoin<From, To> toSQLJoin(IJoin<From, To> join) {
 		if (join == null) {
 			return null;
 		}

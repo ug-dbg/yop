@@ -1,17 +1,12 @@
 package org.yop.orm.query;
 
 import org.apache.commons.lang.StringUtils;
-import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
-import org.yop.reflection.Reflection;
 
 import java.lang.reflect.Field;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
 
 /**
  * A context is basically a path in an oriented acyclic graph.
@@ -128,50 +123,6 @@ public class Context<T extends Yopable> {
 	}
 
 	/**
-	 * Get the columns to fetch for the given context (find all @Column annotated fields)
-	 * @param config the SQL config (sql separator, use batch inserts...)
-	 * @return the columns to fetch
-	 */
-	public Set<SQLColumn> getColumns(Config config) {
-		Set<SQLColumn> columns = new HashSet<>();
-		String path = this.getPath(config);
-		Field idField = ORMUtil.getIdField(this.target);
-		for (Field field : ORMUtil.getFields(this.target, Column.class)) {
-			String name = field.getAnnotation(Column.class).name();
-			columns.add(new SQLColumn(
-				name,
-				path + config.dot() + name,
-				path + config.sqlSeparator() + name,
-				field.equals(idField)
-			));
-		}
-		return columns;
-	}
-
-	/**
-	 * Create the context table alias of the current target
-	 * @return the target table alias
-	 */
-	public String tableAlias() {
-		return ORMUtil.getTargetName(this.target) + this.targetAliasSuffix;
-	}
-
-	/**
-	 * Create the ID alias of the current target and add a prefix.
-	 * @param prefix the prefix to use
-	 * @param config the SQL config (sql separator, use batch inserts...)
-	 * @return the target class ID alias
-	 */
-	public String idAlias(String prefix, Config config) {
-		T newInstance = Reflection.newInstanceNoArgs(this.target);
-		Field idField = Reflection.get(this.target, newInstance.getIdFieldName());
-		if(idField != null && idField.isAnnotationPresent(Column.class)) {
-			return prefix + config.dot() + idField.getAnnotation(Column.class).name();
-		}
-		return prefix + config.dot() + newInstance.getIdFieldName().toUpperCase();
-	}
-
-	/**
 	 * 2 contexts are considered the same if their {@link #getPath(Config)} returns the same value.
 	 * <br><br>
 	 * {@inheritDoc}
@@ -231,62 +182,5 @@ public class Context<T extends Yopable> {
 			context = context.parent;
 		}
 		return context;
-	}
-
-	/**
-	 * Convenience class to store an SQL column (qualified ID and alias)
-	 */
-	public static class SQLColumn {
-		private final String name;
-		private final String qualifiedId;
-		private final String alias;
-
-		/** Is this column the ID of a Yopable class ? */
-		private final boolean id;
-
-		SQLColumn(String name, String qualifiedId, String alias, boolean id) {
-			this.name = name;
-			this.qualifiedId = qualifiedId;
-			this.alias = alias;
-			this.id = id;
-		}
-
-		public String toSQL() {
-			return this.qualifiedId + " AS \"" + this.alias + "\"";
-		}
-
-		public String getName() {
-			return this.name;
-		}
-
-		public String getQualifiedId() {
-			return this.qualifiedId;
-		}
-
-		/**
-		 * @return {@link #id}
-		 */
-		public boolean isId() {
-			return this.id;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || this.getClass() != o.getClass()) return false;
-			SQLColumn sqlColumn = (SQLColumn) o;
-			return Objects.equals(this.qualifiedId, sqlColumn.qualifiedId)
-				&& Objects.equals(this.alias, sqlColumn.alias);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.qualifiedId, this.alias);
-		}
-
-		@Override
-		public String toString() {
-			return this.alias;
-		}
 	}
 }

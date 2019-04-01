@@ -1,6 +1,5 @@
 package org.yop.orm.query.sql;
 
-import com.google.common.base.Joiner;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.lang.StringUtils;
@@ -354,36 +353,14 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	}
 
 	/**
-	 * Find the target type ID alias
-	 * @param config the SQL config (sql separator, use batch inserts...)
-	 * @return the target type T id alias
-	 */
-	private String idAlias(Config config) {
-		return this.idAlias(this.context.tableAlias(), config);
-	}
-
-	/**
-	 * Find the target type ID alias
-	 * @param prefix a context prefix
-	 * @param config the SQL config (sql separator, use batch inserts...)
-	 * @return the target type T id alias that will be added before the computed id alias
-	 */
-	private String idAlias(String prefix, Config config) {
-		return this.context.idAlias(prefix, config);
-	}
-
-	/**
 	 * Create the SQL columns clause
 	 * @param addJoinClauseColumns true to fetch the columns from the join clauses
 	 * @param config               the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL columns clause
 	 */
-	private String toSQLColumnsClause(boolean addJoinClauseColumns, Config config) {
-		Set<Context.SQLColumn> columns = this.columns(addJoinClauseColumns, config);
-		return
-			columns.isEmpty()
-			? "*"
-			: Joiner.on(",").join(columns.stream().map(Context.SQLColumn::toSQL).collect(Collectors.toList()));
+	private CharSequence toSQLColumnsClause(boolean addJoinClauseColumns, Config config) {
+		Set<SQLColumn> columns = this.columns(addJoinClauseColumns, config);
+		return columns.isEmpty() ? "*" : SQLPart.join(",", columns);
 	}
 
 	/**
@@ -391,17 +368,9 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL columns clause for ID columns
 	 */
-	private String toSQLIdColumnsClause(Config config) {
-		Set<Context.SQLColumn> columns = this
-			.columns(true, config)
-			.stream()
-			.filter(Context.SQLColumn::isId)
-			.collect(Collectors.toSet());
-
-		return
-			columns.isEmpty()
-			? "*"
-			: Joiner.on(",").join(columns.stream().map(Context.SQLColumn::toSQL).collect(Collectors.toList()));
+	private CharSequence toSQLIdColumnsClause(Config config) {
+		Set<SQLColumn> columns = this.columns(true, config).stream().filter(SQLColumn::isId).collect(Collectors.toSet());
+		return columns.isEmpty() ? "*" : SQLPart.join(",", columns);
 	}
 
 	/**
@@ -447,9 +416,10 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 */
 	private SQLPart toSQLDataRequest(Set<Comparable> ids, Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
+		String idColumn = SQLColumn.id(this.context, config).qualifiedName();
 		SQLPart whereClause = Where.toSQL(
 			config,
-			config.getDialect().in(this.idAlias(config), ids.stream().map(String::valueOf).collect(Collectors.toList())) ,
+			config.getDialect().in(idColumn, ids.stream().map(String::valueOf).collect(Collectors.toList())) ,
 			joinClauses.toSQLWhere()
 		);
 
@@ -506,19 +476,21 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 		JoinClause.JoinClauses subSelectJoinClauses = subSelect.toSQLJoin(true, config);
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
 
-		String columns = count
-			? config.getDialect().toSQLCount(this.idAlias(config))
+		String idColumn = SQLColumn.id(this.context, config).qualifiedName();
+		String subSelectIdColumn = SQLColumn.id(subSelect.context, config).qualifiedName();
+		CharSequence columns = count
+			? config.getDialect().toSQLCount(idColumn)
 			: onlyIDs ? this.toSQLIdColumnsClause(config) : this.toSQLColumnsClause(true, config);
 
 		return config.getDialect().selectWhereExists(
 			this.lock,
-			this.idAlias(config),
+			idColumn,
 			columns,
 			this.getTableName(),
 			this.context.getPath(config),
 			joinClauses.toSQL(config),
 			joinClauses.toSQLWhere(),
-			subSelect.idAlias(config),
+			subSelectIdColumn,
 			subSelect.context.getPath(config),
 			subSelectJoinClauses.toSQL(config),
 			Where.toSQL(config, subSelect.toSQLWhere(config), subSelectJoinClauses.toSQLWhere()),
@@ -537,7 +509,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true, config);
 		return config.getDialect().selectWhereIdIn(
 			this.lock,
-			this.idAlias(config),
+			SQLColumn.id(this.context, config).qualifiedName(),
 			this.toSQLColumnsClause(true, config),
 			this.getTableName(),
 			this.context.getPath(config),
