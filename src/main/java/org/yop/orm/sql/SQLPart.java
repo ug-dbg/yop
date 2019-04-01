@@ -8,6 +8,7 @@ import org.yop.orm.util.MessageUtil;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,10 +35,10 @@ public class SQLPart implements CharSequence {
 	private static final Pattern REPLACEMENT_PATTERN = Pattern.compile("\\{:[a-z_]+\\}");
 	private static final String PARAM = "?";
 
-	private String sql;
-	private Parameters parameters = new Parameters();
+	protected String sql;
+	protected Parameters parameters = new Parameters();
 
-	private SQLPart() {}
+	protected SQLPart() {}
 
 	/**
 	 * Constructor with an sql string and no parameter. See {@link #SQLPart(String, List)}.
@@ -188,7 +189,7 @@ public class SQLPart implements CharSequence {
 	 * @param parts     the SQL parts to join
 	 * @return a new SQLPart instance
 	 */
-	public static SQLPart join(String separator, List<? extends CharSequence> parts) {
+	public static SQLPart join(String separator, Collection<? extends CharSequence> parts) {
 		List<String> sql = new ArrayList<>();
 		List<Parameters.Parameter> parameters = new ArrayList<>();
 		for (CharSequence part : parts) {

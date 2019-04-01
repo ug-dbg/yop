@@ -30,14 +30,14 @@ abstract class SQLRequest<Request extends AbstractRequest, T extends Yopable> ex
 	 * @param config               the SQL config (sql separator, use batch inserts...)
 	 * @return the columns to select
 	 */
-	protected Set<Context.SQLColumn> columns(boolean addJoinClauseColumns, Config config) {
-		Set<Context.SQLColumn> columns = this.context.getColumns(config);
+	protected Set<SQLColumn> columns(boolean addJoinClauseColumns, Config config) {
+		Set<SQLColumn> columns = SQLColumn.columns(this.context, config);
 
 		if (addJoinClauseColumns) {
 			for (IJoin<T, ? extends Yopable> join : this.joins) {
 				@SuppressWarnings("unchecked")
 				SQLJoin<T, ? extends Yopable> sqlJoin = SQLJoin.toSQLJoin(join);
-				columns.addAll(sqlJoin.columns(this.context, true, config));
+				columns.addAll(sqlJoin.columns(this.context, config));
 			}
 		}
 		return columns;

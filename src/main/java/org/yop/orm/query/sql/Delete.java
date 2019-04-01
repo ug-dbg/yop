@@ -4,7 +4,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.apache.commons.lang3.StringUtils;
 import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.JsonAble;
@@ -179,12 +178,9 @@ public class Delete<T extends Yopable> extends WhereRequest<Delete<T>, T> implem
 	 */
 	private SQLPart toSQL(Config config) {
 		Context<T> root = this.context;
-		Set<Context.SQLColumn> columns = this.columns(true, config);
+		Set<SQLColumn> columns = this.columns(true, config);
 
-		Set<String> tables = columns
-			.stream()
-			.map(c -> StringUtils.substringBeforeLast(c.getQualifiedId(), "."))
-			.collect(Collectors.toSet());
+		Set<String> tables = columns.stream().map(SQLColumn::tableName).collect(Collectors.toSet());
 
 		this.joins.forEach(j -> joinTables(j, root, tables, config));
 
