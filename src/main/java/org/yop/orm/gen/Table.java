@@ -156,11 +156,15 @@ public class Table implements Comparable<Table> {
 		table.schema = ORMUtil.getSchemaName(clazz);
 		table.name   = ORMUtil.getTableName(clazz);
 
+		Field idField = ORMUtil.getIdField(clazz);
 		table.columns = ORMUtil
 			.getFields(clazz, org.yop.orm.annotations.Column.class)
 			.stream()
+			.filter(f -> f != idField)
 			.map(field -> Column.fromField(field, config))
 			.collect(Collectors.toList());
+
+		table.columns.add(Column.fromField(idField, config));
 
 		table.columns.addAll(
 			JoinUtil.joinColumnYopableFields(clazz)

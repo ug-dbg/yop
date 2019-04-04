@@ -6,7 +6,6 @@ import com.google.gson.JsonParser;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.evaluation.NaturalKey;
@@ -54,6 +53,9 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 
 	private final List<Field> targetFields = new ArrayList<>();
 
+	/** For non-generated IDs, it can be required to force insert. */
+	private boolean forceInsert = false;
+
 	/** If set to true, any insert will do a preliminary SELECT query to find any entry whose natural key matches */
 	protected boolean checkNaturalID = false;
 
@@ -85,18 +87,17 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 		}
 
 		Class<U> target = join.getTarget(field);
-		boolean naturalKey = ! ORMUtil.getNaturalKeyFields(join.getTarget(field)).isEmpty();
 		if (children instanceof Collection) {
 			if(! ((Collection) children).isEmpty()) {
 				return new Upsert<>(target)
 					.onto((Collection<U>) children)
-					.checkNaturalID(naturalKey && this.checkNaturalID, this.propagateCheckNaturalID);
+					.checkNaturalID(this.checkNaturalID, this.propagateCheckNaturalID);
 			}
 			return null;
 		} else if (children instanceof Yopable) {
 			return new Upsert<>(target)
 				.onto((U) children)
-				.checkNaturalID(naturalKey && this.checkNaturalID, this.propagateCheckNaturalID);
+				.checkNaturalID(this.checkNaturalID, this.propagateCheckNaturalID);
 		}
 
 		throw new YopMappingException(
@@ -150,6 +151,16 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 				"Could not create query from JSON [" + StringUtils.abbreviate(json, 30) + "]", e
 			);
 		}
+	}
+
+	/**
+	 * Force the queries on all {@link #elements} to be {@link Query.Type#INSERT}.
+	 * <br>
+	 * @return the current UPSERT request, for chaining purpose
+	 */
+	public Upsert<T> forceInsert() {
+		this.forceInsert = true;
+		return this;
 	}
 
 	/**
@@ -281,24 +292,49 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 * using its {@link org.yop.orm.annotations.NaturalId}.
 	 * <br>
 	 * A {@link Select} query is executed with {@link NaturalKey} restrictions.
+	 * <br><br>
+	 * <b>
+	 * ⚠⚠⚠
+	 * <br>
+	 * If an element with a non-generated ID was not found using its natural ID, an insert is forced !
+	 * <br>
+	 * We want to use 'Upsert' on non-generated ID objects but we cannot rely on the "is ID field set?" paradigm.
+	 * <br>
+	 * ⚠⚠⚠
+	 * </b>
+	 *
 	 * @param connection the database connection to use
 	 */
 	protected void findNaturalIDs(IConnection connection) {
-		// Find existing elements
-		Select<T> naturalIDQuery = Select.from(this.getTarget());
-		for (T element : this.elements.stream().filter(e -> e.getId() == null).collect(Collectors.toList())) {
-			naturalIDQuery.where().or(new NaturalKey<>(element));
+		Map<YopableEquals, T> existing = new HashMap<>();
+
+		if (! ORMUtil.getNaturalKeyFields(this.getTarget()).isEmpty()) {
+			// Find existing elements
+			Select<T> naturalIDQuery = Select.from(this.getTarget());
+			for (T element : this.elements.stream().filter(e -> e.getId() == null).collect(Collectors.toList())) {
+				naturalIDQuery.where().or(new NaturalKey<>(element));
+			}
+
+			// Map with YopableEquals as key (YopableEquals has built-in natural ID equals/hashcode methods).
+			existing.putAll(Maps.uniqueIndex(
+				naturalIDQuery.execute(connection, Select.Strategy.EXISTS),
+				YopableEquals::new
+			));
 		}
 
-		// Map with YopableEquals as key (YopableEquals has built-in natural ID equals/hashcode methods).
-		Map<YopableEquals, T> existing = Maps.uniqueIndex(
-			naturalIDQuery.execute(connection, Select.Strategy.EXISTS),
-			YopableEquals::new
-		);
-
+		// For each element to upsert :
+		// - element was found using @NaturalId → set ID.
+		// - element was not found and ID is not autogen → force insert the element, a no-op update will be done.
+		// - element was not found and ID is autogen → do nothing, an insert will be done.
 		// Assign ID on an element if there is a saved element that matched its natural ID
 		// ⚠⚠⚠ The equals and hashcode methods from YopableEquals are quite important here ! ⚠⚠⚠
-		this.elements.forEach(e -> e.setId(existing.getOrDefault(new YopableEquals(e), e).getId()));
+		for (T e : this.elements) {
+			if (existing.containsKey(new YopableEquals(e))) {
+				e.setId(existing.get(new YopableEquals(e)).getId());
+			} else if (! ORMUtil.isAutogenId(e.getClass())) {
+				Executor.executeQuery(connection, this.toSQLInsert(e, connection.config()));
+			}
+		}
 	}
 
 	/**
@@ -338,9 +374,11 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 		List<SimpleQuery<T>> queries = new ArrayList<>();
 
 		for (T element : this.elements) {
-			queries.add(
-				this.toSQL(element, element.getId() == null ? Query.Type.INSERT : Query.Type.UPDATE, config)
-			);
+			queries.add(this.toSQL(
+				element,
+				this.forceInsert || element.getId() == null ? Query.Type.INSERT : Query.Type.UPDATE,
+				config
+			));
 		}
 
 		return queries;
@@ -406,13 +444,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	/**
 	 * Find all the columns and values to set.
 	 * <br>
-	 * <b>
-	 *     Here is what we return here :
-	 *     <ul>
-	 *         <li>insert : columnName → SQLPart[columnName = ?]</li>
-	 *         <li>update : columnName → SQLPart[?]</li>
-	 *     </ul>
-	 * </b>
+
 	 * N.B. For a sequence ID field in an insert query, the column is present if and only if sequences are activated.
 	 * @param element the element to read for its values
 	 * @param config  the SQL config (sql separator, use batch inserts...)
@@ -420,8 +452,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 * @return the columns to select and their SQL part parameter.
 	 */
 	private Map<String, SQLPart> valuePerColumn(T element, Config config, boolean insert) {
-		List<Field> fields = ORMUtil.getFields(this.getTarget(), Column.class);
-		Field idField = ORMUtil.getIdField(this.getTarget());
+		Set<Field> fields = ORMUtil.getColumnFields(this.getTarget());
 		Map<String, SQLPart> out = new HashMap<>();
 
 		for (Field field : fields) {
@@ -429,36 +460,61 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 				logger.debug("Partial update : field [{}] is excluded.", Reflection.fieldToString(field));
 				continue;
 			}
-
 			String columnName = ORMUtil.getColumnName(field);
-			Object value = ORMUtil.readField(field, element);
-			boolean isSequence = config.useSequences() && !ORMUtil.readSequence(idField, config).isEmpty();
-
-			SQLPart column;
-			if(field.equals(idField)) {
-				value = getUpsertIdValue(element, config);
-
-				if (insert && isSequence) {
-					// ID field, insert, sequence → include this column as sequence nextval.
-					column = new SQLPart((String) value);
-				} else {
-					// ID field, insert, not a sequence → do not include this column : autoincrement.
-					continue;
-				}
-
-			} else {
-				column = SQLPart.parameter(columnName, value, field);
+			SQLPart columnValue = this.columnValue(field, element, config, insert);
+			if (columnValue != null) {
+				out.put(columnName, columnValue);
 			}
-
-			// Update : columnName → [columnName = ?]
-			// Insert → columnName → [?]
-			if (! insert) {
-				column = config.getDialect().equals(new SQLPart(columnName), column);
-			}
-			out.put(columnName, column);
 		}
 
 		return out;
+	}
+
+	/**
+	 * Build the SQL part for the column value in the query.
+	 * <b>
+	 *     Here is what we return here :
+	 *     <ul>
+	 *         <li>Autogen ID column : null</li>
+	 *         <li>insert : columnName → SQLPart[columnName = ?]</li>
+	 *         <li>update : columnName → SQLPart[?]</li>
+	 *     </ul>
+	 * </b>
+	 * @param field   the considered field
+	 * @param element the considered element (the value will be read on this object using the field)
+	 * @param config  the SQL config (sql separator, use batch inserts...)
+	 * @param insert  true if values are for an insert query.
+	 * @return an SQLPart for the column value. Null if the column must not be inserted in the query.
+	 */
+	private SQLPart columnValue(Field field, Yopable element, Config config, boolean insert) {
+		boolean isID = ORMUtil.getIdField(this.getTarget()) == field;
+
+		if (isID && ORMUtil.isAutogenId(this.getTarget()) && ! config.useSequences()) {
+			// autoincrement ID field → do not include this column.
+			return null;
+		}
+
+		boolean isSequence = config.useSequences() && !ORMUtil.readSequence(field, config).isEmpty();
+		String columnName = ORMUtil.getColumnName(field);
+		SQLPart column;
+
+		if(isID) {
+			if (insert && isSequence) {
+				// ID field, insert, sequence → include this column as sequence nextval.
+				column = new SQLPart((String) getUpsertIdValue(element, config));
+			} else {
+				column = SQLPart.parameter(columnName, getUpsertIdValue(element, config), field);
+			}
+		} else {
+			column = SQLPart.parameter(columnName, ORMUtil.readField(field, element), field);
+		}
+
+		// Update : columnName → [columnName = ?]
+		// Insert : columnName → [?]
+		if (! insert) {
+			column = config.getDialect().equals(new SQLPart(columnName), column);
+		}
+		return column;
 	}
 
 	/**

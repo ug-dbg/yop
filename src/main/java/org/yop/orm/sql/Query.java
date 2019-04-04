@@ -7,6 +7,7 @@ import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IRequest;
 import org.yop.orm.util.ORMUtil;
+import org.yop.orm.util.TransformUtil;
 
 import java.util.*;
 
@@ -80,7 +81,7 @@ public abstract class Query {
 	boolean askGeneratedKeys = false;
 
 	/** The generated IDs */
-	final List<Long> generatedIds = new ArrayList<>();
+	final List<Comparable> generatedIds = new ArrayList<>();
 
 	/** Aliases map : short alias → original alias */
 	final Map<String, String> tooLongAliases = new HashMap<>();
@@ -213,17 +214,19 @@ public abstract class Query {
 	}
 
 	/**
-	 * Get the ID column of this query's {@link #target}.
+	 * Get the auto-generated ID column of the {@link #target}.
 	 * @return an array of string that contains the target column ID at index 0, or an empty array if target is null.
 	 */
-	public String[] getIdColumn() {
-		return this.target == null ? new String[0] : new String[] {ORMUtil.getIdColumn(this.target)};
+	public String[] getAutogenIdColumn() {
+		return this.target == null || ! ORMUtil.isAutogenId(this.target)
+			? new String[0]
+			: new String[] {ORMUtil.getIdColumn(this.target)};
 	}
 
 	/**
 	 * @return the Ids generated when executing this query
 	 */
-	public List<Long> getGeneratedIds() {
+	public List<Comparable> getGeneratedIds() {
 		return this.generatedIds;
 	}
 
@@ -242,9 +245,23 @@ public abstract class Query {
 				);
 			}
 			for (int i = 0; i < this.generatedIds.size(); i++) {
-				this.elements.get(i).setId(this.generatedIds.get(i));
+				Yopable element = this.elements.get(i);
+				Class<? extends Yopable> target = element.getClass();
+				if (ORMUtil.isAutogenId(target)) {
+					element.setId(readGeneratedId(this.generatedIds.get(i), target));
+				}
 			}
 		}
+	}
+
+	/**
+	 * Read and transform the generated ID so it can be affected to the target type.
+	 * @param input  the generated ID
+	 * @param target the target object
+	 * @return the ID that can be affected to the target element
+	 */
+	private static Comparable readGeneratedId(Comparable input, Class<? extends Yopable> target) {
+		return (Comparable) TransformUtil.transform(input, ORMUtil.getIdField(target).getType());
 	}
 
 	@Override

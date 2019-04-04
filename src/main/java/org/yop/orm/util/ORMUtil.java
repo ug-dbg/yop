@@ -175,7 +175,7 @@ public class ORMUtil {
 	 * @return the ID field, set accessible.
 	 * @throws YopMappingException no Yop compatible ID field found or several ones.
 	 */
-	public static <T extends Yopable> Field getIdField(Class<T> clazz) {
+	public static <T> Field getIdField(Class<T> clazz) {
 		List<Field> idFields = getFields(clazz, Id.class);
 		if(idFields.size() == 0) {
 			logger.trace("No @Id field on [{}]. Assuming 'id'", clazz.getName());
@@ -191,6 +191,18 @@ public class ORMUtil {
 		Field field = idFields.get(0);
 		field.setAccessible(true);
 		return field;
+	}
+
+	/**
+	 * Check if the ID for this class is autogen.
+	 * @param clazz the target class
+	 * @param <T> the target type
+	 * @return true if no @Id field (ID is considered autogen) or @Id with autoincrement or non empty sequence.
+	 */
+	public static <T extends Yopable> boolean isAutogenId(Class<T> clazz) {
+		Field idField = getIdField(clazz);
+		Id id = idField.getAnnotation(Id.class);
+		return id == null || id.autoincrement() || StringUtils.isNotBlank(id.sequence());
 	}
 
 	/**
@@ -217,6 +229,20 @@ public class ORMUtil {
 	 */
 	public static List<Field> getFields(Class type, Class<? extends Annotation> withAnnotation) {
 		return getFields(type, withAnnotation, true);
+	}
+
+	/**
+	 * Get all the non transient and non synthetic @Column fields,
+	 * including the id field, even if it has no @Column annotation.
+	 * <br>
+	 * Also retrieve the non transient and non synthetic column fields from superclasses.
+	 * @param type the target class
+	 * @return the @Column field list
+	 */
+	public static Set<Field> getColumnFields(Class<? extends Yopable> type) {
+		Set<Field> fields = new HashSet<>(getFields(type, Column.class, true));
+		fields.add(getIdField(type));
+		return fields;
 	}
 
 	/**
@@ -260,12 +286,13 @@ public class ORMUtil {
 
 	/**
 	 * Read the column length for a given field, using @Column annotation
-	 * @param columnField the field to read
-	 * @return {@link Column#length()} (which has a default value)
+	 * @param columnField  the field to read
+	 * @param defaultValue the default value if no @Column annotation.
+	 * @return {@link Column#length()} (which has a default value) or the default value parameter
 	 */
-	public static Integer getColumnLength(Field columnField) {
+	public static Integer getColumnLength(Field columnField, int defaultValue) {
 		Column annotation = columnField.getAnnotation(Column.class);
-		return annotation.length();
+		return annotation == null ? defaultValue : annotation.length();
 	}
 
 	/**
@@ -313,6 +340,9 @@ public class ORMUtil {
 	 * @return true if the field has a {@link Column} annotation and {@link Column#not_null()} is true
 	 */
 	public static boolean isColumnNotNullable(Field field) {
+		if (ORMUtil.getIdField(field.getDeclaringClass()) == field) {
+			return true;
+		}
 		if(!field.isAnnotationPresent(Column.class)) {
 			return false;
 		}

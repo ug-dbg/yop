@@ -110,7 +110,7 @@ public class Mapper {
 			return fromCache;
 		}
 
-		List<Field> fields = ORMUtil.getFields(element.getClass(), Column.class);
+		Collection<Field> fields = ORMUtil.getColumnFields(element.getClass());
 		for (Field field : fields) {
 			try {
 				setFieldValue(field, element, context, results);
@@ -136,7 +136,7 @@ public class Mapper {
 	 * @throws org.yop.orm.exception.YopSQLException an error occurred reading the resultset
 	 */
 	static Object read(Results results, Field field, String context) {
-		String columnName = field.getAnnotation(Column.class).name();
+		String columnName = ORMUtil.getColumnName(field);
 		columnName = context + results.getQuery().getConfig().sqlSeparator() + columnName;
 		String shortened = results.getQuery().getShortened(columnName);
 

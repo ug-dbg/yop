@@ -8,6 +8,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.sql.dialect.IDialect;
+import org.yop.orm.util.Reflection;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
@@ -120,7 +121,7 @@ public class Column implements Comparable<Column> {
 		Column column = new Column(
 			ORMUtil.getColumnName(field),
 			ORMUtil.getColumnType(field),
-			ORMUtil.getColumnLength(field),
+			ORMUtil.getColumnLength(field, 50), // FIXME : default length should be read from dialect
 			config.getDialect()
 		);
 		column.notNull = ORMUtil.isColumnNotNullable(field);
@@ -142,8 +143,8 @@ public class Column implements Comparable<Column> {
 		JoinColumn joinColumn = field.getAnnotation(JoinColumn.class);
 		Column column = new Column(
 			joinColumn.local(),
-			Long.class,
-			50,
+			ORMUtil.getIdField(Reflection.getTarget(field)).getType(),
+			50, // FIXME : length should be read from target @Column and default length should be read from dialect
 			config.getDialect()
 		);
 		column.notNull = false;
