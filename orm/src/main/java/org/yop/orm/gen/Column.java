@@ -4,10 +4,10 @@ import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.NaturalId;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
-import org.yop.orm.util.ORMUtil;
 import org.yop.orm.sql.dialect.IDialect;
+import org.yop.orm.util.ORMUtil;
+import org.yop.reflection.Reflection;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
@@ -120,12 +120,12 @@ public class Column implements Comparable<Column> {
 		Column column = new Column(
 			ORMUtil.getColumnName(field),
 			ORMUtil.getColumnType(field),
-			ORMUtil.getColumnLength(field),
+			ORMUtil.getColumnLength(field, config),
 			config.getDialect()
 		);
 		column.notNull = ORMUtil.isColumnNotNullable(field);
 
-		if(field.equals(ORMUtil.getIdField((Class<? extends Yopable>)field.getDeclaringClass()))) {
+		if(field.equals(ORMUtil.getIdField(field.getDeclaringClass()))) {
 			column.pk = new PrimaryKey(
 				!field.isAnnotationPresent(Id.class) || field.getAnnotation(Id.class).autoincrement()
 			);
@@ -140,10 +140,12 @@ public class Column implements Comparable<Column> {
 
 	static Column fromJoinColumnField(Field field, Config config) {
 		JoinColumn joinColumn = field.getAnnotation(JoinColumn.class);
+		Class<Object> targetType = Reflection.getTarget(field);
+		Field targetIdField = ORMUtil.getIdField(targetType);
 		Column column = new Column(
 			joinColumn.local(),
-			Long.class,
-			50,
+			targetIdField.getType(),
+			ORMUtil.getColumnLength(targetIdField, config),
 			config.getDialect()
 		);
 		column.notNull = false;

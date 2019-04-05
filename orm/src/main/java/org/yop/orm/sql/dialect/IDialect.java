@@ -121,6 +121,14 @@ public interface IDialect {
 	}
 
 	/**
+	 * The dialect default column length (if {@link Column#length} is not set).
+	 * @return 50
+	 */
+	default Integer defaultColumnLength() {
+		return 50;
+	}
+
+	/**
 	 * Set the value of a parameter in a statement.
 	 * <br>
 	 * Override this if your JDBC driver does not fully support {@link PreparedStatement#setObject(int, Object)}.

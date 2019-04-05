@@ -18,14 +18,16 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 	/**
 	 * Add a new SQL parameter that is not a sequence.
 	 * <br>
-	 * See {@link #parameterForField(String, Object, Field, boolean)}.
+	 * See {@link #parameterForField(String, Object, Field, boolean, Config)}.
 	 * @param name  the SQL parameter name (will be displayed in the logs if show_sql = true)
 	 * @param value the SQL parameter value
 	 * @param field the field associated to the value. Required to check enum/transformer strategies. Might be null.
+	 * @param seq   is this parameter a sequence parameter ?
+	 * @param config  the SQL config. Might be required to get the default column length.
 	 * @return the current Parameters object, for chaining purposes
 	 */
-	public Parameters addParameter(String name, Object value, Field field, boolean sequence) {
-		this.add(parameterForField(name, value, field, sequence));
+	public Parameters addParameter(String name, Object value, Field field, boolean seq, Config config) {
+		this.add(parameterForField(name, value, field, seq, config));
 		return this;
 	}
 
@@ -53,10 +55,12 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 	 * @param name  the SQL parameter name (will be displayed in the logs if show_sql = true)
 	 * @param value the SQL parameter value
 	 * @param field the field associated to the value. Required to check enum/transformer strategies. Might be null.
+	 * @param seq   is this parameter a sequence parameter ?
+	 * @param config  the SQL config. Might be required to get the default column length.
 	 * @return the new Parameter instance
 	 */
 	@SuppressWarnings("unchecked")
-	private static Parameter parameterForField(String name, Object value, Field field, boolean sequence) {
+	private static Parameter parameterForField(String name, Object value, Field field, boolean seq, Config config) {
 		Object parameterValue = value;
 
 		if (field != null && field.isAnnotationPresent(Column.class)) {
@@ -77,10 +81,10 @@ public class Parameters extends ArrayList<Parameters.Parameter> {
 					default: throw new YopMapperException("Unknown enum strategy [" + enumStrategy.name() + "] !");
 				}
 			}
-			parameterValue = ORMUtil.getTransformerFor(field).forSQL(parameterValue, column);
+			parameterValue = ORMUtil.getTransformerFor(field).forSQL(parameterValue, column, config);
 
 		}
-		return new Parameters.Parameter(name, parameterValue, field, sequence);
+		return new Parameters.Parameter(name, parameterValue, field, seq);
 	}
 
 	/**

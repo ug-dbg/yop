@@ -26,7 +26,24 @@ public class Postgres extends Dialect {
 
 	@Override
 	public String type(Column column) {
-		return column.getPk() == null ? super.type(column) : "";
+		return this.autoincrement(column) ? "" : super.type(column);
+	}
+
+	@Override
+	public String toSQL(Column column) {
+		return column.getName()
+			+ " " + this.type(column) + " "
+			+ (this.autoincrement(column) ? this.autoIncrementKeyWord() : "")
+			+ (column.isNotNull() || (column.isNaturalKey() && ! this.nullInNK()) ? " NOT NULL " : "");
+	}
+
+	/**
+	 * Is this column an autoincrement column ?
+	 * @param column the column to check
+	 * @return true if {@link Column#isPK()} AND {@link org.yop.orm.gen.PrimaryKey#autoincrement}
+	 */
+	private boolean autoincrement(Column column) {
+		return column.isPK() && column.getPk().isAutoincrement();
 	}
 
 	@Override

@@ -51,15 +51,16 @@ public class SQLPart implements CharSequence {
 
 	/**
 	 * Constructor with an sql string and an explicit parameter.
-	 * @param sql           the sql query.
+	 * @param sql            the sql query.
 	 * @param parameterName  the query parameter name
 	 * @param parameterValue the query parameter value
 	 * @param field          the field associated to the query parameter
-	 * @param isSequence     true if this parameters is a sequence. See {@link Parameters.Parameter#isSequence()}
+	 * @param seq            true if this parameters is a sequence. See {@link Parameters.Parameter#isSequence()}
+	 * @param config         the SQL config. Might be required to get the default column length.
 	 * @throws YopIncoherentQueryException if the query string contains a number of '?' different from 1
 	 */
-	public SQLPart(String sql, String parameterName, Object parameterValue, Field field, boolean isSequence) {
-		this(sql, new Parameters().addParameter(parameterName, parameterValue, field, isSequence));
+	public SQLPart(String sql, String parameterName, Object parameterValue, Field field, boolean seq, Config config) {
+		this(sql, new Parameters().addParameter(parameterName, parameterValue, field, seq, config));
 	}
 
 	/**
@@ -159,8 +160,8 @@ public class SQLPart implements CharSequence {
 	 * @param field the field associated to the query parameter
 	 * @return a new SQLPart instance, whose sql is '?' and with a parameter created for the given value.
 	 */
-	public static SQLPart parameter(String name, Object value, Field field) {
-		return new SQLPart(PARAM, name, value, field, false);
+	public static SQLPart parameter(String name, Object value, Field field, Config config) {
+		return new SQLPart(PARAM, name, value, field, false, config);
 	}
 
 	/**

@@ -33,7 +33,8 @@ public class SimpleWithSchemaTest extends DBMSSwitch {
 	@Override
 	protected boolean check() {
 		// There is no 'schema' in SQLite. The test is pointless and fails.
-		return super.check() && !"sqlite".equals(dbms());
+		// The schema name should also match the Pojo schema configuration.
+		return super.check() && !"sqlite".equals(dbms()) && "yop".equals(System.getProperty("yop.test.dbms.db"));
 	}
 
 	@Test

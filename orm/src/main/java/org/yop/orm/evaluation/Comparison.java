@@ -132,6 +132,6 @@ public class Comparison implements Evaluation {
 		}
 
 		String name = context.getPath(config) + "#" + this.field.getName() + " " + this.op.toSQL() + "?";
-		return SQLPart.parameter(name, ref, this.field);
+		return SQLPart.parameter(name, ref, this.field, config);
 	}
 }

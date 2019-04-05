@@ -79,7 +79,7 @@ public class JDBCConnection implements IConnection {
 	 */
 	@Override
 	public IRequest prepare(Query query) {
-		String[] idColumns = query.getIdColumn();
+		String[] idColumns = query.getAutogenIdColumn();
 		PreparedStatement statement;
 
 		try {

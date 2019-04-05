@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
+import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
 import org.yop.rest.annotations.Header;
@@ -245,7 +246,7 @@ public class OpenAPIUtil {
 			minValue = new BigDecimal(1);
 		} else {
 			nullable = ! ORMUtil.isColumnNotNullable(field);
-			maxLength = ORMUtil.getColumnLength(field);
+			maxLength = ORMUtil.getColumnLength(field, Config.DEFAULT);
 		}
 
 		return JSON_SCHEMAS

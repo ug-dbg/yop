@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
+import org.yop.orm.sql.Config;
 import org.yop.reflection.Reflection;
 
 import java.lang.reflect.Method;
@@ -27,8 +28,8 @@ import java.util.TimeZone;
  * </ul>
  * The idea is :
  * <ul>
- *     <li>{@link #forSQL(Object, Column)} → convert these data types to {@link LocalDateTime} with default TZ</li>
- *     <li>{@link #fromSQL(Object, Class)} → convert to String, parse to Instant and assign</li>
+ *     <li>{@link #forSQL(Object, Column, Config)} → {@link LocalDateTime} with default TZ</li>
+ *     <li>{@link #fromSQL(Object, Class)} → String, parse to Instant and assign</li>
  * </ul>
  * In this class, there are some workarounds for oracle and sqlite that should certainly be in specific transformers.
  * <br>
@@ -42,7 +43,7 @@ public class DateTimeLegacyTransformer implements ITransformer<Object> {
 	 * Transform any Date/Calendar/Instant input into a {@link LocalDateTime} with local zone id.
 	 */
 	@Override
-	public Object forSQL(Object what, Column column) {
+	public Object forSQL(Object what, Column column, Config config) {
 		if (what instanceof Calendar) {
 			TimeZone tz = ((Calendar) what).getTimeZone();
 			ZoneId zid = tz == null ? ZoneId.systemDefault() : tz.toZoneId();

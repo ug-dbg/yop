@@ -25,8 +25,8 @@ public @interface Column {
 	/** Be careful to avoid picking a name that your DBMS forbids ! */
 	String name();
 
-	/** Column max length. For now it is only used when creating tables */
-	int length() default 50;
+	/** Column max length. For now it is only used when creating tables. Default to 0 → Read value from config. */
+	int length() default 0;
 
 	/** If true, a 'NOT NULL' constraint will be added when creating the column. No further check is done. */
 	boolean not_null() default false;

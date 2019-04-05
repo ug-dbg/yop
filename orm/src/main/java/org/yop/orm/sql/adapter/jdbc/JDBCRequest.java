@@ -87,7 +87,8 @@ public class JDBCRequest implements IRequest {
 	 * <br>
 	 * We rely on {@link Statement#getGeneratedKeys()}.
 	 * <br>
-	 * {@link Query#getIdColumn()} should be given to {@link java.sql.Connection#prepareStatement(String, String[])}
+	 * {@link Query#getAutogenIdColumn()} should be given to
+	 * {@link java.sql.Connection#prepareStatement(String, String[])}
 	 * <br><br>
 	 * If the ID column is not correctly set :
 	 * <br>
@@ -123,7 +124,10 @@ public class JDBCRequest implements IRequest {
 			}
 
 			while (generatedKeys.next()) {
-				this.query.getGeneratedIds().add(generatedKeys.getLong(idIndex));
+				Object generatedKey = generatedKeys.getObject(idIndex);
+				if (generatedKey instanceof Comparable) {
+					this.query.getGeneratedIds().add((Comparable) generatedKey);
+				}
 			}
 		}
 	}

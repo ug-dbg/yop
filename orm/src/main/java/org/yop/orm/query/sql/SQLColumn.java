@@ -1,15 +1,14 @@
 package org.yop.orm.query.sql;
 
-import org.yop.orm.annotations.Column;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.SQLPart;
 import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Convenience class to store an SQL column (table name, qualified column name and alias) for a context.
@@ -63,11 +62,11 @@ class SQLColumn extends SQLPart {
 	 * @return a Set of SQL columns
 	 */
 	static Set<SQLColumn> columns(Context<?> context, Config config) {
-		Set<SQLColumn> columns = new HashSet<>();
-		for (Field field : ORMUtil.getFields(context.getTarget(), Column.class)) {
-			columns.add(SQLColumn.column(field, context, config));
-		}
-		return columns;
+		return ORMUtil
+			.getColumnFields(context.getTarget())
+			.stream()
+			.map(f -> SQLColumn.column(f, context, config))
+			.collect(Collectors.toSet());
 	}
 
 	/**
