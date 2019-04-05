@@ -63,7 +63,7 @@ public class In implements Evaluation {
 
 		List<SQLPart> values = this.values
 			.stream()
-			.map(value -> SQLPart.parameter(column + "=" + value, value, field))
+			.map(value -> SQLPart.parameter(column + "=" + value, value, field, config))
 			.collect(Collectors.toList());
 		return config.getDialect().in(column, values);
 	}

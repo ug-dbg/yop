@@ -52,7 +52,7 @@ public class IdIn  implements Evaluation {
 		Field idField = ORMUtil.getIdField(context.getTarget());
 		List<SQLPart> values = this.values
 			.stream()
-			.map(value -> SQLPart.parameter(idColumn + "=" + value, value, idField))
+			.map(value -> SQLPart.parameter(idColumn + "=" + value, value, idField, config))
 			.collect(Collectors.toList());
 
 		return config.getDialect().in(idColumn, values);

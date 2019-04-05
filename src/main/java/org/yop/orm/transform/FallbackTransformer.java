@@ -1,6 +1,7 @@
 package org.yop.orm.transform;
 
 import org.yop.orm.annotations.Column;
+import org.yop.orm.sql.Config;
 import org.yop.orm.util.TransformUtil;
 
 /**
@@ -31,7 +32,7 @@ public class FallbackTransformer implements ITransformer<Object> {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Object forSQL(Object what, Column column) {
+	public Object forSQL(Object what, Column column, Config config) {
 		return what;
 	}
 }

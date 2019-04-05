@@ -83,8 +83,9 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 
 	/**
 	 * Build a restriction for a field of the natural ID.
-	 * @param context    the current context (→ column prefix)
-	 * @param field      the field on which the restriction must be built
+	 * @param context the current context (→ column prefix)
+	 * @param field   the field on which the restriction must be built
+	 * @param config  the SQL config. Required to get the default column length.
 	 * @return the SQL portion for the given context→field restriction
 	 */
 	private SQLPart getFieldRestriction(Context<?> context, Field field, Config config) {
@@ -92,7 +93,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 		Parameters parameters = new Parameters();
 		if(ref != null) {
 			String name = context.getPath(config) + "#" + field.getName() + " = " + "?";
-			parameters.addParameter(name, ref, field, false);
+			parameters.addParameter(name, ref, field, false, config);
 		}
 		return new SQLPart(
 			Evaluation.columnName(field, context, config) + (ref == null ? " IS NULL " : "=?"),

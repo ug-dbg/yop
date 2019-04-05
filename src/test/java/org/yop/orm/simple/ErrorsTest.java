@@ -9,7 +9,6 @@ import org.yop.orm.Yop;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.exception.YopMapperException;
 import org.yop.orm.exception.YopMappingException;
-import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.reflection.DynamicEnum;
 import org.yop.orm.simple.invalid_model.*;
@@ -174,8 +173,9 @@ public class ErrorsTest extends DBMSSwitch {
 		}
 	}
 
-	@Test(expected = YopRuntimeException.class)
+	@Test
 	public void test_bad_transformer() throws SQLException, ClassNotFoundException {
+		// Transformer instantiation exception → fallback to VoidTransformer
 		try (IConnection connection = this.getConnection()) {
 			PojoBadTransformer pojo = new PojoBadTransformer();
 			pojo.setaVeryLongInteger(new BigInteger("123456"));

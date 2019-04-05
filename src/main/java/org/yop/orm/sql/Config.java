@@ -1,5 +1,6 @@
 package org.yop.orm.sql;
 
+import org.yop.orm.annotations.Column;
 import org.yop.orm.query.sql.Paging;
 import org.yop.orm.sql.dialect.IDialect;
 
@@ -42,6 +43,7 @@ public class Config {
 	public static final String SQL_DEFAULT_SEQ              = "yop.sql.default_sequence";
 	public static final String SQL_PAGING_METHOD            = "yop.sql.paging_method";
 	public static final String SQL_NULL_IN_NK               = "yop.sql.null_in_nk";
+	public static final String SQL_DEFAULT_COL_LENGTH       = "yop.sql.default_col_length";
 
 	private final Map<String, String> config = new HashMap<>();
 	private IDialect dialect = IDialect.defaultDialect();
@@ -165,6 +167,16 @@ public class Config {
 	 */
 	public String defaultSequence() {
 		return this.config.get(SQL_DEFAULT_SEQ);
+	}
+
+	/**
+	 * If no length is set in {@link Column#length()}, this config parameter should be used.
+	 * @return value from {@link #config} for {@link #SQL_DEFAULT_COL_LENGTH} or {@link IDialect#defaultColumnLength()}
+	 */
+	public Integer defaultColumnLength() {
+		return this.config.containsKey(SQL_DEFAULT_COL_LENGTH)
+			? Integer.valueOf(this.config.get(SQL_DEFAULT_COL_LENGTH))
+			: this.dialect.defaultColumnLength();
 	}
 
 	/**

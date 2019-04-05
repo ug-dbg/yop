@@ -237,7 +237,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 				Field field = parameter.getField();
 				String name = parameter.getName();
 				Object fieldValue = ORMUtil.readField(field, element);
-				parameters.addParameter(name + "#" + batch, fieldValue, field, parameter.isSequence());
+				parameters.addParameter(name + "#" + batch, fieldValue, field, parameter.isSequence(), config);
 			}
 			query.addParametersBatch(parameters);
 		}

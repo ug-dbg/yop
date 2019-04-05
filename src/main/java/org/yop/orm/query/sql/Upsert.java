@@ -426,7 +426,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 		String idColumn = ORMUtil.getColumnName(idField);
 		SQLPart whereIdColumn = config.getDialect().equals(
 			idColumn,
-			SQLPart.parameter("idcolumn", element.getId(), idField)
+			SQLPart.parameter("idcolumn", element.getId(), idField, config)
 		);
 
 		SQLPart sql = config.getDialect().update(this.getTableName(), values, whereIdColumn);
@@ -503,10 +503,10 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 				// ID field, insert, sequence → include this column as sequence nextval.
 				column = new SQLPart((String) getUpsertIdValue(element, config));
 			} else {
-				column = SQLPart.parameter(columnName, getUpsertIdValue(element, config), field);
+				column = SQLPart.parameter(columnName, getUpsertIdValue(element, config), field, config);
 			}
 		} else {
-			column = SQLPart.parameter(columnName, ORMUtil.readField(field, element), field);
+			column = SQLPart.parameter(columnName, ORMUtil.readField(field, element), field, config);
 		}
 
 		// Update : columnName → [columnName = ?]

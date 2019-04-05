@@ -75,7 +75,7 @@ public class Explicit implements Evaluation {
 	@Override
 	public <T extends Yopable> SQLPart toSQL(Context<T> context, Config config) {
 		Parameters parameters = new Parameters();
-		this.parameters.forEach((k, v) -> parameters.addParameter(k, v, null, false));
+		this.parameters.forEach((k, v) -> parameters.addParameter(k, v, null, false, config));
 		return new SQLPart(this.expression, parameters);
 	}
 

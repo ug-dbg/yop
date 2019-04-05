@@ -5,6 +5,7 @@ import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
+import org.yop.orm.sql.Config;
 import org.yop.orm.transform.ITransformer;
 
 import java.math.BigDecimal;
@@ -144,7 +145,7 @@ public class PojoBadTransformer implements Yopable {
 		}
 
 		@Override
-		public Object forSQL(BigInteger bigDecimal, Column column) {
+		public Object forSQL(BigInteger bigDecimal, Column column, Config config) {
 			return null;
 		}
 

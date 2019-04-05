@@ -286,13 +286,21 @@ public class ORMUtil {
 
 	/**
 	 * Read the column length for a given field, using @Column annotation
-	 * @param columnField  the field to read
-	 * @param defaultValue the default value if no @Column annotation.
-	 * @return {@link Column#length()} (which has a default value) or the default value parameter
+	 * @param columnField the field to read
+	 * @param config      the default value is read from config if length is not configured in @Column.
+	 * @return {@link Column#length()} (if > 0) or the default value parameter
 	 */
-	public static Integer getColumnLength(Field columnField, int defaultValue) {
-		Column annotation = columnField.getAnnotation(Column.class);
-		return annotation == null ? defaultValue : annotation.length();
+	public static Integer getColumnLength(Field columnField, Config config) {
+		return getColumnLength(columnField.getAnnotation(Column.class), config);
+	}
+
+	/**
+	 * Read the column length for a given field, using @Column annotation
+	 * @param config the default value is read from config if length is not configured in @Column.
+	 * @return {@link Column#length()} (if > 0) or the default value parameter
+	 */
+	public static Integer getColumnLength(Column annotation, Config config) {
+		return annotation == null || annotation.length() <= 0 ? config.defaultColumnLength() : annotation.length();
 	}
 
 	/**
@@ -416,19 +424,14 @@ public class ORMUtil {
 	 * Read the value of a field.
 	 * <br>
 	 * If the field is a {@link Column} with a specified {@link ITransformer}, the field value is transformed,
-	 * using {@link ITransformer#forSQL(Object, Column)}.
+	 * using {@link ITransformer#forSQL(Object, Column, Config)}.
 	 * @param field   the field to read
 	 * @param element the element on which the field is to read
 	 * @return the field value, that might have been transformed using the specified {@link ITransformer}.
 	 */
 	@SuppressWarnings("unchecked")
 	public static Object readField(Field field, Yopable element) {
-		Object value = Reflection.readField(field, element);
-		if(field.isAnnotationPresent(Column.class)) {
-			Column column = field.getAnnotation(Column.class);
-			return ITransformer.getTransformer(column.transformer()).forSQL(value, column);
-		}
-		return value;
+		return Reflection.readField(field, element);
 	}
 
 	/**

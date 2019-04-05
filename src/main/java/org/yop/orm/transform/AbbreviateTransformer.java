@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.Column;
 import org.yop.orm.exception.YopMappingException;
+import org.yop.orm.sql.Config;
+import org.yop.orm.util.ORMUtil;
 
 /**
  * A transformer implementation for Strings whose length must be checked manually.
@@ -19,8 +21,8 @@ public class AbbreviateTransformer implements ITransformer<String> {
 	 * If the string length is {@literal >} column.length : cut, throw an exception or do nothing, given the length strategy.
 	 */
 	@Override
-	public Object forSQL(String s, Column column) {
-		int maxLength = column.length();
+	public Object forSQL(String s, Column column, Config config) {
+		int maxLength = ORMUtil.getColumnLength(column, config);
 		if(s != null && s.length() > maxLength) {
 			switch (column.length_strategy()) {
 				case EXCEPTION: this.tooLongException(s, column.name(), column.length());

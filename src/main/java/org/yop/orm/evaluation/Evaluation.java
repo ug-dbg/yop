@@ -30,7 +30,8 @@ public interface Evaluation extends JsonAble {
 
 	/**
 	 * Build the SQL portion for the evaluation, fill the given parameters with the evaluation value(s)
-	 * @param context    the current context for the evaluation
+	 * @param context the current context for the evaluation
+	 * @param config  the SQL config. Required to get the default column length.
 	 * @param <T> the target evaluation type
 	 * @return the SQL query portion for the evaluation, from the context
 	 */
