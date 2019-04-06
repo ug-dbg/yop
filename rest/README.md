@@ -32,7 +32,7 @@ Standard behavior for each Yopable :
 - POST
   - execute the serialized request (Select/Upsert/Delete)  
   
-Since PUT idempotency depends on the passed data, use the custom UPSERT method if PUT idempotency is required.
+Since PUT idempotence depends on the passed data, use the custom UPSERT method if PUT idempotence is required.
 
 You can define any extra behavior by adding a @Rest method on your Yopable.
 A @Rest method can receive, in any order : 
@@ -68,16 +68,16 @@ public class Pojo extends org.yop.orm.simple.model.Pojo {
 
 # Note
 For too long have I been reading articles laughing at people who *naively* want to map HTTP methods to CRUD.   
-What fools they are, ha ha ha! They did not think about idempotency, complicated bloated stuff and such !  
+What fools they are, ha ha ha! They did not think about idempotence, complicated bloated stuff and such !  
 Well the thing is HTTP is definitely not designed for doing database CRUD webservices :
 - HTTP was built to expose/manage resources from a filesystem.
 - POST behavior is definitely set apart.
-- Idempotency is a feature you will rarely need.
+- Idempotence is a feature you will rarely need.
 - You can define any custom HTTP method.  
   
 So here is what I came up with :
 - Keep the POST method specificity for executing any type of serialized request.
-- Introduce an UPSERT method with no idempotency requirement.
+- Introduce an UPSERT method with no idempotence requirement.
 - PUT *by default* does UPSERT and is not idempotent. Feel free to override.
 - GET/DELETE are OK for Select/Delete.  
 - **Any conventional behavior can be overloaded.**
