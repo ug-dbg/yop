@@ -11,7 +11,7 @@ Yop is available on Maven central :
 ```xml
 <dependency>
     <groupId>org.y-op</groupId>
-    <artifactId>yop-demo</artifactId>
+    <artifactId>demo</artifactId>
     <version>0.9.0</version>
 </dependency>
 ```  

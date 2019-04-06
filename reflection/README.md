@@ -10,7 +10,7 @@ Yop is available on Maven central :
 ```xml
 <dependency>
     <groupId>org.y-op</groupId>
-    <artifactId>yop-reflection</artifactId>
+    <artifactId>reflection</artifactId>
     <version>0.9.0</version>
 </dependency>
 ```  

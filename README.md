@@ -20,12 +20,40 @@ Modules :
 - [demo](demo/README.md "The demo module README")
   
 ## Maven
-Yop-ORM is available on Maven central :  
+Yop modules are available on Maven central :  
 ```xml
 <dependency>
     <groupId>org.y-op</groupId>
-    <artifactId>yop</artifactId>
-    <version>0.8.0</version>
+    <artifactId>reflection</artifactId>
+    <version>0.9.0</version>
+</dependency>
+```  
+```xml
+<dependency>
+    <groupId>org.y-op</groupId>
+    <artifactId>ioc</artifactId>
+    <version>0.9.0</version>
+</dependency>
+```  
+```xml
+<dependency>
+    <groupId>org.y-op</groupId>
+    <artifactId>orm</artifactId>
+    <version>0.9.0</version>
+</dependency>
+```  
+```xml
+<dependency>
+    <groupId>org.y-op</groupId>
+    <artifactId>rest</artifactId>
+    <version>0.9.0</version>
+</dependency>
+```  
+```xml
+<dependency>
+    <groupId>org.y-op</groupId>
+    <artifactId>swaggerui</artifactId>
+    <version>0.9.0</version>
 </dependency>
 ```  
   

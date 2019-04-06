@@ -9,7 +9,7 @@ Yop is available on Maven central :
 ```xml
 <dependency>
     <groupId>org.y-op</groupId>
-    <artifactId>yop-orm</artifactId>
+    <artifactId>orm</artifactId>
     <version>0.9.0</version>
 </dependency>
 ```

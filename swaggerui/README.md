@@ -11,6 +11,6 @@ Yop is available on Maven central :
 ```xml
 <dependency>
     <groupId>org.y-op</groupId>
-    <artifactId>yop-swaggerui</artifactId>
+    <artifactId>swaggerui</artifactId>
     <version>0.9.0</version>
 </dependency>
