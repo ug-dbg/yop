@@ -16,7 +16,7 @@ import java.util.Collection;
 @Table(name = "yop_action")
 public class Action implements Yopable {
 
-	@Id
+	@Id(sequence = "seq_action")
 	@Column(name = "id")
 	private Long id;
 

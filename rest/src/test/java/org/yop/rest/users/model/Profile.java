@@ -15,7 +15,7 @@ import java.util.List;
 @Table(name = "yop_profile")
 public class Profile implements Yopable {
 
-	@Id
+	@Id(sequence = "seq_profile")
 	@Column(name = "id")
 	private Long id;
 
