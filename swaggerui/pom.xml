@@ -9,7 +9,7 @@
 	<parent>
 		<artifactId>yop</artifactId>
 		<groupId>org.y-op</groupId>
-		<version>0.9.0-SNAPSHOT</version>
+		<version>0.9.0</version>
 	</parent>
 
 	<artifactId>swaggerui</artifactId>
