@@ -20,7 +20,7 @@ Modules :
 - [demo](demo/README.md "The demo module README")
   
 ## Maven
-Yop is available on Maven central :  
+Yop-ORM is available on Maven central :  
 ```xml
 <dependency>
     <groupId>org.y-op</groupId>
@@ -45,7 +45,7 @@ Select
  .execute(connection);
   ```
   
-The [REST](rest) module brings a set of annotation to directly expose the data objects as REST resources : 
+The [REST](rest) module brings a set of annotations to directly expose the data objects as REST resources : 
 ```
 @Rest(
   path="book",
