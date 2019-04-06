@@ -150,11 +150,11 @@ public abstract class AbstractRequest<Request extends AbstractRequest, T extends
 	}
 
 	/**
-	 * Fetch the whole data graph. Stop on transient fields.
-	 * <br>
-	 * <b>⚠⚠⚠ There must be no cycle in the data graph model ! ⚠⚠⚠</b>
+	 * Fetch the whole data graph.
 	 * <br><br>
-	 * <b>⚠⚠⚠ Any join previously set is cleared ! Please add transient fetch clause after this ! ⚠⚠⚠</b>
+	 * <b>⚠⚠⚠ Stop on transient relations and cycled relation field. ⚠⚠⚠</b>
+	 * <br>
+	 * <b>⚠⚠⚠ Any join previously set is cleared ! ⚠⚠⚠</b>
 	 * @return the current request, for chaining purpose
 	 */
 	@SuppressWarnings("unchecked")
