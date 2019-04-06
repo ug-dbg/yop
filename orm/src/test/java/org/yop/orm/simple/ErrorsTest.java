@@ -178,6 +178,7 @@ public class ErrorsTest extends DBMSSwitch {
 		// Transformer instantiation exception → fallback to VoidTransformer
 		try (IConnection connection = this.getConnection()) {
 			PojoBadTransformer pojo = new PojoBadTransformer();
+			pojo.setVersion(1);
 			pojo.setaVeryLongInteger(new BigInteger("123456"));
 			Yop.upsert(PojoBadTransformer.class).onto(pojo).execute(connection);
 		}
