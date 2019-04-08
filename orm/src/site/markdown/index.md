@@ -88,9 +88,8 @@ Hydrate.from(Book.class).onto(booksWithID).join(Book::getChapters).recurse().exe
 **JSON serialization** :  
 ```java
 JSON.from(Library.class)
- .joinAll()
- .joinIDs(SQLJoin.toN(Library::getBooks).join(SQLJoin.to(Book::getAuthor)))
- .joinIDs(SQLJoin.toN(Library::getEmployees).join(SQLJoin.toN(Employee::getProfiles)))
+ .join(SQLJoin.toN(Library::getBooks).join(SQLJoin.to(Book::getAuthor)))
+ .join(SQLJoin.toN(Library::getEmployees).join(SQLJoin.toN(Employee::getProfiles)))
  .register(LocalDateTime.class, (src, typeOfSrc, context) -> new JsonPrimitive("2000-01-01T00:00:00.000"))
  .onto(library)
  .toJSON();

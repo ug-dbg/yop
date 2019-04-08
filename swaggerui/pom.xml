@@ -18,8 +18,8 @@
 
 	<description>
 		YOP-swaggerui is a simple Servlet that can serve the Swagger UI for the yop-rest OpenAPI REST resources.
-		Ω≡{Ⓐ}
 	</description>
+	<organization><name>Ω≡{Ⓐ}</name></organization>
 
 	<properties>
 		<!--

@@ -19,8 +19,8 @@
 
 	<description>
 		This is a a demo for YOP : a simple web-app where you can submit Yopable code and test it using swagger.
-		Ω≡{Ⓐ}
 	</description>
+	<organization><name>Ω≡{Ⓐ}</name></organization>
 
 	<build>
 		<plugins>

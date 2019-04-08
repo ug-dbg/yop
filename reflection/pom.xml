@@ -17,8 +17,8 @@
 
 	<description>
 		YOP-Reflection contains utilities for reflection operations.
-		Ω≡{Ⓐ}
 	</description>
+	<organization><name>Ω≡{Ⓐ}</name></organization>
 
 	<!-- Code Coverage report generation with profile 'coverage' -->
 	<profiles>

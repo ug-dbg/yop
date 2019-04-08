@@ -17,8 +17,8 @@
 
 	<description>
 		YOP-IOC is a simple utility to manage singletons/multitons/prototypes.
-		Ω≡{Ⓐ}
 	</description>
+	<organization><name>Ω≡{Ⓐ}</name></organization>
 
 	<!-- Code Coverage report generation with profile 'coverage' -->
 	<profiles>

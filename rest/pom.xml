@@ -17,8 +17,8 @@
 
 	<description>
 		YOP-rest is a simple REST exposition for YOP-orm.
-		Ω≡{Ⓐ}
 	</description>
+	<organization><name>Ω≡{Ⓐ}</name></organization>
 
 	<!-- Code Coverage report generation with profile 'coverage' -->
 	<profiles>

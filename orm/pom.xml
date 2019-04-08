@@ -19,8 +19,8 @@
 		YOP-orm is a lightweight ORM wannabe. Hit and run, no session, no bytecode generation, SQL-like syntax.
 		Strong constraints on the Database schema.
 		Java 8 is required.
-		Ω≡{Ⓐ}
 	</description>
+	<organization><name>Ω≡{Ⓐ}</name></organization>
 
 	<!-- Code Coverage report generation with profile 'coverage' -->
 	<profiles>

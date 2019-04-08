@@ -13,8 +13,8 @@
 	<url>https://github.com/ug-dbg/yop</url>
 	<description>
 		YOP is a lightweight wannabe REST/ORM stack.
-		Ω≡{Ⓐ}
 	</description>
+	<organization><name>Ω≡{Ⓐ}</name></organization>
 
 	<modules>
 		<module>reflection</module>
