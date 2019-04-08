@@ -13,7 +13,8 @@ import java.util.Map;
  * <br>
  * {@link java.lang.reflect} methods can take a bit of time. Let's try to use some cache !
  * <br>
- * Very similar to {@link ReflectionCache} but I would like to keep pure reflection and YOP ORM concepts separated.
+ * Very similar to {@link org.yop.reflection.ReflectionCache}
+ * but I would like to keep pure reflection and YOP ORM concepts separated.
  */
 class ORMUtilCache {
 
