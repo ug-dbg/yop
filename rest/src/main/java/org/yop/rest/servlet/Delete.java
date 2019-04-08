@@ -30,7 +30,7 @@ public class Delete implements HttpMethod {
 	/**
 	 * Execute the delete operation using a {@link org.yop.orm.query.sql.Delete} query.
 	 * <br>
-	 * Read the joinAll & joinIDs parameters. Returns an empty json array as string.
+	 * Read the joinAll and other parameter. Returns an empty json array as string.
 	 * @param restRequest the incoming request
 	 * @param connection the JDBC (or other) underlying connection
 	 * @return "[]"

@@ -31,7 +31,7 @@ public class Upsert implements HttpMethod {
 	/**
 	 * Execute the "upsert" operation using a {@link org.yop.orm.query.sql.Upsert} query.
 	 * <br>
-	 * Read the joinAll & joinIDs parameters.
+	 * Read the joinAll and other parameters.
 	 * @param restRequest the incoming request
 	 * @param connection the JDBC (or other) underlying connection
 	 * @return the incoming yopables (see {@link RestRequest#contentAsYopables()}) with their IDs set.

@@ -29,7 +29,7 @@ class Get implements HttpMethod {
 	/**
 	 * Execute the "get" operation using a {@link org.yop.orm.query.sql.Select} query.
 	 * <br>
-	 * Read the joinAll & joinIDs parameters.
+	 * Read the joinAll and other parameters.
 	 * @param restRequest the incoming request
 	 * @param connection the JDBC (or other) underlying connection
 	 * @return a wrapped set of {@link Yopable} or a wrapped {@link Yopable} (if {@link RestRequest#getId()} is set).

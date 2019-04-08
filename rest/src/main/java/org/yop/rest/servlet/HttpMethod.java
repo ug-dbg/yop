@@ -134,7 +134,7 @@ public interface HttpMethod {
 	/**
 	 * Create a {@link #PARAM_CHECK_NK}' OpenAPI parameter for a given resource.
 	 * @param forResource the resource name (for {@link io.swagger.oas.models.parameters.Parameter#description}.
-	 * @return the OpenAPI 'joinIDs' parameter
+	 * @return the OpenAPI 'checkNaturalId' parameter
 	 */
 	static io.swagger.oas.models.parameters.Parameter checkNaturalIDParameter(String forResource) {
 		return new io.swagger.oas.models.parameters.Parameter()
