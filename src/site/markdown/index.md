@@ -7,15 +7,15 @@ with an
 [![Build Status](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/badge/icon)](http://jenkins.y-op.org/job/yop-test-MySQL/)
 
 ## Coverage Status
-- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/ws/reflection/target/jacoco.svg)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/lastBuild/jacoco) 
+- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/ws/reflection/target/jacoco.svg)](http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco) 
 [reflection](reflection)
-- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/ws/orm/target/jacoco.svg)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/lastBuild/jacoco)
+- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/ws/orm/target/jacoco.svg)](http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco)
 [orm](orm)
-- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/ws/ioc/target/jacoco.svg)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/lastBuild/jacoco)
+- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/ws/ioc/target/jacoco.svg)](http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco)
 [ioc](ioc)
-- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/ws/rest/target/jacoco.svg)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/lastBuild/jacoco)
+- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/ws/rest/target/jacoco.svg)](http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco)
 [rest](rest)
-- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/ws/swaggerui/target/jacoco.svg)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/lastBuild/jacoco)
+- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/ws/swaggerui/target/jacoco.svg)](http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco)
 [swaggerui](swaggerui)
 - [demo](demo)
 
