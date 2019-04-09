@@ -506,7 +506,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 				column = SQLExpression.parameter(columnName, getUpsertIdValue(element, config), field, config);
 			}
 		} else {
-			column = SQLExpression.parameter(columnName, ORMUtil.readField(field, element), field, config);
+			column = SQLExpression.parameter(columnName, Reflection.readField(field, element), field, config);
 		}
 
 		// Update : columnName → [columnName = ?]

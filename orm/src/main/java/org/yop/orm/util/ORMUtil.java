@@ -1,6 +1,7 @@
 package org.yop.orm.util;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.primitives.Primitives;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
@@ -9,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.annotations.*;
 import org.yop.orm.exception.YopMappingException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.transform.ITransformer;
@@ -37,7 +37,7 @@ public class ORMUtil {
 	private static final Map<Field, Class> FIELD_PARAMETRIZED_TYPES = new HashMap<>();
 
 	/**
-	 * It is useful to know if a {@link Yopable} field is a Collection or a Yopable. Or neither.
+	 * It is useful to know if a {@link org.yop.orm.model.Yopable} field is a Collection or a Yopable. Or neither.
 	 */
 	enum FieldType {
 		COLLECTION, YOPABLE, OTHER;
@@ -46,11 +46,23 @@ public class ORMUtil {
 			if (Collection.class.isAssignableFrom(field.getType())) {
 				return COLLECTION;
 			}
-			if (Yopable.class.isAssignableFrom(field.getType())) {
+			if (isYopable(field.getType())) {
 				return YOPABLE;
 			}
 			return OTHER;
 		}
+	}
+
+	/**
+	 * A target class is considered 'Yopable'
+	 * if it either implements {@link org.yop.orm.model.Yopable} or is {@link Table} annotated.
+	 * <br>
+	 * (For now, it MUST implement Yopable, but it SHOULD NOT be mandatory).
+	 * @param target the target class to check
+	 * @return true if the class is considered Yopable
+	 */
+	public static boolean isYopable(Class target) {
+		return org.yop.orm.model.Yopable.class.isAssignableFrom(target) || target.isAnnotationPresent(Table.class);
 	}
 
 	/**
@@ -60,8 +72,12 @@ public class ORMUtil {
 	 * @param classLoader the class loader to use
 	 * @return a set of Yopable implementations
 	 */
-	public static Set<Class<? extends Yopable>> yopables(ClassLoader classLoader) {
-		return new Reflections("", classLoader).getSubTypesOf(Yopable.class);
+	public static Set<Class> yopables(ClassLoader classLoader) {
+		Reflections reflections = new Reflections("", classLoader);
+		return Sets.union(
+			reflections.getSubTypesOf(org.yop.orm.model.Yopable.class),
+			reflections.getTypesAnnotatedWith(Table.class)
+		);
 	}
 
 	/**
@@ -98,7 +114,7 @@ public class ORMUtil {
 	 * @param target the target Yopable implementation
 	 * @return the table name for the current context
 	 */
-	public static String getTableName(Class<? extends Yopable> target) {
+	public static String getTableName(Class target) {
 		Table table = Reflection.getAnnotation(target, Table.class);
 		if(table != null) {
 			return table.name();
@@ -112,7 +128,7 @@ public class ORMUtil {
 	 * @param target the target Yopable implementation
 	 * @return the table name for the current context
 	 */
-	public static String getSchemaName(Class<? extends Yopable> target) {
+	public static String getSchemaName(Class target) {
 		Table table = Reflection.getAnnotation(target, Table.class);
 		if(table != null) {
 			return table.schema();
@@ -126,7 +142,7 @@ public class ORMUtil {
 	 * @param target the target Yopable implementation
 	 * @return the table name for the current context
 	 */
-	public static String getTableQualifiedName(Class<? extends Yopable> target) {
+	public static String getTableQualifiedName(Class target) {
 		Table table = Reflection.getAnnotation(target, Table.class);
 		if(table != null) {
 			return MessageUtil.join(".", table.schema(), table.name());
@@ -157,10 +173,9 @@ public class ORMUtil {
 	 * This method first checks the cache map {@link #TARGET_NAMES}.
 	 * It adds the computed value and adds it to the cache map if it was not yet known.
 	 * @param target the target class
-	 * @param <T> the target class type ({@link Yopable})
 	 * @return the target class context name
 	 */
-	public static <T extends Yopable> String getTargetName(Class<T> target) {
+	public static String getTargetName(Class target) {
 		if (!TARGET_NAMES.containsKey(target)) {
 			TARGET_NAMES.put(target, "yop_" + target.getSimpleName());
 		}
@@ -174,7 +189,7 @@ public class ORMUtil {
 	 * @param config the SQL config (sql separator, use batch inserts...)
 	 * @return the table name for the current context
 	 */
-	public static String getQualifiedTableName(Class<? extends Yopable> target, Config config) {
+	public static String getQualifiedTableName(Class target, Config config) {
 		String schemaName = getSchemaName(target);
 		String tableName = getTableName(target);
 		return StringUtils.isBlank(schemaName) ? tableName : schemaName + config.dot() + tableName;
@@ -185,11 +200,10 @@ public class ORMUtil {
 	 * <br>
 	 * For now, Yop only supports one single technical Long ID field, that might have (or not) an @Id annotation.
 	 * @param clazz the Yopable class
-	 * @param <T> the yopable type
 	 * @return the ID field, set accessible.
 	 * @throws YopMappingException no Yop compatible ID field found or several ones.
 	 */
-	public static <T> Field getIdField(Class<T> clazz) {
+	public static Field getIdField(Class clazz) {
 		List<Field> idFields = getFields(clazz, Id.class);
 		if(idFields.size() == 0) {
 			logger.trace("No @Id field on [{}]. Assuming 'id'", clazz.getName());
@@ -215,16 +229,15 @@ public class ORMUtil {
 	 */
 	@SuppressWarnings("unchecked")
 	public static boolean isIdField(Field field) {
-		return getIdField((Class)field.getDeclaringClass()) == field;
+		return getIdField(field.getDeclaringClass()) == field;
 	}
 
 	/**
 	 * Check if the ID for this class is autogen.
 	 * @param clazz the target class
-	 * @param <T> the target type
 	 * @return true if no @Id field (ID is considered autogen) or @Id with autoincrement or non empty sequence.
 	 */
-	public static <T extends Yopable> boolean isAutogenId(Class<T> clazz) {
+	public static boolean isAutogenId(Class clazz) {
 		Field idField = getIdField(clazz);
 		Id id = idField.getAnnotation(Id.class);
 		return id == null || id.autoincrement() || StringUtils.isNotBlank(id.sequence());
@@ -264,7 +277,7 @@ public class ORMUtil {
 	 * @param type the target class
 	 * @return the @Column field list
 	 */
-	public static Set<Field> getColumnFields(Class<? extends Yopable> type) {
+	public static Set<Field> getColumnFields(Class type) {
 		Set<Field> fields = new HashSet<>(getFields(type, Column.class, true));
 		fields.add(getIdField(type));
 		return fields;
@@ -289,10 +302,9 @@ public class ORMUtil {
 	/**
 	 * Get the ID column name for a Yopable
 	 * @param clazz the yopable class
-	 * @param <T> the yopable type
 	 * @return the ID column name or "ID" if the id field has no @Column annotation
 	 */
-	public static <T extends Yopable> String getIdColumn(Class<T> clazz) {
+	public static String getIdColumn(Class clazz) {
 		Field field = getIdField(clazz);
 		return field.isAnnotationPresent(Column.class) ? field.getAnnotation(Column.class).name() : "ID";
 	}
@@ -414,7 +426,7 @@ public class ORMUtil {
 	 * @param context the target context
 	 * @return the qualified ID column
 	 */
-	public static String getIdColumn(Context<? extends Yopable> context, Config config) {
+	public static String getIdColumn(Context context, Config config) {
 		return context.getPath(getIdField(context.getTarget()), config);
 	}
 
@@ -443,20 +455,6 @@ public class ORMUtil {
 			}
 		}
 		return ITransformer.voidTransformer();
-	}
-
-	/**
-	 * Read the value of a field.
-	 * <br>
-	 * If the field is a {@link Column} with a specified {@link ITransformer}, the field value is transformed,
-	 * using {@link ITransformer#forSQL(Object, Column, Config)}.
-	 * @param field   the field to read
-	 * @param element the element on which the field is to read
-	 * @return the field value, that might have been transformed using the specified {@link ITransformer}.
-	 */
-	@SuppressWarnings("unchecked")
-	public static Object readField(Field field, Yopable element) {
-		return Reflection.readField(field, element);
 	}
 
 	/**
@@ -508,7 +506,7 @@ public class ORMUtil {
 	 * <br>
 	 * This method uses a field type cache : {@link ORMUtilCache#FIELD_TYPES}.
 	 * @param field the field to check
-	 * @return true if a {@link Yopable} is assignable from the field type.
+	 * @return true if field type is considered {@link FieldType#YOPABLE}.
 	 */
 	public static boolean isYopable(Field field) {
 		return ORMUtilCache.isOfType(field, FieldType.YOPABLE);

@@ -67,7 +67,7 @@ class FieldJoin<From extends Yopable, To extends Yopable> extends SQLJoin<From, 
 	@SuppressWarnings("unchecked")
 	public Collection<To> getTarget(From from) {
 		// Here we are asked to return a collection of objects, whatever the cardinality.
-		Object target = ORMUtil.readField(this.field, from);
+		Object target = Reflection.readField(this.field, from);
 
 		// target is null → empty list
 		// target is collection → target

@@ -284,7 +284,7 @@ public class Mapper {
 				newContext += ORMUtil.getTargetName(targetClass);
 				if(results.noContext(newContext, targetClass)) continue;
 
-				target = (Yopable) ORMUtil.readField(field, element);
+				target = (Yopable) Reflection.readField(field, element);
 				if(target == null) {
 					target = (Yopable) Reflection.newInstanceNoArgs(field.getType());
 				}

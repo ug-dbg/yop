@@ -208,7 +208,7 @@ public class RestServletProxy {
 	private Map<String, Class> initYopRestServlet() {
 		Map<String, Class> yopables = this.readYopablePaths(YopRestServlet.class, this.yopRestServlet);
 
-		Collection<Class<? extends Yopable>> classes = ORMUtil.yopables(this.fakeRootClassLoader);
+		Collection<Class> classes = ORMUtil.yopables(this.fakeRootClassLoader);
 
 		for (Class yopableClass : classes) {
 			if (Yopable.class.isAssignableFrom(yopableClass) && yopableClass.isAnnotationPresent(Rest.class))

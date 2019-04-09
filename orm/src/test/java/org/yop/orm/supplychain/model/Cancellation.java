@@ -1,6 +1,7 @@
 package org.yop.orm.supplychain.model;
 
 import org.yop.orm.annotations.Column;
+import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.Table;
 
@@ -8,6 +9,9 @@ import java.time.LocalDateTime;
 
 @Table(name = "supplychain_cancellation")
 public class Cancellation {
+
+	@Id
+	private Long id;
 
 	@Column(name = "reason")
 	private String reason;

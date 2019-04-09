@@ -2,7 +2,6 @@ package org.yop.orm.gen;
 
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.JoinTable;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.JoinUtil;
 import org.yop.orm.util.MessageUtil;
@@ -119,7 +118,7 @@ public class Table implements Comparable<Table> {
 	 * @return the table objects that can be used to get INSERT queries
 	 */
 	public static Set<Table> findAllInClassPath(String packageName, ClassLoader classLoader, Config config) {
-		Set<Class<? extends Yopable>> subtypes = ORMUtil.yopables(classLoader);
+		Set<Class> subtypes = ORMUtil.yopables(classLoader);
 
 		Set<Table> tables = new TreeSet<>();
 		subtypes
@@ -138,7 +137,7 @@ public class Table implements Comparable<Table> {
 	 * @return the table objects that can be used to get INSERT queries
 	 */
 	@SuppressWarnings("WeakerAccess")
-	public static Set<Table> findTablesFor(Class<? extends Yopable> clazz, Config config) {
+	public static Set<Table> findTablesFor(Class clazz, Config config) {
 		Set<Table> tables = new HashSet<>();
 		tables.add(Table.fromClass(clazz, config));
 		readRelationTables(clazz, tables, config);
@@ -151,7 +150,7 @@ public class Table implements Comparable<Table> {
 	 * @param config the SQL config. Needed for the sql separator to use.
 	 * @return the table object that can be used to get INSERT query
 	 */
-	private static Table fromClass(Class<? extends Yopable> clazz, Config config) {
+	private static Table fromClass(Class clazz, Config config) {
 		Table table = new Table(config.getDialect());
 		table.schema = ORMUtil.getSchemaName(clazz);
 		table.name   = ORMUtil.getTableName(clazz);
@@ -185,16 +184,16 @@ public class Table implements Comparable<Table> {
 		table.schema = joinTable.schema();
 		table.name   = joinTable.table();
 
-		Class<? extends Yopable> sourceClass = (Class<? extends Yopable>) relationField.getDeclaringClass();
+		Class sourceClass = relationField.getDeclaringClass();
 		Column source = new Column(joinTable.sourceColumn(), Long.class, 0, config.getDialect());
 		createJoinTableColumnAttributes(source, sourceClass, joinTable.sourceForeignKey(), joinTable, config);
 		table.columns.add(source);
 
-		Class<? extends Yopable> targetClass;
+		Class targetClass;
 		if(ORMUtil.isCollection(relationField)) {
 			targetClass = Reflection.getCollectionTarget(relationField);
 		} else {
-			targetClass = (Class<? extends Yopable>)relationField.getType();
+			targetClass = relationField.getType();
 		}
 		Column target = new Column(joinTable.targetColumn(), Long.class, 0, config.getDialect());
 		createJoinTableColumnAttributes(target, targetClass, joinTable.targetForeignKey(), joinTable, config);
@@ -204,7 +203,7 @@ public class Table implements Comparable<Table> {
 	}
 
 	private static void readRelationTables(
-		Class<? extends Yopable> clazz,
+		Class clazz,
 		Set<Table> tables,
 		Config config) {
 		tables.addAll(JoinUtil
@@ -216,7 +215,7 @@ public class Table implements Comparable<Table> {
 
 	private static void createJoinTableColumnAttributes(
 		Column column,
-		Class<? extends Yopable> reference,
+		Class reference,
 		String foreignKeyName,
 		JoinTable joinTable,
 		Config config) {

@@ -89,7 +89,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 	 * @return the SQL portion for the given context→field restriction
 	 */
 	private SQLExpression getFieldRestriction(Context<?> context, Field field, Config config) {
-		Object ref = ORMUtil.readField(field, this.reference);
+		Object ref = Reflection.readField(field, this.reference);
 		Parameters parameters = new Parameters();
 		if(ref != null) {
 			String name = context.getPath(config) + "#" + field.getName() + " = " + "?";
