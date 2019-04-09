@@ -8,7 +8,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Parameters;
-import org.yop.orm.sql.SQLPart;
+import org.yop.orm.sql.SQLExpression;
 
 import java.util.*;
 
@@ -73,10 +73,10 @@ public class Explicit implements Evaluation {
 	}
 
 	@Override
-	public <T extends Yopable> SQLPart toSQL(Context<T> context, Config config) {
+	public <T extends Yopable> SQLExpression toSQL(Context<T> context, Config config) {
 		Parameters parameters = new Parameters();
 		this.parameters.forEach((k, v) -> parameters.addParameter(k, v, null, false, config));
-		return new SQLPart(this.expression, parameters);
+		return new SQLExpression(this.expression, parameters);
 	}
 
 	@Override

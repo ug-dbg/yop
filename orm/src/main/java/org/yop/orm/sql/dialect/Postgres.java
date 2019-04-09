@@ -1,7 +1,7 @@
 package org.yop.orm.sql.dialect;
 
 import org.yop.orm.gen.Column;
-import org.yop.orm.sql.SQLPart;
+import org.yop.orm.sql.SQLExpression;
 
 /**
  * Postgres dialect {@link Dialect} extension.
@@ -47,7 +47,7 @@ public class Postgres extends Dialect {
 	}
 
 	@Override
-	public SQLPart select(
+	public SQLExpression select(
 		boolean lock,
 		CharSequence what,
 		CharSequence from,
@@ -57,7 +57,7 @@ public class Postgres extends Dialect {
 		CharSequence orderClause,
 		CharSequence... extras) {
 
-		SQLPart request = super.select(lock, what, from, as, joinClause, whereClause, orderClause, extras);
+		SQLExpression request = super.select(lock, what, from, as, joinClause, whereClause, orderClause, extras);
 		return lock ? request.append("OF " + as) : request;
 	}
 }

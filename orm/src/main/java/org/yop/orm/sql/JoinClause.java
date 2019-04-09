@@ -56,14 +56,14 @@ public class JoinClause implements Comparable<JoinClause> {
 	 */
 	public static class JoinClauses extends HashMap<Context<?>, JoinClause> {
 		/** The where clause aggregated from all the joins */
-		private SQLPart whereClause = new SQLPart("");
+		private SQLExpression whereClause = new SQLExpression("");
 
 		/**
 		 * Add a where clause (from a join).
 		 * @param config the SQL config (dialect, sql separator, use batch inserts...)
 		 * @param sql    the where clause to append
 		 */
-		public void addWhereClause(Config config, SQLPart sql) {
+		public void addWhereClause(Config config, SQLExpression sql) {
 			this.whereClause = config.getDialect().where(this.whereClause, sql);
 		}
 
@@ -75,7 +75,7 @@ public class JoinClause implements Comparable<JoinClause> {
 		 * The where clause is not included !
 		 * @return the join clauses SQL portion
 		 */
-		public SQLPart toSQL(Config config) {
+		public SQLExpression toSQL(Config config) {
 			// Join clauses have to be ordered from the closest context to the farthest when building the output !
 			Set<JoinClause> clauses = new TreeSet<>(this.values());
 			List<Parameters.Parameter> parameters = new ArrayList<>();
@@ -85,14 +85,14 @@ public class JoinClause implements Comparable<JoinClause> {
 				parameters.addAll(joinClause.getParameters());
 			}
 
-			return new SQLPart(sql.toString(), parameters);
+			return new SQLExpression(sql.toString(), parameters);
 		}
 
 		/**
 		 * Generate the SQL portion for these join clauses' where clause
 		 * @return the join clauses' where clause SQL part
 		 */
-		public SQLPart toSQLWhere() {
+		public SQLExpression toSQLWhere() {
 			return this.whereClause;
 		}
 	}

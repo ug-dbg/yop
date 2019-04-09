@@ -8,7 +8,7 @@ import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
-import org.yop.orm.sql.SQLPart;
+import org.yop.orm.sql.SQLExpression;
 import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
 
@@ -61,9 +61,9 @@ public class In implements Evaluation {
 		Field field = Reflection.findField(context.getTarget(), (Function<Y, ?>) this.getter);
 		String column = context.getPath(config) + config.dot() + ORMUtil.getColumnName(field);
 
-		List<SQLPart> values = this.values
+		List<SQLExpression> values = this.values
 			.stream()
-			.map(value -> SQLPart.parameter(column + "=" + value, value, field, config))
+			.map(value -> SQLExpression.parameter(column + "=" + value, value, field, config))
 			.collect(Collectors.toList());
 		return config.getDialect().in(column, values);
 	}

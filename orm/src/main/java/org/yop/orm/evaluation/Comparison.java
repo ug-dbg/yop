@@ -7,7 +7,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.Config;
-import org.yop.orm.sql.SQLPart;
+import org.yop.orm.sql.SQLExpression;
 import org.yop.reflection.Reflection;
 
 import java.lang.reflect.Field;
@@ -109,14 +109,14 @@ public class Comparison implements Evaluation {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T extends Yopable> SQLPart toSQL(Context<T> context, Config config) {
+	public <T extends Yopable> SQLExpression toSQL(Context<T> context, Config config) {
 		if (this.field == null) {
 			this.field = Reflection.findField(context.getTarget(), (Function<T, ?>) this.getter);
 		}
 
-		return SQLPart.join(
+		return SQLExpression.join(
 			" ",
-			new SQLPart(Evaluation.columnName(this.field, context, config)),
+			new SQLExpression(Evaluation.columnName(this.field, context, config)),
 			this.op.toSQL(),
 			this.refSQL(this.ref, context, config)
 		);
@@ -132,6 +132,6 @@ public class Comparison implements Evaluation {
 		}
 
 		String name = context.getPath(config) + "#" + this.field.getName() + " " + this.op.toSQL() + "?";
-		return SQLPart.parameter(name, ref, this.field, config);
+		return SQLExpression.parameter(name, ref, this.field, config);
 	}
 }

@@ -21,7 +21,7 @@ import org.yop.orm.query.relation.Relation;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Query;
-import org.yop.orm.sql.SQLPart;
+import org.yop.orm.sql.SQLExpression;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
@@ -402,11 +402,11 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 * @return the generated Query
 	 */
 	private SimpleQuery toSQLInsert(T element, Config config) {
-		Map<String, SQLPart> valueForColumn = this.valuePerColumn(element, config, true);
+		Map<String, SQLExpression> valueForColumn = this.valuePerColumn(element, config, true);
 		List<String> columns = new ArrayList<>(valueForColumn.keySet());
-		List<SQLPart> values = new ArrayList<>(valueForColumn.values());
+		List<SQLExpression> values = new ArrayList<>(valueForColumn.values());
 
-		SQLPart sql = config.getDialect().insert(this.getTableName(), columns, values);
+		SQLExpression sql = config.getDialect().insert(this.getTableName(), columns, values);
 		SimpleQuery<T> query = new SimpleQuery<>(sql, Query.Type.INSERT, element, config);
 		query.askGeneratedKeys(true, element.getClass());
 		return query;
@@ -419,17 +419,17 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 * @return the generated Query
 	 */
 	private SimpleQuery<T> toSQLUpdate(T element, Config config) {
-		List<SQLPart> values = new ArrayList<>(this.valuePerColumn(element, config, false).values());
+		List<SQLExpression> values = new ArrayList<>(this.valuePerColumn(element, config, false).values());
 
 		// UPDATE query : ID column must be set last (WHERE clause, not VALUES)
 		Field idField = ORMUtil.getIdField(element.getClass());
 		String idColumn = ORMUtil.getColumnName(idField);
-		SQLPart whereIdColumn = config.getDialect().equals(
+		SQLExpression whereIdColumn = config.getDialect().equals(
 			idColumn,
-			SQLPart.parameter("idcolumn", element.getId(), idField, config)
+			SQLExpression.parameter("idcolumn", element.getId(), idField, config)
 		);
 
-		SQLPart sql = config.getDialect().update(this.getTableName(), values, whereIdColumn);
+		SQLExpression sql = config.getDialect().update(this.getTableName(), values, whereIdColumn);
 		return new SimpleQuery<>(sql, Query.Type.UPDATE, element, config);
 	}
 
@@ -451,9 +451,9 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 * @param insert  true if values are for an insert query.
 	 * @return the columns to select and their SQL part parameter.
 	 */
-	private Map<String, SQLPart> valuePerColumn(T element, Config config, boolean insert) {
+	private Map<String, SQLExpression> valuePerColumn(T element, Config config, boolean insert) {
 		Set<Field> fields = ORMUtil.getColumnFields(this.getTarget());
-		Map<String, SQLPart> out = new HashMap<>();
+		Map<String, SQLExpression> out = new HashMap<>();
 
 		for (Field field : fields) {
 			if (! insert && ! this.targetFields.isEmpty() && ! this.targetFields.contains(field)) {
@@ -461,7 +461,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 				continue;
 			}
 			String columnName = ORMUtil.getColumnName(field);
-			SQLPart columnValue = this.columnValue(field, element, config, insert);
+			SQLExpression columnValue = this.columnValue(field, element, config, insert);
 			if (columnValue != null) {
 				out.put(columnName, columnValue);
 			}
@@ -476,17 +476,17 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 *     Here is what we return here :
 	 *     <ul>
 	 *         <li>Autogen ID column : null</li>
-	 *         <li>insert : columnName → SQLPart[columnName = ?]</li>
-	 *         <li>update : columnName → SQLPart[?]</li>
+	 *         <li>insert : columnName → SQLExpression[columnName = ?]</li>
+	 *         <li>update : columnName → SQLExpression[?]</li>
 	 *     </ul>
 	 * </b>
 	 * @param field   the considered field
 	 * @param element the considered element (the value will be read on this object using the field)
 	 * @param config  the SQL config (sql separator, use batch inserts...)
 	 * @param insert  true if values are for an insert query.
-	 * @return an SQLPart for the column value. Null if the column must not be inserted in the query.
+	 * @return an SQLExpression for the column value. Null if the column must not be inserted in the query.
 	 */
-	private SQLPart columnValue(Field field, Yopable element, Config config, boolean insert) {
+	private SQLExpression columnValue(Field field, Yopable element, Config config, boolean insert) {
 		boolean isID = ORMUtil.getIdField(this.getTarget()) == field;
 
 		if (isID && ORMUtil.isAutogenId(this.getTarget()) && ! config.useSequences()) {
@@ -496,23 +496,23 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 
 		boolean isSequence = config.useSequences() && !ORMUtil.readSequence(field, config).isEmpty();
 		String columnName = ORMUtil.getColumnName(field);
-		SQLPart column;
+		SQLExpression column;
 
 		if(isID) {
 			if (insert && isSequence) {
 				// ID field, insert, sequence → include this column as sequence nextval.
-				column = new SQLPart((String) getUpsertIdValue(element, config));
+				column = new SQLExpression((String) getUpsertIdValue(element, config));
 			} else {
-				column = SQLPart.parameter(columnName, getUpsertIdValue(element, config), field, config);
+				column = SQLExpression.parameter(columnName, getUpsertIdValue(element, config), field, config);
 			}
 		} else {
-			column = SQLPart.parameter(columnName, ORMUtil.readField(field, element), field, config);
+			column = SQLExpression.parameter(columnName, ORMUtil.readField(field, element), field, config);
 		}
 
 		// Update : columnName → [columnName = ?]
 		// Insert : columnName → [?]
 		if (! insert) {
-			column = config.getDialect().equals(new SQLPart(columnName), column);
+			column = config.getDialect().equals(new SQLExpression(columnName), column);
 		}
 		return column;
 	}
@@ -551,7 +551,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 * SQL query + parameters aggregation.
 	 */
 	protected static class SimpleQuery<T extends Yopable> extends org.yop.orm.sql.SimpleQuery {
-		private SimpleQuery(SQLPart sql, Type type, T element, Config config) {
+		private SimpleQuery(SQLExpression sql, Type type, T element, Config config) {
 			super(sql, type, config);
 			this.elements.add(element);
 			this.target = element == null ? null : element.getClass();

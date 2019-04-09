@@ -20,7 +20,7 @@ public class SimpleQuery extends Query {
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 */
 	public SimpleQuery(String sql, Type type, Config config) {
-		this(new SQLPart(sql), type, config);
+		this(new SQLExpression(sql), type, config);
 	}
 
 	/**
@@ -29,7 +29,7 @@ public class SimpleQuery extends Query {
 	 * @param type       the query type
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 */
-	public SimpleQuery(SQLPart sql, Type type, Config config) {
+	public SimpleQuery(SQLExpression sql, Type type, Config config) {
 		super(sql.toString(), type, config);
 		if (! sql.isCoherent()) {
 			throw new YopIncoherentQueryException(sql);

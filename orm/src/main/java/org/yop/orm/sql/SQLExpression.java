@@ -14,7 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * An SQL portion. This is simply an SQL string with parameters.
+ * An SQL expression that can be evaluated to an SQL string with parameters.
  * <br>
  * This class helps keeping an SQL query coherent (i.e. with the right number of parameters, in the right order)
  * <br>
@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  * </ul>
  * Use {@link #isCoherent()} to check if the parameters number equals the number of '?' in the query.
  */
-public class SQLPart implements CharSequence {
+public class SQLExpression implements CharSequence {
 
 	/** e.g. {:parameter_name} */
 	private static final Pattern REPLACEMENT_PATTERN = Pattern.compile("\\{:[a-z_]+\\}");
@@ -38,14 +38,14 @@ public class SQLPart implements CharSequence {
 	protected String sql;
 	protected Parameters parameters = new Parameters();
 
-	protected SQLPart() {}
+	protected SQLExpression() {}
 
 	/**
-	 * Constructor with an sql string and no parameter. See {@link #SQLPart(String, List)}.
+	 * Constructor with an sql string and no parameter. See {@link #SQLExpression(String, List)}.
 	 * @param sql the sql query.
 	 * @throws YopIncoherentQueryException if the query string contains at least one '?'
 	 */
-	public SQLPart(String sql) {
+	public SQLExpression(String sql) {
 		this(sql, new ArrayList<>(0));
 	}
 
@@ -59,7 +59,13 @@ public class SQLPart implements CharSequence {
 	 * @param config         the SQL config. Might be required to get the default column length.
 	 * @throws YopIncoherentQueryException if the query string contains a number of '?' different from 1
 	 */
-	public SQLPart(String sql, String parameterName, Object parameterValue, Field field, boolean seq, Config config) {
+	public SQLExpression(
+		String sql,
+		String parameterName,
+		Object parameterValue,
+		Field field,
+		boolean seq,
+		Config config) {
 		this(sql, new Parameters().addParameter(parameterName, parameterValue, field, seq, config));
 	}
 
@@ -69,7 +75,7 @@ public class SQLPart implements CharSequence {
 	 * @param parameters the query parameters
 	 * @throws YopIncoherentQueryException if the query string contains a number of '?' different from parameters size
 	 */
-	public SQLPart(String sql, List<Parameters.Parameter> parameters) {
+	public SQLExpression(String sql, List<Parameters.Parameter> parameters) {
 		this();
 		this.sql = sql == null ? "" : sql;
 		this.parameters.addAll(parameters);
@@ -110,7 +116,7 @@ public class SQLPart implements CharSequence {
 	 * This returns a new SQL part for the sub-sequence, preserving the parameters integrity.
 	 */
 	@Override
-	public SQLPart subSequence(int start, int end) {
+	public SQLExpression subSequence(int start, int end) {
 		String removeStart = (String) this.sql.subSequence(0, start);
 		String keep        = (String) this.sql.subSequence(start, end);
 
@@ -125,7 +131,7 @@ public class SQLPart implements CharSequence {
 			}
 			i++;
 		}
-		return new SQLPart(keep, parameters);
+		return new SQLExpression(keep, parameters);
 	}
 
 	/**
@@ -134,13 +140,13 @@ public class SQLPart implements CharSequence {
 	 * @return the current instance
 	 * @throws YopIncoherentQueryException if the the parameter is a String with at least one '?'.
 	 */
-	public SQLPart append(CharSequence part) {
+	public SQLExpression append(CharSequence part) {
 		if (part instanceof String && ((String) part).contains(PARAM)) {
 			throw new YopRuntimeException("Incoherent SQL : you cannot join an SQL part with '?' and no parameter.");
 		}
 		this.sql = MessageUtil.join(" ", this.sql, part.toString());
-		if (part instanceof SQLPart) {
-			this.parameters.addAll(((SQLPart) part).parameters);
+		if (part instanceof SQLExpression) {
+			this.parameters.addAll(((SQLExpression) part).parameters);
 		}
 		return this;
 	}
@@ -158,52 +164,52 @@ public class SQLPart implements CharSequence {
 	 * @param name  the parameter name
 	 * @param value the parameter value
 	 * @param field the field associated to the query parameter
-	 * @return a new SQLPart instance, whose sql is '?' and with a parameter created for the given value.
+	 * @return a new SQLExpression instance, whose sql is '?' and with a parameter created for the given value.
 	 */
-	public static SQLPart parameter(String name, Object value, Field field, Config config) {
-		return new SQLPart(PARAM, name, value, field, false, config);
+	public static SQLExpression parameter(String name, Object value, Field field, Config config) {
+		return new SQLExpression(PARAM, name, value, field, false, config);
 	}
 
 	/**
 	 * Create an SQL part instance that is actually a '?' parameter, for a delayed value.
 	 * @param name         the parameter name
 	 * @param delayedValue the parameter delayed value
-	 * @return a new SQLPart instance, whose sql is '?' and with a parameter created for the delayed value.
+	 * @return a new SQLExpression instance, whose sql is '?' and with a parameter created for the delayed value.
 	 */
-	public static SQLPart parameter(String name, Parameters.DelayedValue delayedValue) {
-		return new SQLPart(PARAM, new Parameters().addParameter(name, delayedValue));
+	public static SQLExpression parameter(String name, Parameters.DelayedValue delayedValue) {
+		return new SQLExpression(PARAM, new Parameters().addParameter(name, delayedValue));
 	}
 
 	/**
-	 * Create a new SQLPart instance for the given parts, separated with a separator.
+	 * Create a new SQLExpression instance for the given parts, separated with a separator.
 	 * @param separator the separator
 	 * @param parts     the SQL parts to join
-	 * @return a new SQLPart instance
+	 * @return a new SQLExpression instance
 	 */
-	public static SQLPart join(String separator, CharSequence... parts) {
+	public static SQLExpression join(String separator, CharSequence... parts) {
 		return join(separator, Arrays.asList(parts));
 	}
 
 	/**
-	 * Create a new SQLPart instance for the given parts, separated with a separator.
+	 * Create a new SQLExpression instance for the given parts, separated with a separator.
 	 * @param separator the separator
 	 * @param parts     the SQL parts to join
-	 * @return a new SQLPart instance
+	 * @return a new SQLExpression instance
 	 */
-	public static SQLPart join(String separator, Collection<? extends CharSequence> parts) {
+	public static SQLExpression join(String separator, Collection<? extends CharSequence> parts) {
 		List<String> sql = new ArrayList<>();
 		List<Parameters.Parameter> parameters = new ArrayList<>();
 		for (CharSequence part : parts) {
 			sql.add(part.toString());
-			if (part instanceof SQLPart) {
-				parameters.addAll(((SQLPart) part).parameters);
+			if (part instanceof SQLExpression) {
+				parameters.addAll(((SQLExpression) part).parameters);
 			}
 		}
-		return new SQLPart(MessageUtil.join(separator, sql), parameters);
+		return new SQLExpression(MessageUtil.join(separator, sql), parameters);
 	}
 
 	/**
-	 * Create a new SQLPart instance for a String pattern, whose parameters are replaced with the given parts.
+	 * Create a new SQLExpression instance for a String pattern, whose parameters are replaced with the given parts.
 	 * <br><br>
 	 * <b>
 	 * Parameters in the pattern must be in the same order as the replacement parts !
@@ -212,9 +218,9 @@ public class SQLPart implements CharSequence {
 	 * </b>
 	 * @param pattern the SQL pattern. Parameters are delimited using {@link #REPLACEMENT_PATTERN}. e.g. {:param_name}
 	 * @param parts   the SQL parts that will replace the pattern parameters. <b>Order is important !</b>
-	 * @return a new SQLPart instance for the pattern.
+	 * @return a new SQLExpression instance for the pattern.
 	 */
-	public static SQLPart forPattern(String pattern, CharSequence... parts) {
+	public static SQLExpression forPattern(String pattern, CharSequence... parts) {
 		Matcher matcher = REPLACEMENT_PATTERN.matcher(pattern);
 		StringBuilder buffer = new StringBuilder();
 		List<Parameters.Parameter> parameters = new ArrayList<>();
@@ -230,8 +236,8 @@ public class SQLPart implements CharSequence {
 			}
 			buffer.append(pattern, pos, matcher.start());
 			buffer.append(parts[i].toString());
-			if (parts[i] instanceof SQLPart) {
-				parameters.addAll(((SQLPart) parts[i]).parameters);
+			if (parts[i] instanceof SQLExpression) {
+				parameters.addAll(((SQLExpression) parts[i]).parameters);
 			}
 			pos = matcher.end();
 			i++;
@@ -244,6 +250,6 @@ public class SQLPart implements CharSequence {
 		}
 
 		buffer.append(pattern, pos, pattern.length());
-		return new SQLPart(buffer.toString(), parameters);
+		return new SQLExpression(buffer.toString(), parameters);
 	}
 }

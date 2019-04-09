@@ -88,33 +88,33 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 			From from = entry.getKey();
 
 			if (this.sourceTable != null) {
-				SQLPart idColumn = config.getDialect().equals(
+				SQLExpression idColumn = config.getDialect().equals(
 					entry.getKey().getIdColumn(),
-					SQLPart.parameter(this.sourceTable + "#id", from::getId)
+					SQLExpression.parameter(this.sourceTable + "#id", from::getId)
 				);
 
 				for (To to : entry.getValue()) {
-					SQLPart sourceColumn = config.getDialect().equals(
+					SQLExpression sourceColumn = config.getDialect().equals(
 						this.sourceColumn,
-						SQLPart.parameter(this.sourceTable + "#" + this.sourceColumn, to::getId)
+						SQLExpression.parameter(this.sourceTable + "#" + this.sourceColumn, to::getId)
 					);
-					SQLPart sql = config.getDialect().update(this.sourceTable, sourceColumn, idColumn);
+					SQLExpression sql = config.getDialect().update(this.sourceTable, sourceColumn, idColumn);
 					updates.add(new SimpleQuery(sql, Query.Type.UPDATE, config));
 				}
 			}
 
 			if (this.targetTable != null) {
-				SQLPart targetColumn = config.getDialect().equals(
+				SQLExpression targetColumn = config.getDialect().equals(
 					this.targetColumn,
-					SQLPart.parameter(this.targetTable + "#" + this.targetColumn, from::getId)
+					SQLExpression.parameter(this.targetTable + "#" + this.targetColumn, from::getId)
 				);
 
 				for (To to : entry.getValue()) {
-					SQLPart idColumn = config.getDialect().equals(
+					SQLExpression idColumn = config.getDialect().equals(
 						entry.getKey().getIdColumn(),
-						SQLPart.parameter(this.sourceTable + "#id", to::getId)
+						SQLExpression.parameter(this.sourceTable + "#id", to::getId)
 					);
-					SQLPart sql = config.getDialect().update(this.targetTable, targetColumn, idColumn);
+					SQLExpression sql = config.getDialect().update(this.targetTable, targetColumn, idColumn);
 					updates.add(new SimpleQuery(sql, Query.Type.UPDATE, config));
 				}
 			}

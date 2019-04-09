@@ -1,15 +1,15 @@
 package org.yop.orm.exception;
 
-import org.yop.orm.sql.SQLPart;
+import org.yop.orm.sql.SQLExpression;
 
 /**
  * An exception for incoherent query, i.e. the query SQL does not match the parameters length.
  */
 public class YopIncoherentQueryException extends YopRuntimeException {
 
-	private SQLPart query;
+	private SQLExpression query;
 
-	public YopIncoherentQueryException(SQLPart query) {
+	public YopIncoherentQueryException(SQLExpression query) {
 		super(
 			"Incoherent query SQL and parameters. "
 			+ "SQL : [" + query.toString() + "]. "
@@ -18,7 +18,7 @@ public class YopIncoherentQueryException extends YopRuntimeException {
 		this.query = query;
 	}
 
-	public SQLPart getQuery() {
+	public SQLExpression getQuery() {
 		return this.query;
 	}
 }

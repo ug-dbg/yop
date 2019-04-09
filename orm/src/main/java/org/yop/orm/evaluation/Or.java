@@ -3,7 +3,7 @@ package org.yop.orm.evaluation;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
-import org.yop.orm.sql.SQLPart;
+import org.yop.orm.sql.SQLExpression;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -53,6 +53,6 @@ public class Or implements Evaluation {
 			.stream()
 			.map(e -> e.toSQL(context, config))
 			.collect(Collectors.toList());
-		return new SQLPart("(").append(SQLPart.join(" OR ", evaluations)).append(")");
+		return new SQLExpression("(").append(SQLExpression.join(" OR ", evaluations)).append(")");
 	}
 }

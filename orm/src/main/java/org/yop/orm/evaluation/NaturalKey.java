@@ -8,7 +8,7 @@ import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Parameters;
-import org.yop.orm.sql.SQLPart;
+import org.yop.orm.sql.SQLExpression;
 import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
 
@@ -43,7 +43,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 	}
 
 	@Override
-	public <U extends Yopable> SQLPart toSQL(Context<U> context, Config config) {
+	public <U extends Yopable> SQLExpression toSQL(Context<U> context, Config config) {
 		List<Field> naturalKeys = ORMUtil.getNaturalKeyFields(this.reference.getClass());
 		return config.getDialect().where(
 			naturalKeys
@@ -88,14 +88,14 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 	 * @param config  the SQL config. Required to get the default column length.
 	 * @return the SQL portion for the given context→field restriction
 	 */
-	private SQLPart getFieldRestriction(Context<?> context, Field field, Config config) {
+	private SQLExpression getFieldRestriction(Context<?> context, Field field, Config config) {
 		Object ref = ORMUtil.readField(field, this.reference);
 		Parameters parameters = new Parameters();
 		if(ref != null) {
 			String name = context.getPath(config) + "#" + field.getName() + " = " + "?";
 			parameters.addParameter(name, ref, field, false, config);
 		}
-		return new SQLPart(
+		return new SQLExpression(
 			Evaluation.columnName(field, context, config) + (ref == null ? " IS NULL " : "=?"),
 			parameters
 		);

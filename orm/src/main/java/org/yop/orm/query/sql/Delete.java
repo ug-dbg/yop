@@ -161,7 +161,7 @@ public class Delete<T extends Yopable> extends WhereRequest<Delete<T>, T> implem
 				connection.config().maxParams()
 			);
 			for (List<Comparable> batch : batches) {
-				SQLPart sql = Delete.from(entry.getKey()).where(Where.id(batch)).toSQL(connection.config());
+				SQLExpression sql = Delete.from(entry.getKey()).where(Where.id(batch)).toSQL(connection.config());
 				queries.add(new SimpleQuery(sql, Query.Type.DELETE, connection.config()));
 			}
 		}
@@ -176,7 +176,7 @@ public class Delete<T extends Yopable> extends WhereRequest<Delete<T>, T> implem
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL DELETE query string
 	 */
-	private SQLPart toSQL(Config config) {
+	private SQLExpression toSQL(Config config) {
 		Context<T> root = this.context;
 		Set<SQLColumn> columns = this.columns(true, config);
 
@@ -195,7 +195,7 @@ public class Delete<T extends Yopable> extends WhereRequest<Delete<T>, T> implem
 			context = root;
 		}
 
-		SQLPart whereClause = this.where.toSQL(context, config);
+		SQLExpression whereClause = this.where.toSQL(context, config);
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
 		return config.getDialect().delete(
 			columnsClause,

@@ -6,7 +6,7 @@ import org.yop.orm.gen.ForeignKey;
 import org.yop.orm.gen.Table;
 import org.yop.orm.query.sql.Paging;
 import org.yop.orm.sql.Parameters;
-import org.yop.orm.sql.SQLPart;
+import org.yop.orm.sql.SQLExpression;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.MessageUtil;
 
@@ -320,7 +320,7 @@ public interface IDialect {
 	 * @return COUNT (DISTINCT alias)
 	 */
 	default String toSQLCount(String columnAlias) {
-		return SQLPart.forPattern(DEFAULT_COUNT_DISTINCT_PATTERN, columnAlias).toString();
+		return SQLExpression.forPattern(DEFAULT_COUNT_DISTINCT_PATTERN, columnAlias).toString();
 	}
 
 	/**
@@ -335,7 +335,7 @@ public interface IDialect {
 	 * @param extras      Any extra clause.
 	 * @return the SQL select query.
 	 */
-	default SQLPart select(
+	default SQLExpression select(
 		boolean lock,
 		CharSequence what,
 		CharSequence from,
@@ -346,9 +346,9 @@ public interface IDialect {
 		CharSequence... extras) {
 
 		String pattern = this.selectPattern(lock, false);
-		CharSequence any = SQLPart.join(" ", extras);
+		CharSequence any = SQLExpression.join(" ", extras);
 		CharSequence safeWhereClause = StringUtils.isBlank(whereClause.toString()) ? DEFAULT_WHERE : whereClause;
-		return SQLPart.forPattern(pattern, what, from, as, joinClause, safeWhereClause, orderClause, any);
+		return SQLExpression.forPattern(pattern, what, from, as, joinClause, safeWhereClause, orderClause, any);
 	}
 
 	/**
@@ -362,7 +362,7 @@ public interface IDialect {
 	 * @param extras      Any extra clause.
 	 * @return the SQL 'distinct' select query.
 	 */
-	default SQLPart selectDistinct(
+	default SQLExpression selectDistinct(
 		boolean lock,
 		CharSequence what,
 		CharSequence from,
@@ -372,9 +372,9 @@ public interface IDialect {
 		CharSequence... extras) {
 
 		String pattern = this.selectPattern(lock, true);
-		CharSequence any = SQLPart.join(" ", extras);
+		CharSequence any = SQLExpression.join(" ", extras);
 		CharSequence safeWhereClause = StringUtils.isBlank(whereClause.toString()) ? DEFAULT_WHERE : whereClause;
-		return SQLPart.forPattern(pattern, what, from, as, joinClause, safeWhereClause, "", any);
+		return SQLExpression.forPattern(pattern, what, from, as, joinClause, safeWhereClause, "", any);
 	}
 
 	/**
@@ -385,14 +385,14 @@ public interface IDialect {
 	 * @param whereClause  the where clause. Optional.
 	 * @return the {@link SQL#DELETE} formatted query
 	 */
-	default SQLPart delete(
+	default SQLExpression delete(
 		CharSequence columnsClause,
 		CharSequence tableName,
 		CharSequence joinClauses,
 		CharSequence whereClause) {
 
 		CharSequence safeWhereClause = StringUtils.isBlank(whereClause.toString()) ? DEFAULT_WHERE : whereClause;
-		return SQLPart.forPattern(DEFAULT_DELETE_PATTERN, columnsClause, tableName, joinClauses, safeWhereClause);
+		return SQLExpression.forPattern(DEFAULT_DELETE_PATTERN, columnsClause, tableName, joinClauses, safeWhereClause);
 	}
 
 	/**
@@ -402,8 +402,8 @@ public interface IDialect {
 	 * @param ids          the IDs for the IN clause. Mostly a list of '?' if you want to use query parameters.
 	 * @return the {@link SQL#DEFAULT_DELETE_IN_PATTERN} formatted query
 	 */
-	default SQLPart deleteIn(String from, String sourceColumn, List<SQLPart> ids) {
-		return SQLPart.forPattern(DEFAULT_DELETE_IN_PATTERN, from, sourceColumn, SQLPart.join(",", ids));
+	default SQLExpression deleteIn(String from, String sourceColumn, List<SQLExpression> ids) {
+		return SQLExpression.forPattern(DEFAULT_DELETE_IN_PATTERN, from, sourceColumn, SQLExpression.join(",", ids));
 	}
 
 	/**
@@ -413,12 +413,12 @@ public interface IDialect {
 	 * @param values    the column values
 	 * @return the {@link SQL#INSERT} formatted query
 	 */
-	default SQLPart insert(String tableName, List<? extends CharSequence> columns, List<? extends CharSequence> values) {
-		return SQLPart.forPattern(
+	default SQLExpression insert(String tableName, List<? extends CharSequence> columns, List<? extends CharSequence> values) {
+		return SQLExpression.forPattern(
 			DEFAULT_INSERT_PATTERN,
 			tableName,
-			SQLPart.join(" , ", columns),
-			SQLPart.join(" , ", values)
+			SQLExpression.join(" , ", columns),
+			SQLExpression.join(" , ", values)
 		);
 	}
 
@@ -429,8 +429,8 @@ public interface IDialect {
 	 * @param idColumn        the id column (required for : WHERE idColumn = ?)
 	 * @return the {@link SQL#UPDATE} formatted query
 	 */
-	default SQLPart update(String tableName, List<? extends CharSequence> columnAndValues, SQLPart idColumn) {
-		return SQLPart.forPattern(DEFAULT_UPDATE_PATTERN, tableName, SQLPart.join(", ", columnAndValues), idColumn);
+	default SQLExpression update(String tableName, List<? extends CharSequence> columnAndValues, SQLExpression idColumn) {
+		return SQLExpression.forPattern(DEFAULT_UPDATE_PATTERN, tableName, SQLExpression.join(", ", columnAndValues), idColumn);
 	}
 
 	/**
@@ -442,8 +442,8 @@ public interface IDialect {
 	 * @param idColumn   the id column (required for : WHERE idColumn = ?)
 	 * @return the {@link SQL#UPDATE} formatted query
 	 */
-	default SQLPart update(String tableName, SQLPart columnAndValue, SQLPart idColumn) {
-		return SQLPart.forPattern(DEFAULT_UPDATE_PATTERN, tableName, columnAndValue, idColumn);
+	default SQLExpression update(String tableName, SQLExpression columnAndValue, SQLExpression idColumn) {
+		return SQLExpression.forPattern(DEFAULT_UPDATE_PATTERN, tableName, columnAndValue, idColumn);
 	}
 
 	/**
@@ -458,7 +458,7 @@ public interface IDialect {
 	 * @return the formatted SQL join clause
 	 */
 	default String join(String joinType, String table, String tableAlias, String left, String right) {
-		return joinType + SQLPart.forPattern(DEFAULT_JOIN_ON_PATTERN, table, tableAlias, left, right).toString();
+		return joinType + SQLExpression.forPattern(DEFAULT_JOIN_ON_PATTERN, table, tableAlias, left, right).toString();
 	}
 
 	/**
@@ -469,8 +469,8 @@ public interface IDialect {
 	 * @param values the values : for each value, a '?' will be added in 'IN ()'.
 	 * @return the {@link SQL#IN} formatted clause
 	 */
-	default SQLPart in(String column, List<? extends CharSequence> values) {
-		return SQLPart.forPattern(DEFAULT_IN_PATTERN, column, SQLPart.join(" , ", values));
+	default SQLExpression in(String column, List<? extends CharSequence> values) {
+		return SQLExpression.forPattern(DEFAULT_IN_PATTERN, column, SQLExpression.join(" , ", values));
 	}
 
 	/**
@@ -478,7 +478,7 @@ public interface IDialect {
 	 * @param whereClauses the where clauses to join
 	 * @return the new where clause
 	 */
-	default SQLPart where(CharSequence... whereClauses) {
+	default SQLExpression where(CharSequence... whereClauses) {
 		return this.where(Arrays.asList(whereClauses));
 	}
 
@@ -487,8 +487,8 @@ public interface IDialect {
 	 * @param whereClauses the where clauses to join
 	 * @return the new where clause
 	 */
-	default SQLPart where(List<? extends CharSequence> whereClauses) {
-		return SQLPart.join(" " + AND + " ", whereClauses);
+	default SQLExpression where(List<? extends CharSequence> whereClauses) {
+		return SQLExpression.join(" " + AND + " ", whereClauses);
 	}
 
 	/**
@@ -497,8 +497,8 @@ public interface IDialect {
 	 * @param b the right part
 	 * @return a new SQL part, for the {@link SQL#DEFAULT_EQUALS_PATTERN} pattern.
 	 */
-	default SQLPart equals(CharSequence a, CharSequence b) {
-		return SQLPart.forPattern(DEFAULT_EQUALS_PATTERN, a, b);
+	default SQLExpression equals(CharSequence a, CharSequence b) {
+		return SQLExpression.forPattern(DEFAULT_EQUALS_PATTERN, a, b);
 	}
 
 	/**
@@ -519,7 +519,7 @@ public interface IDialect {
 	 * @param orderClause          the 'order by' clause
 	 * @return the assembled SELECT WHERE EXIST query
 	 */
-	default SQLPart selectWhereExists(
+	default SQLExpression selectWhereExists(
 		boolean lock,
 		CharSequence idAlias,
 		CharSequence columns,
@@ -535,7 +535,7 @@ public interface IDialect {
 		CharSequence orderClause,
 		CharSequence... extras) {
 
-		SQLPart subSelect = this.selectDistinct(
+		SQLExpression subSelect = this.selectDistinct(
 			false,
 			subSelectIdAlias,
 			from,
@@ -545,7 +545,7 @@ public interface IDialect {
 			pagingClause
 		);
 
-		SQLPart where = this.where(joinClauseWhere, SQLPart.forPattern(DEFAULT_EXISTS_PATTERN, subSelect));
+		SQLExpression where = this.where(joinClauseWhere, SQLExpression.forPattern(DEFAULT_EXISTS_PATTERN, subSelect));
 		return this.select(lock, columns, from, as, joinClause, where, orderClause, extras);
 	}
 
@@ -565,7 +565,7 @@ public interface IDialect {
 	 * @param orderClause     the 'order by' clause
 	 * @return the assembled SELECT WHERE ID IN query
 	 */
-	default SQLPart selectWhereIdIn(
+	default SQLExpression selectWhereIdIn(
 		boolean lock,
 		CharSequence idAlias,
 		CharSequence columns,
@@ -579,7 +579,7 @@ public interface IDialect {
 		CharSequence orderClause,
 		CharSequence... extras) {
 
-		SQLPart inSubQuery = this.select(
+		SQLExpression inSubQuery = this.select(
 			false,
 			idAlias,
 			from,
@@ -590,7 +590,7 @@ public interface IDialect {
 			pagingClause
 		);
 
-		SQLPart whereInSubQuery = SQLPart.join(" ", idAlias, SQLPart.forPattern(DEFAULT_IN_PATTERN, "", inSubQuery));
+		SQLExpression whereInSubQuery = SQLExpression.join(" ", idAlias, SQLExpression.forPattern(DEFAULT_IN_PATTERN, "", inSubQuery));
 		return this.select(lock, columns, from, as, joinClause, whereInSubQuery, orderClause, extras);
 	}
 }

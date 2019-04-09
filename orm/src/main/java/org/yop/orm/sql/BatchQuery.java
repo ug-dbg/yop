@@ -149,7 +149,7 @@ public class BatchQuery extends Query {
 
 		// Only one batch ? Return a SimpleQuery, for coherence purposes.
 		if (merged != null && merged.parametersBatches.size() == 1) {
-			SQLPart sql = new SQLPart(merged.sql, merged.parametersBatches.get(0));
+			SQLExpression sql = new SQLExpression(merged.sql, merged.parametersBatches.get(0));
 			Query simpleQuery = new SimpleQuery(sql, merged.getType(), merged.config).askGeneratedKeys(
 				merged.askGeneratedKeys,
 				merged.target

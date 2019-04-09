@@ -7,7 +7,7 @@ import com.google.gson.JsonObject;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
-import org.yop.orm.sql.SQLPart;
+import org.yop.orm.sql.SQLExpression;
 import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
@@ -50,9 +50,9 @@ public class IdIn  implements Evaluation {
 
 		String idColumn = ORMUtil.getIdColumn(context, config);
 		Field idField = ORMUtil.getIdField(context.getTarget());
-		List<SQLPart> values = this.values
+		List<SQLExpression> values = this.values
 			.stream()
-			.map(value -> SQLPart.parameter(idColumn + "=" + value, value, idField, config))
+			.map(value -> SQLExpression.parameter(idColumn + "=" + value, value, idField, config))
 			.collect(Collectors.toList());
 
 		return config.getDialect().in(idColumn, values);

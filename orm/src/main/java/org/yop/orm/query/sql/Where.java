@@ -5,7 +5,7 @@ import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
-import org.yop.orm.sql.SQLPart;
+import org.yop.orm.sql.SQLExpression;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -109,7 +109,7 @@ public class Where<T extends Yopable> implements JsonAble {
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL WHERE clause
 	 */
-	public SQLPart toSQL(Context<T> context, Config config) {
+	public SQLExpression toSQL(Context<T> context, Config config) {
 		return config.getDialect().where(
 			this.evaluations.stream().map(e -> e.toSQL(context, config)).collect(Collectors.toList())
 		);
@@ -180,7 +180,7 @@ public class Where<T extends Yopable> implements JsonAble {
 	 * @param whereClauses the where clauses to join
 	 * @return the new where clause
 	 */
-	public static SQLPart toSQL(Config config, CharSequence... whereClauses) {
+	public static SQLExpression toSQL(Config config, CharSequence... whereClauses) {
 		return toSQL(config, Arrays.asList(whereClauses));
 	}
 
@@ -190,7 +190,7 @@ public class Where<T extends Yopable> implements JsonAble {
 	 * @param whereClauses the where clauses to join
 	 * @return the new where clause
 	 */
-	public static SQLPart toSQL(Config config, List<? extends CharSequence> whereClauses) {
+	public static SQLExpression toSQL(Config config, List<? extends CharSequence> whereClauses) {
 		return config.getDialect().where(whereClauses);
 	}
 }

@@ -216,7 +216,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	public Set<T> executeWithTwoQueries(IConnection connection) {
 		List<Comparable> ids;
 
-		SQLPart request = this.toSQLAnswerRequest(connection.config());
+		SQLExpression request = this.toSQLAnswerRequest(connection.config());
 		Query query = new SimpleQuery(request, Query.Type.SELECT, connection.config());
 
 		Set<T> elements = Executor.executeSelectQuery(
@@ -270,7 +270,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 			return this.executeWithTwoQueries(connection);
 		}
 
-		SQLPart request =
+		SQLExpression request =
 			(strategy == Strategy.IN || this.paging.isPaging())
 			? this.toSQLDataRequestWithIN(connection.config())
 			: this.toSQLDataRequestWithEXISTS(connection.config());
@@ -317,7 +317,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @return the SELECT result, as an unique T
 	 */
 	public Long count(IConnection connection) {
-		SQLPart request = this.toSQLIDsRequest(true, connection.config());
+		SQLExpression request = this.toSQLIDsRequest(true, connection.config());
 
 		return Executor.executeQuery(
 			connection,
@@ -334,7 +334,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @throws org.yop.orm.exception.YopMapperException A ResultSet → Yopables mapping error occurred
 	 */
 	public IdMap executeForIds(IConnection connection) {
-		SQLPart request = this.toSQLIDsRequest(false, connection.config());
+		SQLExpression request = this.toSQLIDsRequest(false, connection.config());
 		Query query = new SimpleQuery(request, Query.Type.SELECT, connection.config());
 
 		return Executor.executeQuery(
@@ -360,7 +360,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 */
 	private CharSequence toSQLColumnsClause(boolean addJoinClauseColumns, Config config) {
 		Set<SQLColumn> columns = this.columns(addJoinClauseColumns, config);
-		return columns.isEmpty() ? "*" : SQLPart.join(",", columns);
+		return columns.isEmpty() ? "*" : SQLExpression.join(",", columns);
 	}
 
 	/**
@@ -370,7 +370,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 */
 	private CharSequence toSQLIdColumnsClause(Config config) {
 		Set<SQLColumn> columns = this.columns(true, config).stream().filter(SQLColumn::isId).collect(Collectors.toSet());
-		return columns.isEmpty() ? "*" : SQLPart.join(",", columns);
+		return columns.isEmpty() ? "*" : SQLExpression.join(",", columns);
 	}
 
 	/**
@@ -379,7 +379,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the Where clause for {@link #where} and {@link #context}
 	 */
-	private SQLPart toSQLWhere(Config config) {
+	private SQLExpression toSQLWhere(Config config) {
 		return this.where.toSQL(this.context, config);
 	}
 
@@ -394,7 +394,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'answer' request.
 	 */
-	private SQLPart toSQLAnswerRequest(Config config) {
+	private SQLExpression toSQLAnswerRequest(Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true, config);
 		return config.getDialect().select(
 			false,
@@ -414,10 +414,10 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'data' request.
 	 */
-	private SQLPart toSQLDataRequest(Set<Comparable> ids, Config config) {
+	private SQLExpression toSQLDataRequest(Set<Comparable> ids, Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(false, config);
 		String idColumn = SQLColumn.id(this.context, config).qualifiedName();
-		SQLPart whereClause = Where.toSQL(
+		SQLExpression whereClause = Where.toSQL(
 			config,
 			config.getDialect().in(idColumn, ids.stream().map(String::valueOf).collect(Collectors.toList())) ,
 			joinClauses.toSQLWhere()
@@ -441,7 +441,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'data' request.
 	 */
-	private SQLPart toSQLDataRequestWithEXISTS(Config config) {
+	private SQLExpression toSQLDataRequestWithEXISTS(Config config) {
 		return this.toSQLWithExists(config, false, false);
 	}
 
@@ -453,7 +453,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @param config     the SQL config (sql separator, use batch inserts...)
 	 * @return the SQL 'data' request.
 	 */
-	private SQLPart toSQLIDsRequest(boolean count, Config config) {
+	private SQLExpression toSQLIDsRequest(boolean count, Config config) {
 		return this.toSQLWithExists(config, count, true);
 	}
 
@@ -467,7 +467,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @param onlyIDs    true to only return ID columns. Useless if 'count' is set to 'true'
 	 * @return the sqL 'SELECT WHERE EXISTS' query
 	 */
-	private SQLPart toSQLWithExists(Config config, boolean count, boolean onlyIDs) {
+	private SQLExpression toSQLWithExists(Config config, boolean count, boolean onlyIDs) {
 		// First we have to build a 'select ids' query for the EXISTS subquery
 		// We copy the current 'Select' object to add a suffix to the context
 		// We link the EXISTS subquery to the global one (id = subquery.id)
@@ -505,7 +505,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * It uses a subquery to find IDs of the target type, inside and 'id IN' clause.
 	 * @return the SQL 'data' request.
 	 */
-	private SQLPart toSQLDataRequestWithIN(Config config) {
+	private SQLExpression toSQLDataRequestWithIN(Config config) {
 		JoinClause.JoinClauses joinClauses = this.toSQLJoin(true, config);
 		return config.getDialect().selectWhereIdIn(
 			this.lock,

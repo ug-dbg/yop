@@ -2,7 +2,7 @@ package org.yop.orm.query.sql;
 
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
-import org.yop.orm.sql.SQLPart;
+import org.yop.orm.sql.SQLExpression;
 import org.yop.orm.util.ORMUtil;
 
 import java.lang.reflect.Field;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  *     <li>an SQL representation : {@link #toSQL()}. e.g. Book→author→Author.NAME AS "Book→author→Author→NAME"</li>
  * </ul>
  */
-class SQLColumn extends SQLPart {
+class SQLColumn extends SQLExpression {
 
 	private final Field field;
 	private final Context<?> context;
