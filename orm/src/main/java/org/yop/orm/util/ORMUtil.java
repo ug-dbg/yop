@@ -196,6 +196,21 @@ public class ORMUtil {
 	}
 
 	/**
+	 * Read the Id field on the target object.
+	 * <br>
+	 * If the target object does not have an @Id field, Yop searches for an 'id' named field.
+	 * @param onto the target object
+	 * @return the value of the @Id field
+	 * @throws YopMappingException if no ID field on the target - or several @Id fields.
+	 */
+	public static Comparable readId(Object onto) {
+		if (onto == null) {
+			return null;
+		}
+		return (Comparable) Reflection.readField(getIdField(onto.getClass()), onto);
+	}
+
+	/**
 	 * Get the ID field for a Yopable class.
 	 * <br>
 	 * For now, Yop only supports one single technical Long ID field, that might have (or not) an @Id annotation.

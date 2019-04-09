@@ -6,7 +6,6 @@ import org.yop.orm.annotations.Column;
 import org.yop.orm.exception.YopMapperException;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopSQLException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Results;
 import org.yop.orm.transform.ITransformer;
 import org.yop.orm.util.ORMUtil;
@@ -36,7 +35,7 @@ public class Mapper {
 	 * @param <T>     the target type
 	 * @return a set of T, read from the result set
 	 */
-	public static <T extends Yopable> Set<T> map(Results results, Class<T> clazz, FirstLevelCache cache) {
+	public static <T> Set<T> map(Results results, Class<T> clazz, FirstLevelCache cache) {
 		try {
 			return map(results, clazz, ORMUtil.getTargetName(clazz), cache);
 		} catch (IllegalAccessException e) {
@@ -65,7 +64,7 @@ public class Mapper {
 	 * @throws IllegalAccessException could not read a field
 	 * @throws YopSQLException        error reading the resultset
 	 */
-	private static <T extends Yopable> Set<T> map(
+	private static <T> Set<T> map(
 		Results results,
 		Class<T> clazz,
 		String context,
@@ -78,7 +77,7 @@ public class Mapper {
 			element = mapSimpleFields(results, element, context, cache);
 			element = searchForSelf(element, out, cache);
 			mapRelationFields(results, element, context, cache);
-			out.put(element.getId(), element);
+			out.put(ORMUtil.readId(element), element);
 		}
 		return new LinkedHashSet<>(out.values());
 	}
@@ -99,7 +98,7 @@ public class Mapper {
 	 * @throws YopMapperException Unable to map a field, because of an underlying exception
 	 */
 	@SuppressWarnings("unchecked")
-	private static <T extends Yopable> T mapSimpleFields(
+	private static <T> T mapSimpleFields(
 		Results results,
 		T element,
 		String context,
@@ -173,7 +172,7 @@ public class Mapper {
 	 * @throws org.yop.orm.exception.YopRuntimeException could not access a field on the target instance
 	 */
 	@SuppressWarnings("unchecked")
-	private static void setFieldValue(Field field, Yopable element, String context, Results results) {
+	private static void setFieldValue(Field field, Object element, String context, Results results) {
 		Object value = read(results, field, context);
 		if (value != null) {
 			if (field.getType().isEnum()) {
@@ -197,7 +196,7 @@ public class Mapper {
 	 * @throws YopMapperException Error accessing the enum field on the element
 	 */
 	@SuppressWarnings("unchecked")
-	private static void setEnumValue(Field enumField, Object value, Yopable element) {
+	private static void setEnumValue(Field enumField, Object value, Object element) {
 		Column.EnumStrategy strategy = enumField.getAnnotation(Column.class).enum_strategy();
 		Class<? extends Enum> enumType = (Class<? extends Enum>) enumField.getType();
 
@@ -257,7 +256,7 @@ public class Mapper {
 	 * @throws YopMappingException    Incorrect mapping. Mostly a non Yopable/Collection of Yopable relationship.
 	 */
 	@SuppressWarnings("unchecked")
-	private static <T extends Yopable> void mapRelationFields(
+	private static <T> void mapRelationFields(
 		Results results,
 		T element,
 		String context,
@@ -268,9 +267,9 @@ public class Mapper {
 		String separator = results.getQuery().getConfig().sqlSeparator();
 		for (Field field : fields) {
 			String newContext = context + separator + field.getName() + separator;
-			Yopable target;
+			Object target;
 			if(ORMUtil.isCollection(field)) {
-				Class<? extends Yopable> targetClass = ORMUtil.getRelationFieldType(field);
+				Class targetClass = ORMUtil.getRelationFieldType(field);
 
 				newContext += ORMUtil.getTargetName(targetClass);
 				if(results.noContext(newContext, targetClass)) continue;
@@ -280,13 +279,13 @@ public class Mapper {
 				target = cache.getOrDefault(field, element, target);
 				mapRelationFields(results, target, newContext, cache);
 			} else if (ORMUtil.isYopable(field)){
-				Class<? extends Yopable> targetClass = (Class<? extends Yopable>) field.getType();
+				Class targetClass = field.getType();
 				newContext += ORMUtil.getTargetName(targetClass);
 				if(results.noContext(newContext, targetClass)) continue;
 
-				target = (Yopable) Reflection.readField(field, element);
+				target = Reflection.readField(field, element);
 				if(target == null) {
-					target = (Yopable) Reflection.newInstanceNoArgs(field.getType());
+					target = Reflection.newInstanceNoArgs(field.getType());
 				}
 
 				target = mapSimpleFields(results, target, newContext, cache);
@@ -310,11 +309,12 @@ public class Mapper {
 	 * @param <T> the target type
 	 * @return the found element or the input element after it is added in the collection
 	 */
-	private static <T extends Yopable> T searchForSelf(T element, Map<Comparable, T> elements, FirstLevelCache cache) {
-		if(elements.containsKey(element.getId())) {
-			return elements.get(element.getId());
+	private static <T> T searchForSelf(T element, Map<Comparable, T> elements, FirstLevelCache cache) {
+		Comparable id = ORMUtil.readId(element);
+		if(elements.containsKey(id)) {
+			return elements.get(id);
 		}
-		elements.put(element.getId(), cache.put(element));
+		elements.put(id, cache.put(element));
 		return element;
 	}
 }

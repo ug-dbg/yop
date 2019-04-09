@@ -2,7 +2,6 @@ package org.yop.orm.map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Results;
 import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
@@ -18,7 +17,7 @@ import java.util.stream.Collectors;
  * A very basic cache mechanism.
  * You will find here :
  * <ul>
- *     <li>a {@link Yopable} objects cache, a double map whose key for a given object is : [class, id]</li>
+ *     <li>an object cache, a double map whose key for a given object is : [class, id]</li>
  *     <li>an association cache, a triple map whose key for an associated object is [field, source id, target id]</li>
  * </ul>
  */
@@ -26,11 +25,11 @@ public class FirstLevelCache {
 
 	private static final Logger logger = LoggerFactory.getLogger(FirstLevelCache.class);
 
-	/** The {@link Yopable} objects cache map. Cache key for an object is : [class, id] */
-	private final Map<Class<? extends Yopable>, Map<Comparable, Yopable>> cache = new HashMap<>();
+	/** The target objects cache map. Cache key for an object is : [class, id] */
+	private final Map<Class, Map<Comparable, Object>> cache = new HashMap<>();
 
 	/** Association cache : for a given collection field, then a Yopable ID → a map of associated objects, by ID */
-	private final Map<Field, Map<Comparable, Map<Comparable, Yopable>>> associationsCache = new HashMap<>();
+	private final Map<Field, Map<Comparable, Map<Comparable, Object>>> associationsCache = new HashMap<>();
 
 	/**
 	 * Try to hit the cache.
@@ -43,7 +42,7 @@ public class FirstLevelCache {
 	 * @return the value from the cache, or null
 	 * @throws org.yop.orm.exception.YopSQLException an error occurred reading the resultset
 	 */
-	public <T extends Yopable> T tryCache(Results results, Class<T> clazz, String context) {
+	public <T> T tryCache(Results results, Class<T> clazz, String context) {
 		Comparable id = (Comparable) Mapper.read(results, ORMUtil.getIdField(clazz), context);
 		if(this.has(clazz, id)) {
 			return this.get(clazz, id);
@@ -57,7 +56,7 @@ public class FirstLevelCache {
 	 * @param id    the object ID
 	 * @return true if there is a cache entry
 	 */
-	public boolean has(Class<? extends Yopable> clazz, Comparable id) {
+	public boolean has(Class clazz, Comparable id) {
 		return this.cache.containsKey(clazz) && this.cache.get(clazz).containsKey(id);
 	}
 
@@ -70,7 +69,7 @@ public class FirstLevelCache {
 	 * @throws NullPointerException if there is no cache entry for the element class
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends Yopable> T get(Class<T> clazz, Comparable id) {
+	public <T> T get(Class<T> clazz, Comparable id) {
 		logger.trace("Cache hit for [{}#{}]", clazz.getName(), id);
 		return (T) this.cache.get(clazz).get(id);
 	}
@@ -81,7 +80,7 @@ public class FirstLevelCache {
 	 * @param <T> the target type
 	 * @return the cached element, for chaining purposes
 	 */
-	public <T extends Yopable> T put(T element) {
+	public <T> T put(T element) {
 		if(element == null) {
 			return null;
 		}
@@ -90,7 +89,7 @@ public class FirstLevelCache {
 			this.cache.put(element.getClass(), new HashMap<>());
 		}
 
-		this.cache.get(element.getClass()).putIfAbsent(element.getId(), element);
+		this.cache.get(element.getClass()).putIfAbsent(ORMUtil.readId(element), element);
 		return element;
 	}
 
@@ -107,24 +106,26 @@ public class FirstLevelCache {
 	 * @return the element from cache.
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends Yopable> T getOrDefault(Field collectionField, Yopable source, T target) {
+	public <T> T getOrDefault(Field collectionField, Object source, T target) {
 		if (! this.associationsCache.containsKey(collectionField)) {
 			this.associationsCache.put(collectionField, new HashMap<>());
 		}
 
-		if (! this.associationsCache.get(collectionField).containsKey(source.getId())) {
-			Collection<Yopable> children = (Collection) Reflection.readField(collectionField, source);
+		Comparable sourceID = ORMUtil.readId(source);
+		if (! this.associationsCache.get(collectionField).containsKey(sourceID)) {
+			Collection<Object> children = (Collection) Reflection.readField(collectionField, source);
 			this.associationsCache.get(collectionField).put(
-				source.getId(),
-				children.stream().collect(Collectors.toMap(Yopable::getId, Function.identity()))
+				sourceID,
+				children.stream().collect(Collectors.toMap(ORMUtil::readId, Function.identity()))
 			);
 		}
 
-		Map<Comparable, Yopable> fieldValueAsMap = this.associationsCache.get(collectionField).get(source.getId());
-		if (! fieldValueAsMap.containsKey(target.getId())) {
+		Comparable targetID = ORMUtil.readId(target);
+		Map<Comparable, Object> fieldValueAsMap = this.associationsCache.get(collectionField).get(sourceID);
+		if (! fieldValueAsMap.containsKey(targetID)) {
 			((Collection) Reflection.readField(collectionField, source)).add(target);
-			fieldValueAsMap.put(target.getId(), target);
+			fieldValueAsMap.put(targetID, target);
 		}
-		return (T) fieldValueAsMap.get(target.getId());
+		return (T) fieldValueAsMap.get(targetID);
 	}
 }
