@@ -4,18 +4,18 @@ YOP is an **[ORM](https://en.wikipedia.org/wiki/Object-relational_mapping "Wikip
 And since I am such a nice guy, a [REST](https://en.wikipedia.org/wiki/Representational_state_transfer "Wikipedia → REST") stack is built on top of it.
 
 ## Status
-[![Build Status](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/badge/icon)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/)  
+[![Build Status](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/badge/icon)](http://jenkins.y-op.org/job/yop-test-MySQL/)  
   
 Modules : 
-- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/ws/reflection/target/jacoco.svg)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/lastBuild/jacoco) 
+- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/ws/reflection/target/jacoco.svg)](http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco) 
 [reflection](reflection/README.md "The reflection module README")
-- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/ws/orm/target/jacoco.svg)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/lastBuild/jacoco)
+- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/ws/orm/target/jacoco.svg)](http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco)
 [orm](orm/README.md "The orm module README")
-- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/ws/ioc/target/jacoco.svg)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/lastBuild/jacoco)
+- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/ws/ioc/target/jacoco.svg)](http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco)
 [ioc](ioc/README.md "The ioc module README")
-- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/ws/rest/target/jacoco.svg)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/lastBuild/jacoco)
+- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/ws/rest/target/jacoco.svg)](http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco)
 [rest](rest/README.md "The rest module README")
-- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop.dev_rest-test-MySQL/ws/swaggerui/target/jacoco.svg)](http://jenkins.y-op.org/job/yop.dev_rest-test-MySQL/lastBuild/jacoco)
+- [![Coverage](http://hdmcl.no-ip.org:8081/job/yop-test-MySQL/ws/swaggerui/target/jacoco.svg)](http://jenkins.y-op.org/job/yop-test-MySQL/lastBuild/jacoco)
 [swaggerui](swaggerui/README.md "The swaggerui module README")
 - [demo](demo/README.md "The demo module README")
   
