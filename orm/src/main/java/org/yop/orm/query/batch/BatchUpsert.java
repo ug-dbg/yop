@@ -4,10 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.join.IJoin;
-import org.yop.orm.query.sql.Upsert;
 import org.yop.orm.query.relation.Relation;
+import org.yop.orm.query.sql.Upsert;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Executor;
 import org.yop.orm.sql.Parameters;
@@ -34,13 +33,13 @@ import static org.yop.orm.sql.Parameters.Parameter;
  * When delaying an insert, the generated ID might be required in further queries.
  * We use a {@link org.yop.orm.sql.Parameters.DelayedValue} to create a query parameter whose value is not yet known.
  * <br>
- * The {@link Yopable#getId()} method is referenced as the parameter's {@link org.yop.orm.sql.Parameters.DelayedValue}.
+ * {@link ORMUtil#readId(Object)} is referenced as the parameter's {@link org.yop.orm.sql.Parameters.DelayedValue}.
  * <br><br>
  * For now, this is not very efficient. There is plenty of room for optimization :-)
  *
  * @param <T> the type to upsert.
  */
-public class BatchUpsert<T extends Yopable> extends Upsert<T> {
+public class BatchUpsert<T> extends Upsert<T> {
 
 	private static final Logger logger = LoggerFactory.getLogger(BatchUpsert.class);
 
@@ -58,7 +57,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 * @param <Y> the target type
 	 * @return an UPSERT request instance
 	 */
-	public static <Y extends Yopable> Upsert<Y> from(Class<Y> clazz) {
+	public static <Y> Upsert<Y> from(Class<Y> clazz) {
 		return new BatchUpsert<>(clazz);
 	}
 
@@ -111,10 +110,10 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 
 		// Recurse through the data graph to upsert data tables, by creating a sub upsert for every join
 		for (T element : this.elements) {
-			for (IJoin<T, ? extends Yopable> join : this.joins) {
+			for (IJoin<T, ?> join : this.joins) {
 				BatchUpsert sub = this.subUpsert(join, element);
 				if(sub != null) {
-					for (IJoin<? extends Yopable, ? extends Yopable> iJoin : join.getJoins()) {
+					for (IJoin<?, ?> iJoin : join.getJoins()) {
 						sub.join(iJoin);
 					}
 					sub.execute(connection, delayed);
@@ -131,7 +130,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 		Collection<T> updated = delay(this.toSQL(connection.config()), delayed);
 
 		// Upsert the relation tables of the specified joins (DELETE then INSERT, actually)
-		for (IJoin<T, ? extends Yopable> join : this.joins) {
+		for (IJoin<T, ?> join : this.joins) {
 			updateRelation(connection, updated, join, delayed);
 		}
 	}
@@ -145,7 +144,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 * @throws YopMappingException invalid field mapping for the given join
 	 */
 	@SuppressWarnings("unchecked")
-	private <U extends Yopable> BatchUpsert<U> subUpsert(IJoin<T, U> join, T on) {
+	private <U> BatchUpsert<U> subUpsert(IJoin<T, U> join, T on) {
 		Field field = join.getField(this.getTarget());
 		Object children = Reflection.readField(field, on);
 		if(children == null) {
@@ -161,7 +160,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 					.checkNaturalID(naturalKey && this.checkNaturalID, this.propagateCheckNaturalID);
 			}
 			return null;
-		} else if (children instanceof Yopable) {
+		} else if (ORMUtil.isYopable(children.getClass())) {
 			return ((BatchUpsert<U>) new BatchUpsert<>(target)
 				.onto((U) children))
 				.checkNaturalID(naturalKey && this.checkNaturalID, this.propagateCheckNaturalID);
@@ -185,7 +184,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 		List<T> elementsToUpdate = new ArrayList<>();
 
 		for (T element : this.elements) {
-			if(element.getId() == null) {
+			if(! ORMUtil.isIdSet(element)) {
 				elementsToInsert.add(element);
 			} else {
 				elementsToUpdate.add(element);
@@ -251,7 +250,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 * @param <T> the queries target type
 	 * @return the updated/delayed elements
 	 */
-	private static <T extends Yopable> Collection<T> delay(List<Query> queries, DelayedQueries delayed) {
+	private static <T> Collection<T> delay(List<Query> queries, DelayedQueries delayed) {
 		Set<T> updated = new HashSet<>();
 		for (Query query : queries) {
 			@SuppressWarnings("unchecked")
@@ -278,10 +277,10 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	 * @param delayed    the delayed query map (any delayable query will be added to this map)
 	 * @param <T> the source type
 	 */
-	private static <T extends Yopable> void updateRelation(
+	private static <T> void updateRelation(
 		IConnection connection,
 		Collection<T> elements,
-		IJoin<T, ? extends Yopable> join,
+		IJoin<T, ?> join,
 		DelayedQueries delayed) {
 
 		Relation relation = Relation.relation(elements, join);
@@ -303,7 +302,7 @@ public class BatchUpsert<T extends Yopable> extends Upsert<T> {
 	/**
 	 * SQL batch query with a typed element list constructor.
 	 */
-	private static class BatchQuery<T extends Yopable> extends org.yop.orm.sql.BatchQuery {
+	private static class BatchQuery<T> extends org.yop.orm.sql.BatchQuery {
 		private BatchQuery(String sql, Type type, Config config, List<T> elements, Class<T> target) {
 			super(sql, type, config);
 			this.elements.addAll(elements);

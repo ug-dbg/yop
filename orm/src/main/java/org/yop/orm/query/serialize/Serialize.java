@@ -16,7 +16,7 @@ import java.util.Collection;
  * @param <Request> the request type (e.g. JSON, XML...)
  * @param <T> the request target type
  */
-public interface Serialize<Request extends Serialize, T extends Yopable> {
+public interface Serialize<Request extends Serialize, T> {
 
 	/**
 	 * Add an element to be serialized
@@ -38,7 +38,7 @@ public interface Serialize<Request extends Serialize, T extends Yopable> {
 	 * @param <R> the target join type
 	 * @return the current directive, for chaining purpose
 	 */
-	<R extends Yopable> Request join(IJoin<T, R> join);
+	<R> Request join(IJoin<T, R> join);
 
 	/**
 	 * Add relations - to others Yopable types - to be serialized.

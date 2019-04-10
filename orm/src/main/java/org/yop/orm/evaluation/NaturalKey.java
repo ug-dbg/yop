@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Parameters;
@@ -20,7 +19,7 @@ import java.util.stream.Collectors;
  * Natural Key Evaluation : give me an object reference and I'll build an SQL evaluation for its natural key fields
  * @param <T> the target type
  */
-public class NaturalKey<T extends Yopable> implements Evaluation {
+public class NaturalKey<T> implements Evaluation {
 
 	/** JSON query serialization : the reference object will be serialized as a JSON object for that key. */
 	public static final String REFERENCE = "reference";
@@ -43,7 +42,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 	}
 
 	@Override
-	public <U extends Yopable> SQLExpression toSQL(Context<U> context, Config config) {
+	public <U> SQLExpression toSQL(Context<U> context, Config config) {
 		List<Field> naturalKeys = ORMUtil.getNaturalKeyFields(this.reference.getClass());
 		return config.getDialect().where(
 			naturalKeys
@@ -54,7 +53,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 	}
 
 	@Override
-	public <U extends Yopable> JsonElement toJSON(Context<U> context) {
+	public <U> JsonElement toJSON(Context<U> context) {
 		List<Field> naturalKeys = ORMUtil.getNaturalKeyFields(this.reference.getClass());
 		JsonObject out = new JsonObject();
 		out.addProperty(TYPE, this.getClass().getSimpleName());
@@ -69,7 +68,7 @@ public class NaturalKey<T extends Yopable> implements Evaluation {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <U extends Yopable> void fromJSON(Context<U> context, JsonElement element, Config config) {
+	public <U> void fromJSON(Context<U> context, JsonElement element, Config config) {
 		Class target = context.getTarget();
 		this.reference = (T) Reflection.newInstanceNoArgs(target);
 		JsonObject ref = element.getAsJsonObject().get(REFERENCE).getAsJsonObject();

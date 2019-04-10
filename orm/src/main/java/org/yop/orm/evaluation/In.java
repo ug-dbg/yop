@@ -5,7 +5,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.yop.orm.exception.YopSerializableQueryException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.SQLExpression;
@@ -45,7 +44,7 @@ public class In implements Evaluation {
 	 * @param <From> the source type (holding the field)
 	 * @param <To>   the target type (field type)
 	 */
-	public <From extends Yopable, To> In(Function<From, To> getter, Collection<To> values) {
+	public <From, To> In(Function<From, To> getter, Collection<To> values) {
 		this();
 		this.getter = getter;
 		this.values.addAll(values);
@@ -53,7 +52,7 @@ public class In implements Evaluation {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <Y extends Yopable> CharSequence toSQL(Context<Y> context, Config config) {
+	public <Y> CharSequence toSQL(Context<Y> context, Config config) {
 		if(this.values.isEmpty()) {
 			return "";
 		}
@@ -70,7 +69,7 @@ public class In implements Evaluation {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T extends Yopable> JsonElement toJSON(Context<T> context) {
+	public <T> JsonElement toJSON(Context<T> context) {
 		JsonObject json = Evaluation.super.toJSON(context).getAsJsonObject();
 		Field field = Reflection.findField(context.getTarget(), (Function) this.getter);
 		json.addProperty(FIELD, field.getName());
@@ -83,7 +82,7 @@ public class In implements Evaluation {
 	}
 
 	@Override
-	public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element, Config config) {
+	public <T> void fromJSON(Context<T> context, JsonElement element, Config config) {
 		Evaluation.super.fromJSON(context, element, config);
 		String fieldName = element.getAsJsonObject().get(FIELD).getAsString();
 		Field field = Reflection.get(context.getTarget(), fieldName);

@@ -1,7 +1,6 @@
 package org.yop.orm.query.relation;
 
 import org.yop.orm.annotations.JoinTable;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.*;
 import org.yop.orm.util.ORMUtil;
@@ -19,7 +18,7 @@ import java.util.stream.Collectors;
  * @param <From> the relation source type
  * @param <To>   the relation target type
  */
-class JoinTableRelation<From extends Yopable, To extends Yopable> implements Relation {
+class JoinTableRelation<From, To> implements Relation {
 
 	/**
 	 * The relations to update.
@@ -75,7 +74,7 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 		Collection<From> sources = this.relations.keySet();
 		List<SQLExpression> ids = sources
 			.stream()
-			.map(from -> SQLExpression.parameter(this.relationTable + "#" + this.sourceColumn, from::getId))
+			.map(from -> SQLExpression.parameter(this.relationTable + "#" + this.sourceColumn, () -> ORMUtil.readId(from)))
 			.collect(Collectors.toList());
 
 		SQLExpression sql = config.getDialect().deleteIn(
@@ -109,8 +108,8 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 
 			for (To to : relation.getValue()) {
 				Parameters parameters = new Parameters();
-				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, from::getId);
-				parameters.addParameter(this.relationTable + "#" + this.targetColumn, to::getId);
+				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, () -> ORMUtil.readId(from));
+				parameters.addParameter(this.relationTable + "#" + this.targetColumn, () -> ORMUtil.readId(to));
 
 				SQLExpression insert = new SQLExpression(sql, parameters);
 				inserts.add(new SimpleQuery(insert, Query.Type.INSERT, config));
@@ -144,8 +143,8 @@ class JoinTableRelation<From extends Yopable, To extends Yopable> implements Rel
 
 			for (To to : relation.getValue()) {
 				Parameters parameters = new Parameters();
-				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, from::getId);
-				parameters.addParameter(this.relationTable + "#" + this.targetColumn, to::getId);
+				parameters.addParameter(this.relationTable + "#" + this.sourceColumn, () -> ORMUtil.readId(from));
+				parameters.addParameter(this.relationTable + "#" + this.targetColumn, () -> ORMUtil.readId(to));
 				batchQuery.addParametersBatch(parameters);
 			}
 			inserts.add(batchQuery);

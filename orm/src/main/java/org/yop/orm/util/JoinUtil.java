@@ -78,7 +78,7 @@ public class JoinUtil {
 	public static List<Field> joinColumnYopableFields(Class clazz) {
 		return ORMUtil.getFields(clazz, JoinColumn.class, false)
 			.stream()
-			.filter(f -> Yopable.class.isAssignableFrom(f.getType()))
+			.filter(ORMUtil::isYopable)
 			.collect(Collectors.toList());
 	}
 
@@ -110,9 +110,9 @@ public class JoinUtil {
 	 * @param profiles the profiles to join. If empty, all non transient relations will be used.
 	 * @param <T> the source type
 	 */
-	public static <T extends Yopable> void joinProfiles(
+	public static <T> void joinProfiles(
 		Class<T> source,
-		Collection<IJoin<T, ?  extends Yopable>> joins,
+		Collection<IJoin<T, ?>> joins,
 		String... profiles) {
 		joinAll(source, joins, new HashSet<>(), profiles);
 	}
@@ -123,7 +123,7 @@ public class JoinUtil {
 	 * @param joins  the target joins collection
 	 * @param <T> the source type
 	 */
-	public static <T extends Yopable> void joinAll(Class<T> source, Collection<IJoin<T, ?  extends Yopable>> joins) {
+	public static <T> void joinAll(Class<T> source, Collection<IJoin<T, ?>> joins) {
 		joinAll(source, joins, new HashSet<>());
 	}
 
@@ -135,9 +135,9 @@ public class JoinUtil {
 	 * @param profiles     the profiles to join. If empty, all non transient relations will be used.
 	 * @param <T> the source type
 	 */
-	private static <T extends Yopable> void joinAll(
+	private static <T> void joinAll(
 		Class<T> source,
-		Collection<IJoin<T, ? extends Yopable>> joins,
+		Collection<IJoin<T, ?>> joins,
 		Set<Field> cycleBreaker,
 		String... profiles) {
 
@@ -183,7 +183,7 @@ public class JoinUtil {
 	 * @param <From> the source type for the join clause
 	 */
 	@SuppressWarnings("unchecked")
-	public static <From extends Yopable> void printJoin(
+	public static <From> void printJoin(
 		String prefix,
 		Class<From> from,
 		IJoin<From, ?> join,

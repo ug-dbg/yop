@@ -9,7 +9,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.AbstractRequest;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.join.IJoin;
@@ -27,7 +26,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * XML : serialize a {@link Yopable} to XML and manage the relation to serialize at runtime.
+ * XML : serialize a yopable to XML and manage the relation to serialize at runtime.
  * <br><br>
  * Its API aims at being similar to the {@link org.yop.orm.query} APIs.
  * <br>
@@ -56,7 +55,7 @@ import java.util.regex.Pattern;
  * @param <T> the target Yopable type to serialize to XML.
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
-public class XML<T extends Yopable> extends AbstractRequest<XML<T>, T> implements Serialize<XML, T> {
+public class XML<T> extends AbstractRequest<XML<T>, T> implements Serialize<XML, T> {
 
 	/** The Yopable elements to serialize */
 	private Yopables<T> elements = new Yopables<>();
@@ -81,7 +80,7 @@ public class XML<T extends Yopable> extends AbstractRequest<XML<T>, T> implement
 	 * @param <T> the serialization target type
 	 * @return a new {@link XML} instance
 	 */
-	public static <T extends Yopable> XML<T> from(Class<T> target) {
+	public static <T> XML<T> from(Class<T> target) {
 		return new XML<>(target);
 	}
 
@@ -94,7 +93,7 @@ public class XML<T extends Yopable> extends AbstractRequest<XML<T>, T> implement
 	 * @return the deserialized T elements from the XML input
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T extends Yopable> Collection<T> deserialize(
+	public static <T> Collection<T> deserialize(
 		String yopablesXML,
 		Class<T> target,
 		Class... allowed) {
@@ -121,7 +120,7 @@ public class XML<T extends Yopable> extends AbstractRequest<XML<T>, T> implement
 	 * @param <T> the target type
 	 * @return the deserialized T elements from the XML input
 	 */
-	public static <T extends Yopable> Collection<T> deserialize(
+	public static <T> Collection<T> deserialize(
 		String yopablesXML,
 		Class<T> target,
 		String rootAlias,
@@ -142,7 +141,7 @@ public class XML<T extends Yopable> extends AbstractRequest<XML<T>, T> implement
 	 * @return the deserialized T element from the XML node element
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T extends Yopable> T deserialize(Element object, Class<T> target, Class... allowed) {
+	public static <T> T deserialize(Element object, Class<T> target, Class... allowed) {
 		XStream xstream = new XStream();
 		XStream.setupDefaultSecurity(xstream);
 		if (allowed.length > 0) {
@@ -226,7 +225,7 @@ public class XML<T extends Yopable> extends AbstractRequest<XML<T>, T> implement
 	 * A simple wrapper for {@link #elements} so the root alias can be configured.
 	 * @param <T> the target type
 	 */
-	private static class Yopables<T extends Yopable> {
+	private static class Yopables<T> {
 		@SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // Xstream reflection marshalling
 		private List<T> yopables = new ArrayList<>();
 	}

@@ -5,7 +5,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.gen.Prepare;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
@@ -211,7 +210,7 @@ public class RestServletProxy {
 		Collection<Class> classes = ORMUtil.yopables(this.fakeRootClassLoader);
 
 		for (Class yopableClass : classes) {
-			if (Yopable.class.isAssignableFrom(yopableClass) && yopableClass.isAnnotationPresent(Rest.class))
+			if (ORMUtil.isYopable(yopableClass) && yopableClass.isAnnotationPresent(Rest.class))
 			yopables.put(
 				StringUtils.removeStart(((Rest)yopableClass.getAnnotation(Rest.class)).path(), "/"),
 				yopableClass

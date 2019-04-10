@@ -67,7 +67,7 @@ public class MultitonTest {
 		for (int taskNum = 0; taskNum < 10; taskNum++) {
 			executor.submit(task);
 		}
-		executor.awaitTermination(100, TimeUnit.MILLISECONDS);
+		executor.awaitTermination(500, TimeUnit.MILLISECONDS);
 		Assert.assertTrue(instances.size() <= 3);
 
 		// 3 ServiceA for 'Interface' but 1 ServiceB and 1 ServiceC.

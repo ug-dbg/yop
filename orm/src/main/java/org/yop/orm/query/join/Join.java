@@ -1,6 +1,5 @@
 package org.yop.orm.query.join;
 
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.reflection.Reflection;
 
@@ -20,7 +19,7 @@ import java.util.function.Function;
  * @param <From> the source type
  * @param <To>   the target type
  */
-public class Join<From extends Yopable, To extends Yopable> implements IJoin<From, To> {
+public class Join<From, To> implements IJoin<From, To> {
 
 	/** The field getter (From → field and getter → To) */
 	protected Function<From, ?> getter;
@@ -46,7 +45,7 @@ public class Join<From extends Yopable, To extends Yopable> implements IJoin<Fro
 	}
 
 	@Override
-	public <Next extends Yopable> IJoin<From, To> join(IJoin<To, Next> join) {
+	public <Next> IJoin<From, To> join(IJoin<To, Next> join) {
 		this.joins.add(join);
 		return this;
 	}
@@ -100,9 +99,7 @@ public class Join<From extends Yopable, To extends Yopable> implements IJoin<Fro
 	 * @param <To>   the target type
 	 * @return a new Join clause to From → (N) To
 	 */
-	public static <From extends Yopable, To extends Yopable> Join<From, To> toN(
-		Function<From, ? extends Collection<To>> getter) {
-
+	public static <From, To> Join<From, To> toN(Function<From, ? extends Collection<To>> getter) {
 		Join<From, To> to = new Join<>();
 		to.getter = getter;
 		return to;
@@ -115,7 +112,7 @@ public class Join<From extends Yopable, To extends Yopable> implements IJoin<Fro
 	 * @param <To>   the target type
 	 * @return a new Join clause to From → (1) To
 	 */
-	public static <From extends Yopable, To extends Yopable> IJoin<From, To> to(Function<From, To> getter) {
+	public static <From, To> IJoin<From, To> to(Function<From, To> getter) {
 		Join<From, To> to = new Join<>();
 		to.getter = getter;
 		return to;

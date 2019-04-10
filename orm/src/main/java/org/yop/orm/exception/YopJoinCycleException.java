@@ -1,6 +1,5 @@
 package org.yop.orm.exception;
 
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.join.IJoin;
 import org.yop.reflection.Reflection;
 
@@ -32,7 +31,7 @@ public class YopJoinCycleException extends YopRuntimeException {
 	 * Add joins that were processed before the cycle was detected. They will be printed in {@link #getMessage()}.
 	 * @param processedJoins the processed joins that were successfully processed
 	 */
-	public <T extends Yopable> void addProcessedJoins(Collection<IJoin<T, ? extends Yopable>> processedJoins) {
+	public <T> void addProcessedJoins(Collection<IJoin<T, ?>> processedJoins) {
 		this.processedJoins.addAll(processedJoins);
 	}
 

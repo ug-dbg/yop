@@ -4,13 +4,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import org.yop.orm.model.JsonAble;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Parameters;
 import org.yop.orm.sql.SQLExpression;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * An evaluation where you can explicitly set the expression and parameters value.
@@ -73,14 +73,14 @@ public class Explicit implements Evaluation {
 	}
 
 	@Override
-	public <T extends Yopable> SQLExpression toSQL(Context<T> context, Config config) {
+	public <T> SQLExpression toSQL(Context<T> context, Config config) {
 		Parameters parameters = new Parameters();
 		this.parameters.forEach((k, v) -> parameters.addParameter(k, v, null, false, config));
 		return new SQLExpression(this.expression, parameters);
 	}
 
 	@Override
-	public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element, Config config) {
+	public <T> void fromJSON(Context<T> context, JsonElement element, Config config) {
 		Evaluation.super.fromJSON(context, element, config);
 		element.getAsJsonObject().getAsJsonObject(PARAMETERS).entrySet().forEach(
 			e -> this.parameters.put(e.getKey(), fromJSON(e.getValue().getAsJsonPrimitive()))
@@ -88,7 +88,7 @@ public class Explicit implements Evaluation {
 	}
 
 	@Override
-	public <T extends Yopable> JsonElement toJSON(Context<T> context) {
+	public <T> JsonElement toJSON(Context<T> context) {
 		JsonElement out = Evaluation.super.toJSON(context);
 		JsonObject parametersAsJSON = new JsonObject();
 		this.parameters.forEach((k, v) -> parametersAsJSON.add(k, JsonAble.jsonValue(context, v)));

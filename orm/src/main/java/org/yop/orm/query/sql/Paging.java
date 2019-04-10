@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.evaluation.Explicit;
 import org.yop.orm.model.JsonAble;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.SQLExpression;
@@ -134,7 +133,7 @@ public class Paging implements JsonAble {
 	 * @param <T> the context target type
 	 * @return an ASC {@link OrderBy#orderById(boolean)} or an empty String
 	 */
-	public <T extends Yopable> String toSQLOrderBy(Context<T> context, Config config) {
+	public <T> String toSQLOrderBy(Context<T> context, Config config) {
 		return this.isPaging() ? OrderBy.<T>orderById(true).toSQL(context.getTarget(), config) : "";
 	}
 

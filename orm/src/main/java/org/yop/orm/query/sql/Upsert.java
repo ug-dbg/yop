@@ -12,7 +12,6 @@ import org.yop.orm.evaluation.NaturalKey;
 import org.yop.orm.exception.YopMappingException;
 import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.model.JsonAble;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.model.YopableEquals;
 import org.yop.orm.model.Yopables;
 import org.yop.orm.query.Context;
@@ -44,7 +43,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to upsert.
  */
-public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implements JsonAble {
+public class Upsert<T> extends SQLRequest<Upsert<T>, T> implements JsonAble {
 
 	private static final Logger logger = LoggerFactory.getLogger(Upsert.class);
 
@@ -59,7 +58,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	/** If set to true, any insert will do a preliminary SELECT query to find any entry whose natural key matches */
 	protected boolean checkNaturalID = false;
 
-	/** If set to true, {@link #checkNaturalID} will be propagated when using {@link #subUpsert(IJoin, Yopable)} */
+	/** If set to true, {@link #checkNaturalID} will be propagated when using {@link #subUpsert(IJoin, Object)} */
 	protected boolean propagateCheckNaturalID = false;
 
 	/**
@@ -79,7 +78,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 * @throws YopMappingException invalid field mapping for the given join
 	 */
 	@SuppressWarnings("unchecked")
-	private <U extends Yopable> Upsert<U> subUpsert(IJoin<T, U> join, T on) {
+	private <U> Upsert<U> subUpsert(IJoin<T, U> join, T on) {
 		Field field = join.getField(this.getTarget());
 		Object children = Reflection.readField(field, on);
 		if(children == null) {
@@ -94,7 +93,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 					.checkNaturalID(this.checkNaturalID, this.propagateCheckNaturalID);
 			}
 			return null;
-		} else if (children instanceof Yopable) {
+		} else if (ORMUtil.isYopable(children.getClass())) {
 			return new Upsert<>(target)
 				.onto((U) children)
 				.checkNaturalID(this.checkNaturalID, this.propagateCheckNaturalID);
@@ -114,7 +113,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 * @param <Y> the target type
 	 * @return an UPSERT request instance
 	 */
-	public static <Y extends Yopable> Upsert<Y> from(Class<Y> clazz) {
+	public static <Y> Upsert<Y> from(Class<Y> clazz) {
 		return new Upsert<>(clazz);
 	}
 
@@ -123,7 +122,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	}
 
 	@Override
-	public <U extends Yopable> JsonObject toJSON(Context<U> context) {
+	public <U> JsonObject toJSON(Context<U> context) {
 		JsonObject out = (JsonObject) JsonAble.super.toJSON(context);
 		out.addProperty("target", this.getTarget().getCanonicalName());
 		return out;
@@ -137,7 +136,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 * @param <T> the target context type. This should match the one set in the JSON representation of the query !
 	 * @return a new Upsert query whose state is set from its JSON representation
 	 */
-	public static <T extends Yopable> Upsert<T> fromJSON(String json, Config config, ClassLoader... classLoaders) {
+	public static <T> Upsert<T> fromJSON(String json, Config config, ClassLoader... classLoaders) {
 		try {
 			JsonParser parser = new JsonParser();
 			JsonObject selectJSON = (JsonObject) parser.parse(json);
@@ -178,7 +177,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 * The propagation parameter can be useful with joins :
 	 * you might want - or not - to check for natural ID in your joined data. Default is 'false'.
 	 * <br>
-	 * @param propagate if true, {@link #checkNaturalID} will be propagated to any {@link #subUpsert(IJoin, Yopable)}
+	 * @param propagate if true, {@link #checkNaturalID} will be propagated to any {@link #subUpsert(IJoin, Object)}
 	 * @return the current UPSERT request, for chaining purpose
 	 */
 	public Upsert<T> checkNaturalID(boolean propagate) {
@@ -282,7 +281,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 		}
 
 		// Upsert the relation tables of the specified joins (DELETE then INSERT, actually)
-		for (IJoin<T, ? extends Yopable> join : this.joins) {
+		for (IJoin<T, ?> join : this.joins) {
 			updateRelation(connection, updated, join);
 		}
 	}
@@ -311,7 +310,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 		if (! ORMUtil.getNaturalKeyFields(this.getTarget()).isEmpty()) {
 			// Find existing elements
 			Select<T> naturalIDQuery = Select.from(this.getTarget());
-			for (T element : this.elements.stream().filter(e -> e.getId() == null).collect(Collectors.toList())) {
+			for (T element : this.elements.stream().filter(e -> ! ORMUtil.isIdSet(e)).collect(Collectors.toList())) {
 				naturalIDQuery.where().or(new NaturalKey<>(element));
 			}
 
@@ -330,7 +329,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 		// ⚠⚠⚠ The equals and hashcode methods from YopableEquals are quite important here ! ⚠⚠⚠
 		for (T e : this.elements) {
 			if (existing.containsKey(new YopableEquals(e))) {
-				e.setId(existing.get(new YopableEquals(e)).getId());
+				ORMUtil.setId(ORMUtil.readId(existing.get(new YopableEquals(e))), e);
 			} else if (! ORMUtil.isAutogenId(e.getClass())) {
 				Executor.executeQuery(connection, this.toSQLInsert(e, connection.config()));
 			}
@@ -350,10 +349,10 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 * @param join       the join clause (≈ relation table)
 	 * @param <T> the source type
 	 */
-	private static <T extends Yopable> void updateRelation(
+	private static <T> void updateRelation(
 		IConnection connection,
 		Collection<T> elements,
-		IJoin<T, ? extends Yopable> join) {
+		IJoin<T, ?> join) {
 
 		Relation relation = Relation.relation(elements, join);
 		Collection<org.yop.orm.sql.Query> relationsQueries = new ArrayList<>();
@@ -376,7 +375,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 		for (T element : this.elements) {
 			queries.add(this.toSQL(
 				element,
-				this.forceInsert || element.getId() == null ? Query.Type.INSERT : Query.Type.UPDATE,
+				this.forceInsert || ! ORMUtil.isIdSet(element) ? Query.Type.INSERT : Query.Type.UPDATE,
 				config
 			));
 		}
@@ -426,7 +425,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 		String idColumn = ORMUtil.getColumnName(idField);
 		SQLExpression whereIdColumn = config.getDialect().equals(
 			idColumn,
-			SQLExpression.parameter("idcolumn", element.getId(), idField, config)
+			SQLExpression.parameter("idcolumn", ORMUtil.readId(element), idField, config)
 		);
 
 		SQLExpression sql = config.getDialect().update(this.getTableName(), values, whereIdColumn);
@@ -486,7 +485,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 * @param insert  true if values are for an insert query.
 	 * @return an SQLExpression for the column value. Null if the column must not be inserted in the query.
 	 */
-	private SQLExpression columnValue(Field field, Yopable element, Config config, boolean insert) {
+	private SQLExpression columnValue(Field field, Object element, Config config, boolean insert) {
 		boolean isID = ORMUtil.getIdField(this.getTarget()) == field;
 
 		if (isID && ORMUtil.isAutogenId(this.getTarget()) && ! config.useSequences()) {
@@ -531,9 +530,9 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	 * @return the id value to set in the query
 	 * @throws YopMappingException invalid @Id mapping ←→ ID value
 	 */
-	private static <T extends Yopable> Object getUpsertIdValue(T element, Config config) {
-		if(element.getId() != null) {
-			return element.getId();
+	private static <T> Object getUpsertIdValue(T element, Config config) {
+		if(ORMUtil.isIdSet(element)) {
+			return ORMUtil.readId(element);
 		}
 		Field idField = ORMUtil.getIdField(element.getClass());
 		if(idField.getAnnotation(Id.class) != null && !idField.getAnnotation(Id.class).autoincrement()) {
@@ -550,7 +549,7 @@ public class Upsert<T extends Yopable> extends SQLRequest<Upsert<T>, T> implemen
 	/**
 	 * SQL query + parameters aggregation.
 	 */
-	protected static class SimpleQuery<T extends Yopable> extends org.yop.orm.sql.SimpleQuery {
+	protected static class SimpleQuery<T> extends org.yop.orm.sql.SimpleQuery {
 		private SimpleQuery(SQLExpression sql, Type type, T element, Config config) {
 			super(sql, type, config);
 			this.elements.add(element);

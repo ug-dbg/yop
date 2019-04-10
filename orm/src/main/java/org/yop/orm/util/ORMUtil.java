@@ -5,6 +5,8 @@ import com.google.common.collect.Sets;
 import com.google.common.primitives.Primitives;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,11 +60,121 @@ public class ORMUtil {
 	 * if it either implements {@link org.yop.orm.model.Yopable} or is {@link Table} annotated.
 	 * <br>
 	 * (For now, it MUST implement Yopable, but it SHOULD NOT be mandatory).
+	 * @param element the target element to check
+	 * @return true if the class is considered Yopable
+	 */
+	public static boolean isYopable(Object element) {
+		return element != null && isYopable(element.getClass());
+	}
+
+	/**
+	 * A target class is considered 'Yopable'
+	 * if it either implements {@link org.yop.orm.model.Yopable} or is {@link Table} annotated.
+	 * <br>
+	 * (For now, it MUST implement Yopable, but it SHOULD NOT be mandatory).
 	 * @param target the target class to check
 	 * @return true if the class is considered Yopable
 	 */
 	public static boolean isYopable(Class target) {
 		return org.yop.orm.model.Yopable.class.isAssignableFrom(target) || target.isAnnotationPresent(Table.class);
+	}
+
+	/**
+	 * Equals method on 2 yopables.
+	 * Check if :
+	 * <ul>
+	 *     <li>left or right is null</li>
+	 *     <li>left class is not the same as right</li>
+	 *     <li>left ID and right ID are different</li>
+	 *     <li>the natural ID is implemented and left != right for at least one field</li>
+	 *     <li>Object.equals</li>
+	 * </ul>
+	 * @param left  the left  Yopable object to compare
+	 * @param right the right Yopable object to compare
+	 * @return true if left equals right
+	 */
+	public static boolean equals(Object left, Object right) {
+		if(left == null) {
+			return right == null;
+		}
+		if (right == null) {
+			return false;
+		}
+
+		if(left == right) {
+			return true;
+		}
+
+		if(! left.getClass().equals(right.getClass())) {
+			return false;
+		}
+
+		if(isIdSet(left) && isIdSet(right)) {
+			return readId(left).equals(readId(right));
+		}
+
+		Collection<Field> naturalId = getFields(left.getClass(), NaturalId.class);
+		if(! naturalId.isEmpty()) {
+			for (Field field : naturalId) {
+				Object thisField = Reflection.readField(field, left);
+				Object thatField = Reflection.readField(field, right);
+				if ((thisField == null && thatField != null) || (thisField != null && thatField == null)
+				||  (thisField != null && !thisField.equals(thatField))) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Hashcode method for any Yopable object.
+	 * <ul>
+	 *     <li>yopable is null → NullPointerException</li>
+	 *     <li>the natural ID is implemented → hashcode for all natural fields</li>
+	 *     <li>yopable's ID not null → ID hashcode</li>
+	 *     <li>{@link System#identityHashCode(Object)}</li>
+	 * </ul>
+	 * @param yopable the other Yopable object to check
+	 * @return true if this equals yopable
+	 */
+	public static int hashCode(Object yopable) {
+		if(yopable == null) {
+			throw new NullPointerException();
+		}
+
+		Collection<Field> naturalId = getNaturalKeyFields(yopable.getClass());
+		if(! naturalId.isEmpty()) {
+			HashCodeBuilder builder = new HashCodeBuilder();
+			for (Field field : naturalId) {
+				builder.append(Reflection.readField(field, yopable));
+			}
+			return builder.toHashCode();
+		}
+
+		if(isIdSet(yopable)) {
+			return readId(yopable).hashCode();
+		}
+
+		return System.identityHashCode(yopable);
+	}
+
+	/**
+	 * A convenience method you can use if you want to override {@link #toString()}.
+	 * <br>
+	 * It uses a {@link ToStringBuilder} on every non transient and non synthetic field of the class or its superclass.
+	 * @param yopable the object to convert to String
+	 * @return a String representation of the object. "null" if the target object is null.
+	 */
+	static String toString(Object yopable) {
+		if (yopable == null) {
+			return "null";
+		}
+		ToStringBuilder builder = new ToStringBuilder(yopable);
+		ORMUtil.getFields(yopable.getClass(), true).forEach(f -> builder.append(Reflection.readField(f, yopable)));
+		return builder.toString();
 	}
 
 	/**
@@ -196,6 +308,18 @@ public class ORMUtil {
 	}
 
 	/**
+	 * Is the Id field set on the target object ?
+	 * <br>
+	 * If the target object does not have an @Id field, Yop searches for an 'id' named field.
+	 * @param on the target object. If null → return false
+	 * @return true if on is not null and the @Id field is set
+	 * @throws YopMappingException if no ID field on the target - or several @Id fields.
+	 */
+	public static boolean isIdSet(Object on) {
+		return on != null && Reflection.readField(getIdField(on.getClass()), on) != null;
+	}
+
+	/**
 	 * Read the Id field on the target object.
 	 * <br>
 	 * If the target object does not have an @Id field, Yop searches for an 'id' named field.
@@ -208,6 +332,20 @@ public class ORMUtil {
 			return null;
 		}
 		return (Comparable) Reflection.readField(getIdField(onto.getClass()), onto);
+	}
+
+	/**
+	 * Read the Id field on the target object.
+	 * <br>
+	 * If the target object does not have an @Id field, Yop searches for an 'id' named field.
+	 * @param onto the target object
+	 * @throws YopMappingException if no ID field on the target - or several @Id fields.
+	 */
+	public static void setId(Comparable id, Object onto) {
+		if (onto == null) {
+			return;
+		}
+		Reflection.set(getIdField(onto.getClass()), onto, id);
 	}
 
 	/**

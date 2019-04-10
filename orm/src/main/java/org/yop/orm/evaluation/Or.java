@@ -1,6 +1,5 @@
 package org.yop.orm.evaluation;
 
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.SQLExpression;
@@ -45,7 +44,7 @@ public class Or implements Evaluation {
 	 * If {@link #evaluations} is not empty, the output SQL is wrapped into parentheses.
 	 */
 	@Override
-	public <T extends Yopable> CharSequence toSQL(Context<T> context, Config config) {
+	public <T> CharSequence toSQL(Context<T> context, Config config) {
 		if(this.evaluations.isEmpty()) {
 			return "";
 		}

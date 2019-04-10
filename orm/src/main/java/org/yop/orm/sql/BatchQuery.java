@@ -2,7 +2,6 @@ package org.yop.orm.sql;
 
 import org.apache.commons.lang3.StringUtils;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.model.YopableEquals;
 
 import java.util.*;
@@ -194,7 +193,7 @@ public class BatchQuery extends Query {
 		// In that latter case, it is assumed that :
 		// element[i] ↔ parameter_batch[i]
 		for (int i = 0; i < insert.getElements().size(); i++) {
-			Yopable element = insert.getElements().get(i);
+			Object element = insert.getElements().get(i);
 
 			if (!deduplicated.contains(new YopableEquals(element))) {
 				onto.getElements().add(element);

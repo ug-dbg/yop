@@ -10,11 +10,11 @@ import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.JsonAble;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.*;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
 
 import java.util.Collection;
@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to search for.
  */
-public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implements JsonAble {
+public class Select<T> extends WhereRequest<Select<T>, T> implements JsonAble {
 
 	private static final Logger logger = LoggerFactory.getLogger(Select.class);
 
@@ -80,7 +80,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @param where where clause
 	 * @param joins joins clauses
 	 */
-	Select(Context<T> from, Where<T> where, Collection<IJoin<T, ? extends Yopable>> joins) {
+	Select(Context<T> from, Where<T> where, Collection<IJoin<T, ?>> joins) {
 		super(from);
 		this.where = where;
 		this.joins.addAll(joins);
@@ -92,7 +92,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @param <Y> the target type
 	 * @return a SELECT request instance
 	 */
-	public static <Y extends Yopable> Select<Y> from(Class<Y> clazz) {
+	public static <Y> Select<Y> from(Class<Y> clazz) {
 		return new Select<>(clazz);
 	}
 
@@ -105,7 +105,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	}
 
 	@Override
-	public <U extends Yopable> JsonObject toJSON(Context<U> context) {
+	public <U> JsonObject toJSON(Context<U> context) {
 		JsonObject out = (JsonObject) JsonAble.super.toJSON(context);
 		out.addProperty("target", this.context.getTarget().getCanonicalName());
 		return out;
@@ -119,7 +119,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 	 * @param <T> the target context type. This should match the one set in the JSON representation of the query !
 	 * @return a new Select query whose state is set from its JSON representation
 	 */
-	public static <T extends Yopable> Select<T> fromJSON(String json, Config config, ClassLoader... classLoaders) {
+	public static <T> Select<T> fromJSON(String json, Config config, ClassLoader... classLoaders) {
 		try {
 			JsonParser parser = new JsonParser();
 			JsonObject selectJSON = (JsonObject) parser.parse(json);
@@ -225,7 +225,7 @@ public class Select<T extends Yopable> extends WhereRequest<Select<T>, T> implem
 			this.context.getTarget(),
 			this.cache == null ? new FirstLevelCache() : this.cache
 		);
-		ids = elements.stream().map(Yopable::getId).distinct().collect(Collectors.toList());
+		ids = elements.stream().map(ORMUtil::readId).distinct().collect(Collectors.toList());
 
 		if (this.paging.isPaging()) {
 			ids = this.paging.pageIds(ids);

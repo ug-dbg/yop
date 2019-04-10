@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopSQLException;
 import org.yop.orm.map.FirstLevelCache;
 import org.yop.orm.map.Mapper;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.IRequest;
 
@@ -36,7 +35,7 @@ public class Executor {
 	 * @return the request execution ResultSet
 	 * @throws YopSQLException an SQL error occurred.
 	 */
-	public static <T extends Yopable> Set<T> executeSelectQuery(IConnection connection, Query query, Class<T> target) {
+	public static <T> Set<T> executeSelectQuery(IConnection connection, Query query, Class<T> target) {
 		return executeSelectQuery(connection, query, target, new FirstLevelCache());
 	}
 
@@ -55,7 +54,7 @@ public class Executor {
 	 * @throws YopSQLException an SQL error occurred.
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T extends Yopable> Set<T> executeSelectQuery(
+	public static <T> Set<T> executeSelectQuery(
 		IConnection connection,
 		Query query,
 		Class<T> target,

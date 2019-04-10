@@ -7,7 +7,6 @@ import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.evaluation.Evaluation;
 import org.yop.orm.exception.YopMappingException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.query.join.Join;
@@ -29,7 +28,7 @@ import java.util.function.Function;
  * @param <From> the source type
  * @param <To>   the target type
  */
-public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From, To> {
+public class SQLJoin<From, To> extends Join<From, To> {
 
 	private static final Logger logger = LoggerFactory.getLogger(SQLJoin.class);
 
@@ -133,9 +132,9 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 		Context<To> to = this.to(context);
 		Set<SQLColumn> columns = SQLColumn.columns(to, config);
 
-		for (IJoin<To, ? extends Yopable> join : this.getJoins()) {
+		for (IJoin<To, ?> join : this.getJoins()) {
 			@SuppressWarnings("unchecked")
-			SQLJoin<To, ? extends Yopable> sqlJoin = SQLJoin.toSQLJoin(join);
+			SQLJoin<To, ?> sqlJoin = SQLJoin.toSQLJoin(join);
 			columns.addAll(sqlJoin.columns(to, config));
 		}
 		return columns;
@@ -164,9 +163,7 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 	 * @param <To>   the target type
 	 * @return a new Join clause to From → (N) To
 	 */
-	public static <From extends Yopable, To extends Yopable> SQLJoin<From, To> toN(
-		Function<From, ? extends Collection<To>> getter) {
-
+	public static <From, To> SQLJoin<From, To> toN(Function<From, ? extends Collection<To>> getter) {
 		SQLJoin<From, To> to = new SQLJoin<>();
 		to.getter = getter;
 		return to;
@@ -179,14 +176,14 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 	 * @param <To>   the target type
 	 * @return a new Join clause to From → (1) To
 	 */
-	public static <From extends Yopable, To extends Yopable> SQLJoin<From, To> to(Function<From, To> getter) {
+	public static <From, To> SQLJoin<From, To> to(Function<From, To> getter) {
 		SQLJoin<From, To> to = new SQLJoin<>();
 		to.getter = getter;
 		return to;
 	}
 
 	@SuppressWarnings("unchecked")
-	static <From extends Yopable, To extends Yopable> SQLJoin<From, To> toSQLJoin(IJoin<From, To> join) {
+	static <From, To> SQLJoin<From, To> toSQLJoin(IJoin<From, To> join) {
 		if (join == null) {
 			return null;
 		}
@@ -209,8 +206,8 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 	 * @return the SQL join clauses
 	 */
 	@SuppressWarnings("unchecked")
-	static <T extends Yopable> JoinClause.JoinClauses toSQLJoin(
-		Collection<IJoin<T, ? extends Yopable>> joins,
+	static <T> JoinClause.JoinClauses toSQLJoin(
+		Collection<IJoin<T, ?>> joins,
 		Context<T> context,
 		boolean evaluate,
 		Config config) {
@@ -234,7 +231,7 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 	 * @return the SQL join table clauses
 	 * @throws YopMappingException if there is no JoinColumn/JoinTable annotation or it is incorrectly set
 	 */
-	private static <From extends Yopable, To extends Yopable> String toSQLJoin(
+	private static <From, To> String toSQLJoin(
 		JoinType type,
 		Context<From> parent,
 		Context<To> to,
@@ -268,7 +265,7 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 	 * @param <To>   the target type
 	 * @return the SQL join table clauses (1 for the target table and 1 for the join table)
 	 */
-	private static <From extends Yopable, To extends Yopable> String toSQLJoin(
+	private static <From, To> String toSQLJoin(
 		JoinType type,
 		Context<From> parent,
 		Context<To> to,
@@ -280,10 +277,10 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 		String joinTableSourceColumn = joinTableAnnotation.sourceColumn();
 		String joinTableTargetColumn = joinTableAnnotation.targetColumn();
 		String relationAlias = parent.getPath(config) + config.sqlSeparator() + relationName;
-		String fromIdColumn = Reflection.newInstanceNoArgs(parent.getTarget()).getIdColumn();
+		String fromIdColumn = ORMUtil.getIdColumn(parent.getTarget());
 
 		String targetTableAlias = to.getPath(config);
-		String toIdColumn = Reflection.newInstanceNoArgs(to.getTarget()).getIdColumn();
+		String toIdColumn = ORMUtil.getIdColumn(to.getTarget());
 
 		return
 			config.getDialect().join(
@@ -317,7 +314,7 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 	 * @return the SQL join table clauses
 	 * @throws YopMappingException if the JoinColumn is incorrectly set (no local or remote column name set)
 	 */
-	private static <From extends Yopable, To extends Yopable> String toSQLJoin(
+	private static <From, To> String toSQLJoin(
 		JoinType type,
 		Context<From> parent,
 		Context<To> to,
@@ -329,7 +326,7 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 		String targetTableAlias = to.getPath(config);
 
 		if (StringUtils.isNotBlank(joinColumnAnnotation.local())) {
-			String toIdColumn = Reflection.newInstanceNoArgs(to.getTarget()).getIdColumn();
+			String toIdColumn = ORMUtil.getIdColumn(to.getTarget());
 
 			return config.getDialect().join(
 				type.sql,
@@ -339,7 +336,7 @@ public class SQLJoin<From extends Yopable, To extends Yopable> extends Join<From
 				prefix(targetTableAlias, toIdColumn, config)
 			);
 		} else if (StringUtils.isNotBlank(joinColumnAnnotation.remote())) {
-			String idColumn = Reflection.newInstanceNoArgs(parent.getTarget()).getIdColumn();
+			String idColumn = ORMUtil.getIdColumn(parent.getTarget());
 
 			return config.getDialect().join(
 				type.sql,

@@ -3,7 +3,6 @@ package org.yop.orm.query.relation;
 import org.apache.commons.collections4.CollectionUtils;
 import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.JoinTable;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Query;
@@ -89,7 +88,7 @@ public interface Relation {
 	 * @return a Relation implementation
 	 */
 	@SuppressWarnings("unchecked")
-	static <From extends Yopable, To extends Yopable> Relation relation(Collection<From> sources, IJoin<From, To> join) {
+	static <From, To> Relation relation(Collection<From> sources, IJoin<From, To> join) {
 		if (CollectionUtils.isEmpty(sources)) {
 			return new Relation() {};
 		}

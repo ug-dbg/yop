@@ -1,6 +1,5 @@
 package org.yop.orm.query.sql;
 
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.MessageUtil;
 import org.yop.orm.util.ORMUtil;
@@ -21,7 +20,7 @@ import java.util.function.Function;
  * {@code OrderBy.orderBy(Pojo::isActive, true).thenBy(Pojo::getType, false).thenBy(Pojo::getVersion, true)}
  * @param <T> the target class type
  */
-public class OrderBy<T extends Yopable> {
+public class OrderBy<T> {
 
 	private static final String ORDER_BY = " ORDER BY ";
 	private static final String ASC      = " ASC ";
@@ -36,14 +35,14 @@ public class OrderBy<T extends Yopable> {
 	OrderBy() {}
 
 	/**
-	 * Order by Id. This creates a new {@link Order} and uses {@link Yopable#getId()} as the getter.
+	 * Order by Id. This creates a new {@link Order} and uses {@link ORMUtil#readId(Object)} as the getter.
 	 * @param asc true → ASC, false → DESC
 	 * @param <T> the target type (holding the field)
 	 * @return the Order by ID clause
 	 */
-	public static <T extends Yopable> OrderBy<T> orderById(boolean asc) {
+	public static <T> OrderBy<T> orderById(boolean asc) {
 		OrderBy<T> orderBy = new OrderBy<>();
-		orderBy.orders.add(new Order<>(Yopable::getId, asc));
+		orderBy.orders.add(new Order<>(ORMUtil::readId, asc));
 		return orderBy;
 	}
 
@@ -54,7 +53,7 @@ public class OrderBy<T extends Yopable> {
 	 * @param <T> the target type (holding the field)
 	 * @return the Order by clause
 	 */
-	public static <T extends Yopable> OrderBy<T> orderBy(Function<T, ?> getter, boolean asc) {
+	public static <T> OrderBy<T> orderBy(Function<T, ?> getter, boolean asc) {
 		OrderBy<T> orderBy = new OrderBy<>();
 		orderBy.orders.add(new Order<>(getter, asc));
 		return orderBy;
@@ -98,7 +97,7 @@ public class OrderBy<T extends Yopable> {
 	 * @param <From> the root type
 	 * @param <To>   the target type
 	 */
-	private static class Order<From extends Yopable, To> {
+	private static class Order<From, To> {
 		/** The field getter */
 		private Function<From, To> getter;
 

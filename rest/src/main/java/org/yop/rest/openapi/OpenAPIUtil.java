@@ -210,7 +210,7 @@ public class OpenAPIUtil {
 	 * @return the generated schema for this type. Null if the type is not a yopable
 	 */
 	private static Schema<?> forResource(Class<? extends Yopable> clazz) {
-		if (Yopable.class.isAssignableFrom(clazz)) {
+		if (ORMUtil.isYopable(clazz)) {
 			Schema<?> schema = new Schema<>().properties(new HashMap<>());
 			List<Field> fields = ORMUtil.getFields(clazz, true);
 			for (Field field : fields) {

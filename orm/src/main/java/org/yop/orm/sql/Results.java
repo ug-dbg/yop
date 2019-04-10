@@ -1,7 +1,6 @@
 package org.yop.orm.sql;
 
 import org.apache.commons.lang3.StringUtils;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IResultCursor;
 import org.yop.orm.util.ORMUtil;
 
@@ -78,7 +77,7 @@ public class Results {
 	 * @param targetClass the target class (required to read the ID column name)
 	 * @return true if there is no data for this context on the current row
 	 */
-	public boolean noContext(String context, Class<? extends Yopable> targetClass) {
+	public boolean noContext(String context, Class<?> targetClass) {
 		if (this.contexts.isEmpty()) {
 			int columns = this.getCursor().getColumnCount();
 			for (int x = 1; x <= columns; x++) {

@@ -35,7 +35,7 @@ public interface JsonAble {
 	 * @param <T> the context target type
 	 */
 	@SuppressWarnings("unchecked")
-	default <T extends Yopable> void fromJSON(Context<T> context, JsonElement element, Config config) {
+	default <T> void fromJSON(Context<T> context, JsonElement element, Config config) {
 		if (! (element instanceof JsonObject)) {
 			return;
 		}
@@ -68,7 +68,7 @@ public interface JsonAble {
 	 * @param <T> the context target type
 	 * @return a new JSON object serializing the current instance state
 	 */
-	default <T extends Yopable> JsonElement toJSON(Context<T> context) {
+	default <T> JsonElement toJSON(Context<T> context) {
 		JsonObject out = new JsonObject();
 		List<Field> fields = ORMUtil.getFields(this.getClass(), true);
 
@@ -119,7 +119,7 @@ public interface JsonAble {
 	 */
 	@SuppressWarnings("unchecked")
 	static Object fieldValue(
-		Context<? extends Yopable> context,
+		Context<?> context,
 		Field field,
 		JsonElement fieldValueJSON,
 		Config config) {
@@ -172,7 +172,7 @@ public interface JsonAble {
 	 * @param o       the object to serialize
 	 * @return a GSON JSON element from the given value
 	 */
-	static JsonElement jsonValue(Context<? extends Yopable> context, Object o) {
+	static JsonElement jsonValue(Context<?> context, Object o) {
 		if (o instanceof JsonAble) {
 			return ((JsonAble) o).toJSON(context);
 		}

@@ -15,7 +15,7 @@ import java.util.Collection;
  * We use the {@link JSON} API to serialize/deserialize given potential join clauses.
  * @param <T> the Yopable type of the collection.
  */
-public class Yopables<T extends Yopable> extends ArrayList<T> implements JsonAble {
+public class Yopables<T> extends ArrayList<T> implements JsonAble {
 
 	/** Join clauses (JSON query serialization) */
 	protected IJoin.Joins<T> joins;
@@ -29,13 +29,13 @@ public class Yopables<T extends Yopable> extends ArrayList<T> implements JsonAbl
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <U extends Yopable> void fromJSON(Context<U> context, JsonElement elements, Config config) {
+	public <U> void fromJSON(Context<U> context, JsonElement elements, Config config) {
 		this.addAll(JSON.deserialize((Class) context.getTarget(), elements.getAsJsonArray()));
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <U extends Yopable> JsonElement toJSON(Context<U> context) {
+	public <U> JsonElement toJSON(Context<U> context) {
 		return ((JSON) JSON.from(context.getTarget()).onto((Collection) this).join(this.joins)).toJSONTree();
 	}
 }

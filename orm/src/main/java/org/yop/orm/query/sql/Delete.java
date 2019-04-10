@@ -7,7 +7,6 @@ import com.google.gson.JsonParser;
 import org.yop.orm.exception.YopSerializableQueryException;
 import org.yop.orm.map.IdMap;
 import org.yop.orm.model.JsonAble;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.*;
@@ -49,7 +48,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the type to delete.
  */
-public class Delete<T extends Yopable> extends WhereRequest<Delete<T>, T> implements JsonAble {
+public class Delete<T> extends WhereRequest<Delete<T>, T> implements JsonAble {
 
 	private Delete(Class<T> target) {
 		super(Context.root(target));
@@ -62,13 +61,13 @@ public class Delete<T extends Yopable> extends WhereRequest<Delete<T>, T> implem
 	 * @param where  where clause
 	 * @param joins  join clauses
 	 */
-	Delete(Class<T> target, Where<T> where, Collection<IJoin<T, ? extends Yopable>> joins) {
+	Delete(Class<T> target, Where<T> where, Collection<IJoin<T, ?>> joins) {
 		this(target);
 		this.where = where;
 		this.joins.addAll(joins);
 	}
 
-	public static <T extends Yopable> Delete<T> from(Class<T> target) {
+	public static <T> Delete<T> from(Class<T> target) {
 		return new Delete<>(target);
 	}
 
@@ -81,7 +80,7 @@ public class Delete<T extends Yopable> extends WhereRequest<Delete<T>, T> implem
 	}
 
 	@Override
-	public <U extends Yopable> JsonObject toJSON(Context<U> context) {
+	public <U> JsonObject toJSON(Context<U> context) {
 		JsonObject out = (JsonObject) JsonAble.super.toJSON(context);
 		out.addProperty("target", this.getTarget().getCanonicalName());
 		return out;
@@ -95,7 +94,7 @@ public class Delete<T extends Yopable> extends WhereRequest<Delete<T>, T> implem
 	 * @param <T> the target context type. This should match the one set in the JSON representation of the query !
 	 * @return a new Delete query whose state is set from its JSON representation
 	 */
-	public static <T extends Yopable> Delete<T> fromJSON(String json, Config config, ClassLoader... classLoaders) {
+	public static <T> Delete<T> fromJSON(String json, Config config, ClassLoader... classLoaders) {
 		try {
 			JsonParser parser = new JsonParser();
 			JsonObject selectJSON = (JsonObject) parser.parse(json);
@@ -153,7 +152,7 @@ public class Delete<T extends Yopable> extends WhereRequest<Delete<T>, T> implem
 		IdMap idMap = select.executeForIds(connection);
 		List<Query> queries = new ArrayList<>();
 
-		for (Map.Entry<Class<? extends Yopable>, Set<Comparable>> entry : idMap.entries()) {
+		for (Map.Entry<Class<?>, Set<Comparable>> entry : idMap.entries()) {
 
 			// Create some 'delete by ID' batches, due to some DBMS limitations.
 			List<List<Comparable>> batches = Lists.partition(

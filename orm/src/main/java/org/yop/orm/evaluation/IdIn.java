@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.SQLExpression;
@@ -43,7 +42,7 @@ public class IdIn  implements Evaluation {
 	 * Simply build a SQL portion : '[Context][ID column] IN (?,?...)' and fill the parameters.
 	 */
 	@Override
-	public <Y extends Yopable> CharSequence toSQL(Context<Y> context, Config config) {
+	public <Y> CharSequence toSQL(Context<Y> context, Config config) {
 		if(this.values.isEmpty()) {
 			return "";
 		}
@@ -59,7 +58,7 @@ public class IdIn  implements Evaluation {
 	}
 
 	@Override
-	public <T extends Yopable> JsonElement toJSON(Context<T> context) {
+	public <T> JsonElement toJSON(Context<T> context) {
 		JsonObject json = Evaluation.super.toJSON(context).getAsJsonObject();
 		json.add(VALUES, new JsonArray());
 		for (Comparable value : this.values) {
@@ -75,7 +74,7 @@ public class IdIn  implements Evaluation {
 	}
 
 	@Override
-	public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element, Config config) {
+	public <T> void fromJSON(Context<T> context, JsonElement element, Config config) {
 		Evaluation.super.toJSON(context);
 		JsonArray values = element.getAsJsonObject().get(VALUES).getAsJsonArray();
 		Gson gson = new Gson();

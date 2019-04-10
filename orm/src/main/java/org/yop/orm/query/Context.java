@@ -2,7 +2,6 @@ package org.yop.orm.query;
 
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.Table;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
 
@@ -19,10 +18,10 @@ import java.lang.reflect.Field;
  * </i>
  * @param <T> the context target class
  */
-public class Context<T extends Yopable> {
+public class Context<T> {
 
 	/** Parent context. If null, this context is the root context. */
-	private final Context<? extends Yopable> parent;
+	private final Context<?> parent;
 
 	/** Relation (field) name to the parent context. If null, this context is the root context. */
 	private final String relationToParent;
@@ -156,7 +155,7 @@ public class Context<T extends Yopable> {
 	 * @param <T> the target type
 	 * @return a new root context
 	 */
-	public static <T extends Yopable> Context<T> root(Class<T> root) {
+	public static <T> Context<T> root(Class<T> root) {
 		return new Context<>(root);
 	}
 
@@ -168,7 +167,7 @@ public class Context<T extends Yopable> {
 	 * @return the new context
 	 */
 	@SuppressWarnings("unchecked")
-	public <To extends Yopable> Context<To> to(Class<To> to, Field using) {
+	public <To> Context<To> to(Class<To> to, Field using) {
 		return new Context<>(this, using.getName(), to);
 	}
 
@@ -176,7 +175,7 @@ public class Context<T extends Yopable> {
 	 * Give me the root context from my context path !
 	 * @return the root context of the current context, i.e. the first context whose parent is null
 	 */
-	public Context<? extends Yopable> root() {
+	public Context<?> root() {
 		Context<?> context = this;
 		while (context.parent != null) {
 			context = context.parent;

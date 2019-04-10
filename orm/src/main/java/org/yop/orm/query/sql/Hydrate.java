@@ -3,10 +3,10 @@ package org.yop.orm.query.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.map.FirstLevelCache;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
 
 import java.lang.reflect.Field;
@@ -75,7 +75,7 @@ import java.util.stream.Collectors;
  * Then it will recursively do the same onto her reporters and manager.
  * @param <T> the target type
  */
-public class Hydrate<T extends Yopable> extends SQLRequest<Hydrate<T>, T>{
+public class Hydrate<T> extends SQLRequest<Hydrate<T>, T>{
 
 	private static final Logger logger = LoggerFactory.getLogger(Hydrate.class);
 
@@ -99,7 +99,7 @@ public class Hydrate<T extends Yopable> extends SQLRequest<Hydrate<T>, T>{
 	 * @param <T> the target type
 	 * @return a new Hydrate instance for the target type
 	 */
-	public static <T extends Yopable> Hydrate<T> from(Class<T> target) {
+	public static <T> Hydrate<T> from(Class<T> target) {
 		return new Hydrate<>(target);
 	}
 
@@ -109,7 +109,7 @@ public class Hydrate<T extends Yopable> extends SQLRequest<Hydrate<T>, T>{
 	 * @return the Hydrate instance, for chaining purposes
 	 */
 	public Hydrate<T> onto(T element) {
-		if(element.getId() == null) {
+		if(! ORMUtil.isIdSet(element)) {
 			logger.warn("Element ID for [{}] is not set. Cannot hydrate !");
 			return this;
 		}
@@ -124,7 +124,7 @@ public class Hydrate<T extends Yopable> extends SQLRequest<Hydrate<T>, T>{
 	 */
 	public Hydrate<T> onto(Collection<T> elements) {
 		for (T element : elements) {
-			if(element.getId() == null) {
+			if(! ORMUtil.isIdSet(element)) {
 				logger.warn("Element ID for [{}] is not set. Cannot hydrate !");
 				continue;
 			}
@@ -201,7 +201,7 @@ public class Hydrate<T extends Yopable> extends SQLRequest<Hydrate<T>, T>{
 		this.elements.forEach(cache::put);
 
 		// Get the data using a SELECT query on the target elements and the join clauses.
-		Map<Comparable, T> byID = this.elements.stream().collect(Collectors.toMap(Yopable::getId, Function.identity()));
+		Map<Comparable, T> byID = this.elements.stream().collect(Collectors.toMap(ORMUtil::readId, Function.identity()));
 
 		if (byID.size() > connection.config().maxParams()) {
 			logger.warn(
@@ -219,7 +219,7 @@ public class Hydrate<T extends Yopable> extends SQLRequest<Hydrate<T>, T>{
 		for (IJoin<T, ?> join : this.joins) {
 			// Assign the data, reading the field from the join directive and the fetched data
 			Field field = join.getField(this.getTarget());
-			fetched.forEach(from -> Reflection.setFrom(field, from, byID.get(from.getId())));
+			fetched.forEach(from -> Reflection.setFrom(field, from, byID.get(ORMUtil.readId(from))));
 
 			if (this.recurse) {
 				// Walk through the fetched data using the 'join' directive and grab any target type object → 'next'
@@ -252,14 +252,14 @@ public class Hydrate<T extends Yopable> extends SQLRequest<Hydrate<T>, T>{
 	 * @param <T>        the target type
 	 */
 	@SuppressWarnings("unchecked")
-	private static <T extends Yopable> void recurseCandidates(
+	private static <T> void recurseCandidates(
 		IJoin join,
 		Collection sources,
 		Collection<T> candidates,
 		Class<T> target) {
 
 		Collection elements = new ArrayList();
-		sources.forEach(source -> elements.addAll(join.getTarget((Yopable) source)));
+		sources.forEach(source -> elements.addAll(join.getTarget(source)));
 
 		if (elements.isEmpty() || candidates.containsAll(elements)) {
 			return;

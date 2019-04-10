@@ -2,7 +2,6 @@ package org.yop.orm.query.relation;
 
 import org.apache.commons.lang.StringUtils;
 import org.yop.orm.annotations.JoinColumn;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.*;
 import org.yop.orm.util.ORMUtil;
@@ -22,7 +21,7 @@ import java.util.*;
  * @param <From> the relation source type
  * @param <To>   the relation target type
  */
-class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Relation {
+class JoinColumnRelation<From, To> implements Relation {
 
 	/** The source table name */
 	private String sourceTable;
@@ -89,14 +88,14 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 
 			if (this.sourceTable != null) {
 				SQLExpression idColumn = config.getDialect().equals(
-					entry.getKey().getIdColumn(),
-					SQLExpression.parameter(this.sourceTable + "#id", from::getId)
+					ORMUtil.getIdColumn(entry.getKey().getClass()),
+					SQLExpression.parameter(this.sourceTable + "#id", () -> ORMUtil.readId(from))
 				);
 
 				for (To to : entry.getValue()) {
 					SQLExpression sourceColumn = config.getDialect().equals(
 						this.sourceColumn,
-						SQLExpression.parameter(this.sourceTable + "#" + this.sourceColumn, to::getId)
+						SQLExpression.parameter(this.sourceTable + "#" + this.sourceColumn, () -> ORMUtil.readId(to))
 					);
 					SQLExpression sql = config.getDialect().update(this.sourceTable, sourceColumn, idColumn);
 					updates.add(new SimpleQuery(sql, Query.Type.UPDATE, config));
@@ -106,13 +105,13 @@ class JoinColumnRelation<From extends Yopable, To extends Yopable> implements Re
 			if (this.targetTable != null) {
 				SQLExpression targetColumn = config.getDialect().equals(
 					this.targetColumn,
-					SQLExpression.parameter(this.targetTable + "#" + this.targetColumn, from::getId)
+					SQLExpression.parameter(this.targetTable + "#" + this.targetColumn, () -> ORMUtil.readId(from))
 				);
 
 				for (To to : entry.getValue()) {
 					SQLExpression idColumn = config.getDialect().equals(
-						entry.getKey().getIdColumn(),
-						SQLExpression.parameter(this.sourceTable + "#id", to::getId)
+						ORMUtil.getIdColumn(entry.getKey().getClass()),
+						SQLExpression.parameter(this.sourceTable + "#id", () -> ORMUtil.readId(to))
 					);
 					SQLExpression sql = config.getDialect().update(this.targetTable, targetColumn, idColumn);
 					updates.add(new SimpleQuery(sql, Query.Type.UPDATE, config));

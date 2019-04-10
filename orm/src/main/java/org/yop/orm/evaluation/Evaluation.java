@@ -35,7 +35,7 @@ public interface Evaluation extends JsonAble {
 	 * @param <T> the target evaluation type
 	 * @return the SQL query portion for the evaluation, from the context
 	 */
-	<T extends Yopable> CharSequence toSQL(Context<T> context, Config config);
+	<T> CharSequence toSQL(Context<T> context, Config config);
 
 	/**
 	 * Read the field @Column annotation, or the ID column for a @JoinTable
@@ -46,7 +46,7 @@ public interface Evaluation extends JsonAble {
 	 * @return the column name. If no @Column/@JoinTable annotation, returns the class name in upper case.
 	 */
 	@SuppressWarnings("unchecked")
-	static String columnName(Field field, Context<? extends Yopable> context, Config config) {
+	static String columnName(Field field, Context<?> context, Config config) {
 		if (field.isAnnotationPresent(JoinTable.class)) {
 			if(ORMUtil.isCollection(field)) {
 				Class<? extends Yopable> target = Reflection.getCollectionTarget(field);
@@ -67,7 +67,7 @@ public interface Evaluation extends JsonAble {
 	 * {@inheritDoc}
 	 */
 	@Override
-	default <T extends Yopable> JsonElement toJSON(Context<T> context) {
+	default <T> JsonElement toJSON(Context<T> context) {
 		JsonElement element = JsonAble.super.toJSON(context);
 		element.getAsJsonObject().addProperty(TYPE, this.getClass().getSimpleName());
 		return element;
@@ -94,7 +94,7 @@ public interface Evaluation extends JsonAble {
 	 */
 	class Evaluations extends ArrayList<Evaluation> implements JsonAble {
 		@Override
-		public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element, Config config) {
+		public <T> void fromJSON(Context<T> context, JsonElement element, Config config) {
 			for (JsonElement evaluationJSON : element.getAsJsonArray()) {
 				Evaluation evaluation = Evaluation.newInstance(((JsonObject) evaluationJSON).get(TYPE).getAsString());
 				evaluation.fromJSON(context, evaluationJSON, config);
@@ -103,7 +103,7 @@ public interface Evaluation extends JsonAble {
 		}
 
 		@Override
-		public <T extends Yopable> JsonElement toJSON(Context<T> context) {
+		public <T> JsonElement toJSON(Context<T> context) {
 			JsonArray evaluations = new JsonArray();
 			for (Evaluation evaluation : this) {
 				evaluations.add(evaluation.toJSON(context));

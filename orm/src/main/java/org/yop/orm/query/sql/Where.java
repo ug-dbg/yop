@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  * You can do standard comparisons (see {@link Comparison}) between a field (using a method reference)
  * and a reference value.
  * <br>
- * You can do an Evaluation given a natural ID : {@link #naturalID(Yopable)}.
+ * You can do an Evaluation given a natural ID : {@link #naturalID(Object)}.
  * <br>
  * You can also do standard comparisons between a field and an other target field anywhere in the data graph :
  * see {@link Path}. Example :
@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> the target type
  */
-public class Where<T extends Yopable> implements JsonAble {
+public class Where<T> implements JsonAble {
 
 	/** The where clause evaluations. Joined with AND. Use {@link Or} to create an OR evaluation. */
 	private final Evaluation.Evaluations evaluations = new Evaluation.Evaluations();

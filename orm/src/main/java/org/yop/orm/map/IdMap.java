@@ -2,7 +2,6 @@ package org.yop.orm.map;
 
 import com.google.common.base.Joiner;
 import org.yop.orm.exception.YopMappingException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.Executor;
@@ -22,19 +21,19 @@ import java.util.stream.Collectors;
  * if the DBMS does not support multi-table delete.
  * <br>
  * But actually, can't it be quite useful to get a data map of ID for a given data graph ?
- * {@code Class<? extends Yopable>} → {@code Set<Comparable>}
+ * {@code Class<?>} → {@code Set<Comparable>}
  */
 public class IdMap {
 
 	/** The ID map. One class → a collection of IDs */
-	private final Map<Class<? extends Yopable>, Set<Comparable>> ids = new HashMap<>();
+	private final Map<Class<?>, Set<Comparable>> ids = new HashMap<>();
 
 	/**
 	 * Get the IDs for the given class.
 	 * @param clazz the target class
 	 * @return the IDs this map has for the given class
 	 */
-	public Collection<Comparable> getIdsForClass(Class<? extends Yopable> clazz) {
+	public Collection<Comparable> getIdsForClass(Class<?> clazz) {
 		return this.ids.getOrDefault(clazz, new HashSet<>());
 	}
 
@@ -42,7 +41,7 @@ public class IdMap {
 	 * Return an entry set of the IDs per class.
 	 * @return the {@link Map#entrySet()}of {@link #ids}
 	 */
-	public Set<Map.Entry<Class<? extends Yopable>, Set<Comparable>>> entries() {
+	public Set<Map.Entry<Class<?>, Set<Comparable>>> entries() {
 		return this.ids.entrySet();
 	}
 
@@ -62,7 +61,7 @@ public class IdMap {
 	 * @param clazz the target class
 	 * @param id the ID to add
 	 */
-	private void put(Class<? extends Yopable> clazz, Comparable id) {
+	private void put(Class<?> clazz, Comparable id) {
 		this.ids.putIfAbsent(clazz, new HashSet<>());
 		this.ids.get(clazz).add(id);
 	}
@@ -75,7 +74,7 @@ public class IdMap {
 	 * @param config the SQL config. Needed for the sql separator to use.
 	 * @return the Action that can be given to the {@link Executor}
 	 */
-	public static Executor.Action<IdMap> populateAction(Class<? extends Yopable> target, Config config) {
+	public static Executor.Action<IdMap> populateAction(Class<?> target, Config config) {
 		return results -> {
 			IdMap map = new IdMap();
 			while (results.getCursor().next()) {
@@ -90,14 +89,14 @@ public class IdMap {
 	 * <br>
 	 * It should actually work with any Yop SELECT query.
 	 * <br>
-	 * This method is quite similar to {@link Mapper#mapRelationFields(Results, Yopable, String, FirstLevelCache)}
+	 * This method is quite similar to {@link Mapper#mapRelationFields(Results, Object, String, FirstLevelCache)}
 	 * @param results the SQL query result
 	 * @param yopable the target class
 	 * @param context the current context
 	 * @param map the target IdMap that will be populated with IDs
 	 * @param <T> the target type
 	 */
-	private static <T extends Yopable> void map(
+	private static <T> void map(
 		Results results,
 		Class<T> yopable,
 		String context,
@@ -109,14 +108,14 @@ public class IdMap {
 		for (Field field : fields) {
 			String newContext = context + separator + field.getName() + separator;
 			if(ORMUtil.isCollection(field)) {
-				Class<? extends Yopable> targetClass = ORMUtil.getRelationFieldType(field);
+				Class<?> targetClass = ORMUtil.getRelationFieldType(field);
 				newContext += ORMUtil.getTargetName(targetClass);
 
 				if(results.noContext(newContext, targetClass)) continue;
 				map(results, targetClass, newContext, map);
 			} else if (ORMUtil.isYopable(field)){
 				@SuppressWarnings("unchecked")
-				Class<? extends Yopable> targetClass = (Class<? extends Yopable>) field.getType();
+				Class<?> targetClass = field.getType();
 				newContext += ORMUtil.getTargetName(targetClass);
 
 				if(results.noContext(newContext, targetClass)) continue;
@@ -140,7 +139,7 @@ public class IdMap {
 	 * @return the ID on the current row, whose column matches [context→columnIDName]
 	 * @throws org.yop.orm.exception.YopSQLException an error occurred reading the resultset
 	 */
-	private static <T extends Yopable> Comparable readId(Results results, Class<T> target, String context) {
+	private static <T> Comparable readId(Results results, Class<T> target, String context) {
 		return (Comparable) Mapper.read(results, ORMUtil.getIdField(target), context);
 	}
 }

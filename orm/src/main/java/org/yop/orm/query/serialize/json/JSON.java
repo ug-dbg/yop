@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  * @param <T> the target Yopable type to serialize to JSON.
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class JSON<T extends Yopable> extends AbstractRequest<JSON<T>, T> implements Serialize<JSON, T> {
+public class JSON<T> extends AbstractRequest<JSON<T>, T> implements Serialize<JSON, T> {
 
 	private final GsonInstance gson = new GsonInstance();
 
@@ -65,7 +65,7 @@ public class JSON<T extends Yopable> extends AbstractRequest<JSON<T>, T> impleme
 	 * @param <T> the target Yopable type
 	 * @return a new {@link JSON} directive
 	 */
-	public static <T extends Yopable> JSON<T> from(Class<T> target) {
+	public static <T> JSON<T> from(Class<T> target) {
 		return new JSON<>(target);
 	}
 
@@ -76,7 +76,7 @@ public class JSON<T extends Yopable> extends AbstractRequest<JSON<T>, T> impleme
 	 * @param <T> the target type
 	 * @return a collection of T which are the deserialized elements
 	 */
-	public static <T extends Yopable> Collection<T> deserialize(Class<T> target, JsonArray elements) {
+	public static <T> Collection<T> deserialize(Class<T> target, JsonArray elements) {
 		GsonInstance instance = new GsonInstance().defaultDeserializers();
 		instance.customBuilder(new GsonBuilder().excludeFieldsWithModifiers(Modifier.STATIC));
 		Gson gson = instance.instance();
@@ -94,7 +94,7 @@ public class JSON<T extends Yopable> extends AbstractRequest<JSON<T>, T> impleme
 	 * @param <T> the target type
 	 * @return an instance of T that is the element, deserialized as T.
 	 */
-	public static <T extends Yopable> T deserialize(Class<T> target, JsonObject element) {
+	public static <T> T deserialize(Class<T> target, JsonObject element) {
 		GsonInstance instance = new GsonInstance()
 			.defaultDeserializers()
 			.customBuilder(new GsonBuilder().excludeFieldsWithModifiers(Modifier.STATIC));
@@ -109,7 +109,7 @@ public class JSON<T extends Yopable> extends AbstractRequest<JSON<T>, T> impleme
 	 * @param <T> the target type
 	 * @return  a collection of T which are the deserialized elements
 	 */
-	public static <T extends Yopable> Collection<T> deserialize(Class<T> target, JsonElement element) {
+	public static <T> Collection<T> deserialize(Class<T> target, JsonElement element) {
 		if (element.isJsonArray()) {
 			return JSON.deserialize(target, element.getAsJsonArray());
 		} else {

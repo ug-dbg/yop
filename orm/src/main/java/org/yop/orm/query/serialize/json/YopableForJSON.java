@@ -1,6 +1,5 @@
 package org.yop.orm.query.serialize.json;
 
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.util.ORMUtil;
 
@@ -9,14 +8,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * A wrapper class for a {@link Yopable} that should be serialized to Json using {@link JSON}.
+ * A wrapper class for an object that should be serialized to Json using {@link JSON}.
  * <br>
  * It aggregates the {@link #subject} but also the join and joinID instructions from the subject.
  */
 class YopableForJSON {
 
 	/** The object that will be serialized. */
-	private final Yopable subject;
+	private final Object subject;
 
 	/** Which fields (and sub-fields) should be serialized */
 	private final Collection<IJoin> joins;
@@ -25,13 +24,13 @@ class YopableForJSON {
 	private final Map<IJoin, Field> fieldCache;
 
 	/**
-	 * Private complete constructor. Please use {@link #create(Yopable, JSON)}.
+	 * Private complete constructor. Please use {@link #create(Object, JSON)}.
 	 * @param subject    the object that will be serialized
 	 * @param joins      which fields (and sub-fields) should be serialized
 	 * @param fieldCache join → Field cache (Finding a field from a method reference can be expensive)
 	 */
 	private YopableForJSON(
-		Yopable subject,
+		Object subject,
 		Collection<IJoin> joins,
 		Map<IJoin, Field> fieldCache) {
 
@@ -44,7 +43,7 @@ class YopableForJSON {
 	 * Get the underlying subject (i.e. the object that will be serialized to Json)
 	 * @return {@link #subject}
 	 */
-	Yopable getSubject() {
+	Object getSubject() {
 		return this.subject;
 	}
 
@@ -57,13 +56,13 @@ class YopableForJSON {
 	}
 
 	/**
-	 * Create a new {@link YopableForJSON} wrapping a {@link Yopable}.
+	 * Create a new {@link YopableForJSON} wrapping a {@link Object}.
 	 * @param on    the object to wrap
 	 * @param using where to find the join/joinID paths and a field cache
 	 * @return a new wrapper for the object to serialize
 	 */
 	@SuppressWarnings("unchecked")
-	static YopableForJSON create(Yopable on, JSON using) {
+	static YopableForJSON create(Object on, JSON using) {
 		return new YopableForJSON(on, new ArrayList<IJoin>(using.getJoins()), using.fieldCache);
 	}
 
@@ -82,7 +81,7 @@ class YopableForJSON {
 	@SuppressWarnings("unchecked")
 	Object next(IJoin join) {
 		Field field = this.getField(join);
-		Collection<Yopable> next = join.getTarget(this.subject);
+		Collection<Object> next = join.getTarget(this.subject);
 		if (ORMUtil.isCollection(field)) {
 			return next
 				.stream()

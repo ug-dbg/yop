@@ -3,7 +3,6 @@ package org.yop.orm.evaluation;
 import com.google.gson.JsonElement;
 import org.apache.commons.lang3.StringUtils;
 import org.yop.orm.model.JsonAble;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.sql.Config;
@@ -52,7 +51,7 @@ public class Comparison implements Evaluation {
 	 * @param op     the comparison operator
 	 * @param ref    the comparison reference value. Will be set as a JDBC query parameter if applicable.
 	 */
-	public <T extends Yopable> Comparison(Function<T, ?> getter, Operator op, Comparable ref) {
+	public <T> Comparison(Function<T, ?> getter, Operator op, Comparable ref) {
 		this();
 		this.getter = getter;
 		this.op = op;
@@ -61,7 +60,7 @@ public class Comparison implements Evaluation {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T extends Yopable> JsonElement toJSON(Context<T> context) {
+	public <T> JsonElement toJSON(Context<T> context) {
 		if (this.field == null) {
 			this.field = Reflection.findField(context.getTarget(), (Function<T, ?>) this.getter);
 		}
@@ -75,7 +74,7 @@ public class Comparison implements Evaluation {
 	}
 
 	@Override
-	public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element, Config config) {
+	public <T> void fromJSON(Context<T> context, JsonElement element, Config config) {
 		Evaluation.super.fromJSON(context, element, config);
 		this.field = Reflection.get(context.getTarget(), element.getAsJsonObject().get(FIELD).getAsString());
 		this.getter = o -> Reflection.readField(this.field, o);
@@ -109,7 +108,7 @@ public class Comparison implements Evaluation {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T extends Yopable> SQLExpression toSQL(Context<T> context, Config config) {
+	public <T> SQLExpression toSQL(Context<T> context, Config config) {
 		if (this.field == null) {
 			this.field = Reflection.findField(context.getTarget(), (Function<T, ?>) this.getter);
 		}

@@ -1,15 +1,16 @@
 package org.yop.orm.simple.model;
 
+import org.yop.orm.annotations.Column;
 import org.yop.orm.annotations.Id;
+import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.model.Yopable;
-import org.yop.orm.annotations.Column;
-import org.yop.orm.annotations.JoinTable;
+import org.yop.orm.util.ORMUtil;
 
 import java.util.Objects;
 
 @Table(name = "simple_jopo")
-public class Jopo implements Yopable {
+public class Jopo {
 
 	@Id(sequence = "seq_JOPO")
 	@Column(name = "id")
@@ -21,18 +22,16 @@ public class Jopo implements Yopable {
 	@JoinTable(table = "POJO_JOPO_relation", sourceColumn = "idJOPO", targetColumn = "idPOJO")
 	private transient Pojo pojo;
 
-	@Override
 	public Long getId() {
-		return id;
+		return this.id;
 	}
 
-	@Override
 	public void setId(Long id) {
 		this.id = id;
 	}
 
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	public void setName(String name) {
@@ -40,7 +39,7 @@ public class Jopo implements Yopable {
 	}
 
 	public Pojo getPojo() {
-		return pojo;
+		return this.pojo;
 	}
 
 	public void setPojo(Pojo pojo) {
@@ -49,16 +48,20 @@ public class Jopo implements Yopable {
 
 	@Override
 	public boolean equals(Object o) {
-		return o instanceof Yopable && this.equals((Yopable) o);
+		return ORMUtil.equals(this, o);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(name);
+		return Objects.hash(this.name);
 	}
 
 	@Override
 	public String toString() {
-		return "Jopo{" + "id=" + id + ", name='" + name + '\'' + ", pojo.id=" + (pojo != null ? pojo.getId() : "null") + '}';
+		return "Jopo{"
+			+ "id=" + this.id
+			+ ", name='" + this.name + '\''
+			+ ", pojo.id=" + (this.pojo != null ? this.pojo.getId() : "null")
+		+ '}';
 	}
 }

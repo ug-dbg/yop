@@ -4,7 +4,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IRequest;
 import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.TransformUtil;
@@ -87,13 +86,13 @@ public abstract class Query {
 	final Map<String, String> tooLongAliases = new HashMap<>();
 
 	/** A reference to the root target Yopable that this query was generated for. Only required for generated keys. */
-	protected Class<? extends Yopable> target;
+	protected Class target;
 
 	/**
 	 * The source elements of the query.
 	 * If the query is {@link Type#INSERT}, and {@link #askGeneratedKeys} is set to true, their IDs will be set back.
 	 */
-	protected final List<Yopable> elements = new ArrayList<>();
+	protected final List<Object> elements = new ArrayList<>();
 
 	/**
 	 * Default constructor : SQL query.
@@ -130,7 +129,7 @@ public abstract class Query {
 		}
 	}
 
-	public Class<? extends Yopable> getTarget() {
+	public Class getTarget() {
 		return this.target;
 	}
 
@@ -154,7 +153,7 @@ public abstract class Query {
 	 * This is useful when doing INSERT queries whose generated IDs must be set back to the Java objects.
 	 * @return the {@link #elements} of this query
 	 */
-	public List<Yopable> getElements() {
+	public List<Object> getElements() {
 		return this.elements;
 	}
 
@@ -203,7 +202,7 @@ public abstract class Query {
 	 * @param target the target class for which there will be generated keys
 	 * @return the current query, for chaining purposes
 	 */
-	public Query askGeneratedKeys(boolean value, Class<? extends Yopable> target) {
+	public Query askGeneratedKeys(boolean value, Class target) {
 		this.askGeneratedKeys = value;
 		this.target = target;
 		return this;
@@ -245,10 +244,10 @@ public abstract class Query {
 				);
 			}
 			for (int i = 0; i < this.generatedIds.size(); i++) {
-				Yopable element = this.elements.get(i);
-				Class<? extends Yopable> target = element.getClass();
+				Object element = this.elements.get(i);
+				Class target = element.getClass();
 				if (ORMUtil.isAutogenId(target)) {
-					element.setId(readGeneratedId(this.generatedIds.get(i), target));
+					ORMUtil.setId(readGeneratedId(this.generatedIds.get(i), target), element);
 				}
 			}
 		}
@@ -260,7 +259,7 @@ public abstract class Query {
 	 * @param target the target object
 	 * @return the ID that can be affected to the target element
 	 */
-	private static Comparable readGeneratedId(Comparable input, Class<? extends Yopable> target) {
+	private static Comparable readGeneratedId(Comparable input, Class target) {
 		return (Comparable) TransformUtil.transform(input, ORMUtil.getIdField(target).getType());
 	}
 

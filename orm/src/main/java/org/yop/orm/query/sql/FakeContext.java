@@ -1,6 +1,5 @@
 package org.yop.orm.query.sql;
 
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 
@@ -10,7 +9,7 @@ import org.yop.orm.sql.Config;
  * I am not very proud of this.
  * @param <T> the target type
  */
-class FakeContext<T extends Yopable> extends Context<T> {
+class FakeContext<T> extends Context<T> {
 	private final String fakePath;
 
 	FakeContext(Context<T> context, String fakePath) {

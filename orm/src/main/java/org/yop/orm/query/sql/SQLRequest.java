@@ -1,6 +1,5 @@
 package org.yop.orm.query.sql;
 
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.AbstractRequest;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.join.IJoin;
@@ -13,7 +12,7 @@ import java.util.Set;
  * A YOP request refined for SQL : it simply adds some protected methods, useful in an SQL context.
  * @param <T> the target type
  */
-abstract class SQLRequest<Request extends AbstractRequest, T extends Yopable> extends AbstractRequest<Request, T> {
+abstract class SQLRequest<Request extends AbstractRequest, T> extends AbstractRequest<Request, T> {
 
 	/**
 	 * Default constructor : final field {@link #context} must be initialized.
@@ -34,9 +33,9 @@ abstract class SQLRequest<Request extends AbstractRequest, T extends Yopable> ex
 		Set<SQLColumn> columns = SQLColumn.columns(this.context, config);
 
 		if (addJoinClauseColumns) {
-			for (IJoin<T, ? extends Yopable> join : this.joins) {
+			for (IJoin<T, ?> join : this.joins) {
 				@SuppressWarnings("unchecked")
-				SQLJoin<T, ? extends Yopable> sqlJoin = SQLJoin.toSQLJoin(join);
+				SQLJoin<T, ?> sqlJoin = SQLJoin.toSQLJoin(join);
 				columns.addAll(sqlJoin.columns(this.context, config));
 			}
 		}

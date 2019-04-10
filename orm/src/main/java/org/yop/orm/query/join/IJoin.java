@@ -7,11 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopInvalidJoinException;
 import org.yop.orm.model.JsonAble;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.JoinUtil;
 import org.yop.orm.util.MessageUtil;
+import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
 
 import java.lang.reflect.Field;
@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * A join relation between 2 {@link Yopable} types.
+ * A join relation between 2 Yopable types.
  * <br><br>
  * <br>
  * The join is referenced by the getter method.
@@ -43,7 +43,7 @@ import java.util.function.Function;
  * @param <To>   the target type
  */
 @SuppressWarnings("unused")
-public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAble {
+public interface IJoin<From, To> extends JsonAble {
 
 	Logger logger = LoggerFactory.getLogger(IJoin.class);
 
@@ -59,7 +59,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	default <T extends Yopable> JsonElement toJSON(Context<T> context) {
+	default <T> JsonElement toJSON(Context<T> context) {
 		JsonObject element = (JsonObject) JsonAble.super.toJSON(context);
 		element.addProperty(FIELD, this.getField((Class) context.getTarget()).getName());
 		return element;
@@ -78,7 +78,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	 * Get the sub-join clauses
 	 * @return the sub join clauses (To → relation → Next)
 	 */
-	Collection<IJoin<To, ? extends Yopable>> getJoins();
+	Collection<IJoin<To, ?>> getJoins();
 
 	/**
 	 * Add a sub join to the current join clause
@@ -86,7 +86,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	 * @param <Next> the next target type
 	 * @return the current join clause, for chaining purposes
 	 */
-	<Next extends Yopable> IJoin<From, To> join(IJoin<To, Next> join);
+	<Next> IJoin<From, To> join(IJoin<To, Next> join);
 
 	/**
 	 * Get the field this join is related to, given the source class.
@@ -127,7 +127,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	 * @param <To>   the target type
 	 * @return a new IJoin instance for the given field. The instance is actually a {@link FieldJoin}.
 	 */
-	static <From extends Yopable, To extends Yopable> IJoin<From, To> onField(Field field) {
+	static <From, To> IJoin<From, To> onField(Field field) {
 		return new FieldJoin<>(field);
 	}
 
@@ -137,15 +137,15 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 	 * <b>Implementation note</b> : when deserializing an {@link IJoin}, return an explicit {@link FieldJoin} instance.
 	 * @param <From> the joins source context type
 	 */
-	class Joins<From extends Yopable> extends ArrayList<IJoin<From, ? extends Yopable>> implements JsonAble {
+	class Joins<From> extends ArrayList<IJoin<From, ?>> implements JsonAble {
 		@Override
-		public <T extends Yopable> void fromJSON(Context<T> context, JsonElement element, Config config) {
+		public <T> void fromJSON(Context<T> context, JsonElement element, Config config) {
 			element.getAsJsonArray().forEach(e -> this.add(FieldJoin.from(context, e.getAsJsonObject(), config)));
 		}
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public <T extends Yopable> JsonElement toJSON(Context<T> context) {
+		public <T> JsonElement toJSON(Context<T> context) {
 			JsonArray out = new JsonArray();
 			this.forEach(j -> out.add(j.toJSON(j.to((Context) context))));
 			return out;
@@ -197,7 +197,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 				return;
 			}
 
-			Class<? extends Yopable> next = context.getTarget();
+			Class<?> next = context.getTarget();
 			FieldJoin join = null;
 			FieldJoin current = null;
 			String path = next.getSimpleName();
@@ -214,7 +214,7 @@ public interface IJoin<From extends Yopable, To extends Yopable> extends JsonAbl
 
 				next = Reflection.getTarget(field);
 				path = MessageUtil.join("→", path, next.getSimpleName());
-				if (! Yopable.class.isAssignableFrom(next)) {
+				if (! ORMUtil.isYopable(next)) {
 					throw new YopInvalidJoinException(
 						"The join path is invalid. @[" + path + "], "
 						+ "last element type [" + next.getSimpleName() + "] is not acceptable."

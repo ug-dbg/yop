@@ -1,6 +1,5 @@
 package org.yop.orm;
 
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.batch.BatchUpsert;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.query.serialize.json.JSON;
@@ -22,8 +21,8 @@ import java.util.function.Function;
  * </ul>
  * You will also find static methods to YOP join directives ({@link IJoin} implementations):
  * <ul>
- *     <li>to a single {@link Yopable} → {@link SQLJoin} : {@link #to(Function)}</li>
- *     <li>to a collection of {@link Yopable} → {@link SQLJoin} : {@link #toN(Function)}</li>
+ *     <li>to a single object → {@link SQLJoin} : {@link #to(Function)}</li>
+ *     <li>to a collection of objects → {@link SQLJoin} : {@link #toN(Function)}</li>
  * </ul>
  * Consider this class an API <i>vade mecum</i>.
  */
@@ -34,11 +33,11 @@ public class Yop {
 
 	/**
 	 * Shortcut to {@link Select#from(Class)}.
-	 * @param what the target {@link Yopable} annotated class
+	 * @param what the target class
 	 * @param <What> the target type
 	 * @return a {@link Select} directive.
 	 */
-	public static <What extends Yopable> Select<What> select(Class<What> what) {
+	public static <What> Select<What> select(Class<What> what) {
 		return Select.from(what);
 	}
 
@@ -51,11 +50,11 @@ public class Yop {
 	 *     <li>the Yopable object has a null ID field → insert</li>
 	 * </ul>
 	 * See the {@link Upsert#checkNaturalID()} if you don't have the objects IDs but natural keys.
-	 * @param what the target {@link Yopable} annotated class
+	 * @param what the target class
 	 * @param <What> the target type
 	 * @return a {@link Upsert} directive.
 	 */
-	public static <What extends Yopable> Upsert<What> upsert(Class<What> what) {
+	public static <What> Upsert<What> upsert(Class<What> what) {
 		return Upsert.from(what);
 	}
 
@@ -63,41 +62,41 @@ public class Yop {
 	 * Shortcut to {@link BatchUpsert#from(Class)}.
 	 * <br>
 	 * The API is similar to {@link #upsert(Class)}.
-	 * @param what the target {@link Yopable} annotated class
+	 * @param what the target class
 	 * @param <What> the target type
 	 * @return a {@link Upsert} (actually a {@link BatchUpsert} directive.
 	 */
-	public static <What extends Yopable> Upsert<What> batchUpsert(Class<What> what) {
+	public static <What> Upsert<What> batchUpsert(Class<What> what) {
 		return BatchUpsert.from(what);
 	}
 
 	/**
 	 * Shortcut to {@link Delete}.
-	 * @param what the target {@link Yopable} annotated class
+	 * @param what the target class
 	 * @param <What> the target type
 	 * @return a {@link Delete} directive.
 	 */
-	public static <What extends Yopable> Delete<What> delete(Class<What> what) {
+	public static <What> Delete<What> delete(Class<What> what) {
 		return Delete.from(what);
 	}
 
 	/**
 	 * Shortcut to {@link Hydrate}.
-	 * @param what the target {@link Yopable} annotated class
+	 * @param what the target class
 	 * @param <What> the target type
 	 * @return a {@link Hydrate} directive.
 	 */
-	public static <What extends Yopable> Hydrate<What> hydrate(Class<What> what) {
+	public static <What> Hydrate<What> hydrate(Class<What> what) {
 		return Hydrate.from(what);
 	}
 
 	/**
 	 * Shortcut to {@link JSON}.
-	 * @param what the target {@link Yopable} annotated class
+	 * @param what the target class
 	 * @param <What> the target type
 	 * @return a {@link JSON} directive.
 	 */
-	public static <What extends Yopable> JSON<What> json(Class<What> what) {
+	public static <What> JSON<What> json(Class<What> what) {
 		return JSON.from(what);
 	}
 
@@ -105,13 +104,13 @@ public class Yop {
 	 * Shortcut to {@link SQLJoin}.
 	 * <br>
 	 * This is the {@link IJoin} implementation for 1 → 1 or N → 1 relationships,
-	 * i.e. when the target class is a {@link Yopable} and not a {@link Collection} of {@link Yopable}.
+	 * i.e. when the target class is a single object and not a {@link Collection}.
 	 * @param getter the relation field getter
 	 * @param <From> the relation source type
 	 * @param <To>   the relation target type
 	 * @return an {@link SQLJoin} relation for the given getter
 	 */
-	public static <From extends Yopable, To extends Yopable> SQLJoin<From, To> to(Function<From, To> getter) {
+	public static <From, To> SQLJoin<From, To> to(Function<From, To> getter) {
 		return SQLJoin.to(getter);
 	}
 
@@ -119,13 +118,13 @@ public class Yop {
 	 * Shortcut to {@link SQLJoin}.
 	 * <br>
 	 * This is the {@link IJoin} implementation for 1 → N or N → N relationships,
-	 * i.e. when the target class is a {@link Collection} of {@link Yopable} and not a single {@link Yopable}.
+	 * i.e. when the target class is a {@link Collection} and not a single object.
 	 * @param getter the relation field getter
 	 * @param <From> the relation source type
 	 * @param <To>   the relation target type
 	 * @return an {@link SQLJoin} relation for the given getter
 	 */
-	public static <From extends Yopable, To extends Yopable> SQLJoin<From, To> toN(Function<From, Collection<To>> getter) {
+	public static <From, To> SQLJoin<From, To> toN(Function<From, Collection<To>> getter) {
 		return SQLJoin.toN(getter);
 	}
 }

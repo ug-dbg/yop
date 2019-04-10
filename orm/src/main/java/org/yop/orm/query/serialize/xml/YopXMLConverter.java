@@ -6,9 +6,9 @@ import com.thoughtworks.xstream.converters.reflection.FieldDictionary;
 import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
 import com.thoughtworks.xstream.converters.reflection.ReflectionConverter;
 import com.thoughtworks.xstream.mapper.Mapper;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.query.serialize.xml.annotations.YopXMLTransient;
+import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
 
 import java.lang.reflect.Field;
@@ -26,7 +26,7 @@ import java.util.Set;
  * We use {@link Path} to keep a reference to the current {@link IJoin} and check if we should serialize any further.
  * @param <Root> the object graph root type.
  */
-class YopXMLConverter<Root extends Yopable> extends ReflectionConverter {
+class YopXMLConverter<Root> extends ReflectionConverter {
 	/** The current serialization path in the join graph */
 	private Path path = Paths.get("/");
 
@@ -43,16 +43,16 @@ class YopXMLConverter<Root extends Yopable> extends ReflectionConverter {
 	 * @param root   the serialization root class
 	 * @param joins  the serialization join graph
 	 */
-	YopXMLConverter(Mapper mapper, Class<Root> root, Collection<IJoin<Root, ? extends Yopable>> joins) {
+	YopXMLConverter(Mapper mapper, Class<Root> root, Collection<IJoin<Root, ?>> joins) {
 		super(mapper, new YopReflectionProvider());
-		for (IJoin<Root, ? extends Yopable> join : joins) {
+		for (IJoin<Root, ?> join : joins) {
 			toPaths(join, root, this.path, this.joins);
 		}
 	}
 
 	@Override
 	public boolean canConvert(Class type) {
-		return Yopable.class.isAssignableFrom(type);
+		return ORMUtil.isYopable(type);
 	}
 
 	@Override
@@ -67,7 +67,7 @@ class YopXMLConverter<Root extends Yopable> extends ReflectionConverter {
 
 	@Override
 	protected void marshallField(MarshallingContext context, Object newObj, Field field) {
-		if (! Yopable.class.isAssignableFrom(Reflection.getTarget(field))) {
+		if (! ORMUtil.isYopable(Reflection.getTarget(field))) {
 			super.marshallField(context, newObj, field);
 		} else {
 			this.path = this.path.resolve(field.getName());
@@ -89,7 +89,7 @@ class YopXMLConverter<Root extends Yopable> extends ReflectionConverter {
 	}
 
 	/**
-	 * Recusrively transform the current join and its {@link IJoin#getJoins()} into a collection {@link Path}.
+	 * Recursively transform the current join and its {@link IJoin#getJoins()} into a collection {@link Path}.
 	 * @param currentJoin  the current join
 	 * @param currentClass the current class
 	 * @param currentPath  the current path
@@ -102,13 +102,13 @@ class YopXMLConverter<Root extends Yopable> extends ReflectionConverter {
 		Path nextPath = currentPath.resolve(field.getName());
 		output.add(nextPath);
 
-		for (IJoin<?, ? extends Yopable> nextJoin : currentJoin.getJoins()) {
+		for (IJoin<?, ?> nextJoin : currentJoin.getJoins()) {
 			field = nextJoin.getField(nextClass);
 			nextPath = nextPath.resolve(field.getName());
 			output.add(nextPath);
 
 			nextClass = nextJoin.getTarget(field);
-			for (IJoin<?, ? extends Yopable> furtherJoin : nextJoin.getJoins()) {
+			for (IJoin<?, ?> furtherJoin : nextJoin.getJoins()) {
 				toPaths(furtherJoin, nextClass, nextPath, output);
 			}
 		}

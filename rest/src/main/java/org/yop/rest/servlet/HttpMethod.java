@@ -15,6 +15,7 @@ import org.yop.ioc.Singleton;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.serialize.Serialize;
 import org.yop.orm.sql.adapter.IConnection;
+import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.TransformUtil;
 import org.yop.reflection.Reflection;
 import org.yop.rest.annotations.JoinProfiles;
@@ -413,17 +414,17 @@ public interface HttpMethod {
 	 */
 	@SuppressWarnings("unchecked")
 	default String serialize(Object what, RestRequest restRequest) {
-		if (what instanceof Yopable || what instanceof Collection) {
+		if (ORMUtil.isYopable(what) || what instanceof Collection) {
 			String outputContentType = restRequest.accept(Serializers.SUPPORTED);
 			Serialize serializer = Serializers.getFor(restRequest.getRestResource(), outputContentType);
 
-			if (what instanceof Yopable) {
-				serializer.onto((Yopable) what);
-			} else {
+			if (what instanceof Collection) {
 				serializer.onto((Collection<Yopable>) what);
 				if (restRequest.joinAll()) {
 					serializer.joinAll();
 				}
+			} else {
+				serializer.onto(what);
 			}
 
 			if (restRequest.joinAll()) {

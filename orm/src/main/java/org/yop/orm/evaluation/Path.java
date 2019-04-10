@@ -3,9 +3,9 @@ package org.yop.orm.evaluation;
 import com.google.common.base.Joiner;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.yop.orm.model.JsonAble;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
-import org.yop.orm.model.JsonAble;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
@@ -39,7 +39,7 @@ import java.util.function.Function;
  * @param <To>   the target type of the path (the type of the last field of the path)
  */
 @SuppressWarnings("unchecked")
-public class Path<From extends Yopable, To> implements Comparable<Path<From, To>>, JsonAble {
+public class Path<From, To> implements Comparable<Path<From, To>>, JsonAble {
 
 	static final String PATH_TYPE = "path";
 	static final String SEPARATOR = "separator";
@@ -59,7 +59,7 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 	 * @param <To>   the target type
 	 * @return a Path object, from 'From' to to 'To' using the getter
 	 */
-	public static <From extends Yopable, To> Path<From, To> path(Function<From, To> getter) {
+	public static <From, To> Path<From, To> path(Function<From, To> getter) {
 		Path<From, To> path = new Path<>();
 		path.steps.add(getter);
 		return path;
@@ -75,7 +75,7 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 	 * @param <To>   the target type
 	 * @return a Path object, from 'From' to to 'To' using the getter
 	 */
-	public static <From extends Yopable, To extends Yopable> Path<From, To> pathSet(
+	public static <From, To> Path<From, To> pathSet(
 		Function<From, Collection<To>> getter) {
 		Path<From, To> path = new Path<>();
 		path.steps.add(getter);
@@ -116,7 +116,7 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 	 * @param <Next> the target type
 	 * @return a new {@link Path} from the current one, using the getter.
 	 */
-	public <Next extends Yopable> Path<From, Next> toSet(Function<To, Collection<Next>> getter) {
+	public <Next> Path<From, Next> toSet(Function<To, Collection<Next>> getter) {
 		Path<From, Next> next = new Path<>();
 		next.steps.addAll(this.steps);
 		next.steps.add(getter);
@@ -171,7 +171,7 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 	}
 
 	@Override
-	public <T extends Yopable> JsonElement toJSON(Context<T> context) {
+	public <T> JsonElement toJSON(Context<T> context) {
 		return new ExplicitPath(
 			this.toPath((Class<From>) context.root().getTarget(), Config.DEFAULT),
 			Config.DEFAULT.sqlSeparator()
@@ -191,9 +191,9 @@ public class Path<From extends Yopable, To> implements Comparable<Path<From, To>
 	 */
 	private String toPath(Field field, Config config) {
 		Class<?> target = getTarget(field);
-		if (Yopable.class.isAssignableFrom(target)) {
+		if (ORMUtil.isYopable(target)) {
 			String out = config.sqlSeparator() + field.getName();
-			out += config.sqlSeparator() + ORMUtil.getTargetName((Class<? extends Yopable>) target);
+			out += config.sqlSeparator() + ORMUtil.getTargetName(target);
 			return out;
 		} else {
 			return config.dot() + ORMUtil.getColumnName(field);

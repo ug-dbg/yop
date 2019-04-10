@@ -1,7 +1,6 @@
 package org.yop.orm.query;
 
 import org.yop.orm.exception.YopInvalidJoinException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.join.IJoin;
 import org.yop.orm.util.JoinUtil;
 
@@ -15,7 +14,7 @@ import java.util.function.Function;
  * @param <Request> the request type (e.g. Select, Upsert, Delete, JSON, XML...)
  * @param <T> the request target type
  */
-public abstract class AbstractRequest<Request extends AbstractRequest, T extends Yopable> {
+public abstract class AbstractRequest<Request extends AbstractRequest, T> {
 
 	/** Root context : target class and SQL path **/
 	protected final Context<T> context;
@@ -56,7 +55,7 @@ public abstract class AbstractRequest<Request extends AbstractRequest, T extends
 	 * @return the current request, for chaining purpose
 	 */
 	@SuppressWarnings("unchecked")
-	public <R extends Yopable> Request join(IJoin<T, R> join) {
+	public <R> Request join(IJoin<T, R> join) {
 		this.joins.add(join);
 		return (Request) this;
 	}

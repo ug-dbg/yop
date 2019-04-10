@@ -1,7 +1,6 @@
 package org.yop.orm.query.sql;
 
 import org.yop.orm.evaluation.*;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 
 import java.util.Arrays;
@@ -13,7 +12,7 @@ import java.util.function.Function;
  * @param <Request> the request type (e.g. Select, Delete)
  * @param <T> the request target type
  */
-abstract class WhereRequest<Request extends WhereRequest, T extends Yopable> extends SQLRequest<Request, T> {
+abstract class WhereRequest<Request extends WhereRequest, T> extends SQLRequest<Request, T> {
 
 	/** Where clauses */
 	protected Where<T> where = new Where<>();
