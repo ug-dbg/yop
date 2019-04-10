@@ -56,7 +56,7 @@ public class NonGeneratedIdTest extends DBMSSwitch {
 	}
 
 	@Test
-	public void testCRUD_WithJoin() throws SQLException, ClassNotFoundException {
+	public void testCRUD_WithJoinColumn() throws SQLException, ClassNotFoundException {
 		try (IConnection connection = this.getConnection()) {
 			Pojo pojo = new Pojo("anIDThatIsAString", "Hello world", LocalDate.now());
 			Pojo parent = new Pojo("ParentIDString",  "Hello world from parent", LocalDate.now());
@@ -76,6 +76,34 @@ public class NonGeneratedIdTest extends DBMSSwitch {
 			Assert.assertEquals(pojo, pojoFromDB.getParent().getChild());
 
 			Delete.from(Pojo.class).whereId(pojo.getId()).join(Pojo::getParent).executeQueries(connection);
+			Assert.assertEquals(0, Select.from(Pojo.class).count(connection).intValue());
+		}
+	}
+
+	@Test
+	public void testCRUD_WithJoinTable() throws SQLException, ClassNotFoundException {
+		try (IConnection connection = this.getConnection()) {
+			Pojo pojo = new Pojo("anIDThatIsAString", "Hello world", LocalDate.now());
+
+			for (int i = 1; i < 5; i++) {
+				Pojo related = new Pojo("relatedPojoString#" + i, "Hello world from related", LocalDate.now());
+				pojo.getRelated().add(related);
+			}
+
+			Upsert.from(Pojo.class).onto(pojo).join(Pojo::getRelated).checkNaturalID(true).execute(connection);
+
+			Pojo pojoFromDB = Select.from(Pojo.class).whereId(pojo.getId()).joinAll().uniqueResult(connection);
+			Assert.assertEquals(pojo, pojoFromDB);
+
+			Hydrate
+				.from(Pojo.class)
+				.onto(pojoFromDB)
+				.join(Pojo::getRelated, Pojo::getReverseRelated)
+				.recurse()
+				.execute(connection);
+			Assert.assertEquals(pojoFromDB, pojoFromDB.getRelated().get(0).getReverseRelated().get(0));
+
+			Delete.from(Pojo.class).whereId(pojo.getId()).join(Pojo::getRelated).executeQueries(connection);
 			Assert.assertEquals(0, Select.from(Pojo.class).count(connection).intValue());
 		}
 	}

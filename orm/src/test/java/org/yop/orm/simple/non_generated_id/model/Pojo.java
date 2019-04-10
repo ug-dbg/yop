@@ -4,6 +4,8 @@ import org.yop.orm.annotations.*;
 import org.yop.orm.model.Yopable;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Table(name = "non_generated_id_pojo")
@@ -23,6 +25,12 @@ public class Pojo implements Yopable {
 
 	@JoinColumn(local = "CHILD_ID", remote = "PARENT_ID")
 	private Pojo child;
+
+	@JoinTable(table = "RELATED_POJOS", sourceColumn = "FROM_ID", targetColumn = "TO_ID")
+	private List<Pojo> related = new ArrayList<>();
+
+	@JoinTable(table = "RELATED_POJOS", sourceColumn = "TO_ID", targetColumn = "FROM_ID")
+	private List<Pojo> reverseRelated = new ArrayList<>();
 
 	private Pojo() {}
 
@@ -46,6 +54,14 @@ public class Pojo implements Yopable {
 
 	public void setChild(Pojo child) {
 		this.child = child;
+	}
+
+	public List<Pojo> getRelated() {
+		return this.related;
+	}
+
+	public List<Pojo> getReverseRelated() {
+		return this.reverseRelated;
 	}
 
 	@Override
