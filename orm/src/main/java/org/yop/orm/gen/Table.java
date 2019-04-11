@@ -175,7 +175,6 @@ public class Table implements Comparable<Table> {
 		return table;
 	}
 
-	@SuppressWarnings("unchecked")
 	private static Table fromRelationField(Field relationField, Config config) {
 		JoinTable joinTable = relationField.getAnnotation(JoinTable.class);
 
@@ -185,17 +184,19 @@ public class Table implements Comparable<Table> {
 		table.name   = joinTable.table();
 
 		Class sourceClass = relationField.getDeclaringClass();
-		Column source = new Column(joinTable.sourceColumn(), Long.class, 0, config.getDialect());
+		Class targetClass = Reflection.getTarget(relationField);
+		Field sourceIDField = ORMUtil.getIdField(sourceClass);
+		Field targetIDField = ORMUtil.getIdField(targetClass);
+		Class sourceIDClass = sourceIDField.getType();
+		Class targetIDClass = targetIDField.getType();
+		Integer sourceIdLength = ORMUtil.getColumnLength(sourceIDField, config);
+		Integer targetIdLength = ORMUtil.getColumnLength(targetIDField, config);
+
+		Column source = new Column(joinTable.sourceColumn(), sourceIDClass, sourceIdLength, config.getDialect());
 		createJoinTableColumnAttributes(source, sourceClass, joinTable.sourceForeignKey(), joinTable, config);
 		table.columns.add(source);
 
-		Class targetClass;
-		if(ORMUtil.isCollection(relationField)) {
-			targetClass = Reflection.getCollectionTarget(relationField);
-		} else {
-			targetClass = relationField.getType();
-		}
-		Column target = new Column(joinTable.targetColumn(), Long.class, 0, config.getDialect());
+		Column target = new Column(joinTable.targetColumn(), targetIDClass, targetIdLength, config.getDialect());
 		createJoinTableColumnAttributes(target, targetClass, joinTable.targetForeignKey(), joinTable, config);
 		table.columns.add(target);
 
