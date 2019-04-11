@@ -405,9 +405,7 @@ public class Upsert<T> extends SQLRequest<Upsert<T>, T> implements JsonAble {
 		List<SQLExpression> values = new ArrayList<>(valueForColumn.values());
 
 		SQLExpression sql = config.getDialect().insert(this.getTableName(), columns, values);
-		SimpleQuery<T> query = new SimpleQuery<>(sql, Query.Type.INSERT, element, config);
-		query.askGeneratedKeys(true, element.getClass());
-		return query;
+		return new SimpleQuery<>(sql, Query.Type.INSERT, element, config);
 	}
 
 	/**
@@ -510,7 +508,7 @@ public class Upsert<T> extends SQLRequest<Upsert<T>, T> implements JsonAble {
 	}
 
 	/**
-	 * SQL query + parameters aggregation.
+	 * SQL query for an explicit target type.
 	 */
 	protected static class SimpleQuery<T> extends org.yop.orm.sql.SimpleQuery {
 		private SimpleQuery(SQLExpression sql, Type type, T element, Config config) {

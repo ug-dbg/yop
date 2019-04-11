@@ -68,9 +68,9 @@ public class SimpleQuery extends Query {
 	public String toString() {
 		return "Query{" +
 			"sql='" + this.sql + '\'' +
-			", parameters=" + this.parameters +
-			", askGeneratedKeys=" + this.askGeneratedKeys +
-			", generatedIds=" + this.generatedIds +
+			", parameters="     + this.parameters +
+			", type="           + this.getType() +
+			", generatedIds="   + this.generatedIds +
 			", tooLongAliases=" + this.tooLongAliases +
 		'}';
 	}

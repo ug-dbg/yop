@@ -228,7 +228,6 @@ public class BatchUpsert<T> extends Upsert<T> {
 
 				query = new BatchQuery<>(reference.getSql(), type, config, elements, target);
 				query.addParametersBatch(reference.getParameters());
-				query.askGeneratedKeys(Query.Type.INSERT == type, this.getTarget());
 				continue;
 			}
 			Parameters parameters = new Parameters();
@@ -300,7 +299,7 @@ public class BatchUpsert<T> extends Upsert<T> {
 	}
 
 	/**
-	 * SQL batch query with a typed element list constructor.
+	 * SQL batch query for an explicit target type.
 	 */
 	private static class BatchQuery<T> extends org.yop.orm.sql.BatchQuery {
 		private BatchQuery(String sql, Type type, Config config, List<T> elements, Class<T> target) {

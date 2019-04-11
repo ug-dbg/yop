@@ -100,7 +100,7 @@ public class BatchQuery extends Query {
 			"sql='" + this.sql + '\'' +
 			", parametersBatches=" + this.parametersBatches +
 			", target="            + this.target +
-			", askGeneratedKeys="  + this.askGeneratedKeys +
+			", type="              + this.getType() +
 			", generatedIds="      + this.generatedIds +
 			", tooLongAliases="    + this.tooLongAliases +
 		'}';
@@ -149,10 +149,7 @@ public class BatchQuery extends Query {
 		// Only one batch ? Return a SimpleQuery, for coherence purposes.
 		if (merged != null && merged.parametersBatches.size() == 1) {
 			SQLExpression sql = new SQLExpression(merged.sql, merged.parametersBatches.get(0));
-			Query simpleQuery = new SimpleQuery(sql, merged.getType(), merged.config).askGeneratedKeys(
-				merged.askGeneratedKeys,
-				merged.target
-			);
+			Query simpleQuery = new SimpleQuery(sql, merged.getType(), merged.config).askGeneratedKeys(merged.target);
 
 			simpleQuery.elements.addAll(merged.getElements());
 			return Collections.singletonList(simpleQuery);
@@ -171,7 +168,6 @@ public class BatchQuery extends Query {
 	private static BatchQuery toBatch(Query query) {
 		BatchQuery batch = new BatchQuery(query.getSql(), query.getType(), query.config);
 		batch.target = query.target;
-		batch.askGeneratedKeys(query.askGeneratedKeys(), query.getTarget());
 		return batch;
 	}
 

@@ -76,9 +76,6 @@ public abstract class Query {
 	/** The SQL with too long aliases replaced with generated UUIDs */
 	private String safeAliasSQL;
 
-	/** True to ask the statement to return the generated Ids */
-	boolean askGeneratedKeys = false;
-
 	/** The generated IDs */
 	final List<Comparable> generatedIds = new ArrayList<>();
 
@@ -197,19 +194,25 @@ public abstract class Query {
 	}
 
 	/**
-	 * Ask for generated IDs or not.
-	 * @param value  true to ask the statement to return the generated IDs
-	 * @param target the target class for which there will be generated keys
+	 * Ask for generated IDs on behalf of the target class.
+	 * <br>
+	 * This will be used to find the Id to associate to generated keys.
+	 * <br>
+	 * This is only applicable if {@link #type} is {@link Type#INSERT}.
+	 * @param target the target class for which there will be generated keys. If null, generated keys will not be read.
 	 * @return the current query, for chaining purposes
 	 */
-	public Query askGeneratedKeys(boolean value, Class target) {
-		this.askGeneratedKeys = value;
+	public Query askGeneratedKeys(Class target) {
 		this.target = target;
 		return this;
 	}
 
+	/**
+	 * Should generated keys be read and assigned to target {@link #elements} ?
+	 * @return true if {@link #target} is not null and {@link #type} is {@link Type#INSERT}.
+	 */
 	public boolean askGeneratedKeys() {
-		return this.askGeneratedKeys;
+		return this.target != null && this.type == Type.INSERT;
 	}
 
 	/**
