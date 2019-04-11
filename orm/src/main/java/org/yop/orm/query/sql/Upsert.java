@@ -6,7 +6,6 @@ import com.google.gson.JsonParser;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.annotations.Id;
 import org.yop.orm.annotations.Table;
 import org.yop.orm.evaluation.NaturalKey;
 import org.yop.orm.exception.YopMappingException;
@@ -494,19 +493,13 @@ public class Upsert<T> extends SQLRequest<Upsert<T>, T> implements JsonAble {
 		}
 
 		boolean isSequence = config.useSequences() && !ORMUtil.readSequence(field, config).isEmpty();
-		String columnName = ORMUtil.getColumnName(field);
-		SQLExpression column;
-
-		if(isID) {
-			if (insert && isSequence) {
-				// ID field, insert, sequence → include this column as sequence nextval.
-				column = new SQLExpression((String) getUpsertIdValue(element, config));
-			} else {
-				column = SQLExpression.parameter(columnName, getUpsertIdValue(element, config), field, config);
-			}
-		} else {
-			column = SQLExpression.parameter(columnName, Reflection.readField(field, element), field, config);
+		if(isID && insert && isSequence) {
+			// ID field, insert, sequence → include this column as sequence nextval.
+			return new SQLExpression(ORMUtil.readSequence(field, config) + ".nextval");
 		}
+
+		String columnName = ORMUtil.getColumnName(field);
+		SQLExpression column = SQLExpression.parameter(columnName, Reflection.readField(field, element), field, config);
 
 		// Update : columnName → [columnName = ?]
 		// Insert : columnName → [?]
@@ -514,36 +507,6 @@ public class Upsert<T> extends SQLRequest<Upsert<T>, T> implements JsonAble {
 			column = config.getDialect().equals(new SQLExpression(columnName), column);
 		}
 		return column;
-	}
-
-	/**
-	 * Get the ID that should be in the SQL insert/update query for the given element.
-	 * <ol>
-	 *     <li>element has an ID field set → return the value of the ID field (UPDATE)</li>
-	 *     <li>autoincrement is set to false and id is null → mapping exception</li>
-	 *     <li>sequence name is set → sequence name + .nextval</li>
-	 *     <li>null (→ i.e. do not put me in the insert query)</li>
-	 * </ol>
-	 * @param element the element to check
-	 * @param config  the SQL config (sql separator, use batch inserts...)
-	 * @param <T> the element type
-	 * @return the id value to set in the query
-	 * @throws YopMappingException invalid @Id mapping ←→ ID value
-	 */
-	private static <T> Object getUpsertIdValue(T element, Config config) {
-		if(ORMUtil.isIdSet(element)) {
-			return ORMUtil.readId(element);
-		}
-		Field idField = ORMUtil.getIdField(element.getClass());
-		if(idField.getAnnotation(Id.class) != null && !idField.getAnnotation(Id.class).autoincrement()) {
-			throw new YopMappingException("Element [" + element + "] has no ID and autoincrement is set to false !");
-		}
-
-		if(config.useSequences()
-		&& !ORMUtil.readSequence(idField, config).isEmpty()) {
-			return ORMUtil.readSequence(idField, config) + ".nextval";
-		}
-		return null;
 	}
 
 	/**
