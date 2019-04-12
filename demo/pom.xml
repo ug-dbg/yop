@@ -33,7 +33,7 @@
 						<artifactId>jacoco-maven-plugin</artifactId>
 						<configuration>
 							<excludes>
-								<exclude>*</exclude>
+								<exclude>**/*</exclude>
 							</excludes>
 						</configuration>
 					</plugin>
