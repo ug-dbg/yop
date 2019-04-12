@@ -22,6 +22,26 @@
 	</description>
 	<organization><name>Ω≡{Ⓐ}</name></organization>
 
+	<!-- Code Coverage report generation with profile 'coverage'. No coverage for this module. -->
+	<profiles>
+		<profile>
+			<id>coverage_demo</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<configuration>
+							<excludes>
+								<exclude>*</exclude>
+							</excludes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 	<build>
 		<plugins>
 			<plugin>
