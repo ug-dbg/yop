@@ -2,7 +2,6 @@ package org.yop.orm.query.sql;
 
 import org.yop.orm.evaluation.*;
 import org.yop.orm.model.JsonAble;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.sql.SQLExpression;
@@ -123,7 +122,7 @@ public class Where<T> implements JsonAble {
 	 * @param <T> the current type, holding the getter
 	 * @return a Compare object that can be added to the where clause
 	 */
-	public static <T extends Yopable> Comparison compare(Function<T, ?> getter, Operator op, Comparable ref) {
+	public static <T> Comparison compare(Function<T, ?> getter, Operator op, Comparable ref) {
 		return new Comparison(getter, op, ref);
 	}
 
@@ -133,7 +132,7 @@ public class Where<T> implements JsonAble {
 	 * @param <T> the current type, holding the getter
 	 * @return a Compare object that can be added to the where clause
 	 */
-	public static <T extends Yopable> Comparison isNull(Function<T, Comparable<?>> getter) {
+	public static <T> Comparison isNull(Function<T, Comparable<?>> getter) {
 		return new Comparison(getter, Operator.IS_NULL, null);
 	}
 
@@ -143,7 +142,7 @@ public class Where<T> implements JsonAble {
 	 * @param <T> the current type, holding the getter
 	 * @return a Compare object that can be added to the where clause
 	 */
-	public static <T extends Yopable> Comparison isNotNull(Function<T, Comparable<?>> getter) {
+	public static <T> Comparison isNotNull(Function<T, Comparable<?>> getter) {
 		return new Comparison(getter, Operator.IS_NOT_NULL, null);
 	}
 
@@ -153,7 +152,7 @@ public class Where<T> implements JsonAble {
 	 * @param <T> the current type
 	 * @return a NaturalId Evaluation object that can be added to the where clause
 	 */
-	public static <T extends Yopable> Evaluation naturalId(T reference) {
+	public static <T> Evaluation naturalId(T reference) {
 		return new NaturalKey<>(reference);
 	}
 

@@ -8,7 +8,6 @@ import org.yop.orm.annotations.JoinColumn;
 import org.yop.orm.annotations.JoinProfile;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.exception.YopJoinCycleException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.join.IJoin;
 
 import java.lang.reflect.Field;
@@ -134,8 +133,9 @@ public class JoinUtil {
 	 * @param cycleBreaker a set of fields that already were processed. Is used to stop on cycles.
 	 * @param profiles     the profiles to join. If empty, all non transient relations will be used.
 	 * @param <T> the source type
+	 * @param <N> the join target type
 	 */
-	private static <T> void joinAll(
+	private static <T, N> void joinAll(
 		Class<T> source,
 		Collection<IJoin<T, ?>> joins,
 		Set<Field> cycleBreaker,
@@ -158,10 +158,10 @@ public class JoinUtil {
 			}
 			cycleBreaker.add(field);
 
-			IJoin<T, Yopable> join = IJoin.onField(field);
+			IJoin<T, N> join = IJoin.onField(field);
 			joins.add(join);
 
-			Class<Yopable> newTarget = join.getTarget(field);
+			Class<N> newTarget = join.getTarget(field);
 
 			try {
 				joinAll(newTarget, join.getJoins(), cycleBreaker, profiles);

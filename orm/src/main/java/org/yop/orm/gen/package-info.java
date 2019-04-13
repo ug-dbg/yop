@@ -1,4 +1,4 @@
 /**
- * Generate SQL schema from {@link org.yop.orm.model.Yopable} objects.
+ * Generate CREATE/DROP SQL for target objects.
  */
 package org.yop.orm.gen;

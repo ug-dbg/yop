@@ -7,7 +7,6 @@ import com.google.gson.JsonObject;
 import org.yop.orm.annotations.JoinTable;
 import org.yop.orm.exception.YopRuntimeException;
 import org.yop.orm.model.JsonAble;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
@@ -49,13 +48,11 @@ public interface Evaluation extends JsonAble {
 	static String columnName(Field field, Context<?> context, Config config) {
 		if (field.isAnnotationPresent(JoinTable.class)) {
 			if(ORMUtil.isCollection(field)) {
-				Class<? extends Yopable> target = Reflection.getCollectionTarget(field);
-				Context<? extends Yopable> targetContext = context.to(target, field);
+				Class<?> target = Reflection.getCollectionTarget(field);
+				Context<?> targetContext = context.to(target, field);
 				return ORMUtil.getIdColumn(targetContext, config);
 			} else {
-				Class<? extends Yopable> target = (Class<? extends Yopable>) field.getType();
-				Context<? extends Yopable> targetContext = context.to(target, field);
-				return ORMUtil.getIdColumn(targetContext, config);
+				return ORMUtil.getIdColumn(context.to(field.getType(), field), config);
 			}
 		}
 		return context.getPath(field, config);

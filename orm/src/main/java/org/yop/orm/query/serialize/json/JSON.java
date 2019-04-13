@@ -2,7 +2,6 @@ package org.yop.orm.query.serialize.json;
 
 import com.google.gson.*;
 import org.yop.orm.annotations.JoinTable;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.AbstractRequest;
 import org.yop.orm.query.Context;
 import org.yop.orm.query.join.IJoin;
@@ -15,7 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * JSON : serialize a {@link Yopable} to JSON and manage the relation to serialize at runtime.
+ * JSON : serialize object(s) to JSON and manage the relation to serialize at runtime.
  * <br><br>
  * Its API aims at being similar to the {@link org.yop.orm.query} APIs.
  * <br>
@@ -160,7 +159,7 @@ public class JSON<T> extends AbstractRequest<JSON<T>, T> implements Serialize<JS
 	 * @param singleElement the single Yopable element to serialize
 	 * @return a JSON string (singleElement, serialized as JSON Object)
 	 */
-	public String toJSON(Yopable singleElement) {
+	public String toJSON(Object singleElement) {
 		return this.gson.instance().toJson(this.toJSONTree(singleElement));
 	}
 
@@ -178,7 +177,7 @@ public class JSON<T> extends AbstractRequest<JSON<T>, T> implements Serialize<JS
 	 * <b>⚠ {@link #elements} are ignored ! ⚠</b>
 	 * @return a GSON JSON element (JSON object)
 	 */
-	private JsonElement toJSONTree(Yopable singleElement) {
+	private JsonElement toJSONTree(Object singleElement) {
 		return this.gson.instance().toJsonTree(YopableForJSON.create(singleElement, this));
 	}
 

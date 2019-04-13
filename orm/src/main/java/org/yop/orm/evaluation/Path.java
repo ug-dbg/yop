@@ -4,7 +4,6 @@ import com.google.common.base.Joiner;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.yop.orm.model.JsonAble;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.Context;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
@@ -52,8 +51,6 @@ public class Path<From, To> implements Comparable<Path<From, To>>, JsonAble {
 
 	/**
 	 * Initialize a path from a source and a getter.
-	 * <br>
-	 * The 'To' target might not be a {@link Yopable}.
 	 * @param getter the getter to the 'To' type.
 	 * @param <From> the root type
 	 * @param <To>   the target type
@@ -68,7 +65,7 @@ public class Path<From, To> implements Comparable<Path<From, To>>, JsonAble {
 	/**
 	 * Initialize a path from a source and a getter.
 	 * <br>
-	 * The 'To' target <b>must</b> be a {@link Yopable}
+	 * The 'To' target <b>must</b> be {@link org.yop.orm.util.ORMUtil.FieldType#YOPABLE}
 	 * (it does not make sense to create a path to a non Yopable collection).
 	 * @param getter the getter to the 'To' type.
 	 * @param <From> the root type
@@ -94,8 +91,6 @@ public class Path<From, To> implements Comparable<Path<From, To>>, JsonAble {
 
 	/**
 	 * Extend the current path to a new one, using a getter.
-	 * <br>
-	 * The 'To' target might not be a {@link Yopable}.
 	 * @param getter the getter to use.
 	 * @param <Next> the target type
 	 * @return a new {@link Path} from the current one, using the getter.
@@ -110,7 +105,7 @@ public class Path<From, To> implements Comparable<Path<From, To>>, JsonAble {
 	/**
 	 * Extend the current path to a new one, using a getter.
 	 * <br>
-	 * The 'To' target <b>must</b> be a {@link Yopable}
+	 * The 'To' target <b>must</b> be {@link org.yop.orm.util.ORMUtil.FieldType#YOPABLE}
 	 * (it does not make sense to create a path to a non Yopable collection).
 	 * @param getter the getter to use.
 	 * @param <Next> the target type
@@ -182,8 +177,8 @@ public class Path<From, To> implements Comparable<Path<From, To>>, JsonAble {
 	 * Build the path portion for a field.
 	 * <br>
 	 * <ul>
-	 *   <li>if target class is {@link Yopable} : →fieldName→targetClassName </li>
-	 *   <li>if target class is not {@link Yopable} : .column_name(field) </li>
+	 *   <li>if target class is {@link org.yop.orm.util.ORMUtil#isYopable(Class)} : →fieldName→targetClassName </li>
+	 *   <li>if target class is not {@link org.yop.orm.util.ORMUtil#isYopable(Class)}  : .column_name(field) </li>
 	 * </ul>
 	 * @param field   the considered field
 	 * @param config  the SQL config. Needed for the sql separator to use.

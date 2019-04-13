@@ -1,5 +1,5 @@
 /**
- * Query management : you'll find all you need here to create queries on {@link org.yop.orm.model.Yopable} objects.
+ * Query management : you'll find all you need here to create queries on Yop objects.
  * <br>
  * {@link org.yop.orm.query.AbstractRequest} is the root class for all queries.
  * <br>
