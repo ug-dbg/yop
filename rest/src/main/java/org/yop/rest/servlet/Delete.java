@@ -5,7 +5,6 @@ import io.swagger.oas.models.media.Schema;
 import io.swagger.oas.models.responses.ApiResponse;
 import io.swagger.oas.models.responses.ApiResponses;
 import org.yop.orm.evaluation.IdIn;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.openapi.OpenAPIUtil;
 import org.yop.rest.serialize.Serializers;
@@ -36,8 +35,8 @@ public class Delete implements HttpMethod {
 	 * @return "[]"
 	 */
 	@Override
-	public ExecutionOutput executeDefault(RestRequest restRequest, IConnection connection) {
-		org.yop.orm.query.sql.Delete<Yopable> delete = org.yop.orm.query.sql.Delete.from(restRequest.getRestResource());
+	public <T> ExecutionOutput executeDefault(RestRequest<T> restRequest, IConnection connection) {
+		org.yop.orm.query.sql.Delete<T> delete = org.yop.orm.query.sql.Delete.from(restRequest.getRestResource());
 		if (restRequest.joinAll()) {
 			delete.joinAll();
 		}
@@ -52,7 +51,7 @@ public class Delete implements HttpMethod {
 	}
 
 	@Override
-	public Operation openAPIDefaultModel(Class<? extends Yopable> yopable) {
+	public Operation openAPIDefaultModel(Class<?> yopable) {
 		String resource = OpenAPIUtil.getResourceName(yopable);
 		Operation delete = new Operation();
 		delete.setSummary("Do delete operation on [" + resource + "]. If not ID provided, delete all entries !");

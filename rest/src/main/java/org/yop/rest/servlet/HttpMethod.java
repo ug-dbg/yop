@@ -12,7 +12,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.ioc.Singleton;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.serialize.Serialize;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.util.ORMUtil;
@@ -153,7 +152,7 @@ public interface HttpMethod {
 	 * @param yopable the target resource.
 	 * @return the OpenAPI 'joinProfile' parameter
 	 */
-	static io.swagger.oas.models.parameters.Parameter joinProfilesParameter(Class<? extends Yopable> yopable) {
+	static io.swagger.oas.models.parameters.Parameter joinProfilesParameter(Class<?> yopable) {
 		JoinProfiles annotation = Reflection.getAnnotation(yopable, JoinProfiles.class);
 		String[] profiles = new String[0];
 		if (annotation != null) {
@@ -258,7 +257,7 @@ public interface HttpMethod {
 	 * @param yopable the Yopable resource
 	 * @return a new {@link ApiResponse} with a resource description and referenced Schema.
 	 */
-	static ApiResponse http200(Class<? extends Yopable> yopable) {
+	static ApiResponse http200(Class<?> yopable) {
 		ApiResponse responseItem = new ApiResponse();
 		responseItem.setDescription("A set of [" + OpenAPIUtil.getResourceName(yopable) + "]");
 		responseItem.setContent(OpenAPIUtil.contentFor(OpenAPIUtil.refArraySchema(yopable), Serializers.SUPPORTED));
@@ -310,7 +309,7 @@ public interface HttpMethod {
 	 * @param target the target class
 	 * @return the OpenAPI request body
 	 */
-	static RequestBody requestBody(Class<? extends Yopable> target) {
+	static RequestBody requestBody(Class<?> target) {
 		return new RequestBody().content(OpenAPIUtil.contentFor(
 			OpenAPIUtil.refArraySchema(target),
 			Deserializers.SUPPORTED
@@ -342,7 +341,7 @@ public interface HttpMethod {
 	 * @param connection the JDBC (or other) underlying connection
 	 * @return the execution result, be it from default or custom behavior
 	 */
-	default ExecutionOutput execute(RestRequest restRequest, IConnection connection) {
+	default <T> ExecutionOutput execute(RestRequest<T> restRequest, IConnection connection) {
 		if (restRequest.isCustomResource()) {
 			return this.executeCustom(restRequest, connection);
 		}
@@ -350,7 +349,7 @@ public interface HttpMethod {
 	}
 
 	/**
-	 * Execute the custom resource (i.e.custom method on the {@link Yopable}.
+	 * Execute the custom resource (i.e.custom method on the Yopable.
 	 * <br>
 	 * Uses {@link RestRequest#matches(Method)} to find the custom method to execute.
 	 * @param restRequest the incoming rest request.
@@ -359,7 +358,7 @@ public interface HttpMethod {
 	 * @throws YopNoResourceException no custom resource found for the request
 	 * @throws YopResourceInvocationException an error occurred executing the custom method
 	 */
-	default ExecutionOutput executeCustom(RestRequest restRequest, IConnection connection) {
+	default <T> ExecutionOutput executeCustom(RestRequest<T> restRequest, IConnection connection) {
 		Optional<Method> candidate = restRequest.getCandidate();
 
 		if (! candidate.isPresent()) {
@@ -396,30 +395,30 @@ public interface HttpMethod {
 			return ExecutionOutput.forOutput(out);
 		} catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
 			throw new YopResourceInvocationException(
-				"Error invoking YOP resource [" + Objects.toString(candidate.get()) + "]",
+				"Error invoking YOP resource [" + candidate.get() + "]",
 				e
 			);
 		}
 	}
 
 	/**
-	 * Serialize the execution result, be it a {@link Yopable} or a collection of {@link Yopable}.
+	 * Serialize the execution result, be it a Yopable or a collection of Yopable.
 	 * <br>
 	 * For now, it can only serialize to {@link ContentType#APPLICATION_JSON}.
 	 * <br>
-	 * If the input object is neither a {@link Yopable} or a collection, naively use {@link Objects#toString(Object)}.
+	 * If the input object is neither a Yopable or a collection, naively use {@link Objects#toString(Object)}.
 	 * @param what        the object(s) to serialize
 	 * @param restRequest the incoming rest request.
 	 * @return the execution result, serialized into a String
 	 */
 	@SuppressWarnings("unchecked")
-	default String serialize(Object what, RestRequest restRequest) {
+	default <T> String serialize(Object what, RestRequest<T> restRequest) {
 		if (ORMUtil.isYopable(what) || what instanceof Collection) {
 			String outputContentType = restRequest.accept(Serializers.SUPPORTED);
 			Serialize serializer = Serializers.getFor(restRequest.getRestResource(), outputContentType);
 
 			if (what instanceof Collection) {
-				serializer.onto((Collection<Yopable>) what);
+				serializer.onto((Collection) what);
 				if (restRequest.joinAll()) {
 					serializer.joinAll();
 				}
@@ -472,14 +471,14 @@ public interface HttpMethod {
 	 * @param connection the JDBC (or other) underlying connection
 	 * @return the execution result : a wrapper containing both the output and some extra output headers to set.
 	 */
-	ExecutionOutput executeDefault(RestRequest restRequest, IConnection connection);
+	<T> ExecutionOutput executeDefault(RestRequest<T> restRequest, IConnection connection);
 
 	/**
 	 * Generate an OpenAPI operation model for the given resource.
 	 * <br>
 	 * This operation should contain the default Yop REST behavior.
-	 * @param resource the resource (Yopable) class
+	 * @param resource the resource (mostly : Yopable) class
 	 * @return the default Operation model for the resource name
 	 */
-	Operation openAPIDefaultModel(Class<? extends Yopable> resource);
+	Operation openAPIDefaultModel(Class<?> resource);
 }

@@ -13,7 +13,6 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yop.orm.model.Yopable;
 import org.yop.reflection.Reflection;
 import org.yop.rest.annotations.Rest;
 import org.yop.rest.exception.YopBadContentException;
@@ -38,9 +37,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * A rest request to a {@link Yopable} with a reference to the HTTP request & response.
+ * A rest request to a Yopable with a reference to the HTTP request & response.
  */
-class RestRequest {
+class RestRequest<T> {
 
 	private static final Logger logger = LoggerFactory.getLogger(RestRequest.class);
 
@@ -49,7 +48,7 @@ class RestRequest {
 
 	private String requestPath;
 
-	private Class<Yopable> restResource;
+	private Class<T> restResource;
 	private Path subResource = Paths.get("");
 	private String method;
 	private String accept;
@@ -232,10 +231,10 @@ class RestRequest {
 	}
 
 	/**
-	 * Get the {@link Yopable} class associated to the REST request.
+	 * Get the Yopable/@Table class associated to the REST request.
 	 * @return {@link #restResource}. Might be null if no match.
 	 */
-	Class<Yopable> getRestResource() {
+	Class<T> getRestResource() {
 		return this.restResource;
 	}
 
@@ -386,14 +385,15 @@ class RestRequest {
 	}
 
 	/**
-	 * Read the input from the request and deserialize it to a collection of {@link Yopable}
+	 * Read the input from the request and deserialize it to a collection of Yopable objects.
 	 * using a {@link org.yop.orm.query.serialize.Serialize}.
 	 * @return a collection of Yopable from the incoming request
 	 * @throws YopBadContentException Could not parse the input content
 	 */
-	Collection<Yopable> contentAsYopables() {
+	Collection<T> contentAsYopables() {
 		try {
-			return Deserializers.getFor(this.contentType).deserialize(this.getRestResource(), this.content);
+			Deserializers.Deserializer<T> deserializer = Deserializers.getFor(this.contentType);
+			return deserializer.deserialize(this.getRestResource(), this.content);
 		} catch (RuntimeException e) {
 			throw new YopBadContentException(
 				"Unable to parse JSON array [" + StringUtils.abbreviate(this.content, 50) + "]",
@@ -403,18 +403,15 @@ class RestRequest {
 	}
 
 	/**
-	 * Read the input from the request and deserialize it to a {@link Yopable}
+	 * Read the input from the request and deserialize it to a single object.
 	 * using a {@link org.yop.orm.query.serialize.Serialize}.
 	 * @return a Yopable instance from the incoming request
 	 * @throws YopBadContentException Could not parse the input content as JSON object
 	 */
-	Yopable contentAsYopable() {
+	T contentAsYopable() {
 		try {
-			return Deserializers
-				.getFor(this.contentType)
-				.deserialize(this.getRestResource(), this.content)
-				.iterator()
-				.next();
+			Deserializers.Deserializer<T> deserializer = Deserializers.getFor(this.contentType);
+			return deserializer.deserialize(this.getRestResource(), this.content).iterator().next();
 		} catch (RuntimeException e) {
 			throw new YopBadContentException(
 				"Unable to parse JSON object [" + StringUtils.abbreviate(this.content, 50) + "]",
@@ -448,7 +445,7 @@ class RestRequest {
 	 * @throws YopNoResourceException No match for the request path. This should trigger an HTTP 404
 	 */
 	@SuppressWarnings("unchecked")
-	private static Class<Yopable> findResource(String requestPath, Yopables yopablePaths) {
+	private static <T> Class<T> findResource(String requestPath, Yopables yopablePaths) {
 		TreeSet<String> paths = new TreeSet<>(Comparator.comparing(String::length));
 		paths.addAll(yopablePaths.keySet().stream().filter(requestPath::startsWith).collect(Collectors.toSet()));
 		if (! paths.isEmpty()) {

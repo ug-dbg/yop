@@ -23,7 +23,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.Config;
 import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
@@ -90,7 +89,7 @@ public class OpenAPIUtil {
 	}};
 
 	/**
-	 * Return the name associated to a model (mostly : a {@link Yopable}.
+	 * Return the name associated to a model.
 	 * @param clazz the model class
 	 * @return the name associated to the resource
 	 */
@@ -99,7 +98,7 @@ public class OpenAPIUtil {
 	}
 
 	/**
-	 * Return a new Schema whose $ref targets a the model (mostly : a {@link Yopable}).
+	 * Return a new Schema whose $ref targets a the model.
 	 * <br>
 	 * Uses {@link #getResourceName(Class)} for the $ref target name.
 	 * @param clazz the model class
@@ -114,7 +113,7 @@ public class OpenAPIUtil {
 	 * @param clazz the target resource
 	 * @return a new ArraySchema for the target resource. The resource schema will be linked.
 	 */
-	public static Schema<?> refArraySchema(Class<? extends Yopable> clazz) {
+	public static Schema<?> refArraySchema(Class<?> clazz) {
 		return new ArraySchema().items(refSchema(clazz)).description("Array of " + clazz.getSimpleName());
 	}
 
@@ -123,7 +122,7 @@ public class OpenAPIUtil {
 	 * @param clazz the target resource
 	 * @return a new ArraySchema for the target resource. The resource schema will be generated
 	 */
-	private static Schema<?> forResourceArray(Class<? extends Yopable> clazz) {
+	private static Schema<?> forResourceArray(Class<?> clazz) {
 		return new ArraySchema().items(forResource(clazz)).description("Array of " + clazz.getSimpleName());
 	}
 
@@ -150,7 +149,7 @@ public class OpenAPIUtil {
 	 * @param yopables the REST Yopables resources
 	 * @return an OpenAPI model populated with the Yopables annotated documentation.
 	 */
-	public static OpenAPI generate(Collection<Class<? extends Yopable>> yopables) {
+	public static OpenAPI generate(Collection<Class<?>> yopables) {
 		OpenAPI api = new OpenAPI();
 		Info info = new Info();
 		info.setTitle("Yop unrestful REST API");
@@ -193,23 +192,22 @@ public class OpenAPIUtil {
 			return mapper.writeValueAsString(api);
 		} catch (JsonProcessingException e) {
 			throw new YopOpenAPIException(
-				"Could not convert Open API object to YAML [" + Objects.toString(api) + "]",
+				"Could not convert Open API object to YAML [" + api + "]",
 				e
 			);
 		}
 	}
 
 	/**
-	 * Create an OpenAPI {@link Schema} object from a {@link Yopable} type.
+	 * Create an OpenAPI {@link Schema} object from a Yop persistent type.
 	 * <br>
 	 * This is done by recursively iterating on the yopable fields.
 	 * <br>
-	 * See {@link #forColumnField(Field)} when the field is
-	 * neither a {@link Yopable} nor a collection of {@link Yopable}.
+	 * See {@link #forColumnField(Field)} when the field is neither a yopable nor a collection of yopables.
 	 * @param clazz the Yopable type
 	 * @return the generated schema for this type. Null if the type is not a yopable
 	 */
-	private static Schema<?> forResource(Class<? extends Yopable> clazz) {
+	private static Schema<?> forResource(Class<?> clazz) {
 		if (ORMUtil.isYopable(clazz)) {
 			Schema<?> schema = new Schema<>().properties(new HashMap<>());
 			List<Field> fields = ORMUtil.getFields(clazz, true);
@@ -232,9 +230,7 @@ public class OpenAPIUtil {
 	/**
 	 * Create an OpenAPI {@link Schema} object from the given Field.
 	 * <br>
-	 * @param field the target field.
-	 *              Should be a @Column field.
-	 *              Neither a {@link Yopable} nor collection of {@link Yopable}
+	 * @param field the target field. Should be a @Column field.
 	 * @return the generated schema for the type
 	 */
 	private static Schema forColumnField(Field field) {
@@ -276,7 +272,7 @@ public class OpenAPIUtil {
 	 * @param yopable the yopable resource type
 	 * @param api the target OpenAPI object
 	 */
-	private static void addResourceDefaultBehavior(Class<? extends Yopable> yopable, OpenAPI api) {
+	private static void addResourceDefaultBehavior(Class<?> yopable, OpenAPI api) {
 		Rest rest = yopable.getAnnotation(Rest.class);
 		if (rest == null) {
 			return;
@@ -320,7 +316,7 @@ public class OpenAPIUtil {
 	 * @param yopable the yopable resource type
 	 * @param api the target OpenAPI object
 	 */
-	private static void addResourceCustomBehavior(Class<? extends Yopable> yopable, OpenAPI api) {
+	private static void addResourceCustomBehavior(Class<?> yopable, OpenAPI api) {
 		String resource = getResourceName(yopable);
 		List<String> tags = Collections.singletonList(resource);
 		Rest classAnnotation = yopable.getAnnotation(Rest.class);

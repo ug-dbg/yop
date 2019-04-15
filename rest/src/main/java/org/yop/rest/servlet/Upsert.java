@@ -2,7 +2,6 @@ package org.yop.rest.servlet;
 
 import io.swagger.oas.models.Operation;
 import io.swagger.oas.models.responses.ApiResponses;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.reflection.Reflection;
 import org.yop.rest.openapi.OpenAPIUtil;
@@ -37,19 +36,19 @@ public class Upsert implements HttpMethod {
 	 * @return the incoming yopables (see {@link RestRequest#contentAsYopables()}) with their IDs set.
 	 */
 	@Override
-	public ExecutionOutput executeDefault(RestRequest restRequest, IConnection connection) {
+	public <T> ExecutionOutput executeDefault(RestRequest<T> restRequest, IConnection connection) {
 		// The yopables to insert (i.e. id is null) will have their id set after Upsert#execute.
-		Collection<Yopable> output = new ArrayList<>();
-		Class<Yopable> target = restRequest.getRestResource();
-		Collection<org.yop.orm.query.sql.Upsert<Yopable>> upserts = new ArrayList<>();
+		Collection<T> output = new ArrayList<>();
+		Class<T> target = restRequest.getRestResource();
+		Collection<org.yop.orm.query.sql.Upsert<T>> upserts = new ArrayList<>();
 
 		if (restRequest.isPartial()) {
-			List<PartialDeserializers.Partial> objects = PartialDeserializers
-				.getFor(restRequest.accept(Deserializers.SUPPORTED))
-				.deserialize(target, restRequest.getContent());
+			String contentType = restRequest.accept(Deserializers.SUPPORTED);
+			PartialDeserializers.Deserializer<T> deserializer = PartialDeserializers.getFor(contentType);
+			List<PartialDeserializers.Partial<T>> objects = deserializer.deserialize(target, restRequest.getContent());
 
-			for (PartialDeserializers.Partial partial : objects) {
-				org.yop.orm.query.sql.Upsert<Yopable> upsert = org.yop.orm.query.sql.Upsert.from(target);
+			for (PartialDeserializers.Partial<T> partial : objects) {
+				org.yop.orm.query.sql.Upsert<T> upsert = org.yop.orm.query.sql.Upsert.from(target);
 				partial(upsert, partial.getKeys());
 				upsert.onto(partial.getObject());
 				output.add(partial.getObject());
@@ -60,7 +59,7 @@ public class Upsert implements HttpMethod {
 			upserts.add(org.yop.orm.query.sql.Upsert.from(target).onto(output));
 		}
 
-		for (org.yop.orm.query.sql.Upsert<Yopable> upsert : upserts) {
+		for (org.yop.orm.query.sql.Upsert<T> upsert : upserts) {
 			if (restRequest.joinAll()) {
 				upsert.joinAll();
 			}
@@ -74,7 +73,7 @@ public class Upsert implements HttpMethod {
 	}
 
 	@Override
-	public Operation openAPIDefaultModel(Class<? extends Yopable> yopable) {
+	public Operation openAPIDefaultModel(Class<?> yopable) {
 		String resource = OpenAPIUtil.getResourceName(yopable);
 		Operation upsert = new Operation();
 		upsert.setSummary("Do upsert operation on [" + resource + "]");
@@ -105,7 +104,7 @@ public class Upsert implements HttpMethod {
 	 * @param upsert the upsert query
 	 * @param keys   The 'partial' attributes. Will be used to find the target fields for update.
 	 */
-	private static void partial(org.yop.orm.query.sql.Upsert<Yopable> upsert, Set<String> keys) {
+	private static <T> void partial(org.yop.orm.query.sql.Upsert<T> upsert, Set<String> keys) {
 		keys.forEach(attribute -> upsert.onFields(t -> Reflection.readField(attribute, t)));
 	}
 }

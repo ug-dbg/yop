@@ -21,7 +21,7 @@ import java.util.Map;
  */
 class ExecutionOutput {
 
-	/** Execution output. Might be a (collection of) {@link org.yop.orm.model.Yopable} or a String. */
+	/** Execution output. Might be a (collection of) Yopable or a String. */
 	private Object output;
 
 	/** The output headers to add to the response. */
@@ -37,7 +37,7 @@ class ExecutionOutput {
 
 	/**
 	 * Wrap the output of a REST resource execution.
-	 * @param output the output (might be a (collection of) {@link org.yop.orm.model.Yopable} or a String)
+	 * @param output the output (might be a (collection of) Yopable or a String)
 	 * @return a wrapper for your output
 	 */
 	static ExecutionOutput forOutput(Object output) {

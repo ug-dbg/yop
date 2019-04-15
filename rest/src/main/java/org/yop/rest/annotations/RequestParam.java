@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * In a custom {@link org.yop.orm.model.Yopable} {@link Rest} method,
+ * In a custom {@link Rest} method,
  * mark a String parameter to the first parameter into the request request parameters with the given {@link #name()}.
  */
 @Retention(RetentionPolicy.RUNTIME)

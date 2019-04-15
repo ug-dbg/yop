@@ -3,7 +3,6 @@ package org.yop.rest.servlet;
 import io.swagger.oas.models.Operation;
 import io.swagger.oas.models.responses.ApiResponses;
 import org.yop.orm.evaluation.IdIn;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.sql.Select;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.exception.YopNoResultException;
@@ -32,12 +31,12 @@ class Get implements HttpMethod {
 	 * Read the joinAll and other parameters.
 	 * @param restRequest the incoming request
 	 * @param connection the JDBC (or other) underlying connection
-	 * @return a wrapped set of {@link Yopable} or a wrapped {@link Yopable} (if {@link RestRequest#getId()} is set).
+	 * @return a wrapped yopable object (or collection of).
 	 * @throws YopNoResultException if asked for a single element by ID and no result.
 	 */
 	@Override
-	public ExecutionOutput executeDefault(RestRequest restRequest, IConnection connection) {
-		Select<Yopable> select = Select.from(restRequest.getRestResource());
+	public <T> ExecutionOutput executeDefault(RestRequest<T> restRequest, IConnection connection) {
+		Select<T> select = Select.from(restRequest.getRestResource());
 		if (restRequest.joinAll()) {
 			select.joinAll();
 		}
@@ -50,7 +49,7 @@ class Get implements HttpMethod {
 
 		if (restRequest.getId() != null) {
 			select.where(new IdIn(Collections.singletonList(restRequest.getId())));
-			Yopable uniqueResult = select.uniqueResult(connection);
+			T uniqueResult = select.uniqueResult(connection);
 			if (uniqueResult == null) {
 				throw new YopNoResultException(
 					"No element [" + restRequest.getRestResource().getName() + "] for ID [" + restRequest.getId() + "]"
@@ -62,7 +61,7 @@ class Get implements HttpMethod {
 			}
 			return output;
 		} else {
-			Set<Yopable> results = select.execute(connection);
+			Set<T> results = select.execute(connection);
 			ExecutionOutput output = ExecutionOutput.forOutput(results);
 			if (restRequest.count()) {
 				output.addHeader(PARAM_COUNT, String.valueOf(select.count(connection)));
@@ -72,7 +71,7 @@ class Get implements HttpMethod {
 	}
 
 	@Override
-	public Operation openAPIDefaultModel(Class<? extends Yopable> yopable) {
+	public Operation openAPIDefaultModel(Class<?> yopable) {
 		String resource = OpenAPIUtil.getResourceName(yopable);
 		Operation get = new Operation();
 		get.setSummary("Get all [" + resource + "] or one single object by ID");

@@ -3,13 +3,12 @@ package org.yop.rest.servlet;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.entity.ContentType;
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.orm.sql.adapter.jdbc.JDBCConnection;
+import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
 import org.yop.rest.annotations.Rest;
 import org.yop.rest.exception.*;
@@ -27,11 +26,11 @@ import java.sql.SQLException;
 import java.util.Set;
 
 /**
- * A servlet that will answer HTTP requests for the {@link Rest} annotated {@link Yopable} objects.
+ * A servlet that will answer HTTP requests for the {@link Rest} annotated Yopable objects.
  * <br>
  * Configure the servlet in your web.xml with the given parameters :
  * <ul>
- *     <li>{@link #PACKAGE_INIT_PARAM} : the package prefix to scan for {@link Rest} {@link Yopable} objects.</li>
+ *     <li>{@link #PACKAGE_INIT_PARAM} : the package prefix to scan for {@link Rest} Yopable objects.</li>
  *     <li>
  *         {@link #DATASOURCE_JNDI_INIT_PARAM} the JNDI name of the datasource to use.
  *         Feel free to override {@link #getConnection()} if you directly have a JDBC connection with no JNDI.
@@ -52,7 +51,7 @@ public class YopRestServlet extends HttpServlet {
 
 	private static final Logger logger = LoggerFactory.getLogger(YopRestServlet.class);
 
-	/** Servlet init param : the packages to scan for {@link Rest} {@link Yopable} to expose */
+	/** Servlet init param : the packages to scan for {@link Rest} Yopable to expose */
 	public static final String PACKAGE_INIT_PARAM = "packages";
 
 	/** Servlet init param : a custom implementation for {@link RequestChecker}. Optional. */
@@ -97,14 +96,13 @@ public class YopRestServlet extends HttpServlet {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void init() throws ServletException {
 		super.init();
 
 		// Packages init param → the Yopables to expose as REST resources
-		Set<Class<? extends Yopable>> subtypes = new Reflections("").getSubTypesOf(Yopable.class);
+		Set<Class> subtypes = ORMUtil.yopables(this.getClass().getClassLoader());
 		String[] packages = this.getInitParameter(PACKAGE_INIT_PARAM).split(",");
-		for (Class<? extends Yopable> subtype : subtypes) {
+		for (Class<?> subtype : subtypes) {
 			if (StringUtils.startsWithAny(subtype.getPackage().getName(), packages)
 			&& subtype.isAnnotationPresent(Rest.class)) {
 				this.yopablePaths.put(StringUtils.removeStart(subtype.getAnnotation(Rest.class).path(), "/"), subtype);
@@ -238,8 +236,8 @@ public class YopRestServlet extends HttpServlet {
 	 * @param resp   the servlet response
 	 * @param method the method implementation (e.g. {@link Get}, {@link Post}...)
 	 */
-	private void doExecute(HttpServletRequest req, HttpServletResponse resp, HttpMethod method) {
-		RestRequest restRequest = new RestRequest(req, resp, this.yopablePaths);
+	private <T> void doExecute(HttpServletRequest req, HttpServletResponse resp, HttpMethod method) {
+		RestRequest<T> restRequest = new RestRequest<>(req, resp, this.yopablePaths);
 		method.checkResource(restRequest);
 
 		ExecutionOutput out;

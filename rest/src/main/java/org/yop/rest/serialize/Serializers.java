@@ -1,6 +1,5 @@
 package org.yop.rest.serialize;
 
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.serialize.Serialize;
 import org.yop.orm.query.serialize.json.JSON;
 import org.yop.orm.query.serialize.xml.XML;
@@ -26,7 +25,7 @@ public class Serializers {
 	 * @return the appropriate {@link Serialize} implementation.
 	 * @throws UnsupportedOperationException if no serializer implementation for the content type
 	 */
-	public static <T extends Yopable> Serialize<?, T> getFor(Class<T> target, String contentType) {
+	public static <T> Serialize<?, T> getFor(Class<T> target, String contentType) {
 		switch (contentType) {
 			case JSON_MIME_TYPE : return JSON.from(target);
 			case XML_MIME_TYPE :  return XML.from(target);

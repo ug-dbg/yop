@@ -12,8 +12,8 @@ import io.swagger.oas.models.parameters.RequestBody;
 import io.swagger.oas.models.responses.ApiResponses;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.entity.ContentType;
-import org.yop.orm.model.Yopable;
 import org.yop.orm.query.AbstractRequest;
+import org.yop.orm.query.serialize.Serialize;
 import org.yop.orm.query.sql.Delete;
 import org.yop.orm.query.sql.Select;
 import org.yop.orm.query.sql.Upsert;
@@ -25,7 +25,6 @@ import org.yop.rest.serialize.Serializers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Set;
 
 import static javax.servlet.http.HttpServletResponse.*;
@@ -43,7 +42,7 @@ import static javax.servlet.http.HttpServletResponse.*;
  * <br>
  * <b>
  *     ⚠⚠⚠
- *     The target {@link Yopable} is both set in :
+ *     The target Yopable is both set in :
  *     <ul>
  *         <li>the request path context ({@link RestRequest#getRestResource()}</li>
  *         <li>the serialized query (e.g. {@link Upsert#getTarget()})</li>
@@ -70,7 +69,7 @@ public class Post implements HttpMethod {
 	 * @throws IllegalArgumentException for an unknown query type.
 	 */
 	@Override
-	public ExecutionOutput executeDefault(RestRequest restRequest, IConnection connection) {
+	public <T> ExecutionOutput executeDefault(RestRequest<T> restRequest, IConnection connection) {
 		String queryType = restRequest.getParameterFirstValue(PARAM_TYPE);
 		switch (StringUtils.lowerCase(queryType)) {
 			case YopSchemas.SELECT : return doSelect(restRequest, connection);
@@ -81,7 +80,7 @@ public class Post implements HttpMethod {
 	}
 
 	@Override
-	public Operation openAPIDefaultModel(Class<? extends Yopable> yopable) {
+	public Operation openAPIDefaultModel(Class<?> yopable) {
 		String resource = OpenAPIUtil.getResourceName(yopable);
 		Operation post = new Operation();
 		post.setSummary("Execute custom YOP operation on [" + resource + "]");
@@ -127,8 +126,9 @@ public class Post implements HttpMethod {
 	 * @return a Set of Yopable, serialized to JSON using {@link Select#to(AbstractRequest)}
 	 * @throws IllegalArgumentException {@link RestRequest#getRestResource()} does not match {@link Select#getTarget()}
 	 */
-	private static ExecutionOutput doSelect(RestRequest restRequest, IConnection connection) {
-		Select<Yopable> select = Select.fromJSON(
+	@SuppressWarnings("unchecked")
+	private static <T> ExecutionOutput doSelect(RestRequest<T> restRequest, IConnection connection) {
+		Select<T> select = Select.fromJSON(
 			restRequest.getContent(),
 			connection.config(),
 			restRequest.getRestResource().getClassLoader()
@@ -144,15 +144,12 @@ public class Post implements HttpMethod {
 			logger.info("Paging headers found. Overriding any paging configuration from JSON select query.");
 			select.page(restRequest.offset(), restRequest.limit());
 		}
-		Set<Yopable> results = select.execute(connection);
+		Set<T> results = select.execute(connection);
 		String outputContentType = restRequest.accept(Serializers.SUPPORTED);
 
-		@SuppressWarnings("unchecked")
-		String serialized = Serializers
-			.getFor(restRequest.getRestResource(), outputContentType)
-			.join((Collection) select.getJoins())
-			.onto(results)
-			.execute();
+
+		Serialize serializer = Serializers.getFor(restRequest.getRestResource(), outputContentType);
+		String serialized = serializer.join(select.getJoins()).onto(results).execute();
 
 		ExecutionOutput output = ExecutionOutput.forOutput(serialized);
 		if (restRequest.count()) {
@@ -168,8 +165,8 @@ public class Post implements HttpMethod {
 	 * @return an empty array list
 	 * @throws IllegalArgumentException {@link RestRequest#getRestResource()} does not match {@link Select#getTarget()}
 	 */
-	private static ExecutionOutput doDelete(RestRequest restRequest, IConnection connection) {
-		Delete<Yopable> delete = Delete.fromJSON(
+	private static <T> ExecutionOutput doDelete(RestRequest<T> restRequest, IConnection connection) {
+		Delete<T> delete = Delete.fromJSON(
 			restRequest.getContent(),
 			connection.config(),
 			restRequest.getRestResource().getClassLoader()
@@ -192,8 +189,8 @@ public class Post implements HttpMethod {
 	 * @return an empty array list
 	 * @throws IllegalArgumentException {@link RestRequest#getRestResource()} does not match {@link Select#getTarget()}
 	 */
-	private static ExecutionOutput doUpsert(RestRequest restRequest, IConnection connection) {
-		Upsert<Yopable> upsert = Upsert.fromJSON(
+	private static <T> ExecutionOutput doUpsert(RestRequest<T> restRequest, IConnection connection) {
+		Upsert<T> upsert = Upsert.fromJSON(
 			restRequest.getContent(),
 			connection.config(),
 			restRequest.getRestResource().getClassLoader()
@@ -217,7 +214,7 @@ public class Post implements HttpMethod {
 	 * @param <T> the target type
 	 * @return a Select query
 	 */
-	private static <T extends Yopable> String example(Class<T> yopable) {
+	private static <T> String example(Class<T> yopable) {
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		Select<T> select = Select.from(yopable);
 		select.where(Where.id(1L, 2L, 3L));
