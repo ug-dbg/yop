@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 
 /**
  * A rest request to a Yopable with a reference to the HTTP request & response.
+ * @param <T> the REST request target type ({@link #restResource}). Read using {@link #findResource(String, Yopables)}.
  */
 class RestRequest<T> {
 

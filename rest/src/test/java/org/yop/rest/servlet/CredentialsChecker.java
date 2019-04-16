@@ -31,7 +31,7 @@ public class CredentialsChecker implements YopRestServlet.RequestChecker {
 	}
 
 	@Override
-	public void checkResource(RestRequest request, IConnection connection) {
+	public <T> void checkResource(RestRequest<T> request, IConnection connection) {
 		logger.info("Checking resource [{}]", request);
 
 		Object user = request.getRequest().getSession().getAttribute("user");
