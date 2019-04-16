@@ -1,7 +1,5 @@
 package org.yop.orm.annotations;
 
-import org.yop.orm.model.Yopable;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
