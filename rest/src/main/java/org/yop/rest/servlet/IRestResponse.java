@@ -6,9 +6,9 @@ import java.util.Map;
 /**
  * An interface for the output of a REST request.
  * <br>
- * It should not be mandatory for a @Rest method to return a RestResponse though.
+ * It should not be mandatory for a @Rest method to return a IRestResponse though.
  */
-public interface RestResponse {
+public interface IRestResponse {
 
 	/**
 	 * Get the response output.

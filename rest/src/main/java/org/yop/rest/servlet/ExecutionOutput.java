@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * A simple wrapper for the output of a REST resource execution that implements {@link RestResponse}.
+ * A simple wrapper for the output of a REST resource execution that implements {@link IRestResponse}.
  * <br>
  * You might want to add some extra output headers after executing a custom method. This wrapper is for you !
  * <br>
@@ -19,7 +19,7 @@ import java.util.Map;
  * N.B. This wrapper was added to handle paging mechanisms.
  * See an implementation in {@link Get#executeDefault(RestRequest, IConnection)}
  */
-public class ExecutionOutput implements RestResponse {
+public class ExecutionOutput implements IRestResponse {
 
 	/** Execution output. Might be a (collection of) Yopable or a String. */
 	private Object output;
