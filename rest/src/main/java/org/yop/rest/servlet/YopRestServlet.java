@@ -270,8 +270,9 @@ public class YopRestServlet extends HttpServlet {
 			);
 		}
 
-		String serialized = method.serialize(out.getOutput(), restRequest);
-		out.getHeaders().forEach(entry -> resp.setHeader(entry.getKey(), entry.getValue()));
+		String serialized = method.serialize(out.output(), restRequest);
+		out.headers().forEach(entry -> resp.setHeader(entry.getKey(), entry.getValue()));
+		resp.setStatus(out.statusCode());
 
 		if (StringUtils.isNotBlank(serialized)) {
 			method.write(serialized, restRequest);
