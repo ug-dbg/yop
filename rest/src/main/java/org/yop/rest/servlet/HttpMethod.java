@@ -341,7 +341,7 @@ public interface HttpMethod {
 	 * @param connection the JDBC (or other) underlying connection
 	 * @return the execution result, be it from default or custom behavior
 	 */
-	default <T> ExecutionOutput execute(RestRequest<T> restRequest, IConnection connection) {
+	default <T> RestResponse execute(RestRequest<T> restRequest, IConnection connection) {
 		if (restRequest.isCustomResource()) {
 			return this.executeCustom(restRequest, connection);
 		}
@@ -358,7 +358,7 @@ public interface HttpMethod {
 	 * @throws YopNoResourceException no custom resource found for the request
 	 * @throws YopResourceInvocationException an error occurred executing the custom method
 	 */
-	default <T> ExecutionOutput executeCustom(RestRequest<T> restRequest, IConnection connection) {
+	default <T> RestResponse executeCustom(RestRequest<T> restRequest, IConnection connection) {
 		Optional<Method> candidate = restRequest.getCandidate();
 
 		if (! candidate.isPresent()) {
@@ -392,7 +392,7 @@ public interface HttpMethod {
 			} else {
 				out = method.invoke(Singleton.of(restRequest.getRestResource()).get(), parameters);
 			}
-			return ExecutionOutput.forOutput(out);
+			return RestResponse.forOutput(out);
 		} catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
 			throw new YopResourceInvocationException(
 				"Error invoking YOP resource [" + candidate.get() + "]",
@@ -471,7 +471,7 @@ public interface HttpMethod {
 	 * @param connection the JDBC (or other) underlying connection
 	 * @return the execution result : a wrapper containing both the output and some extra output headers to set.
 	 */
-	<T> ExecutionOutput executeDefault(RestRequest<T> restRequest, IConnection connection);
+	<T> RestResponse executeDefault(RestRequest<T> restRequest, IConnection connection);
 
 	/**
 	 * Generate an OpenAPI operation model for the given resource.

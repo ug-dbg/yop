@@ -249,7 +249,7 @@ public class YopRestServlet extends HttpServlet {
 		RestRequest<T> restRequest = new RestRequest<>(req, resp, this.yopablePaths);
 		method.checkResource(restRequest);
 
-		ExecutionOutput out;
+		RestResponse out;
 		try (IConnection connection = this.connector.getConnection()) {
 			this.requestChecker.checkResource(restRequest, connection);
 

@@ -19,7 +19,7 @@ import java.util.Map;
  * N.B. This wrapper was added to handle paging mechanisms.
  * See an implementation in {@link Get#executeDefault(RestRequest, IConnection)}
  */
-public class ExecutionOutput implements IRestResponse {
+public class RestResponse implements IRestResponse {
 
 	/** Execution output. Might be a (collection of) Yopable or a String. */
 	private Object output;
@@ -34,7 +34,7 @@ public class ExecutionOutput implements IRestResponse {
 	 * Private constructor. Please use {@link #forOutput(Object)}.
 	 * @param output the request output.
 	 */
-	private ExecutionOutput(Object output) {
+	private RestResponse(Object output) {
 		this.output = output;
 	}
 
@@ -43,8 +43,8 @@ public class ExecutionOutput implements IRestResponse {
 	 * @param output the output (might be a (collection of) Yopable or a String)
 	 * @return a wrapper for your output
 	 */
-	static ExecutionOutput forOutput(Object output) {
-		return output instanceof ExecutionOutput ? (ExecutionOutput) output : new ExecutionOutput(output);
+	static RestResponse forOutput(Object output) {
+		return output instanceof RestResponse ? (RestResponse) output : new RestResponse(output);
 	}
 
 	/**
@@ -53,8 +53,8 @@ public class ExecutionOutput implements IRestResponse {
 	 * @param statusCode the execution output status code to set in the response
 	 * @return a wrapper for your output
 	 */
-	static ExecutionOutput forOutput(Object output, int statusCode) {
-		ExecutionOutput out = output instanceof ExecutionOutput ? (ExecutionOutput) output : new ExecutionOutput(output);
+	static RestResponse forOutput(Object output, int statusCode) {
+		RestResponse out = output instanceof RestResponse ? (RestResponse) output : new RestResponse(output);
 		out.statusCode = statusCode;
 		return out;
 	}
@@ -65,7 +65,7 @@ public class ExecutionOutput implements IRestResponse {
 	 * @param value the header value
 	 * @return the current wrapper
 	 */
-	ExecutionOutput addHeader(String key, String value) {
+	RestResponse addHeader(String key, String value) {
 		this.outputHeaders.put(key, value);
 		return this;
 	}

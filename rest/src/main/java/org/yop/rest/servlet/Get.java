@@ -35,7 +35,7 @@ class Get implements HttpMethod {
 	 * @throws YopNoResultException if asked for a single element by ID and no result.
 	 */
 	@Override
-	public <T> ExecutionOutput executeDefault(RestRequest<T> restRequest, IConnection connection) {
+	public <T> RestResponse executeDefault(RestRequest<T> restRequest, IConnection connection) {
 		Select<T> select = Select.from(restRequest.getRestResource());
 		if (restRequest.joinAll()) {
 			select.joinAll();
@@ -55,14 +55,14 @@ class Get implements HttpMethod {
 					"No element [" + restRequest.getRestResource().getName() + "] for ID [" + restRequest.getId() + "]"
 				);
 			}
-			ExecutionOutput output = ExecutionOutput.forOutput(uniqueResult);
+			RestResponse output = RestResponse.forOutput(uniqueResult);
 			if (restRequest.count()) {
 				output.addHeader(PARAM_COUNT, "1");
 			}
 			return output;
 		} else {
 			Set<T> results = select.execute(connection);
-			ExecutionOutput output = ExecutionOutput.forOutput(results);
+			RestResponse output = RestResponse.forOutput(results);
 			if (restRequest.count()) {
 				output.addHeader(PARAM_COUNT, String.valueOf(select.count(connection)));
 			}
