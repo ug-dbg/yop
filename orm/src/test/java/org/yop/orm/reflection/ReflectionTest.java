@@ -59,10 +59,10 @@ public class ReflectionTest {
 		Assert.assertEquals(Jopo.class, argParameter);
 	}
 
-	@Test(expected = ReflectionException.class)
+	@Test
 	public void test_get1ArgParameter_no_arg_field() {
 		Field field = Reflection.getFields(Pojo.class, Column.class).get(0);
-		Reflection.get1ArgParameter(field);
+		Assert.assertNull(Reflection.get1ArgParameter(field));
 	}
 
 	@Test

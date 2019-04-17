@@ -2,8 +2,8 @@ package org.yop.reflection;
 
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.reflect.ReflectionFactory;
@@ -307,32 +307,46 @@ public class Reflection {
 	}
 
 	/**
-	 * Return the type parameter for a 1-arg generic field. <br>
-	 * Throws an exception if not a 1-arg generic field.
-	 *
+	 * Return the type parameter for a n-arg generic field.
+	 * Return null if the field not generic or with no actual generic type.
+	 * FIXME : rename this method : it is misleading.
 	 * @param field the generic field.
-	 * @return the type.
+	 * @return the 1st generic type or null.
 	 */
 	public static Type get1ArgParameter(Field field){
 		Type genericType = field.getGenericType();
 		if (! (genericType instanceof ParameterizedType)) {
-			throw new ReflectionException(concat(
-				"Field [", fieldToString(field), "] is not generic. Unsupported."
-			));
+			return null;
 		}
 
 		ParameterizedType type = (ParameterizedType) genericType;
 		Type[] typeParameter = type.getActualTypeArguments();
 
-		if(typeParameter.length != 1){
-			throw new ReflectionException(concat(
-				"Field [", fieldToString(field), "] has [", typeParameter.length, "] parameters. Unsupported."
-			));
+		if(typeParameter.length == 0 ){
+			return null;
 		}
 		return
 			typeParameter[0] instanceof ParameterizedType
 			? ((ParameterizedType)typeParameter[0]).getRawType()
 			: typeParameter[0];
+	}
+
+	/**
+	 * Return the type parameter for a method n-arg generic return type.
+	 * Return null if the return type not generic or with no actual generic type.
+	 * FIXME : rename this method : it is misleading.
+	 * @param method the method. Not null.
+	 * @return the return type 1st generic type or null.
+	 */
+	public static Type get1ArgReturnType(Method method) {
+		Type returnType = method.getGenericReturnType();
+		if (! (returnType instanceof ParameterizedType)) {
+			return null;
+		}
+		if (((ParameterizedType) returnType).getActualTypeArguments().length == 0) {
+			return null;
+		}
+		return ((ParameterizedType) returnType).getActualTypeArguments()[0];
 	}
 
 	/**

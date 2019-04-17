@@ -101,10 +101,10 @@ public class ReflectionTest {
 		Assert.assertEquals("null", fieldAsString);
 	}
 
-	@Test(expected = ReflectionException.class)
+	@Test
 	public void test_get1ArgParameter_several_args_field() {
 		Field field = Reflection.getFields(Local.class).get(0);
-		Reflection.get1ArgParameter(field);
+		Assert.assertEquals(String.class, Reflection.get1ArgParameter(field));
 	}
 
 	@Test()
@@ -146,7 +146,7 @@ public class ReflectionTest {
 		Local local = new Local();
 		Map<String, String> map = new HashMap<>();
 		local.map = map;
-		Assert.assertTrue(map == Reflection.readField("map", local));
+		Assert.assertSame(map, Reflection.readField("map", local));
 	}
 
 	@Test (expected = ReflectionException.class)
@@ -193,16 +193,38 @@ public class ReflectionTest {
 	}
 
 	@Test
-	public void test_get1ArgParameter() {
+	public void test_get1ArgParameterField() {
 		Field field = Reflection.getFields(Book.class, Book.ComposedOf.class).get(0);
 		Type argParameter = Reflection.get1ArgParameter(field);
 		Assert.assertEquals(Book.Sheet.class, argParameter);
 	}
 
-	@Test(expected = ReflectionException.class)
+	@Test
 	public void test_get1ArgParameter_no_arg_field() {
 		Field field = Reflection.getFields(Book.class, Book.TechnicalID.class).get(0);
-		Reflection.get1ArgParameter(field);
+		Assert.assertNull(Reflection.get1ArgParameter(field));
+	}
+
+	@Test
+	public void test_get1ArgMethodReturnType() {
+		Method method = Reflection.getMethod(Book.class, "getSheets");
+		Assert.assertNotNull(method);
+		Type argParameter = Reflection.get1ArgReturnType(method);
+		Assert.assertEquals(Book.Sheet.class, argParameter);
+	}
+
+	@Test
+	public void test_get1ArgMethodReturnType_no_arg_method() {
+		Method method = Reflection.getMethod(Book.class, "getId");
+		Assert.assertNotNull(method);
+		Assert.assertNull(Reflection.get1ArgReturnType(method));
+	}
+
+	@Test
+	public void test_get1ArgMethodReturnType_several_arg_method() {
+		Method method = Reflection.getMethod(Local.class, "getMap");
+		Assert.assertNotNull(method);
+		Assert.assertEquals(String.class, Reflection.get1ArgReturnType(method));
 	}
 
 	@Test
