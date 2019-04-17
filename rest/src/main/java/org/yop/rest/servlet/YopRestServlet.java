@@ -3,7 +3,6 @@ package org.yop.rest.servlet;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.entity.ContentType;
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.exception.YopRuntimeException;
@@ -23,7 +22,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Set;
 
 /**
  * A servlet that will answer HTTP requests for the {@link Rest} annotated Yopable objects.
@@ -86,20 +84,6 @@ public class YopRestServlet extends HttpServlet {
 	}
 
 	/**
-	 * Find all the {@link Rest} annotated classes in the classpath.
-	 * @param packages package filter : the packages the @Rest class must start with. If empty : no package filter.
-	 * @return a set of @Rest classes
-	 */
-	protected Set<Class<?>> yopables(String... packages) {
-		Reflections reflections = new Reflections("", this.getClass().getClassLoader());
-		Set<Class<?>> candidates = reflections.getTypesAnnotatedWith(Rest.class);
-		if (packages != null && packages.length > 0) {
-			candidates.removeIf(c -> ! StringUtils.startsWithAny(Reflection.packageName(c), packages));
-		}
-		return candidates;
-	}
-
-	/**
 	 * Set the connection to use for the servlet. The Connector is simply a lambda that returns a connection.
 	 * @param connector the connector that can be a method reference to a JDBC connection
 	 * @return the current REST servlet, for chaining purposes
@@ -115,29 +99,24 @@ public class YopRestServlet extends HttpServlet {
 	 * @return the current servlet instance.
 	 */
 	public YopRestServlet register(String... packages) {
-		this.yopables(packages).forEach(this::register);
+		this.yopablePaths.register(packages);
 		return this;
 	}
 
 	/**
 	 * Register a {@link Rest} class as REST webservice.
-	 * @param target the target class to register. If not @Rest annotated, do nothing.
+	 * @param target the target class(s) to register. If not @Rest annotated, do nothing.
 	 * @return the current servlet instance.
 	 */
-	public YopRestServlet register(Class<?> target) {
-		if (target != null && target.isAnnotationPresent(Rest.class)) {
-			this.yopablePaths.put(StringUtils.removeStart(target.getAnnotation(Rest.class).path(), "/"), target);
-		}
+	public YopRestServlet register(Class<?>... target) {
+		this.yopablePaths.register(target);
 		return this;
 	}
 
 	@Override
 	public void init() throws ServletException {
 		super.init();
-		String packages = this.getInitParameter(PACKAGE_INIT_PARAM);
-		if (StringUtils.isNotBlank(packages)) {
-			this.register(StringUtils.split(packages, ","));
-		}
+		this.yopablePaths.register(this.getInitParameter(PACKAGE_INIT_PARAM));
 
 		// The JNDI data source init param → the underlying connection
 		// It can be null if the getConnection is overridden

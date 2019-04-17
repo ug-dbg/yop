@@ -932,6 +932,100 @@ paths:
                 properties:
                   error:
                     type: "string"
+  /pojo/search/{search_string}:
+    post:
+      tags:
+      - "Pojo"
+      summary: ""
+      description: ""
+      parameters:
+      - name: "search_string"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        200:
+          description: "A set of [Pojo]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                description: "Array of Pojo"
+                items:
+                  $ref: "#/components/schemas/Pojo"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of Pojo"
+                items:
+                  $ref: "#/components/schemas/Pojo"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
   /profile:
     summary: "YOP default REST operations for [Profile]"
     description: "Profiles REST resource "
@@ -3576,100 +3670,6 @@ paths:
           headers:
             Content-Length:
               description: "Equivalent GET request content-length"
-        400:
-          description: "Bad request"
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: "string"
-            application/xml:
-              schema:
-                properties:
-                  error:
-                    type: "string"
-        401:
-          description: "Unauthorized"
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: "string"
-            application/xml:
-              schema:
-                properties:
-                  error:
-                    type: "string"
-        403:
-          description: "Forbidden"
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: "string"
-            application/xml:
-              schema:
-                properties:
-                  error:
-                    type: "string"
-        404:
-          description: "Resource not found"
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: "string"
-            application/xml:
-              schema:
-                properties:
-                  error:
-                    type: "string"
-        500:
-          description: "Internal server error"
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: "string"
-            application/xml:
-              schema:
-                properties:
-                  error:
-                    type: "string"
-  /pojo/search/{search_string}:
-    post:
-      tags:
-      - "Pojo"
-      summary: ""
-      description: ""
-      parameters:
-      - name: "search_string"
-        in: "path"
-        description: ""
-        required: true
-        schema:
-          type: "string"
-      responses:
-        200:
-          description: "A set of [Pojo]"
-          content:
-            application/json:
-              schema:
-                type: "array"
-                description: "Array of Pojo"
-                items:
-                  $ref: "#/components/schemas/Pojo"
-            application/xml:
-              schema:
-                type: "array"
-                description: "Array of Pojo"
-                items:
-                  $ref: "#/components/schemas/Pojo"
         400:
           description: "Bad request"
           content:

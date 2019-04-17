@@ -169,14 +169,20 @@ public class OpenAPIUtil {
 		documentation.setDescription("YOP default documentation");
 		api.setExternalDocs(documentation);
 
-		api.components(new Components().schemas(new LinkedHashMap<>()));
-		yopables.forEach(y -> api.getComponents().addSchemas(getResourceName(y), forResource(y)));
-		YopSchemas.YOP_SCHEMAS.forEach((k,v) -> api.getComponents().addSchemas(k, v));
-
 		api.setTags(new ArrayList<>());
 		api.setPaths(new Paths());
-		yopables.forEach(y -> addResourceDefaultBehavior(y, api));
-		yopables.forEach(y -> addResourceCustomBehavior(y, api));
+		api.components(new Components().schemas(new LinkedHashMap<>()));
+
+		for (Class<?> yopable : yopables) {
+			api.getComponents().addSchemas(getResourceName(yopable), forResource(yopable));
+			if (ORMUtil.isYopable(yopable)) {
+				addResourceDefaultBehavior(yopable, api);
+			}
+			addResourceCustomBehavior(yopable, api);
+		}
+
+		YopSchemas.YOP_SCHEMAS.forEach((k,v) -> api.getComponents().addSchemas(k, v));
+
 		return api;
 	}
 
@@ -199,32 +205,29 @@ public class OpenAPIUtil {
 	}
 
 	/**
-	 * Create an OpenAPI {@link Schema} object from a Yop persistent type.
+	 * Create an OpenAPI {@link Schema} object from a target type.
 	 * <br>
-	 * This is done by recursively iterating on the yopable fields.
+	 * This is done by recursively iterating on the fields.
 	 * <br>
 	 * See {@link #forColumnField(Field)} when the field is neither a yopable nor a collection of yopables.
 	 * @param clazz the Yopable type
 	 * @return the generated schema for this type. Null if the type is not a yopable
 	 */
 	private static Schema<?> forResource(Class<?> clazz) {
-		if (ORMUtil.isYopable(clazz)) {
-			Schema<?> schema = new Schema<>().properties(new HashMap<>());
-			List<Field> fields = ORMUtil.getFields(clazz, true);
-			for (Field field : fields) {
-				Schema property;
-				if (ORMUtil.isCollection(field)) {
-					property = forResourceArray(Reflection.getTarget(field));
-				} else if (ORMUtil.isYopable(field)) {
-					property = forResource(Reflection.getTarget(field));
-				} else {
-					property = forColumnField(field);
-				}
-				schema.getProperties().put(field.getName(), property);
+		Schema<?> schema = new Schema<>().properties(new HashMap<>());
+		List<Field> fields = ORMUtil.getFields(clazz, true);
+		for (Field field : fields) {
+			Schema property;
+			if (ORMUtil.isCollection(field)) {
+				property = forResourceArray(Reflection.getTarget(field));
+			} else if (ORMUtil.isYopable(field)) {
+				property = forResource(Reflection.getTarget(field));
+			} else {
+				property = forColumnField(field);
 			}
-			return schema;
+			schema.getProperties().put(field.getName(), property);
 		}
-		return null;
+		return schema;
 	}
 
 	/**

@@ -47,7 +47,7 @@ public class OpenAPIServlet extends HttpServlet {
 	@Override
 	public void init() throws ServletException {
 		super.init();
-		this.yopablePaths.fromPackage(this.getInitParameter(PACKAGE_INIT_PARAM));
+		this.yopablePaths.register(this.getInitParameter(PACKAGE_INIT_PARAM));
 		this.expositionPath = this.getInitParameter(EXPOSITION_PATH_PARAM);
 	}
 

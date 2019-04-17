@@ -6,11 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.gen.Prepare;
 import org.yop.orm.sql.adapter.IConnection;
-import org.yop.orm.util.ORMUtil;
 import org.yop.reflection.Reflection;
-import org.yop.rest.annotations.Rest;
 import org.yop.rest.servlet.OpenAPIServlet;
 import org.yop.rest.servlet.YopRestServlet;
+import org.yop.rest.servlet.Yopables;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -206,16 +205,7 @@ public class RestServletProxy {
 	 */
 	private Map<String, Class> initYopRestServlet() {
 		Map<String, Class> yopables = this.readYopablePaths(YopRestServlet.class, this.yopRestServlet);
-
-		Collection<Class> classes = ORMUtil.yopables(this.fakeRootClassLoader);
-
-		for (Class yopableClass : classes) {
-			if (ORMUtil.isYopable(yopableClass) && yopableClass.isAnnotationPresent(Rest.class))
-			yopables.put(
-				StringUtils.removeStart(((Rest)yopableClass.getAnnotation(Rest.class)).path(), "/"),
-				yopableClass
-			);
-		}
+		yopables.putAll(new Yopables(this.fakeRootClassLoader).register(""));
 		return yopables;
 	}
 

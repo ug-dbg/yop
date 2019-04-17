@@ -58,9 +58,6 @@ public class YopDemoServlet extends HttpServlet {
 		"(?<=\\n|\\A)(?:public\\s)(class)(\\s|\\n)+"
 		+ "(?<className>\\w+)"
 		+ "(\\s|\\n)+"
-		+ Pattern.quote("implements") + "(\\s|\\n)+"
-		+ Pattern.quote("Yopable") + "(\\s|\\n)+"
-		+ Pattern.quote("{")
 	);
 
 	@Override
