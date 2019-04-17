@@ -687,17 +687,4 @@ public class Reflection {
 		}
 		return null;
 	}
-
-	/**
-	 * Concat objects as Strings using an underlying StringBuilder. <br>
-	 * @param objects the strings to concat.
-	 * @return the resulting string.
-	 */
-	private static String concat(Object... objects){
-		StringBuilder builder = new StringBuilder();
-		for(Object o : objects){
-			builder.append(String.valueOf(o));
-		}
-		return builder.toString();
-	}
 }
