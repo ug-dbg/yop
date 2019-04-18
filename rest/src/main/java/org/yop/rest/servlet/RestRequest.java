@@ -92,7 +92,7 @@ class RestRequest<T> {
 		try {
 			this.content = IOUtils.toString(req.getInputStream());
 		} catch (IOException e) {
-			logger.debug("No content for request", e);
+			logger.debug("I/O error reading request content. No content ?", e);
 		}
 
 		req.getParameterMap().forEach((key, value) -> this.parameters.putAll(key, Arrays.asList(value)));
@@ -397,7 +397,7 @@ class RestRequest<T> {
 			return deserializer.deserialize(this.getRestResource(), this.content);
 		} catch (RuntimeException e) {
 			throw new YopBadContentException(
-				"Unable to parse JSON array [" + StringUtils.abbreviate(this.content, 50) + "]",
+				"Unable to parse collection input [" + StringUtils.abbreviate(this.content, 50) + "]",
 				e
 			);
 		}
@@ -415,7 +415,7 @@ class RestRequest<T> {
 			return deserializer.deserialize(this.getRestResource(), this.content).iterator().next();
 		} catch (RuntimeException e) {
 			throw new YopBadContentException(
-				"Unable to parse JSON object [" + StringUtils.abbreviate(this.content, 50) + "]",
+				"Unable to parse single object input [" + StringUtils.abbreviate(this.content, 50) + "]",
 				e
 			);
 		}
@@ -452,6 +452,6 @@ class RestRequest<T> {
 		if (! paths.isEmpty()) {
 			return (Class) yopablePaths.get(paths.last());
 		}
-		throw new YopNoResourceException("No REST Yopable for request path [" + requestPath + "]");
+		throw new YopNoResourceException("No REST resource for request path [" + requestPath + "]");
 	}
 }
