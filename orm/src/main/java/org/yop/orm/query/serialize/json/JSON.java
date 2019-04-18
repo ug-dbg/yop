@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  * You can set some custom {@link JsonSerializer} using {@link #register(Type, JsonSerializer)}.
  * @param <T> the target Yopable type to serialize to JSON.
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
+@SuppressWarnings({"unused"})
 public class JSON<T> extends AbstractRequest<JSON<T>, T> implements Serialize<JSON, T> {
 
 	private final GsonInstance gson = new GsonInstance();
@@ -220,7 +220,6 @@ public class JSON<T> extends AbstractRequest<JSON<T>, T> implements Serialize<JS
 		 * </ul>
 		 */
 		@Override
-		@SuppressWarnings("unchecked")
 		public JsonElement serialize(YopableForJSON src, Type typeOfSrc, JsonSerializationContext context) {
 			// Serialize the given element to JSON. The YopableStrategy excludes @JoinTable properties
 			JsonElement element = JSON.this.gson.instance().toJsonTree(src.getSubject());
