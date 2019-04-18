@@ -36,7 +36,7 @@ public class Upsert implements HttpMethod {
 	 * @return the incoming yopables (see {@link RestRequest#contentAsYopables()}) with their IDs set.
 	 */
 	@Override
-	public <T> RestResponse executeDefault(RestRequest<T> restRequest, IConnection connection) {
+	public <T> IRestResponse executeDefault(RestRequest<T> restRequest, IConnection connection) {
 		// The yopables to insert (i.e. id is null) will have their id set after Upsert#execute.
 		Collection<T> output = new ArrayList<>();
 		Class<T> target = restRequest.getRestResource();
@@ -69,7 +69,7 @@ public class Upsert implements HttpMethod {
 			upsert.joinProfiles(restRequest.profiles().toArray(new String[0]));
 			upsert.execute(connection);
 		}
-		return RestResponse.forOutput(output);
+		return RestResponse.wrap(restRequest.getRestResource(), output);
 	}
 
 	@Override

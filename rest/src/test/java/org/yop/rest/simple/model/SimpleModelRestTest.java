@@ -1,10 +1,12 @@
 package org.yop.rest.simple.model;
 
+import com.google.common.collect.Sets;
 import com.google.gson.JsonParser;
 import org.apache.commons.codec.digest.Crypt;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -17,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.orm.evaluation.Operator;
 import org.yop.orm.query.serialize.json.JSON;
+import org.yop.orm.query.serialize.xml.XML;
 import org.yop.orm.query.sql.*;
 import org.yop.orm.simple.model.Jopo;
 import org.yop.orm.simple.model.Other;
@@ -37,6 +40,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import static org.yop.orm.Yop.toN;
 import static org.yop.orm.Yop.upsert;
@@ -78,6 +82,69 @@ public class SimpleModelRestTest extends RestServletTest {
 			Response response = doRequest(httpclient, httpGet);
 			Assert.assertEquals(200, response.statusCode);
 			Assert.assertEquals(classpathResource("/openapi/expected_openapi.yaml"), response.content);
+		}
+	}
+
+	@Test
+	public void test_userAPI_getAll_json() throws SQLException, ClassNotFoundException, IOException {
+		try (IConnection connection = this.getConnection()) {
+			rogerCanWrite(connection);
+		}
+
+		String sessionCookie = login();
+
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			// GET all users. This custom @Rest method uses a RestResponse output with custom joins.
+			HttpGet httpGet = new HttpGet("http://localhost:1234/yop/rest/user/all");
+			httpGet.setHeader("Cookie", sessionCookie);
+			Response response = doRequest(httpclient, httpGet);
+			Collection<User> users = JSON.deserialize(User.class, new JsonParser().parse(response.content));
+			Assert.assertEquals(1, users.size());
+
+			User roger = users.iterator().next();
+			Assert.assertEquals(USER_NAME, roger.getName());
+
+			Assert.assertEquals(1, roger.getProfiles().size());
+			Profile admin = roger.getProfiles().iterator().next();
+			Assert.assertEquals("admin", admin.getName());
+
+			Assert.assertEquals(2, admin.getActionsForProfile().size());
+			Assert.assertEquals(
+				Sets.newHashSet("read", "write"),
+				admin.getActionsForProfile().stream().map(Action::getName).collect(Collectors.toSet())
+			);
+		}
+	}
+
+	@Test
+	public void test_userAPI_getAll_xml() throws SQLException, ClassNotFoundException, IOException {
+		try (IConnection connection = this.getConnection()) {
+			rogerCanRead(connection);
+		}
+
+		String sessionCookie = login();
+
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			// GET all users. This custom @Rest method uses a RestResponse output with custom joins.
+			HttpGet httpGet = new HttpGet("http://localhost:1234/yop/rest/user/all");
+			httpGet.setHeader("Cookie", sessionCookie);
+			httpGet.setHeader("Accept", ContentType.APPLICATION_XML.getMimeType());
+			Response response = doRequest(httpclient, httpGet);
+			Collection<User> users = XML.deserialize(response.content, User.class);
+			Assert.assertEquals(1, users.size());
+
+			User roger = users.iterator().next();
+			Assert.assertEquals(USER_NAME, roger.getName());
+
+			Assert.assertEquals(1, roger.getProfiles().size());
+			Profile admin = roger.getProfiles().iterator().next();
+			Assert.assertEquals("admin", admin.getName());
+
+			Assert.assertEquals(1, admin.getActionsForProfile().size());
+			Assert.assertEquals(
+				Sets.newHashSet("read"),
+				admin.getActionsForProfile().stream().map(Action::getName).collect(Collectors.toSet())
+			);
 		}
 	}
 

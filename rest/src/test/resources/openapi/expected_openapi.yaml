@@ -3735,6 +3735,94 @@ paths:
                 properties:
                   error:
                     type: "string"
+  /user/all:
+    get:
+      tags:
+      - "User"
+      summary: "Get all users."
+      description: "Get all users with profiles and actions !"
+      parameters: []
+      responses:
+        200:
+          description: "A set of [User]"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                description: "Array of User"
+                items:
+                  $ref: "#/components/schemas/User"
+            application/xml:
+              schema:
+                type: "array"
+                description: "Array of User"
+                items:
+                  $ref: "#/components/schemas/User"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        404:
+          description: "Resource not found"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: "string"
+            application/xml:
+              schema:
+                properties:
+                  error:
+                    type: "string"
 components:
   schemas:
     Pojo:

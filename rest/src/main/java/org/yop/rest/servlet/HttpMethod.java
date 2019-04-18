@@ -12,9 +12,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yop.ioc.Singleton;
-import org.yop.orm.query.serialize.Serialize;
 import org.yop.orm.sql.adapter.IConnection;
-import org.yop.orm.util.ORMUtil;
 import org.yop.orm.util.TransformUtil;
 import org.yop.reflection.Reflection;
 import org.yop.rest.annotations.JoinProfiles;
@@ -33,7 +31,6 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -341,7 +338,7 @@ public interface HttpMethod {
 	 * @param connection the JDBC (or other) underlying connection
 	 * @return the execution result, be it from default or custom behavior
 	 */
-	default <T> RestResponse execute(RestRequest<T> restRequest, IConnection connection) {
+	default <T> IRestResponse execute(RestRequest<T> restRequest, IConnection connection) {
 		if (restRequest.isCustomResource()) {
 			return this.executeCustom(restRequest, connection);
 		}
@@ -358,7 +355,7 @@ public interface HttpMethod {
 	 * @throws YopNoResourceException no custom resource found for the request
 	 * @throws YopResourceInvocationException an error occurred executing the custom method
 	 */
-	default <T> RestResponse executeCustom(RestRequest<T> restRequest, IConnection connection) {
+	default <T> IRestResponse executeCustom(RestRequest<T> restRequest, IConnection connection) {
 		Optional<Method> candidate = restRequest.getCandidate();
 
 		if (! candidate.isPresent()) {
@@ -392,48 +389,13 @@ public interface HttpMethod {
 			} else {
 				out = method.invoke(Singleton.of(restRequest.getRestResource()).get(), parameters);
 			}
-			return RestResponse.forOutput(out);
+			return RestResponse.wrap(restRequest.getRestResource(), out);
 		} catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
 			throw new YopResourceInvocationException(
 				"Error invoking YOP resource [" + candidate.get() + "]",
 				e
 			);
 		}
-	}
-
-	/**
-	 * Serialize the execution result, be it a Yopable or a collection of Yopable.
-	 * <br>
-	 * For now, it can only serialize to {@link ContentType#APPLICATION_JSON}.
-	 * <br>
-	 * If the input object is neither a Yopable or a collection, naively use {@link Objects#toString(Object)}.
-	 * @param what        the object(s) to serialize
-	 * @param restRequest the incoming rest request.
-	 * @return the execution result, serialized into a String
-	 */
-	@SuppressWarnings("unchecked")
-	default <T> String serialize(Object what, RestRequest<T> restRequest) {
-		if (ORMUtil.isYopable(what) || what instanceof Collection) {
-			String outputContentType = restRequest.accept(Serializers.SUPPORTED);
-			Serialize serializer = Serializers.getFor(restRequest.getRestResource(), outputContentType);
-
-			if (what instanceof Collection) {
-				serializer.onto((Collection) what);
-				if (restRequest.joinAll()) {
-					serializer.joinAll();
-				}
-			} else {
-				serializer.onto(what);
-			}
-
-			if (restRequest.joinAll()) {
-				serializer.joinAll();
-			}
-			serializer.joinProfiles(restRequest.profiles().toArray(new String[0]));
-			return serializer.execute();
-		}
-
-		return Objects.toString(what);
 	}
 
 	/**
@@ -471,7 +433,7 @@ public interface HttpMethod {
 	 * @param connection the JDBC (or other) underlying connection
 	 * @return the execution result : a wrapper containing both the output and some extra output headers to set.
 	 */
-	<T> RestResponse executeDefault(RestRequest<T> restRequest, IConnection connection);
+	<T> IRestResponse executeDefault(RestRequest<T> restRequest, IConnection connection);
 
 	/**
 	 * Generate an OpenAPI operation model for the given resource.

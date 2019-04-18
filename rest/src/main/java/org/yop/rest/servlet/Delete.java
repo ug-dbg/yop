@@ -32,10 +32,10 @@ public class Delete implements HttpMethod {
 	 * Read the joinAll and other parameter. Returns an empty json array as string.
 	 * @param restRequest the incoming request
 	 * @param connection the JDBC (or other) underlying connection
-	 * @return "[]"
+	 * @return an empty list result
 	 */
 	@Override
-	public <T> RestResponse executeDefault(RestRequest<T> restRequest, IConnection connection) {
+	public <T> IRestResponse executeDefault(RestRequest<T> restRequest, IConnection connection) {
 		org.yop.orm.query.sql.Delete<T> delete = org.yop.orm.query.sql.Delete.from(restRequest.getRestResource());
 		if (restRequest.joinAll()) {
 			delete.joinAll();
@@ -47,7 +47,7 @@ public class Delete implements HttpMethod {
 
 		delete.joinProfiles(restRequest.profiles().toArray(new String[0]));
 		delete.executeQueries(connection);
-		return RestResponse.forOutput("[]");
+		return RestResponse.empty(restRequest.getRestResource());
 	}
 
 	@Override

@@ -2,24 +2,30 @@ package org.yop.rest.servlet;
 
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
+import org.yop.orm.query.AbstractRequest;
+import org.yop.orm.query.Context;
+import org.yop.orm.query.serialize.Serialize;
 import org.yop.orm.sql.adapter.IConnection;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * A simple wrapper for the output of a REST resource execution that implements {@link IRestResponse}.
  * <br>
- * You might want to add some extra output headers after executing a custom method. This wrapper is for you !
+ * Yop has a strong conventional behavior but you might want to craft the HTTP response after executing a custom method.
  * <br>
- * Instead of returning the POJO objects or the serialized output, just wrap it with {@link #forOutput(Object)}.
+ * Instead of returning POJO objects or a serialized output, wrap it (e.g. {@link #wrap(Class, Object)}).
  * <br>
  * Then you can add any output header. The REST servlet will add them into the output response.
+ * <br>
+ * Use the join methods (e.g. {@link #join(Function)}) to set custom join directives for serialization.
  * <br><br>
- * N.B. This wrapper was added to handle paging mechanisms.
- * See an implementation in {@link Get#executeDefault(RestRequest, IConnection)}
+ * See a typical usage in {@link Get#executeDefault(RestRequest, IConnection)}
  */
-public class RestResponse implements IRestResponse {
+public class RestResponse<T> extends AbstractRequest<RestResponse<T>, T> implements IRestResponse {
 
 	/** Execution output. Might be a (collection of) Yopable or a String. */
 	private Object output;
@@ -32,31 +38,50 @@ public class RestResponse implements IRestResponse {
 
 	/**
 	 * Private constructor. Please use {@link #forOutput(Object)}.
+	 * @param target the output target type
 	 * @param output the request output.
 	 */
-	private RestResponse(Object output) {
+	private RestResponse(Class<T> target, Object output) {
+		super(Context.root(target));
 		this.output = output;
 	}
 
 	/**
-	 * Wrap the output of a REST resource execution.
-	 * @param output the output (might be a (collection of) Yopable or a String)
-	 * @return a wrapper for your output
+	 * Wrap an empty list as the output of a REST resource execution.
+	 * @param target the target type
+	 * @return a wrapper for an empty list
 	 */
-	static RestResponse forOutput(Object output) {
-		return output instanceof RestResponse ? (RestResponse) output : new RestResponse(output);
+	public static <T> IRestResponse empty(Class<T> target) {
+		return new RestResponse<>(target, new ArrayList<>(0));
 	}
 
 	/**
 	 * Wrap the output of a REST resource execution.
-	 * @param output     the output (might be a (collection of) Yopable or a String)
-	 * @param statusCode the execution output status code to set in the response
-	 * @return a wrapper for your output
+	 * @param output the output (might be a (collection of) Yopable, a String... or an IResponse)
+	 * @return a new wrapper for the output or the output parameter itself if applicable.
 	 */
-	static RestResponse forOutput(Object output, int statusCode) {
-		RestResponse out = output instanceof RestResponse ? (RestResponse) output : new RestResponse(output);
-		out.statusCode = statusCode;
-		return out;
+	public static <T> IRestResponse wrap(Class<T> target, Object output) {
+		return output instanceof IRestResponse ? (IRestResponse) output : new RestResponse<>(target, output);
+	}
+
+	/**
+	 * Wrap the output of a REST resource execution as a single T object.
+	 * @param target the output target type
+	 * @param output the request output.
+	 * @return a new wrapper for the output
+	 */
+	public static <T> RestResponse<T> build(Class<T> target, T of) {
+		return new RestResponse<>(target, of);
+	}
+
+	/**
+	 * Wrap the output of a REST resource execution as a collection of T.
+	 * @param target the output target type
+	 * @param output the request output.
+	 * @return a new wrapper for the output
+	 */
+	public static <T> RestResponse<T> build(Class<T> target, Collection<T> of) {
+		return new RestResponse<>(target, of);
 	}
 
 	/**
@@ -65,8 +90,15 @@ public class RestResponse implements IRestResponse {
 	 * @param value the header value
 	 * @return the current wrapper
 	 */
-	RestResponse addHeader(String key, String value) {
+	@Override
+	public RestResponse<T> header(String key, String value) {
 		this.outputHeaders.put(key, value);
+		return this;
+	}
+
+	@Override
+	public IRestResponse statusCode(int code) {
+		this.statusCode = code;
 		return this;
 	}
 
@@ -83,5 +115,11 @@ public class RestResponse implements IRestResponse {
 	@Override
 	public Collection<Map.Entry<String, String>> headers() {
 		return this.outputHeaders.entries();
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <U> Serialize serializer(RestRequest<U> restRequest) {
+		return IRestResponse.super.serializer(restRequest).join(this.getJoins());
 	}
 }

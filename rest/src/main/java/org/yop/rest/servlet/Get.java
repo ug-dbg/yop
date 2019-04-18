@@ -55,16 +55,16 @@ class Get implements HttpMethod {
 					"No element [" + restRequest.getRestResource().getName() + "] for ID [" + restRequest.getId() + "]"
 				);
 			}
-			RestResponse output = RestResponse.forOutput(uniqueResult);
+			RestResponse output = RestResponse.build(restRequest.getRestResource(), uniqueResult);
 			if (restRequest.count()) {
-				output.addHeader(PARAM_COUNT, "1");
+				output.header(PARAM_COUNT, "1");
 			}
 			return output;
 		} else {
 			Set<T> results = select.execute(connection);
-			RestResponse output = RestResponse.forOutput(results);
+			RestResponse output = RestResponse.build(restRequest.getRestResource(), results);
 			if (restRequest.count()) {
-				output.addHeader(PARAM_COUNT, String.valueOf(select.count(connection)));
+				output.header(PARAM_COUNT, String.valueOf(select.count(connection)));
 			}
 			return output;
 		}

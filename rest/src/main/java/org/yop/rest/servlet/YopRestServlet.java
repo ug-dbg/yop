@@ -249,7 +249,7 @@ public class YopRestServlet extends HttpServlet {
 		RestRequest<T> restRequest = new RestRequest<>(req, resp, this.yopablePaths);
 		method.checkResource(restRequest);
 
-		RestResponse out;
+		IRestResponse out;
 		try (IConnection connection = this.connector.getConnection()) {
 			this.requestChecker.checkResource(restRequest, connection);
 
@@ -270,7 +270,7 @@ public class YopRestServlet extends HttpServlet {
 			);
 		}
 
-		String serialized = method.serialize(out.output(), restRequest);
+		String serialized = out.serialize(restRequest);
 		out.headers().forEach(entry -> resp.setHeader(entry.getKey(), entry.getValue()));
 		resp.setStatus(out.statusCode());
 

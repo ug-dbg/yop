@@ -5,10 +5,12 @@ import org.apache.http.NameValuePair;
 import org.yop.orm.annotations.*;
 import org.yop.orm.model.Yopable;
 import org.yop.orm.query.serialize.json.annotations.YopJSONTransient;
+import org.yop.orm.query.sql.Select;
 import org.yop.orm.sql.adapter.IConnection;
 import org.yop.rest.annotations.Content;
 import org.yop.rest.annotations.RequestPath;
 import org.yop.rest.annotations.Rest;
+import org.yop.rest.servlet.RestResponse;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -63,6 +65,14 @@ public class User implements Yopable {
 		NameValuePair[] parameters) {
 
 		throw new UnsupportedOperationException("Not implemented yet !");
+	}
+
+	@Rest(path = "all", description = "Get all users with profiles and actions !", summary = "Get all users.")
+	public static RestResponse<User> getAll(IConnection connection) {
+		Select<User> select = Select.from(User.class).join(User::getProfiles, Profile::getActionsForProfile);
+		RestResponse<User> output = RestResponse.build(User.class, select.execute(connection));
+		output.getJoins().addAll(select.getJoins());
+		return output;
 	}
 
 	@Override

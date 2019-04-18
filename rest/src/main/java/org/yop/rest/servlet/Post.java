@@ -69,7 +69,7 @@ public class Post implements HttpMethod {
 	 * @throws IllegalArgumentException for an unknown query type.
 	 */
 	@Override
-	public <T> RestResponse executeDefault(RestRequest<T> restRequest, IConnection connection) {
+	public <T> IRestResponse executeDefault(RestRequest<T> restRequest, IConnection connection) {
 		String queryType = restRequest.getParameterFirstValue(PARAM_TYPE);
 		switch (StringUtils.lowerCase(queryType)) {
 			case YopSchemas.SELECT : return doSelect(restRequest, connection);
@@ -127,7 +127,7 @@ public class Post implements HttpMethod {
 	 * @throws IllegalArgumentException {@link RestRequest#getRestResource()} does not match {@link Select#getTarget()}
 	 */
 	@SuppressWarnings("unchecked")
-	private static <T> RestResponse doSelect(RestRequest<T> restRequest, IConnection connection) {
+	private static <T> IRestResponse doSelect(RestRequest<T> restRequest, IConnection connection) {
 		Select<T> select = Select.fromJSON(
 			restRequest.getContent(),
 			connection.config(),
@@ -151,9 +151,9 @@ public class Post implements HttpMethod {
 		Serialize serializer = Serializers.getFor(restRequest.getRestResource(), outputContentType);
 		String serialized = serializer.join(select.getJoins()).onto(results).execute();
 
-		RestResponse output = RestResponse.forOutput(serialized);
+		IRestResponse output = RestResponse.wrap(restRequest.getRestResource(), serialized);
 		if (restRequest.count()) {
-			output.addHeader(PARAM_COUNT, String.valueOf(select.count(connection)));
+			output.header(PARAM_COUNT, String.valueOf(select.count(connection)));
 		}
 		return output;
 	}
@@ -165,7 +165,7 @@ public class Post implements HttpMethod {
 	 * @return an empty array list
 	 * @throws IllegalArgumentException {@link RestRequest#getRestResource()} does not match {@link Select#getTarget()}
 	 */
-	private static <T> RestResponse doDelete(RestRequest<T> restRequest, IConnection connection) {
+	private static <T> IRestResponse doDelete(RestRequest<T> restRequest, IConnection connection) {
 		Delete<T> delete = Delete.fromJSON(
 			restRequest.getContent(),
 			connection.config(),
@@ -179,7 +179,7 @@ public class Post implements HttpMethod {
 			);
 		}
 		delete.executeQueries(connection);
-		return RestResponse.forOutput(new ArrayList<>(0));
+		return RestResponse.empty(restRequest.getRestResource());
 	}
 
 	/**
@@ -189,7 +189,7 @@ public class Post implements HttpMethod {
 	 * @return an empty array list
 	 * @throws IllegalArgumentException {@link RestRequest#getRestResource()} does not match {@link Select#getTarget()}
 	 */
-	private static <T> RestResponse doUpsert(RestRequest<T> restRequest, IConnection connection) {
+	private static <T> IRestResponse doUpsert(RestRequest<T> restRequest, IConnection connection) {
 		Upsert<T> upsert = Upsert.fromJSON(
 			restRequest.getContent(),
 			connection.config(),
@@ -203,7 +203,7 @@ public class Post implements HttpMethod {
 			);
 		}
 		upsert.execute(connection);
-		return RestResponse.forOutput(new ArrayList<>(0));
+		return RestResponse.empty(restRequest.getRestResource());
 	}
 
 	/**
