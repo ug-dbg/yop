@@ -1,7 +1,7 @@
 package org.yop.reflection;
 
 import com.google.common.primitives.Primitives;
-import com.google.common.reflect.TypeToken;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -102,10 +102,8 @@ public class Reflection {
 			allMethods.addAll(getMethods(superClass));
 		}
 
-		if (target.getInterfaces() != null) {
-			Class<?>[] interfaces = target.getInterfaces();
-			Arrays.stream(interfaces).forEach(superInterface -> allMethods.addAll(getMethods(superInterface)));
-		}
+		Arrays.stream(ArrayUtils.nullToEmpty(target.getInterfaces())).forEach(i -> allMethods.addAll(getMethods(i)));
+		
 		allMethods.addAll(Arrays.asList(declaredMethods));
 		allMethods.addAll(Arrays.asList(methods));
 		return allMethods;
@@ -127,10 +125,10 @@ public class Reflection {
 			}
 			i = i.getSuperclass();
 		}
-		Set<TypeToken> typeTokens = TypeToken.of(target).getTypes().interfaces();
-		for (TypeToken typeToken : typeTokens) {
-			if (typeToken.getRawType().isAnnotationPresent(annotation)) {
-				return (A) typeToken.getRawType().getAnnotation(annotation);
+		
+		for (Class<?> interfaceClass : ArrayUtils.nullToEmpty(target.getInterfaces())) {
+			if (interfaceClass.isAnnotationPresent(annotation)) {
+				return interfaceClass.getAnnotation(annotation);
 			}
 		}
 		return null;
