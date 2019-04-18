@@ -20,10 +20,10 @@ with an
 - [demo](demo)
 
 ## What is it ?
-YOP is a daft backend stack. Pick up what you need : 
-* ORM : No session, no bytecode generation, SQL-like syntax. Method references to manage join clauses.  
-* REST webservices for your ORM data objects with an OpenAPI description generation.
-* [Swagger UI](https://swagger.io/tools/swagger-ui "Swagger UI website") for your REST webservices.
+YOP is a daft backend stack. Pick up what you need :  
+- ORM : No session, no bytecode generation, SQL-like syntax. Method references to manage join clauses.  
+- REST webservices for your ORM data objects with an OpenAPI description generation.  
+- [Swagger UI](https://swagger.io/tools/swagger-ui "Swagger UI website") for your REST webservices.  
 
 ## Philosophy
 YOP is not a framework but a tool. It should do no more than you ask for.  
