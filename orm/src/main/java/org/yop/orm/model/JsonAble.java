@@ -34,7 +34,6 @@ public interface JsonAble {
 	 * @param config  the SQL config. Needed for the sql separator to use - for some very specific cases.
 	 * @param <T> the context target type
 	 */
-	@SuppressWarnings("unchecked")
 	default <T> void fromJSON(Context<T> context, JsonElement element, Config config) {
 		if (! (element instanceof JsonObject)) {
 			return;
