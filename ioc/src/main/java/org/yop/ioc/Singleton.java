@@ -51,7 +51,7 @@ import java.util.Collection;
  * </pre>
  * @param <T> the target type of the Singleton instance
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
+@SuppressWarnings({"unused"})
 public class Singleton<T> {
 
 	private static final MultiValuedMap<Class, Singleton<?>> MULTITONS = new ArrayListValuedHashMap<>();
