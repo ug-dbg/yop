@@ -187,7 +187,7 @@ public class SimpleModelRestTest extends RestServletTest {
 			Assert.assertEquals(200, response.statusCode);
 			Assert.assertEquals(1, new JSONArray(response.content).length());
 			int contentLength = response.content.getBytes().length;
-			Long id = ((JSONObject) new JSONArray(response.content).get(0)).getLong("id");
+			long id = ((JSONObject) new JSONArray(response.content).get(0)).getLong("id");
 
 			// HEAD with joinAll, user logged in, user can read, not write → 200 with no content
 			HttpHead httpHead = new HttpHead("http://localhost:1234/yop/rest/pojo?joinAll");
@@ -202,7 +202,7 @@ public class SimpleModelRestTest extends RestServletTest {
 			httpGet.setHeader("Cookie", sessionCookie);
 			response = doRequest(httpclient, httpGet);
 			Assert.assertEquals(200, response.statusCode);
-			Assert.assertEquals((long) id, ((JSONObject) (new JSONArray(response.content).get(0))).getLong("id"));
+			Assert.assertEquals(id, ((JSONObject) (new JSONArray(response.content).get(0))).getLong("id"));
 
 			// GET by unknown ID, user logged in, user can read → 404
 			httpGet = new HttpGet("http://localhost:1234/yop/rest/pojo/1337");
@@ -284,7 +284,7 @@ public class SimpleModelRestTest extends RestServletTest {
 
 	@Test
 	public void test_custom_query_POST() throws SQLException, ClassNotFoundException, IOException {
-		Pojo newPojo;
+		org.yop.rest.simple.model.Pojo newPojo;
 		try (IConnection connection = this.getConnection()) {
 			newPojo = new org.yop.rest.simple.model.Pojo();
 			newPojo.setVersion(18);
@@ -353,7 +353,7 @@ public class SimpleModelRestTest extends RestServletTest {
 		newPojo.setType(Pojo.Type.BAR);
 		jsonQuery = Upsert
 			.from(org.yop.rest.simple.model.Pojo.class)
-			.onto((org.yop.rest.simple.model.Pojo) newPojo)
+			.onto(newPojo)
 			.toJSON()
 			.toString();
 
