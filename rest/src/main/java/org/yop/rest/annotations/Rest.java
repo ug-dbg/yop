@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark a persistent class (Topable or @Table) to answer to HTTP request on a given path/method.
+ * Mark a persistent class (Yopable or @Table) to answer to HTTP request on a given path/method.
  * <br>
  * This annotation can also be used on a method to add extra behavior.
  */
