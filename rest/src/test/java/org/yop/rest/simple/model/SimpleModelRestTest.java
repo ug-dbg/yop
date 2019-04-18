@@ -250,7 +250,7 @@ public class SimpleModelRestTest extends RestServletTest {
 			httpUpsert.setHeader("Cookie", sessionCookie);
 			response = doRequest(httpclient, httpUpsert);
 			Assert.assertEquals(400, response.statusCode);
-			Assert.assertEquals("{\"error\":\"Unable to parse JSON array [This is a test]\"}", response.content);
+			Assert.assertEquals("{\"error\":\"Unable to parse collection input [This is a test]\"}", response.content);
 
 			// UPSERT,  user logged in, user can read and write → 200
 			httpUpsert = new HttpUpsert("http://localhost:1234/yop/rest/pojo");
