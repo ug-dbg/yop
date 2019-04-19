@@ -5,6 +5,7 @@ import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.yop.reflection.Reflection;
 
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * Simple singleton/multiton instances management.
@@ -19,13 +20,18 @@ import java.util.Collection;
  *     <li>on demand, lazy : {@link #register(Class, Class, int)}</li>
  * </ul>
  * <br>
- * When registering a singleton, you can set the number of instances.
+ * When registering a singleton for a class, you can set an optional ID and the number of instances.
  * <br>
- * Default is 1 : a singleton.
+ * Default ID is {@link Key#DEFAULT_KEY} : a <b>singleton</b>.
  * <br>
- * If the number of instances is > 1, let's call it a multiton.
+ * Default number of instances is 1 : a <b>singleton</b>.
  * <br>
- * If every call to {@link #get()} should return a new instance (number of instances = -1), let's call it a prototype.
+ * If the number of instances is > 1, and all instances are equivalent, let's call it a <b>pool</b>.
+ * <br>
+ * If every call to {@link #get()} should return a new instance (number of instances = -1), 
+ * let's call it a <b>prototype</b>.
+ * <br>
+ * If a singleton can have several instances identified by an ID, this is a <b>multiton</b>.
  * <br><br>
  * A singleton of a target class/interface can be set as a field to achieve IoC.
  * <br>
@@ -49,14 +55,76 @@ import java.util.Collection;
  * }
  * }
  * </pre>
+ * If you need a multiton, use the methods to register or get a singleton that explicitly require an id.
+ * <br>
+ * Example :
+ * <pre>
+ * {@code
+ * public class ServiceA implements IServiceA {
+ *  private Singleton<IServiceB> b = Singleton.of(IServiceB.class, "b");
+ *  private Singleton<IServiceB> b_prime = Singleton.of(IServiceB.class, "b_prime");
+ * 
+ *  public void executeA(boolean usePrime) {
+ *   if (usePrime) {
+ *    this.b_prime.get().executeB();
+ *   } else {
+ *    this.b.get().executeB();
+ *   }
+ *  }
+ * }
+ * }
+ * {@code
+ * public class Main {
+ *  public static void main(String[] args) {
+ *    Singleton.register(IServiceA.class, ServiceA.class);
+ *    Singleton.register(IServiceB.class, "b", ServiceB.class);
+ *    Singleton.register(IServiceB.class, "b_prime", ServiceBPrime.class);
+ *  }
+ * }
+ * }
+ * </pre>
+ * 
+ * 
  * @param <T> the target type of the Singleton instance
  */
 @SuppressWarnings({"unused"})
 public class Singleton<T> {
 
-	private static final MultiValuedMap<Class, Singleton<?>> MULTITONS = new ArrayListValuedHashMap<>();
+	private static final MultiValuedMap<Key, Singleton<?>> MULTITONS = new ArrayListValuedHashMap<>();
 	private static final Object lock = "lock";
 
+	/**
+	 * A unique key to handle multiton instances.
+	 * <br>
+	 * The key is simply the target type and a comparable object.
+	 * <br>
+	 * For singletons that are not multitons, {@link #DEFAULT_KEY} is used.
+	 * @param <T> the multiton target type
+	 */
+	private static class Key<T> {
+		private static final String DEFAULT_KEY = "default";
+		private final Class<? extends T> clazz;
+		private final Comparable id;
+
+		private Key(Class<? extends T> clazz, Comparable id) {
+			this.clazz = clazz;
+			this.id = id;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || this.getClass() != o.getClass()) return false;
+			Key<?> key1 = (Key<?>) o;
+			return this.clazz.equals(key1.clazz) && this.id.equals(key1.id);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.clazz, this.id);
+		}
+	}
+	
 	Class<? extends T> clazz;
 	private volatile T instance;
 
@@ -69,20 +137,34 @@ public class Singleton<T> {
 	}
 
 	/**
-	 * Get a reference to the target type singleton/multiton instance.
+	 * Get a reference to the target type singleton instance.
 	 * <br>
 	 * If there are more than 1 instance in {@link #MULTITONS}, a random one is returned.
 	 * @param clazz the singleton target class
 	 * @param <T> the singleton target type
 	 * @return a reference to the target type singleton
 	 */
-	@SuppressWarnings("unchecked")
 	public static synchronized <T> Singleton<T> of(Class<? extends T> clazz) {
-		if (! MULTITONS.containsKey(clazz)) {
+		return of(clazz, Key.DEFAULT_KEY);
+	}
+	
+	/**
+	 * Get a reference to the target type singleton instance.
+	 * <br>
+	 * If there are more than 1 instance in {@link #MULTITONS}, a random one is returned.
+	 * @param clazz the singleton target class
+	 * @param id    the singleton id 
+	 * @param <T> the singleton target type
+	 * @return a reference to the target type singleton
+	 */
+	@SuppressWarnings("unchecked")
+	public static synchronized <T> Singleton<T> of(Class<? extends T> clazz, Comparable id) {
+		Key<T> key = new Key<>(clazz, id); 
+		if (! MULTITONS.containsKey(key)) {
 			Singleton<T> singleton = new Singleton<>(clazz);
-			MULTITONS.put(clazz, singleton);
+			MULTITONS.put(key, singleton);
 		}
-		Collection<Singleton<T>> values = (Collection) MULTITONS.get(clazz);
+		Collection<Singleton<T>> values = (Collection) MULTITONS.get(key);
 		return values.stream().skip((int) (values.size() * Math.random())).findFirst().orElse(null);
 	}
 
@@ -96,9 +178,29 @@ public class Singleton<T> {
 	 * @param <Impl> the implementation type
 	 */
 	public static synchronized <T, Impl extends T> void register(Class<T> clazz, Class<Impl> implementation) {
-		MULTITONS.get(clazz).clear();
-		MULTITONS.put(clazz, new Singleton<>(implementation));
+		register(clazz, Key.DEFAULT_KEY, implementation);
 	}
+	
+	/**
+	 * Register the implementation for a given class.
+	 * <br>
+	 * Using this registration method, the target type implementation will be on demand.
+	 * @param clazz          the singleton class (key for {@link #MULTITONS})
+	 * @param id             the singleton class id
+	 * @param implementation the implementation to use
+	 * @param <T> the registered type
+	 * @param <Impl> the implementation type
+	 */
+	public static synchronized <T, Impl extends T> void register(
+		Class<T> clazz, 
+		Comparable id,
+		Class<Impl> implementation) {
+		
+		Key<T> key = new Key<>(clazz, id);
+		MULTITONS.get(key).clear();
+		MULTITONS.put(key, new Singleton<>(implementation));
+	}
+	
 
 	/**
 	 * Register the implementation for a given class.
@@ -114,17 +216,37 @@ public class Singleton<T> {
 		Class<T> clazz,
 		Class<Impl> implementation,
 		int nbOfInstances) {
-		MULTITONS.get(clazz).clear();
+		register(clazz, Key.DEFAULT_KEY, implementation, nbOfInstances);
+	}
+
+	/**
+	 * Register the implementation for a given class.
+	 * <br>
+	 * Using this registration method, the target type implementation will be on demand.
+	 * @param clazz          the singleton class (key for {@link #MULTITONS})
+	 * @param id             the singleton class id
+	 * @param implementation the implementation to use
+	 * @param nbOfInstances  the number of instances to add. If -1 : every {@link #get()} creates a new instance.
+	 * @param <T> the registered type
+	 * @param <Impl> the implementation type
+	 */
+	public static synchronized <T, Impl extends T> void register(
+		Class<T> clazz,
+		Comparable id,
+		Class<Impl> implementation,
+		int nbOfInstances) {
+		Key<T> key = new Key<>(clazz, id);
+		MULTITONS.get(key).clear();
 
 		if (nbOfInstances == -1) {
-			MULTITONS.put(clazz, new Prototype<>(implementation));
+			MULTITONS.put(key, new Prototype<>(implementation));
 		}
 
 		for (int i = 0; i < nbOfInstances; i++) {
-			MULTITONS.put(clazz, new Singleton<>(implementation));
+			MULTITONS.put(key, new Singleton<>(implementation));
 		}
 	}
-
+	
 	/**
 	 * Explicitly register the implementation instance for a given class.
 	 * <br>
@@ -135,11 +257,26 @@ public class Singleton<T> {
 	 */
 	@SuppressWarnings("unchecked")
 	public static synchronized <T, Impl extends T> void register(Class<T> clazz, Impl... instances) {
-		MULTITONS.get(clazz).clear();
+		register(clazz, Key.DEFAULT_KEY, instances);
+	}
+	
+	/**
+	 * Explicitly register the implementation instance for a given class and id.
+	 * <br>
+	 * @param clazz     the singleton class (key for {@link #MULTITONS})
+	 * @param id        the singleton class id 
+	 * @param instances the implementation instances to use
+	 * @param <T> the registered type
+	 * @param <Impl> the implementation type
+	 */
+	@SuppressWarnings("unchecked")
+	public static synchronized <T, Impl extends T> void register(Class<T> clazz, Comparable id, Impl... instances) {
+		Key<T> key = new Key<>(clazz, id);
+		MULTITONS.get(key).clear();
 		for (Impl instance : instances) {
 			Singleton<Impl> singleton = new Singleton<>((Class<? extends Impl>) instance.getClass());
 			singleton.instance = instance;
-			MULTITONS.put(clazz, singleton);
+			MULTITONS.put(key, singleton);
 		}
 	}
 
