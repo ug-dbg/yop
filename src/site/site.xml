@@ -25,7 +25,10 @@
         </breadcrumbs>
 
         <menu ref="reports" inherit="top" />
-        <menu name="Liens"  inherit="top" >
+        <menu name="Project Code Reports" inherit="top">
+            <item name="Coverage" href="/report/jacoco-aggregate" />
+        </menu>
+        <menu name="Project links"  inherit="top" >
             <item name="Home"    href="http://maven.y-op.org" />
             <item name="Jenkins" href="http://jenkins.y-op.org" />
             <item name="GitHub"  href="http://github.com/ug-dbg/yop" />

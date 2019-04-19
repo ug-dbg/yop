@@ -1,0 +1,79 @@
+<project
+		xmlns="http://maven.apache.org/POM/4.0.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<artifactId>yop</artifactId>
+		<groupId>org.y-op</groupId>
+		<version>1.0-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>report</artifactId>
+	<packaging>jar</packaging>
+	<name>yop-report</name>
+
+	<description>
+		Yop code analysis reports for maven site. 
+		Jacoco aggregate goal cannot be used in the aggregate pom and requires a specific module.
+	</description>
+	<organization>
+		<name>Ω≡{Ⓐ}</name>
+	</organization>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.y-op</groupId>
+			<artifactId>reflection</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.y-op</groupId>
+			<artifactId>ioc</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.y-op</groupId>
+			<artifactId>orm</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.y-op</groupId>
+			<artifactId>rest</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.y-op</groupId>
+			<artifactId>swaggerui</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+	
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<configuration>
+					<executions>
+						<execution>
+							<id>jacoco-initialize</id>
+							<goals>
+								<goal>prepare-agent</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>jacoco-site-aggregate</id>
+							<phase>prepare-package</phase>
+							<goals>
+								<goal>report-aggregate</goal>
+							</goals>
+						</execution>
+					</executions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</reporting>
+</project>
