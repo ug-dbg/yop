@@ -282,6 +282,7 @@ public class YopRestServlet extends HttpServlet {
 	/**
 	 * A functional interface to a connection.
 	 */
+	@FunctionalInterface
 	public interface Connector {
 
 		/**
